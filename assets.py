@@ -48,7 +48,6 @@ def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period='
         wealth_index = assets_wealth_indexes.sum(axis=1)
         ror = wealth_index.pct_change()
         ror = ror.iloc[1:]
-        #print(f'{period=}')
         return ror
     grouped = ror.resample(period)
     for i, x in enumerate(grouped):
