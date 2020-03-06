@@ -16,6 +16,41 @@ class EfficientFrontier(AssetList):
 
     n_points = 40  # number of points for EF
 
+    @property
+    def gmv_weights(self):
+        """
+        Returns the weights of the Global Minimum Volatility portfolio
+        """
+        n = self.ror.shape[1]
+        init_guess = np.repeat(1 / n, n)
+        bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples!
+        # construct the constraints
+        weights_sum_to_1 = {'type': 'eq',
+                            'fun': lambda weights: np.sum(weights) - 1
+                            }
+        weights = minimize(get_portfolio_risk, init_guess,
+                           args=(self.ror,), method='SLSQP',
+                           options={'disp': False},
+                           constraints=(weights_sum_to_1,),
+                           bounds=bounds)
+        return weights.x
+
+    @property
+    def gmv(self):
+        """
+        Returns the annualized risk and return of the Global Minimum Volatility portfolio
+        """
+        gmv_monthly = (
+            get_portfolio_risk(self.gmv_weights, self.ror),
+            get_portfolio_mean_return(self.gmv_weights, self.ror)
+        )
+
+        gmv_annualized = (
+            annualize_risk(gmv_monthly[0], gmv_monthly[1]),
+            annualize_return(gmv_monthly[1])
+        )
+        return gmv_annualized
+
     def _minimize_risk(self, target_return: float) -> float:
         """
         Returns the optimal weights that achieve the target return
@@ -55,12 +90,6 @@ class EfficientFrontier(AssetList):
         point['Return'] = a_r
         point['Return (risk adjusted approx)'] = r_gmean
         point['Risk'] = annualize_risk(risk, r)
-        # point = {
-        #     'Weights': weights.x,
-        #     'Return': a_r,
-        #     "Return (risk adjusted approx)": r_gmean,
-        #     'Risk': annualize_risk(risk, r)
-        # }
         return point
 
     @property
@@ -86,10 +115,11 @@ class EfficientFrontier(AssetList):
 
 
 class EfficientFrontierReb(AssetList):
-    def __init__(self, symbols=[default_ticker], curr='USD'):
+    def __init__(self, symbols=[default_ticker], curr='USD', period='Y'):
         if len(symbols) < 2:
             raise ValueError('The number of symbols cannot be less than two')
         super().__init__(symbols, curr)
+        self.period = period
         #self.gmv = None
         #self.gmv_annualized = None
 
@@ -103,12 +133,18 @@ class EfficientFrontierReb(AssetList):
         n = self.ror.shape[1]
         init_guess = np.repeat(1 / n, n)
         bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples!
+
+        # Set the objective function
+        def objective_function(w, ror, per):
+            risk = rebalanced_portfolio_return_ts(w, ror, period=per).std()
+            return risk
+
         # construct the constraints
         weights_sum_to_1 = {'type': 'eq',
                             'fun': lambda weights: np.sum(weights) - 1
                             }
-        weights = minimize(get_portfolio_risk, init_guess,
-                           args=(self.ror,), method='SLSQP',
+        weights = minimize(objective_function, init_guess,
+                           args=(self.ror, self.period), method='SLSQP',
                            options={'disp': False},
                            constraints=(weights_sum_to_1,),
                            bounds=bounds)
@@ -116,22 +152,25 @@ class EfficientFrontierReb(AssetList):
 
     def _get_gmv_monthly(self) -> tuple:
         """
-        Returns the risk and return (monthly) of the Global Minimum Volatility portfolio
+        Returns the risk and return (mean, monthly) of the Global Minimum Volatility portfolio
         """
         gmv_monthly = (
-            get_portfolio_risk(self.gmv_weights, self.ror),
-            get_portfolio_mean_return(self.gmv_weights, self.ror)
+            rebalanced_portfolio_return_ts(self.gmv_weights, self.ror, period=self.period).std(),
+            rebalanced_portfolio_return_ts(self.gmv_weights, self.ror, period=self.period).mean()
         )
         return gmv_monthly
 
     @property
     def gmv(self):
         """
-        Returns the annualized risk and return of the Global Minimum Volatility portfolio
+        Returns the annualized risk and CAGR of the Global Minimum Volatility portfolio
+        NOTE: Apparently very small difference with quick gmv calculation by get_portfolio_risk function.
+        TODO: Check the Note
         """
+        returns = rebalanced_portfolio_return_ts(self.gmv_weights, self.ror, period=self.period)
         gmv_annualized = (
             annualize_risk(self._get_gmv_monthly()[0], self._get_gmv_monthly()[1]),
-            annualize_return(self._get_gmv_monthly()[1])
+            (returns + 1).prod()**(12/self.ror.shape[0]) - 1
         )
         return gmv_annualized
 
@@ -145,8 +184,8 @@ class EfficientFrontierReb(AssetList):
         bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples!
 
         # Set the objective function
-        def objective_function(w, ror):
-            returns = rebalanced_portfolio_return_ts(w, ror)
+        def objective_function(w, ror, per):
+            returns = rebalanced_portfolio_return_ts(w, ror, period=per)
             accumulated_return = (returns + 1.).prod() - 1.
             return - accumulated_return
 
@@ -155,15 +194,17 @@ class EfficientFrontierReb(AssetList):
                             'fun': lambda weights: np.sum(weights) - 1
                             }
         weights = minimize(objective_function, init_guess,
-                           args=(self.ror,), method='SLSQP',
+                           args=(self.ror, self.period), method='SLSQP',
                            options={'disp': False},
                            constraints=(weights_sum_to_1,),
                            bounds=bounds)
         mean_return = rebalanced_portfolio_return_ts(weights.x, self.ror).mean()
+        portfolio_risk = rebalanced_portfolio_return_ts(weights.x, self.ror, period=self.period).std()
+        print(portfolio_risk)
         point = {
             'Weights': weights.x,
-            'CAGR': (1 - objective_function(weights.x, self.ror)) ** (12 / self.ror.shape[0]) - 1,
-            'Risk': annualize_risk(get_portfolio_risk(weights.x, self.ror), mean_return)
+            'CAGR': (1 - objective_function(weights.x, self.ror, self.period)) ** (12 / self.ror.shape[0]) - 1,
+            'Risk': annualize_risk(portfolio_risk, mean_return)
         }
         return point
 
@@ -173,14 +214,15 @@ class EfficientFrontierReb(AssetList):
         given a DataFrame of return time series.
         """
         ror = self.ror
+        period = self.period
         n = ror.shape[1]  # number of assets
 
         init_guess = np.repeat(1 / n, n)  # initial weights
 
         # Set the objective function
-        def objective_function(w, ror):
-            returns = rebalanced_portfolio_return_ts(w, ror)
-            accumulated_return = (returns + 1.).prod() - 1.
+        def objective_function(w, ror, per):
+            objective_function.returns = rebalanced_portfolio_return_ts(w, ror, period=per)
+            accumulated_return = (objective_function.returns + 1.).prod() - 1.
             return - accumulated_return
 
         # construct the constraints
@@ -190,19 +232,20 @@ class EfficientFrontierReb(AssetList):
                             }
         risk_is_target = {'type': 'eq',
                           'args': (ror,),
-                          'fun': lambda weights, ror: target_risk - get_portfolio_risk(weights, ror)
+                          'fun': lambda weights, ror: target_risk - rebalanced_portfolio_return_ts(weights, ror, period=period).std()
                           }
         weights = minimize(objective_function, init_guess,
-                           args=(ror,), method='SLSQP',
+                           args=(ror, period), method='SLSQP',
                            options={'disp': False},
                            constraints=(weights_sum_to_1, risk_is_target),
                            bounds=bounds)
+        # Calculate points of EF given optimal weights
+        cagr = (1. - objective_function(weights.x, ror, period))**(12/ror.shape[0]) - 1.
+        returns = objective_function.returns
+        risk = annualize_risk(target_risk, returns.mean())
         point = {x: y for x, y in zip(self.tickers, weights.x)}
-        # point = {
-        #     'Weights': weights.x,
-        #     'CAGR': (1 - objective_function(weights.x, self.ror)) ** (12 / self.ror.shape[0]) - 1,
-        #     'Risk': annualize_risk(target_risk, rebalanced_portfolio_return_ts(weights.x, self.ror).mean())
-        # }
+        point['CAGR'] = cagr
+        point['Risk'] = risk
         return point
     
     @property
@@ -210,9 +253,8 @@ class EfficientFrontierReb(AssetList):
         """
         Returns a DataFrame of points for Efficient Frontier when the Objective Function is the rate of return
         for rebalanced portfolio.
-        ATT: yearly rebalanced only (!)
         Each point has:
-        - Weights (np.array)
+        - Weights (float) for each ticker
         - CAGR (float)
         - Risk (float)
         """
@@ -269,7 +311,7 @@ class Plots(AssetList):
     def transition_map(self, ef: pd.DataFrame):
         fig = plt.figure(figsize=(12, 6))
         ax = plt.axes()
-        for i in list(ef.cogitlumns.values):
+        for i in list(ef.columns.values):
             if i not in ('Risk', 'Return', 'Return (risk adjusted approx)'):
                 ax.plot(ef['Risk'], ef.loc[:, i], label=i)
         ax.set_xlim(ef.Risk.iloc[0], ef.Risk.iloc[-1])

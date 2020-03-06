@@ -41,7 +41,7 @@ def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period='
     For not rebalanced portfolio set Period to 'None'
     """
     initial_inv = 1000
-    if period == 'None':  # Not rebalanced portfolio
+    if period == 'N':  # Not rebalanced portfolio
         inv_period = initial_inv
         inv_period_spread = np.asarray(weights) * inv_period
         assets_wealth_indexes = inv_period_spread * (1 + ror).cumprod()
@@ -54,7 +54,7 @@ def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period='
         if i == 0:
             inv_period = 1000
             wealth_index = pd.Series(dtype='float64')
-            wealth_index_local = pd.Series(dtype='float64')
+            #wealth_index_local = pd.Series(dtype='float64')
         df = x[1]
         inv_period_spread = np.asarray(weights) * inv_period # rebalancing
         assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()

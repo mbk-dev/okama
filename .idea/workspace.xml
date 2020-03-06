@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b19e4593-f937-43f0-bc5e-3f7ebe844fd0" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/assets.py" beforeDir="false" afterPath="$PROJECT_DIR$/assets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontier.py" beforeDir="false" afterPath="$PROJECT_DIR$/frontier.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -116,7 +116,19 @@
       <option name="presentableId" value="Default" />
       <updated>1582608088034</updated>
     </task>
+    <task id="LOCAL-00001" summary="Test commitment">
+      <created>1583160902647</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1583160902647</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Test commitment" />
+    <option name="LAST_COMMIT_MESSAGE" value="Test commitment" />
   </component>
   <component name="WindowStateProjectService">
     <state x="560" y="178" key="#Inspections" timestamp="1582615235168">
@@ -127,6 +139,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="422" y="174" key="#com.intellij.execution.impl.EditConfigurationsDialog/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582624366020" />
+    <state x="621" y="114" key="CommitChangelistDialog2" timestamp="1583160901634">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="621" y="114" key="CommitChangelistDialog2/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1583160901634" />
     <state x="748" y="274" key="FileChooserDialogImpl" timestamp="1582726646902">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -167,14 +183,14 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="468" y="162" key="SettingsEditor/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1583159614535" />
-    <state x="107" y="100" width="1720" height="840" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1583160871521">
+    <state x="107" y="100" width="1720" height="840" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1583512033810">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="107" y="100" width="1720" height="840" key="com.intellij.history.integration.ui.views.FileHistoryDialog/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1583160871521" />
-    <state x="664" y="343" key="com.intellij.ide.util.TipDialog" timestamp="1583159463073">
+    <state x="107" y="100" width="1720" height="840" key="com.intellij.history.integration.ui.views.FileHistoryDialog/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1583512033810" />
+    <state x="664" y="343" key="com.intellij.ide.util.TipDialog" timestamp="1583508298277">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="664" y="343" key="com.intellij.ide.util.TipDialog/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1583159463073" />
+    <state x="664" y="343" key="com.intellij.ide.util.TipDialog/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1583508298277" />
     <state x="598" y="217" width="737" height="606" key="find.popup" timestamp="1582866189558">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
