@@ -1,20 +1,22 @@
-import math
+import itertools
+
 import pandas as pd
 import numpy as np
+
 from scipy.optimize import minimize
 import matplotlib. pyplot as plt
 
 from .assets import AssetList, get_portfolio_mean_return, get_portfolio_risk, annualize_return, annualize_risk, rebalanced_portfolio_return_ts, approx_return_risk_adjusted
-from .settings import default_ticker
+from okama.settings import default_ticker
 
 
 class EfficientFrontier(AssetList):
-    def __init__(self, symbols=[default_ticker], curr='USD'):
+    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD'):
         if len(symbols) < 2:
             raise ValueError('The number of symbols cannot be less than two')
-        super().__init__(symbols, curr)
+        super().__init__(symbols, first_date, last_date, curr)
 
-    n_points = 40  # number of points for EF
+    n_points = 20  # number of points for EF
 
     @property
     def gmv_weights(self):
@@ -115,10 +117,10 @@ class EfficientFrontier(AssetList):
 
 
 class EfficientFrontierReb(AssetList):
-    def __init__(self, symbols=[default_ticker], curr='USD', period='Y'):
+    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD', period='Y'):
         if len(symbols) < 2:
             raise ValueError('The number of symbols cannot be less than two')
-        super().__init__(symbols, curr)
+        super().__init__(symbols, first_date, last_date, curr)
         self.period = period
         #self.gmv = None
         #self.gmv_annualized = None
@@ -270,8 +272,8 @@ class EfficientFrontierReb(AssetList):
 
 
 class Plots(AssetList):
-    def __init__(self, symbols=[default_ticker], curr='USD'):
-        super().__init__(symbols, curr)
+    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD'):
+        super().__init__(symbols, first_date, last_date, curr)
 
     def plot_assets(self, type='mean'):
         """
@@ -279,7 +281,7 @@ class Plots(AssetList):
         type:
         mean - mean return
         cagr_app - CAGR by approximation
-        cagr - CAGR from monthly returns
+        cagr - CAGR from monthly returns time series
         """
         if type == 'mean':
             risks = self.calculate_risk(annualize=True)
@@ -317,4 +319,15 @@ class Plots(AssetList):
         ax.set_xlim(ef.Risk.iloc[0], ef.Risk.iloc[-1])
         ax.legend(loc='upper left', frameon=False)
         fig.tight_layout()
+        return ax
+
+    def plot_pair_ef(self):
+        """
+        Plots efficient frontier of every pair of assets in a set.
+        """
+        ax = plt.axes()
+        for i in list(itertools.combinations(self.tickers, 2)):
+            ef = EfficientFrontier(symbols=i, curr=self.currency, first_date=self.first_date, last_date=self.last_date).ef_points
+            ax.plot(ef.Risk, ef.Return)
+        self.plot_assets()
         return ax

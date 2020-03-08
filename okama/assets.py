@@ -7,6 +7,9 @@ from .settings import default_ticker
 from .data import get_eod_data
 
 def get_portfolio_return_ts(weights:list, ror: pd.DataFrame) -> pd.Series:
+    """
+    Returns the mean return time series given portfolio weights and the DataFrame of assets mean returns.
+    """
     if isinstance(ror, pd.Series): # required for a single asset portfolio
         return ror
     return_ts = ror @ weights
@@ -36,9 +39,10 @@ def get_portfolio_risk(weights: list, ror: pd.DataFrame) -> float:
 
 def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period='Y'):
     """
-    Returns the rate of return time serie of rebalanced portfolio.
+    Returns the mean return time series of rebalanced portfolio. Can be used to calculate returns geometric mean for the
+    rebalanced portfolio.
     Default rebalancing period is a Year (end of year)
-    For not rebalanced portfolio set Period to 'None'
+    For not rebalanced portfolio set Period to 'N'
     """
     initial_inv = 1000
     if period == 'N':  # Not rebalanced portfolio
@@ -99,12 +103,17 @@ class Asset:
     """
     An asset, that could be used in a list or portfolio.
     """
+
     def __init__(self, symbol=default_ticker):
         self.ticker = symbol
         self.ror = self._get_monthly_ror(symbol)
         self.market = self._define_market(symbol)
         self.asset_currency = self._define_currency()
+
     def _get_monthly_ror(self, ticker: str) -> pd.Series:
+        """
+        Calculate monthly mean return time series given the ticker.
+        """
         s = get_eod_data(ticker)
         name = s.name
         s = s.resample('M').apply(lambda x: (np.prod(1 + x) - 1))
@@ -134,11 +143,17 @@ class AssetList:
     """
     The list of assets implementation.
     """
-    def __init__(self, symbols=[default_ticker], curr='USD'):
+    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD'):
         self.tickers = symbols
         self.currency = curr
         self._make_asset_list(symbols)
         self._calculate_wealth_indexes()
+        if first_date:
+            self.ror = self.ror[pd.to_datetime(first_date):]
+        if last_date:
+            self.ror = self.ror[:pd.to_datetime(last_date)]
+        self.first_date = self.ror.index[0].to_timestamp()
+        self.last_date = self.ror.index[-1].to_timestamp()
              
     def _make_asset_list(self, l:list):
         """

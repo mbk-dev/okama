@@ -1,49 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="b19e4593-f937-43f0-bc5e-3f7ebe844fd0" name="Default Changelist" comment="">
+    <list default="true" id="7dc874c2-507d-46d7-add8-5c09cde49419" name="Default Changelist" comment="- Updated folder structure&#10;- Jupyter Notebooks added&#10;- first_date &amp; last_date parameters added to AssetList, and all EF classes&#10;- plot pairs of EF method added to Plots">
+      <change afterPath="$PROJECT_DIR$/Assets Posts.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/EF pairs plot.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/okama/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/okama/assets.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/okama/data.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/okama/frontier.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/okama/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/okama.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/okama.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets.py" beforeDir="false" afterPath="$PROJECT_DIR$/assets.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontier.py" beforeDir="false" afterPath="$PROJECT_DIR$/frontier.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.ipynb_checkpoints/assets-checkpoint.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontier.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Python Script" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectId" id="1YHmqszM80CvnenV3GJvYfPwhC5" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectId" id="1Yo6obRYZq5ylOTxwUwXCIWMoZh" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showExcludedFiles" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
-  </component>
-  <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\Sergey\OneDrive\NoteBooks\okama" />
-    </key>
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\Sergey\OneDrive\NoteBooks\okama" />
-    </key>
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/main.py" />
+    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <module name="okama" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\Sergey\Anaconda3\envs\py38\python.exe" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="okama" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="true" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="okama" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="okama" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -64,140 +82,84 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="okama" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Python.main" />
-        <item itemvalue="Python.main" />
-        <item itemvalue="Python.main" />
-      </list>
-    </recent_temporary>
-  </component>
-  <component name="ServiceViewManager">
-    <option name="viewStates">
-      <list>
-        <serviceView>
-          <treeState>
-            <expand />
-            <select />
-          </treeState>
-        </serviceView>
-      </list>
-    </option>
   </component>
   <component name="SvnConfiguration">
     <configuration />
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="b19e4593-f937-43f0-bc5e-3f7ebe844fd0" name="Default Changelist" comment="" />
-      <created>1582608088034</created>
+      <changelist id="7dc874c2-507d-46d7-add8-5c09cde49419" name="Default Changelist" comment="" />
+      <created>1583596775600</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1582608088034</updated>
+      <updated>1583596775600</updated>
     </task>
-    <task id="LOCAL-00001" summary="Test commitment">
-      <created>1583160902647</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1583160902647</updated>
-    </task>
-    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Test commitment" />
-    <option name="LAST_COMMIT_MESSAGE" value="Test commitment" />
+    <option name="CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT" value="true" />
+    <MESSAGE value="- Updated folder structure&#10;- Jupyter Notebooks added&#10;- first_date &amp; last_date parameters added to AssetList, and all EF classes&#10;- plot pairs of EF method added to Plots" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Updated folder structure&#10;- Jupyter Notebooks added&#10;- first_date &amp; last_date parameters added to AssetList, and all EF classes&#10;- plot pairs of EF method added to Plots" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="560" y="178" key="#Inspections" timestamp="1582615235168">
+    <state x="414" y="175" width="1092" height="706" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1583597442579">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="560" y="178" key="#Inspections/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582615235168" />
-    <state x="422" y="174" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1582624366020">
+    <state x="414" y="175" width="1092" height="706" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583597442579" />
+    <state x="1004" y="75" key="CommitChangelistDialog2" timestamp="1583644506684">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="422" y="174" key="#com.intellij.execution.impl.EditConfigurationsDialog/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582624366020" />
-    <state x="621" y="114" key="CommitChangelistDialog2" timestamp="1583160901634">
+    <state x="1004" y="75" key="CommitChangelistDialog2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583644506684" />
+    <state x="740" y="283" key="FileChooserDialogImpl" timestamp="1583597441096">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="621" y="114" key="CommitChangelistDialog2/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1583160901634" />
-    <state x="748" y="274" key="FileChooserDialogImpl" timestamp="1582726646902">
+    <state x="740" y="283" key="FileChooserDialogImpl/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583597441096" />
+    <state width="1899" height="282" key="GridCell.Tab.0.bottom" timestamp="1583644506766">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="748" y="274" key="FileChooserDialogImpl/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582726646902" />
-    <state width="1882" height="279" key="GridCell.Tab.0.bottom" timestamp="1582883251127">
+    <state width="1899" height="282" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583644506766" />
+    <state width="1899" height="282" key="GridCell.Tab.0.center" timestamp="1583644506766">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1882" height="279" key="GridCell.Tab.0.bottom/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582883251127" />
-    <state width="1882" height="279" key="GridCell.Tab.0.center" timestamp="1582883251127">
+    <state width="1899" height="282" key="GridCell.Tab.0.center/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583644506766" />
+    <state width="1899" height="282" key="GridCell.Tab.0.left" timestamp="1583644506766">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1882" height="279" key="GridCell.Tab.0.center/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582883251127" />
-    <state width="1882" height="279" key="GridCell.Tab.0.left" timestamp="1582883251127">
+    <state width="1899" height="282" key="GridCell.Tab.0.left/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583644506766" />
+    <state width="1899" height="282" key="GridCell.Tab.0.right" timestamp="1583644506766">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1882" height="279" key="GridCell.Tab.0.left/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582883251127" />
-    <state width="1882" height="279" key="GridCell.Tab.0.right" timestamp="1582883251127">
+    <state width="1899" height="282" key="GridCell.Tab.0.right/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583644506766" />
+    <state width="1899" height="348" key="GridCell.Tab.1.bottom" timestamp="1583597932741">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1882" height="279" key="GridCell.Tab.0.right/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582883251127" />
-    <state width="1882" height="344" key="GridCell.Tab.1.bottom" timestamp="1582643516541">
+    <state width="1899" height="348" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583597932741" />
+    <state width="1899" height="348" key="GridCell.Tab.1.center" timestamp="1583597932741">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1882" height="344" key="GridCell.Tab.1.bottom/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582643516541" />
-    <state width="1882" height="344" key="GridCell.Tab.1.center" timestamp="1582643516540">
+    <state width="1899" height="348" key="GridCell.Tab.1.center/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583597932741" />
+    <state width="1899" height="348" key="GridCell.Tab.1.left" timestamp="1583597932741">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1882" height="344" key="GridCell.Tab.1.center/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582643516540" />
-    <state width="1882" height="344" key="GridCell.Tab.1.left" timestamp="1582643516539">
+    <state width="1899" height="348" key="GridCell.Tab.1.left/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583597932741" />
+    <state width="1899" height="348" key="GridCell.Tab.1.right" timestamp="1583597932741">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1882" height="344" key="GridCell.Tab.1.left/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582643516539" />
-    <state width="1882" height="344" key="GridCell.Tab.1.right" timestamp="1582643516540">
+    <state width="1899" height="348" key="GridCell.Tab.1.right/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583597932741" />
+    <state x="461" y="162" key="SettingsEditor" timestamp="1583642943844">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1882" height="344" key="GridCell.Tab.1.right/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582643516540" />
-    <state x="468" y="162" key="SettingsEditor" timestamp="1583159614535">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="468" y="162" key="SettingsEditor/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1583159614535" />
-    <state x="107" y="100" width="1720" height="840" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1583512033810">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="107" y="100" width="1720" height="840" key="com.intellij.history.integration.ui.views.FileHistoryDialog/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1583512033810" />
-    <state x="664" y="343" key="com.intellij.ide.util.TipDialog" timestamp="1583508298277">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="664" y="343" key="com.intellij.ide.util.TipDialog/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1583508298277" />
-    <state x="598" y="217" width="737" height="606" key="find.popup" timestamp="1582866189558">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="598" y="217" width="737" height="606" key="find.popup/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582866189558" />
-    <state x="624" y="177" width="670" height="676" key="search.everywhere.popup" timestamp="1582729192611">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="624" y="177" width="670" height="676" key="search.everywhere.popup/1920.0.1366.728/0.0.1920.1040@0.0.1920.1040" timestamp="1582729192611" />
+    <state x="461" y="162" key="SettingsEditor/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583642943844" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/main.py</url>
+          <line>21</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
