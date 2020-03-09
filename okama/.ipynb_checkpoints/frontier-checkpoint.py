@@ -1,21 +1,20 @@
-import itertools
-
+import math
 import pandas as pd
 import numpy as np
-
 from scipy.optimize import minimize
 import matplotlib. pyplot as plt
 
 from .assets import AssetList, get_portfolio_mean_return, get_portfolio_risk, annualize_return, annualize_risk, rebalanced_portfolio_return_ts, approx_return_risk_adjusted
-from okama.settings import default_ticker, n_points
+from .settings import default_ticker
 
 
 class EfficientFrontier(AssetList):
-    def __init__(self, *, symbols=[default_ticker], first_date=None, last_date=None, curr='USD', full_frontier=True):
+    def __init__(self, symbols=[default_ticker], curr='USD'):
         if len(symbols) < 2:
             raise ValueError('The number of symbols cannot be less than two')
-        super().__init__(symbols, first_date, last_date, curr)
-        self.full_frontier = full_frontier
+        super().__init__(symbols, curr)
+
+    n_points = 40  # number of points for EF
 
     @property
     def gmv_weights(self):
@@ -100,7 +99,7 @@ class EfficientFrontier(AssetList):
         """
         ror = self.ror
         er = ror.mean()
-        target_rs = np.linspace(er.min(), er.max(), n_points)
+        target_rs = np.linspace(er.min(), er.max(), self.n_points)
         for (i, x) in enumerate(target_rs):
             if i == 0: df = pd.DataFrame()
             row = self._minimize_risk(x)
@@ -112,19 +111,19 @@ class EfficientFrontier(AssetList):
         cols.pop(cols.index('Return (risk adjusted approx)'))
         # Create new DataFrame with columns in the right order
         df = df[['Risk', 'Return', 'Return (risk adjusted approx)'] + cols]
-        if not self.full_frontier:
-            df = df[df['Return'] >= self.gmv[1]]
         return df
 
 
 class EfficientFrontierReb(AssetList):
-    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD', period='Y'):
+    def __init__(self, symbols=[default_ticker], curr='USD', period='Y'):
         if len(symbols) < 2:
             raise ValueError('The number of symbols cannot be less than two')
-        super().__init__(symbols, first_date, last_date, curr)
+        super().__init__(symbols, curr)
         self.period = period
         #self.gmv = None
         #self.gmv_annualized = None
+
+    n_points = 40  # number of points for EF
 
     @property
     def gmv_weights(self):
@@ -258,30 +257,21 @@ class EfficientFrontierReb(AssetList):
         - Weights (float) for each ticker
         - CAGR (float)
         - Risk (float)
-        TODO: make a function to place set of columns in the first place
         """
         min_std = self._get_gmv_monthly()[0]
         max_std = self.ror.std().max()
 
-        target_range = np.linspace(min_std, max_std, n_points)
+        target_range = np.linspace(min_std, max_std, self.n_points)
         for (i, target_risk) in enumerate(target_range):
             if i == 0: df = pd.DataFrame()
             row = self._maximize_return(target_risk)
             df = df.append(row, ignore_index=True)
-        # Put Risk, Return and "Return (risk adjusted approx)" columns in the beginning
-        cols = list(df.columns.values)  # Make a list of all of the columns in the df
-        cols.pop(cols.index('Risk'))  # Remove from list
-        cols.pop(cols.index('Return'))
-        cols.pop(cols.index('Return (risk adjusted approx)'))
-        # Create new DataFrame with columns in the right order
-        df = df[['Risk', 'Return', 'Return (risk adjusted approx)'] + cols]
         return df
 
 
 class Plots(AssetList):
-    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD'):
-        super().__init__(symbols, first_date, last_date, curr)
-        self.ax = None
+    def __init__(self, symbols=[default_ticker], curr='USD'):
+        super().__init__(symbols, curr)
 
     def plot_assets(self, type='mean'):
         """
@@ -289,7 +279,7 @@ class Plots(AssetList):
         type:
         mean - mean return
         cagr_app - CAGR by approximation
-        cagr - CAGR from monthly returns time series
+        cagr - CAGR from monthly returns
         """
         if type == 'mean':
             risks = self.calculate_risk(annualize=True)
@@ -305,43 +295,26 @@ class Plots(AssetList):
             risks = [risks]
             returns = [returns]
         # Plotting
-        if not self.ax:
-            self.ax = plt.axes()
+        ax = plt.axes()
         plt.autoscale(enable=True, axis='y', tight=False)
-        self.ax.scatter(risks, returns)
+        ax.scatter(risks, returns)
 
         for n, x, y in zip(self.tickers, risks, returns):
             label = n
-            self.ax.annotate(label,  # this is the text
+            ax.annotate(label,  # this is the text
                         (x, y),  # this is the point to label
                         textcoords="offset points",  # how to position the text
                         xytext=(0, 10),  # distance from text to points (x,y)
                         ha='center')  # horizontal alignment can be left, right or center
-        return self.ax
+        return ax
 
-    @staticmethod
-    def transition_map(ef: pd.DataFrame):
-        """
-        Plots EF weights transition map given a EF points DataFrame.
-        """
+    def transition_map(self, ef: pd.DataFrame):
         fig = plt.figure(figsize=(12, 6))
         ax = plt.axes()
         for i in list(ef.columns.values):
-            if i not in ('Risk', 'Return', 'Return (risk adjusted approx)', 'CAGR'):
+            if i not in ('Risk', 'Return', 'Return (risk adjusted approx)'):
                 ax.plot(ef['Risk'], ef.loc[:, i], label=i)
-        ax.set_xlim(ef.Risk.min(), ef.Risk.max())
+        ax.set_xlim(ef.Risk.iloc[0], ef.Risk.iloc[-1])
         ax.legend(loc='upper left', frameon=False)
         fig.tight_layout()
         return ax
-
-    def plot_pair_ef(self):
-        """
-        Plots efficient frontier of every pair of assets in a set.
-        """
-        if not self.ax:
-            self.ax = plt.axes()
-        for i in list(itertools.combinations(self.tickers, 2)):
-            ef = EfficientFrontier(symbols=i, curr=self.currency, first_date=self.first_date, last_date=self.last_date).ef_points
-            self.ax.plot(ef.Risk, ef.Return)
-        self.plot_assets()
-        return self.ax
