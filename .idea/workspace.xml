@@ -2,20 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="7dc874c2-507d-46d7-add8-5c09cde49419" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/okama/helpers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_assets.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_frontier.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets Posts.ipynb" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Assets.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Efficiend Frontier.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Efficiend Frontier.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Transition Map.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Transition Map.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/okama/assets.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/assets.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okama/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/okama/frontier.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/frontier.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/okama/helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/helpers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/okama/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_assets.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_assets.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +59,7 @@
       <recent name="C:\Users\Sergey\OneDrive\NoteBooks\okama\okama" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests in test_assets.py">
+  <component name="RunManager" selected="Python tests.Unittests in test_frontier.py">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="okama" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -106,6 +102,21 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="Unittests for test_frontier.TestEfficientFrontierReb" type="tests" factoryName="Unittests" nameIsGenerated="true">
+      <module name="okama" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="C:\Users\Sergey\Anaconda3\envs\py38\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_pattern" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_frontier.TestEfficientFrontierReb&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <configuration name="Unittests in test_assets.py" type="tests" factoryName="Unittests" nameIsGenerated="true">
       <output_file path="$PROJECT_DIR$/tests/tests.log" is_save="true" />
       <module name="okama" />
@@ -119,6 +130,21 @@
       <option name="_new_pattern" value="&quot;&quot;" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
       <option name="_new_target" value="&quot;$PROJECT_DIR$/tests/test_assets.py&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unittests in test_frontier.py" type="tests" factoryName="Unittests" nameIsGenerated="true">
+      <module name="okama" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="C:\Users\Sergey\Anaconda3\envs\py38\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_pattern" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/tests/test_frontier.py&quot;" />
       <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method v="2" />
     </configuration>
@@ -139,6 +165,8 @@
     </configuration>
     <list>
       <item itemvalue="Python.okama" />
+      <item itemvalue="Python tests.Unittests in test_frontier.py" />
+      <item itemvalue="Python tests.Unittests for test_frontier.TestEfficientFrontierReb" />
       <item itemvalue="Python tests.Unittests in test_assets.py" />
     </list>
   </component>
@@ -167,25 +195,33 @@
       <option name="project" value="LOCAL" />
       <updated>1583745163555</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Unittests for Assets &amp; Portfolio methods&#10;- Unittests for Asset, AssetList and Portfolio classes&#10;- main Portfolio attributes are static methods now&#10;- drawdowns method is added to helpers Frame">
+      <created>1584336107084</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1584336107084</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT" value="true" />
     <MESSAGE value="- Updated folder structure&#10;- Jupyter Notebooks added&#10;- first_date &amp; last_date parameters added to AssetList, and all EF classes&#10;- plot pairs of EF method added to Plots" />
     <MESSAGE value="Plots &amp; EfficientFrontier changes&#10;- full_frontier=False attribute for Efficient frontier (shows only upper part of EF) &#10;- transition_map is a static method&#10;- Plots has self.ax=None attribute" />
-    <option name="LAST_COMMIT_MESSAGE" value="Plots &amp; EfficientFrontier changes&#10;- full_frontier=False attribute for Efficient frontier (shows only upper part of EF) &#10;- transition_map is a static method&#10;- Plots has self.ax=None attribute" />
+    <MESSAGE value="Unittests for Assets &amp; Portfolio methods&#10;- Unittests for Asset, AssetList and Portfolio classes&#10;- main Portfolio attributes are static methods now&#10;- drawdowns method is added to helpers Frame" />
+    <option name="LAST_COMMIT_MESSAGE" value="Unittests for Assets &amp; Portfolio methods&#10;- Unittests for Asset, AssetList and Portfolio classes&#10;- main Portfolio attributes are static methods now&#10;- drawdowns method is added to helpers Frame" />
   </component>
   <component name="WindowStateProjectService">
     <state x="402" y="12" key="#Unittests_for_test_setup.TestAsset" timestamp="1584069507629">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
     <state x="402" y="12" key="#Unittests_for_test_setup.TestAsset/0.0.1366.728@0.0.1366.728" timestamp="1584069507629" />
-    <state x="295" y="28" width="834" height="700" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1584073179159">
-      <screen x="0" y="0" width="1366" height="728" />
+    <state x="414" y="175" width="834" height="700" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1584460159167">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="295" y="28" width="834" height="700" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1366.728@0.0.1366.728" timestamp="1584073179159" />
-    <state x="414" y="175" width="1092" height="706" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583868138656" />
+    <state x="414" y="175" width="1092" height="706" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584460159167" />
     <state x="689" y="312" key="#com.intellij.ide.util.TreeClassChooserDialog" timestamp="1583866575662">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -194,72 +230,72 @@
       <screen x="0" y="0" width="1366" height="728" />
     </state>
     <state x="453" y="271" key="#com.jetbrains.python.refactoring.move.PyMakeFunctionTopLevelDialog/0.0.1366.728@0.0.1366.728" timestamp="1584073827571" />
-    <state x="792" y="126" key="CommitChangelistDialog2" timestamp="1583745161790">
+    <state x="792" y="126" key="CommitChangelistDialog2" timestamp="1584336105310">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="792" y="126" key="CommitChangelistDialog2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583745161790" />
+    <state x="792" y="126" key="CommitChangelistDialog2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584336105310" />
     <state x="526" y="198" key="FileChooserDialogImpl" timestamp="1584069962408">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
     <state x="526" y="198" key="FileChooserDialogImpl/0.0.1366.728@0.0.1366.728" timestamp="1584069962408" />
     <state x="740" y="283" key="FileChooserDialogImpl/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583864165318" />
-    <state width="1899" height="310" key="GridCell.Tab.0.bottom" timestamp="1584332022711">
+    <state width="1899" height="310" key="GridCell.Tab.0.bottom" timestamp="1584460218747">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1345" height="223" key="GridCell.Tab.0.bottom/0.0.1366.728@0.0.1366.728" timestamp="1584086205111" />
-    <state width="1899" height="310" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584332022711" />
-    <state width="1899" height="310" key="GridCell.Tab.0.center" timestamp="1584332022711">
+    <state width="1899" height="310" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584460218747" />
+    <state width="1899" height="310" key="GridCell.Tab.0.center" timestamp="1584460218746">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1345" height="223" key="GridCell.Tab.0.center/0.0.1366.728@0.0.1366.728" timestamp="1584086205110" />
-    <state width="1899" height="310" key="GridCell.Tab.0.center/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584332022711" />
-    <state width="1899" height="310" key="GridCell.Tab.0.left" timestamp="1584332022710">
+    <state width="1899" height="310" key="GridCell.Tab.0.center/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584460218746" />
+    <state width="1899" height="310" key="GridCell.Tab.0.left" timestamp="1584460218746">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1345" height="223" key="GridCell.Tab.0.left/0.0.1366.728@0.0.1366.728" timestamp="1584086205110" />
-    <state width="1899" height="310" key="GridCell.Tab.0.left/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584332022710" />
-    <state width="1899" height="310" key="GridCell.Tab.0.right" timestamp="1584332022711">
+    <state width="1899" height="310" key="GridCell.Tab.0.left/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584460218746" />
+    <state width="1899" height="310" key="GridCell.Tab.0.right" timestamp="1584460218746">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1345" height="223" key="GridCell.Tab.0.right/0.0.1366.728@0.0.1366.728" timestamp="1584086205110" />
-    <state width="1899" height="310" key="GridCell.Tab.0.right/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584332022711" />
-    <state width="1345" height="223" key="GridCell.Tab.1.bottom" timestamp="1584086205111">
-      <screen x="0" y="0" width="1366" height="728" />
+    <state width="1899" height="310" key="GridCell.Tab.0.right/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584460218746" />
+    <state width="1899" height="2" key="GridCell.Tab.1.bottom" timestamp="1584459872825">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1345" height="223" key="GridCell.Tab.1.bottom/0.0.1366.728@0.0.1366.728" timestamp="1584086205111" />
-    <state width="1899" height="348" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583652317200" />
-    <state width="1345" height="223" key="GridCell.Tab.1.center" timestamp="1584086205111">
-      <screen x="0" y="0" width="1366" height="728" />
+    <state width="1899" height="2" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584459872825" />
+    <state width="1899" height="2" key="GridCell.Tab.1.center" timestamp="1584459872825">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1345" height="223" key="GridCell.Tab.1.center/0.0.1366.728@0.0.1366.728" timestamp="1584086205111" />
-    <state width="1899" height="348" key="GridCell.Tab.1.center/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583652317200" />
-    <state width="1345" height="223" key="GridCell.Tab.1.left" timestamp="1584086205111">
-      <screen x="0" y="0" width="1366" height="728" />
+    <state width="1899" height="2" key="GridCell.Tab.1.center/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584459872825" />
+    <state width="1899" height="2" key="GridCell.Tab.1.left" timestamp="1584459872825">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1345" height="223" key="GridCell.Tab.1.left/0.0.1366.728@0.0.1366.728" timestamp="1584086205111" />
-    <state width="1899" height="348" key="GridCell.Tab.1.left/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583652317200" />
-    <state width="1345" height="223" key="GridCell.Tab.1.right" timestamp="1584086205111">
-      <screen x="0" y="0" width="1366" height="728" />
+    <state width="1899" height="2" key="GridCell.Tab.1.left/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584459872825" />
+    <state width="1899" height="2" key="GridCell.Tab.1.right" timestamp="1584459872825">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1345" height="223" key="GridCell.Tab.1.right/0.0.1366.728@0.0.1366.728" timestamp="1584086205111" />
-    <state width="1899" height="348" key="GridCell.Tab.1.right/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583652317200" />
+    <state width="1899" height="2" key="GridCell.Tab.1.right/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584459872825" />
     <state x="461" y="162" width="1204" height="715" key="SettingsEditor" timestamp="1584170259243">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="461" y="162" width="1204" height="715" key="SettingsEditor/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584170259243" />
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1583745596239">
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1584336130681">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583745596239" />
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584336130681" />
     <state x="92" y="92" width="1736" height="856" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1583848217423">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="92" y="92" width="1736" height="856" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583848217423" />
-    <state x="725" y="438" key="com.intellij.ide.util.TipDialog" timestamp="1584265637216">
+    <state x="725" y="438" key="com.intellij.ide.util.TipDialog" timestamp="1584460012492">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="516" y="307" key="com.intellij.ide.util.TipDialog/0.0.1366.728@0.0.1366.728" timestamp="1584100753754" />
-    <state x="725" y="438" key="com.intellij.ide.util.TipDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584265637216" />
+    <state x="725" y="438" key="com.intellij.ide.util.TipDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584460012492" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

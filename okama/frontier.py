@@ -12,11 +12,17 @@ from okama.settings import default_ticker, n_points
 
 
 class EfficientFrontier(AssetList):
-    def __init__(self, *, symbols=[default_ticker], first_date=None, last_date=None, curr='USD', full_frontier=True):
+    """
+    Efficient Frontier (EF) with classic MVA implementation.
+    n - is a number of points in the EF.
+    full_frontier = False - shows only the points with the return above GMV
+    """
+    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD', full_frontier=True, n=20):
         if len(symbols) < 2:
             raise ValueError('The number of symbols cannot be less than two')
         super().__init__(symbols, first_date, last_date, curr)
         self.full_frontier = full_frontier
+        self.n_points = n
 
     @property
     def gmv_weights(self):
@@ -101,7 +107,7 @@ class EfficientFrontier(AssetList):
         """
         ror = self.ror
         er = ror.mean()
-        target_rs = np.linspace(er.min(), er.max(), n_points)
+        target_rs = np.linspace(er.min(), er.max(), self.n_points)
         for (i, x) in enumerate(target_rs):
             if i == 0: df = pd.DataFrame()
             row = self._minimize_risk(x)
@@ -119,13 +125,16 @@ class EfficientFrontier(AssetList):
 
 
 class EfficientFrontierReb(AssetList):
-    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD', period='Y'):
+    """
+    Efficient Frontier (EF) with rebalanced portfolio implementation.
+    Objective Function is accumulated_return.
+    """
+    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD', period='Y', n=20):
         if len(symbols) < 2:
             raise ValueError('The number of symbols cannot be less than two')
         super().__init__(symbols, first_date, last_date, curr)
         self.period = period
-        #self.gmv = None
-        #self.gmv_annualized = None
+        self.n_points = n
 
     @property
     def gmv_weights(self):
@@ -166,8 +175,7 @@ class EfficientFrontierReb(AssetList):
     def gmv(self):
         """
         Returns the annualized risk and CAGR of the Global Minimum Volatility portfolio
-        NOTE: Apparently very small difference with quick gmv calculation by get_portfolio_risk function.
-        TODO: Check the Note
+        TODO: Apparently very small difference with quick gmv calculation by get_portfolio_risk function. Replace?
         """
         returns = Rebalance.rebalanced_portfolio_return_ts(self.gmv_weights, self.ror, period=self.period)
         gmv_annualized = (
@@ -202,7 +210,7 @@ class EfficientFrontierReb(AssetList):
                            bounds=bounds)
         mean_return = Rebalance.rebalanced_portfolio_return_ts(weights.x, self.ror).mean()
         portfolio_risk = Rebalance.rebalanced_portfolio_return_ts(weights.x, self.ror, period=self.period).std()
-        print(portfolio_risk)
+        # print(portfolio_risk) # monthly risk for debugging
         point = {
             'Weights': weights.x,
             'CAGR': (1 - objective_function(weights.x, self.ror, self.period)) ** (12 / self.ror.shape[0]) - 1,
@@ -264,7 +272,7 @@ class EfficientFrontierReb(AssetList):
         min_std = self._get_gmv_monthly()[0]
         max_std = self.ror.std().max()
 
-        target_range = np.linspace(min_std, max_std, n_points)
+        target_range = np.linspace(min_std, max_std, self.n_points)
         for (i, target_risk) in enumerate(target_range):
             if i == 0: df = pd.DataFrame()
             row = self._maximize_return(target_risk)
@@ -272,10 +280,9 @@ class EfficientFrontierReb(AssetList):
         # Put Risk, Return and "Return (risk adjusted approx)" columns in the beginning
         cols = list(df.columns.values)  # Make a list of all of the columns in the df
         cols.pop(cols.index('Risk'))  # Remove from list
-        cols.pop(cols.index('Return'))
-        cols.pop(cols.index('Return (risk adjusted approx)'))
+        cols.pop(cols.index('CAGR'))
         # Create new DataFrame with columns in the right order
-        df = df[['Risk', 'Return', 'Return (risk adjusted approx)'] + cols]
+        df = df[['Risk', 'CAGR'] + cols]
         return df
 
 

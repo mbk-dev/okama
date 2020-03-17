@@ -122,8 +122,22 @@ class AssetList:
         return risk
 
     @property
+    def semideviation(self):
+        return Frame.get_semideviation(self.ror)
+
+    def get_var_historic(self, level=5):
+        return Frame.get_var_historic(self.ror, level)
+
+    def get_cvar_historic(self, level=5):
+        return Frame.get_cvar_historic(self.ror, level)
+
+    @property
+    def drawdowns(self):
+        return Frame.get_drawdowns(self.ror)
+
+    @property
     def cagr(self):
-        return ((self.ror + 1.).prod()) ** (12 / self.ror.shape[0]) - 1
+        return Frame.get_cagr(self.ror)
 
 
 class Portfolio:
@@ -146,42 +160,45 @@ class Portfolio:
 
     @property
     def returns_ts(self) -> pd.Series:
-        """
-        Returns mean rate of return time series.
-        """
         return Frame.get_portfolio_return_ts(self.weights, self._ror)
 
     def get_rebalanced_portfolio_return_ts(self, period='Y') -> pd.Series:
-        """
-        Return meant rate of return for rebalanced (annual) portfolio.
-        For not rebalanced portfolio set Period to 'N'
-        """
         return Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror, period=period)
 
     @property
     def mean_return_monthly(self) -> float:
-        """
-        Calculates mean monthly return (weighted sum of asset returns).
-        """
         return Frame.get_portfolio_mean_return(self.weights, self._ror)
 
     @property
     def mean_return_annual(self) -> float:
-        """
-        Annualizes monthly mean return.
-        """
         return Float.annualize_return(self.mean_return_monthly)
 
     @property
+    def cagr(self):
+        return Frame.get_cagr(self._ror)
+
+    @property
     def risk_monthly(self):
-        """
-        Calculates monthly risk (standard deviation) using covariance.
-        """
         return Frame.get_portfolio_risk(self.weights, self._ror)
 
     @property
     def risk_annual(self) -> float:
-        """
-        Calculates annualized risk (standard deviation) given monthly risk and mean return.
-        """
         return Float.annualize_risk(self.risk_monthly, self.mean_return_monthly)
+
+    @property
+    def semideviation(self):
+        return Frame.get_semideviation(self.returns_ts)
+
+    def get_var_historic(self, level=5):
+        rolling = self.returns_ts.rolling(12).apply(Frame.get_cagr)
+        var = Frame.get_var_historic(rolling, level)
+        return var
+
+    def get_cvar_historic(self, level=5):
+        rolling = self.returns_ts.rolling(12).apply(Frame.get_cagr)
+        cvar = Frame.get_cvar_historic(rolling, level)
+        return cvar
+
+    @property
+    def drawdowns(self):
+        return Frame.get_drawdowns(self._ror)

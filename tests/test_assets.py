@@ -35,6 +35,12 @@ class TestAssetList(unittest.TestCase):
         self.assertEqual(self.x.calculate_risk().sum(), 0.13611625845630504)
         self.assertEqual(self.x.calculate_risk(annualize=True).sum(), 0.723380689819134)
 
+    def test_semideviation(self):
+        self.assertEqual(self.x.semideviation.sum(), 0.05592602298844028)
+
+    def test_drawdowns(self):
+        self.assertEqual(self.x.drawdowns.min().sum(), -0.1798727778213174)
+
     def test_cagr(self):
         self.assertEqual(self.x.cagr.sum(), 0.727483108320252)
 
@@ -47,14 +53,14 @@ class TestPortfolio(unittest.TestCase):
     def test_portfolio(self):
         self.assertListEqual(self.x.weights, [0.5, 0.5])
 
-        self.assertEqual(self.x.mean_return_monthly, 0.012178819876164489)
-        self.assertEqual(self.x.mean_return_annual, 0.1563437144065083)
+        self.assertEqual(self.x.mean_return_monthly, 0.012189530337703269)
+        self.assertEqual(self.x.mean_return_annual, 0.1564905544168027)
 
-        self.assertEqual(self.x.risk_monthly, 0.04356365834071058)
-        self.assertEqual(self.x.risk_annual, 0.17328436789926255)
+        self.assertEqual(self.x.risk_monthly, 0.04394340007565)
+        self.assertEqual(self.x.risk_annual, 0.17483083217685386)
 
-        self.assertEqual(self.x.get_rebalanced_portfolio_return_ts().mean(), 0.010292714584833771)
-        self.assertEqual(self.x.get_rebalanced_portfolio_return_ts(period='N').mean(), 0.010525105802228808)
+        self.assertEqual(self.x.get_rebalanced_portfolio_return_ts().mean(), 0.01030113749004299)
+        self.assertEqual(self.x.get_rebalanced_portfolio_return_ts(period='N').mean(), 0.010543594224881905)
 
 if __name__ == '__main__':
     unittest.main()

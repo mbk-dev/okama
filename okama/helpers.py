@@ -38,6 +38,8 @@ class Frame:
     """
     Group of methods using
     """
+    # Rate of return metrics
+
     @staticmethod
     def get_portfolio_return_ts(weights: list, ror: pd.DataFrame) -> pd.Series:
         """
@@ -59,6 +61,18 @@ class Frame:
         return weights.T @ ror.mean()
 
     @staticmethod
+    def get_cagr(ror: pd.DataFrame) -> pd.DataFrame:
+        """
+        Return Compound Annual Rate of Return (CAGR) for each asset given returns time series DataFrame.
+        TODO: update the method to calculate CAGR for 1, 2, 3, 5, 10 years.
+        """
+        if ror.shape[0] < 12:
+            return np.nan  # CAGR is not defined for time periods < 1 year
+        return ((ror + 1.).prod()) ** (12 / ror.shape[0]) - 1
+
+    # Risk metrics
+
+    @staticmethod
     def get_portfolio_risk(weights: list, ror: pd.DataFrame) -> float:
         """
         Computes the std of portfolio returns.
@@ -70,9 +84,38 @@ class Frame:
         return math.sqrt(weights.T @ covmat @ weights)
 
     @staticmethod
-    def drawdowns(ror: pd.DataFrame) -> pd.DataFrame:
+    def get_semideviation(ror: pd.DataFrame) -> pd.Series:
         """
-        From returns time series gets drawdowns
+        Returns semideviation for each asset given returns time series.
+        """
+        is_negative = ror < 0
+        return ror[is_negative].std(ddof=0)
+
+    @staticmethod
+    def get_var_historic(ror, level=5):
+        """
+        Returns the historic Value at Risk (VaR) at a specified level
+        """
+        if isinstance(ror, pd.DataFrame) or isinstance(ror, pd.Series):
+            return -ror.quantile(level / 100)
+        else:
+            raise TypeError("Expected ror to be a pd.Series or pd.DataFrame")
+
+    @staticmethod
+    def get_cvar_historic(ror: pd.DataFrame, level=5):
+        """
+        Computes the Conditional VaR (CVaR) of Series or DataFrame at a specified level.
+        """
+        if isinstance(ror, pd.Series) or isinstance(ror, pd.DataFrame):
+            is_beyond = ror <= ror.quantile(level / 100)  # mask: return is less than quantile
+            return -ror[is_beyond].mean()
+        else:
+            raise TypeError("Expected ror to be a pd.Series or pd.DataFrame")
+
+    @staticmethod
+    def get_drawdowns(ror: pd.DataFrame) -> pd.DataFrame:
+        """
+        From returns time series gets drawdowns.
         """
         wealth_index = 1000 * (1 + ror).cumprod()
         previous_peaks = wealth_index.cummax()
