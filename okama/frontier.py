@@ -1,4 +1,6 @@
 import itertools
+import time
+import random
 
 import pandas as pd
 import numpy as np
@@ -135,6 +137,7 @@ class EfficientFrontierReb(AssetList):
         super().__init__(symbols, first_date, last_date, curr)
         self.period = period
         self.n_points = n
+        self.gmv_monthly = self._get_gmv_monthly()
 
     @property
     def gmv_weights(self):
@@ -180,7 +183,7 @@ class EfficientFrontierReb(AssetList):
         returns = Rebalance.rebalanced_portfolio_return_ts(self.gmv_weights, self.ror, period=self.period)
         gmv_annualized = (
             Float.annualize_risk(self._get_gmv_monthly()[0], self._get_gmv_monthly()[1]),
-            (returns + 1).prod()**(12/self.ror.shape[0]) - 1
+            (returns + 1.).prod()**(12/self.ror.shape[0]) - 1.
         )
         return gmv_annualized
 
@@ -214,7 +217,8 @@ class EfficientFrontierReb(AssetList):
         point = {
             'Weights': weights.x,
             'CAGR': (1 - objective_function(weights.x, self.ror, self.period)) ** (12 / self.ror.shape[0]) - 1,
-            'Risk': Float.annualize_risk(portfolio_risk, mean_return)
+            'Risk': Float.annualize_risk(portfolio_risk, mean_return),
+            'Risk_monthly': portfolio_risk
         }
         return point
 
@@ -232,6 +236,8 @@ class EfficientFrontierReb(AssetList):
         # Set the objective function
         def objective_function(w, ror, per):
             objective_function.returns = Rebalance.rebalanced_portfolio_return_ts(w, ror, period=per)
+            # if objective_function.returns.mean() < self.gmv_monthly[1]:  # makes OF convex
+            #     return np.nan
             accumulated_return = (objective_function.returns + 1.).prod() - 1.
             return - accumulated_return
 
@@ -250,7 +256,7 @@ class EfficientFrontierReb(AssetList):
                            constraints=(weights_sum_to_1, risk_is_target),
                            bounds=bounds)
         # Calculate points of EF given optimal weights
-        cagr = (1. - objective_function(weights.x, ror, period))**(12/ror.shape[0]) - 1.
+        cagr = (1. - objective_function(weights.x, ror, period))**(12 / ror.shape[0]) - 1.
         returns = objective_function.returns
         risk = Float.annualize_risk(target_risk, returns.mean())
         point = {x: y for x, y in zip(self.tickers, weights.x)}
@@ -269,21 +275,67 @@ class EfficientFrontierReb(AssetList):
         - Risk (float)
         TODO: make a function to place set of columns in the first place
         """
+        main_start_time = time.time()
         min_std = self._get_gmv_monthly()[0]
+
         max_std = self.ror.std().max()
+
+        # max_std = self.max_return['Risk_monthly']  # Risk limit is a max return point risk
+
+        # criterion = self.ror.mean() > self.gmv_monthly[1]  # Select only R above GMV. Works only if such asset exist
+        # max_std = self.ror.loc[:, criterion].std().max()
 
         target_range = np.linspace(min_std, max_std, self.n_points)
         for (i, target_risk) in enumerate(target_range):
-            if i == 0: df = pd.DataFrame()
+            if i == 0:
+                df = pd.DataFrame()
+            start_time = time.time()
             row = self._maximize_return(target_risk)
             df = df.append(row, ignore_index=True)
+            end_time = time.time()
+            print(f"EF point #{i+1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
         # Put Risk, Return and "Return (risk adjusted approx)" columns in the beginning
         cols = list(df.columns.values)  # Make a list of all of the columns in the df
         cols.pop(cols.index('Risk'))  # Remove from list
         cols.pop(cols.index('CAGR'))
         # Create new DataFrame with columns in the right order
         df = df[['Risk', 'CAGR'] + cols]
+        main_end_time = time.time()
+        print(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
         return df
+
+    def get_monte_carlo(self, n=100):
+        """
+        Calculates random risk, cagr point for rebalanced portfolios for a given asset list.
+        Risk and cagr are calculated from a set of random weights.
+        """
+        main_start_time = time.time()
+        # Random weights
+        rand_nos = np.random.rand(n, self.ror.shape[1])
+        weights_transposed = rand_nos.transpose() / rand_nos.sum(axis=1)
+        weights = weights_transposed.transpose()
+        weights_df = pd.DataFrame(weights)
+        # weights_df = weights_df.aggregate(list, axis=1)  # Converts df to DataFrame of lists
+        weights_df = weights_df.aggregate(np.array, axis=1)  # Converts df to DataFrame of np.array
+
+        # Portfolio risk and cagr for each set of weights
+        portfolios_ror = weights_df.aggregate(Rebalance.rebalanced_portfolio_return_ts, ror=self.ror, period=self.period)
+        for index, data in portfolios_ror.iterrows():
+            if index == 0:
+                random_portfolios = pd.DataFrame()
+            risk_monthly = data.std()
+            mean_return = data.mean()
+            risk = Float.annualize_risk(risk_monthly, mean_return)
+            cagr = Frame.get_cagr(data)
+            row = {
+                'Risk': risk,
+                'CAGR': cagr
+            }
+            random_portfolios = random_portfolios.append(row, ignore_index=True)
+        main_end_time = time.time()
+        print(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
+        return random_portfolios
+
 
 
 class Plots(AssetList):

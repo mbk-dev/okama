@@ -10,12 +10,11 @@ from .settings import default_ticker, EOD_url, api_token
 
 def get_eod_data(symbol=default_ticker, type='return', session=None) -> pd.Series:
     """
-    Get rate of return for a set of ror in the same currency.
+    Get rate of return for a set of ror in the same currency. Returns daily data.
     """
     requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
     if session is None:
         session = requests.session()
-        # session.config['keep_alive'] = False
     url = EOD_url + symbol
     params = {'api_token': api_token}
     r = session.get(url, params=params, verify=False)
@@ -28,14 +27,18 @@ def get_eod_data(symbol=default_ticker, type='return', session=None) -> pd.Serie
             df = df['Adjusted_close']
         df.index = df.index.to_period('D')
         df.sort_index(ascending = True, inplace=True)
+        if (df == 0).any():
+            raise Exception("Zero close values in data")
         if type == 'return':
             df = df.pct_change()
             df = df.iloc[1:]
-        if df.isna().any(): raise Exception("NaN values in data")
+        if df.isna().any():
+            raise Exception("NaN values in data")
         df.rename(symbol, inplace=True)
         return df
     else:
         raise Exception(r.status_code, r.reason, url)
+
 
 def get_eod_close(symbol=default_ticker, session=None):
     requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -52,7 +55,8 @@ def get_eod_close(symbol=default_ticker, session=None):
             df = df['Adjusted_close']
         df.index = df.index.to_period('D')
         df.sort_index(ascending = True, inplace=True)
-        if df.isna().any(): raise Exception("NaN values in data")
+        if df.isna().any():
+            raise Exception("NaN values in data")
         df.rename(symbol, inplace=True)
         return df
     else:
