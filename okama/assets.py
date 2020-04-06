@@ -175,7 +175,7 @@ class Portfolio:
 
     @property
     def cagr(self):
-        return Frame.get_cagr(self._ror)
+        return Frame.get_cagr(self.returns_ts)
 
     @property
     def risk_monthly(self):

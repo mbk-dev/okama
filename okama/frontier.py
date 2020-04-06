@@ -10,7 +10,7 @@ import matplotlib. pyplot as plt
 
 from .assets import AssetList
 from .helpers import Float, Frame, Rebalance
-from okama.settings import default_ticker, n_points
+from okama.settings import default_ticker
 
 
 class EfficientFrontier(AssetList):

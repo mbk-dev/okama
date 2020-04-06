@@ -3,10 +3,11 @@
   <component name="ChangeListManager">
     <list default="true" id="7dc874c2-507d-46d7-add8-5c09cde49419" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Efficiend Frontier.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/okama/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Assets.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/okama/assets.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/assets.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/okama/frontier.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/frontier.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/okama/helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/helpers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/okama/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,7 +55,7 @@
       <recent name="C:\Users\Sergey\OneDrive\NoteBooks\okama\okama" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.api (1)">
+  <component name="RunManager" selected="Python.okama">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="okama" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -201,9 +202,9 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Python.okama" />
       <item itemvalue="Python.api (1)" />
       <item itemvalue="Python.api" />
-      <item itemvalue="Python.okama" />
       <item itemvalue="Python tests.Unittests for test_frontier.TestEfficientFrontierReb" />
       <item itemvalue="Python tests.Unittests in test_assets.py" />
       <item itemvalue="Python tests.Unittests in test_frontier.py" />
@@ -254,7 +255,14 @@
       <option name="project" value="LOCAL" />
       <updated>1584460301565</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Monte Carlo class in frontier">
+      <created>1585576382762</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1585576382762</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -263,7 +271,8 @@
     <MESSAGE value="Plots &amp; EfficientFrontier changes&#10;- full_frontier=False attribute for Efficient frontier (shows only upper part of EF) &#10;- transition_map is a static method&#10;- Plots has self.ax=None attribute" />
     <MESSAGE value="Unittests for Assets &amp; Portfolio methods&#10;- Unittests for Asset, AssetList and Portfolio classes&#10;- main Portfolio attributes are static methods now&#10;- drawdowns method is added to helpers Frame" />
     <MESSAGE value="Efficient Frontier has n_points attribute" />
-    <option name="LAST_COMMIT_MESSAGE" value="Efficient Frontier has n_points attribute" />
+    <MESSAGE value="Monte Carlo class in frontier" />
+    <option name="LAST_COMMIT_MESSAGE" value="Monte Carlo class in frontier" />
   </component>
   <component name="WindowStateProjectService">
     <state x="402" y="12" key="#Unittests_for_test_setup.TestAsset" timestamp="1584069507629">
@@ -287,10 +296,10 @@
       <screen x="0" y="0" width="1366" height="728" />
     </state>
     <state x="453" y="271" key="#com.jetbrains.python.refactoring.move.PyMakeFunctionTopLevelDialog/0.0.1366.728@0.0.1366.728" timestamp="1584073827571" />
-    <state x="792" y="126" key="CommitChangelistDialog2" timestamp="1584460300107">
+    <state x="792" y="126" key="CommitChangelistDialog2" timestamp="1585576380988">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="792" y="126" key="CommitChangelistDialog2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584460300107" />
+    <state x="792" y="126" key="CommitChangelistDialog2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1585576380988" />
     <state x="526" y="198" key="FileChooserDialogImpl" timestamp="1584069962408">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
@@ -340,19 +349,19 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="461" y="162" width="1204" height="715" key="SettingsEditor/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584170259243" />
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1584460326303">
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1585576405550">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584460326303" />
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1585576405550" />
     <state x="92" y="92" width="1736" height="856" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1583848217423">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="92" y="92" width="1736" height="856" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583848217423" />
-    <state x="725" y="438" key="com.intellij.ide.util.TipDialog" timestamp="1585309068659">
+    <state x="725" y="438" key="com.intellij.ide.util.TipDialog" timestamp="1586147354030">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="516" y="307" key="com.intellij.ide.util.TipDialog/0.0.1366.728@0.0.1366.728" timestamp="1584944278355" />
-    <state x="725" y="438" key="com.intellij.ide.util.TipDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1585309068659" />
+    <state x="725" y="438" key="com.intellij.ide.util.TipDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586147354030" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

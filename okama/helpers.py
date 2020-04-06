@@ -3,6 +3,7 @@ import math
 import pandas as pd
 import numpy as np
 
+
 class Float:
     """
     Group of methods using float values inputs.
@@ -139,7 +140,7 @@ class Rebalance:
     Methods for rebalancing portfolio.
     """
     @staticmethod
-    def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period='Y'):
+    def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period='Y') -> pd.Series:
         """
         Returns the mean return time series of rebalanced portfolio. Can be used to calculate returns geometric mean for the
         rebalanced portfolio.
