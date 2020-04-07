@@ -1,6 +1,6 @@
 import matplotlib. pyplot as plt
 from okama.assets import Asset, AssetList, Portfolio
-from okama.frontier import EfficientFrontier, Plots
+from okama.frontier import EfficientFrontier, EfficientFrontierReb, Plots
 
 p = 'test'
 # # p_spy = Portfolio()
@@ -11,7 +11,7 @@ p = 'test'
 # assets = AssetList(symbols=['SPY.US', '0890-94127385.RUFUND'], curr='RUB')
 print(p)
 
-ef = EfficientFrontierReb(symbols=l, curr='RUB', period='Y', first_date='2019-01').ef_points
+ef = EfficientFrontier(symbols=['SPY.US', '0890-94127385.RUFUND'], curr='RUB').ef_points
 
 # x = Plots(['SPY.US', 'GLD.US', 'VNQ.US', '0890-94127385.RUFUND', '0165-70287767.RUFUND'], first_date='2009-01', curr='RUB')
 # x.plot_pair_ef()

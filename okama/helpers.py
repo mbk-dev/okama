@@ -43,7 +43,7 @@ class Frame:
 
     @staticmethod
     def _weights_sum_is_one(weights: list):
-        if sum(weights) != 1.:
+        if np.around(np.sum(weights), decimals=4) != 1.:
             raise ValueError('Weights sum is not equal to one.')
         if any(x < 0 for x in weights):
             raise ValueError('Negative weights are detected.')
