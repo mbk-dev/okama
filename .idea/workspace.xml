@@ -4,11 +4,9 @@
     <list default="true" id="7dc874c2-507d-46d7-add8-5c09cde49419" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Assets.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Efficient Frontier.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Efficient Frontier.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Indexes.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Indexes.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SP500.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Currencies.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Currencies.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/okama/assets.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/assets.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okama/helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/helpers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/okama/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/data.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -203,9 +201,9 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Python.okama" />
       <item itemvalue="Python.api (1)" />
       <item itemvalue="Python.api" />
-      <item itemvalue="Python.okama" />
       <item itemvalue="Python tests.Unittests for test_frontier.TestEfficientFrontierReb" />
       <item itemvalue="Python tests.Unittests in test_assets.py" />
       <item itemvalue="Python tests.Unittests in test_frontier.py" />
@@ -277,7 +275,14 @@
       <option name="project" value="LOCAL" />
       <updated>1586242959194</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Wealth_indexes are now in helpers.py&#10;wealth_index is added to Portfolio">
+      <created>1586407247527</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1586407247527</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -289,7 +294,8 @@
     <MESSAGE value="Monte Carlo class in frontier" />
     <MESSAGE value="Jupyter Notebooks added to git" />
     <MESSAGE value="Issue with weights sum check" />
-    <option name="LAST_COMMIT_MESSAGE" value="Issue with weights sum check" />
+    <MESSAGE value="Wealth_indexes are now in helpers.py&#10;wealth_index is added to Portfolio" />
+    <option name="LAST_COMMIT_MESSAGE" value="Wealth_indexes are now in helpers.py&#10;wealth_index is added to Portfolio" />
   </component>
   <component name="WindowStateProjectService">
     <state x="402" y="12" key="#Unittests_for_test_setup.TestAsset" timestamp="1584069507629">
@@ -317,10 +323,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="834" y="273" key="#xdebugger.XInspectDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586242142321" />
-    <state x="792" y="126" key="CommitChangelistDialog2" timestamp="1586242957652">
+    <state x="792" y="126" key="CommitChangelistDialog2" timestamp="1586407244898">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="792" y="126" key="CommitChangelistDialog2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586242957652" />
+    <state x="792" y="126" key="CommitChangelistDialog2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586407244898" />
     <state x="526" y="198" key="FileChooserDialogImpl" timestamp="1584069962408">
       <screen x="0" y="0" width="1366" height="728" />
     </state>

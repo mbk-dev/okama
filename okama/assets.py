@@ -18,6 +18,21 @@ class Asset:
         self.ror = self._get_monthly_ror(symbol)
         self.market = self._define_market(symbol)
         self.asset_currency = self._define_currency()
+        self.asset_type = self._define_type()
+
+    def _define_type(self):
+        if self.market == 'US':
+            return 'stock'
+        elif self.market == 'FOREX':
+            return 'currency'
+        elif self.market == 'RUFUND':
+            return 'mutual fund'
+        elif self.market == 'MCX':
+            return 'stock'
+        elif self.market == 'INDX':
+            return 'index'
+        else:
+            raise ValueError(f'asset type is not defined for {self.market}')
 
     def _get_monthly_ror(self, ticker: str) -> pd.Series:
         """
@@ -59,6 +74,20 @@ class Asset:
                 return 'USD'
         else:
             raise ValueError(self.market + ' is not a known namespace')
+
+    @property
+    def nav_ts(self):
+        """
+        NAV time series (monthly) for mutual funds when available in data.
+        """
+        if (self.asset_type == 'mutual fund') and (self.market == 'RUFUND'):
+            s = get_eod_data(self.ticker, type='nav')
+            # name = s.name
+            s = s.resample('M').last()
+            # s.rename(name, inplace=True)
+            return s
+        else:
+            raise ValueError(f'NAV is not available for {self.ticker}')
 
             
 class AssetList:

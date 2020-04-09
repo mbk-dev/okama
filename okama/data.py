@@ -11,6 +11,9 @@ from .settings import default_ticker, EOD_url, api_token
 def get_eod_data(symbol=default_ticker, type='return', session=None) -> pd.Series:
     """
     Get rate of return for a set of ror in the same currency. Returns daily data.
+    type: return - Rate of Return pd.Series
+    type: nav - Net Asset Value (works with RUFUND only)
+    type: close - Adjusted Close values
     """
     requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
     if session is None:
@@ -19,9 +22,13 @@ def get_eod_data(symbol=default_ticker, type='return', session=None) -> pd.Serie
     params = {'api_token': api_token}
     r = session.get(url, params=params, verify=False)
     if r.status_code == requests.codes.ok:
-        r.connection.close()  # TODO: check if closing connection slows down multiple requests
+        r.connection.close()
         df = pd.read_csv(StringIO(r.text), skipfooter=1, parse_dates=[0], index_col=0, engine='python')
         if symbol.split('.',1)[-1] == 'RUFUND':
+            if type == 'nav':
+                df = df['Nav']
+                df.rename(symbol, inplace=True)
+                return df
             df = df['Price']
         else:
             df = df['Adjusted_close']
@@ -29,6 +36,13 @@ def get_eod_data(symbol=default_ticker, type='return', session=None) -> pd.Serie
         df.sort_index(ascending = True, inplace=True)
         if (df == 0).any():
             raise Exception("Zero close values in data")
+        if df.isna().any():
+            raise Exception("NaN values in data")
+        if type == 'close':
+            df.rename(symbol, inplace=True)
+            return df
+        if type == 'nav':
+            raise Exception("NAV is not available for this type of data")
         if type == 'return':
             df = df.pct_change()
             df = df.iloc[1:]
