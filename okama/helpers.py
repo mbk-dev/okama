@@ -134,6 +134,19 @@ class Frame:
         drawdowns = (wealth_index - previous_peaks) / previous_peaks
         return drawdowns
 
+    @staticmethod
+    def wealth_indexes(ror: pd.DataFrame) -> pd.Series:
+        """
+        Returns wealth index for a list of assets (or for portfolio).
+        Works also with pd.Series inputs.
+        """
+        initial_investments = 1000
+        first_date = ror.index[0]
+        wealth_index = initial_investments * (ror + 1).cumprod()
+        wealth_index.loc[first_date] = 1000  # replaces NaN with the first period return
+        wealth_index.sort_index(ascending=True, inplace=True)
+        return wealth_index
+
 
 class Rebalance:
     """
@@ -161,7 +174,6 @@ class Rebalance:
             assets_wealth_indexes = inv_period_spread * (1 + ror).cumprod()
             wealth_index = assets_wealth_indexes.sum(axis=1)
             ror = wealth_index.pct_change()
-            # ror = ror.iloc[1:] #  drops NaN
             ror.loc[first_date] = return_first_period #  replaces NaN with the first period return
             ror.sort_index(ascending = True, inplace=True)
             return ror

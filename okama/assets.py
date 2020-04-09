@@ -44,8 +44,21 @@ class Asset:
             return 'RUB'
         elif self.market == 'MCX':
             return 'RUB'
+        elif self.market == 'INDX':
+            if self.ticker.split('.',1)[0] == 'IMOEX':
+                return 'RUB'
+            if self.ticker.split('.',1)[0] == 'MCFTR':
+                return 'RUB'
+            if self.ticker.split('.',1)[0] == 'RGBI':
+                return 'RUB'
+            if self.ticker.split('.',1)[0] == 'GSPC':
+                return 'USD'
+            if self.ticker.split('.',1)[0] == 'SP500TR':
+                return 'USD'
+            if self.ticker.split('.',1)[0] == 'SP500NTR':
+                return 'USD'
         else:
-            raise ValueError(self.market + ' is not a known namespace') # ERR: self.market is a text
+            raise ValueError(self.market + ' is not a known namespace')
 
             
 class AssetList:
@@ -103,11 +116,7 @@ class AssetList:
 
     @property
     def wealth_indexes(self):
-        """
-        Returns wealth index for a list of assets.
-        """
-        initial_investments = 1000
-        return initial_investments * (self.ror + 1).cumprod()
+        return Frame.wealth_indexes(self.ror)
 
     def calculate_risk(self, annualize=False, periods_per_year=12) -> pd.Series:
         """
@@ -161,6 +170,10 @@ class Portfolio:
     @property
     def returns_ts(self) -> pd.Series:
         return Frame.get_portfolio_return_ts(self.weights, self._ror)
+
+    @property
+    def wealth_index(self) -> pd.Series:
+        return Frame.wealth_indexes(self.returns_ts)
 
     def get_rebalanced_portfolio_return_ts(self, period='Y') -> pd.Series:
         return Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror, period=period)
