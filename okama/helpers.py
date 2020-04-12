@@ -194,3 +194,15 @@ class Rebalance:
         ror.loc[first_date] = return_first_period  # replaces NaN with the first period return
         ror.sort_index(ascending=True, inplace=True)
         return ror
+
+
+class String:
+    """
+    Functions working with string inputs.
+    """
+    @staticmethod
+    def define_market(char: str) -> str:
+        if '.' not in char:
+            return 'US'
+        else:
+            return char.split('.',1)[0], char.split('.',1)[-1]

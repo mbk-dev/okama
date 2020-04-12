@@ -1,11 +1,11 @@
-import math
+import time
 
 import pandas as pd
 import numpy as np
 
-from .helpers import Float, Frame, Rebalance
+from .helpers import Float, Frame, Rebalance, String
 from .settings import default_ticker
-from .data import get_eod_data
+from .data import get_eod_data, get_ticker_data
 
 
 class Asset:
@@ -18,37 +18,45 @@ class Asset:
         self.ror = self._get_monthly_ror(symbol)
         self.market = self._define_market(symbol)
         self.asset_currency = self._define_currency()
-        self.asset_type = self._define_type()
+        self.first_date = self.ror.index[0].to_timestamp()
+        self.last_date = self.ror.index[-1].to_timestamp()
+        # self.asset_type = self._define_type()
 
-    def _define_type(self):
-        if self.market == 'US':
-            return 'stock'
-        elif self.market == 'FOREX':
-            return 'currency'
-        elif self.market == 'RUFUND':
-            return 'mutual fund'
-        elif self.market == 'MCX':
-            return 'stock'
-        elif self.market == 'INDX':
-            return 'index'
-        else:
-            raise ValueError(f'asset type is not defined for {self.market}')
+    # def _define_type(self):
+    #     if self.market == 'US':
+    #         return 'stock'
+    #     elif self.market == 'FOREX':
+    #         return 'currency'
+    #     elif self.market == 'RUFUND':
+    #         return 'mutual fund'
+    #     elif self.market == 'MCX':
+    #         return 'stock'
+    #     elif self.market == 'INDX':
+    #         return 'index'
+    #     else:
+    #         raise ValueError(f'asset type is not defined for {self.market}')
 
     def _get_monthly_ror(self, ticker: str) -> pd.Series:
         """
         Calculate monthly mean return time series given the ticker.
+        Time Series with low number of days (<15) in the first month are sliced (monthly data begins from th second month)
         """
         s = get_eod_data(ticker)
         name = s.name
+
+        y = s.index[0].year
+        m = s.index[0].month
+        first_month = str(y)+'-'+str(m)
+        cut = s[first_month].count() < 15
+
         s = s.resample('M').apply(lambda x: (np.prod(1 + x) - 1))
+        if cut:
+            s = s.iloc[1:]
         s.rename(name, inplace=True)
         return s
-        
+
     def _define_market(self, char):
-        if '.' not in char:
-            return 'US'
-        else:
-            return char.split('.',1)[-1]
+        return String.define_market(char)[1]
         
     def _define_currency(self):
         if self.market == 'US':
@@ -58,36 +66,40 @@ class Asset:
         elif self.market == 'RUFUND':
             return 'RUB'
         elif self.market == 'MCX':
-            return 'RUB'
+            if self.ticker.split('.',1)[0] in ['AKSP', 'AKNX', 'TUSD', 'VTBU']:
+                return 'USD'
+            else:
+                return 'RUB'
         elif self.market == 'INDX':
-            if self.ticker.split('.',1)[0] == 'IMOEX':
+            if self.ticker.split('.',1)[0] in ['IMOEX', 'MCFTR', 'RGBI']:
                 return 'RUB'
-            if self.ticker.split('.',1)[0] == 'MCFTR':
-                return 'RUB'
-            if self.ticker.split('.',1)[0] == 'RGBI':
-                return 'RUB'
-            if self.ticker.split('.',1)[0] == 'GSPC':
-                return 'USD'
-            if self.ticker.split('.',1)[0] == 'SP500TR':
-                return 'USD'
-            if self.ticker.split('.',1)[0] == 'SP500NTR':
+            if self.ticker.split('.',1)[0] in ['GSPC', 'SP500TR', 'SP500NTR']:
                 return 'USD'
         else:
             raise ValueError(self.market + ' is not a known namespace')
 
     @property
-    def nav_ts(self):
+    def nav_ts(self) -> pd.Series:
         """
         NAV time series (monthly) for mutual funds when available in data.
         """
-        if (self.asset_type == 'mutual fund') and (self.market == 'RUFUND'):
+        if self.market == 'RUFUND':
             s = get_eod_data(self.ticker, type='nav')
-            # name = s.name
             s = s.resample('M').last()
-            # s.rename(name, inplace=True)
             return s
-        else:
-            raise ValueError(f'NAV is not available for {self.ticker}')
+        return np.nan
+
+    @property
+    def name(self) -> str:
+        return get_ticker_data(self.ticker)['name']
+
+    @property
+    def exchange(self) -> str:
+        return get_ticker_data(self.ticker)['exchange']
+
+    @property
+    def asset_type(self) -> str:
+        return get_ticker_data(self.ticker)['type']
 
             
 class AssetList:
@@ -95,15 +107,18 @@ class AssetList:
     The list of assets implementation.
     """
     def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD'):
+        main_start_time = time.time()
         self.tickers = symbols
         self.currency = curr
         self._make_asset_list(symbols)
         if first_date:
-            self.ror = self.ror[pd.to_datetime(first_date):]
+            self.first_date = max(self.first_date, pd.to_datetime(first_date))
+        self.ror = self.ror[self.first_date:]
         if last_date:
             self.ror = self.ror[:pd.to_datetime(last_date)]
-        self.first_date = self.ror.index[0].to_timestamp()
         self.last_date = self.ror.index[-1].to_timestamp()
+        main_end_time = time.time()
+        print(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
              
     def _make_asset_list(self, ls: list):
         """
@@ -113,6 +128,7 @@ class AssetList:
         for i, x in enumerate(ls):
             asset = Asset(x)
             if i == 0:
+                dates = []
                 if asset.asset_currency == self.currency:
                     df = asset.ror
                 else:
@@ -123,9 +139,13 @@ class AssetList:
                 else:
                     new = self._set_currency(asset.ror, self.currency)                   
                 df = pd.concat([df,new], axis = 1, join='inner', copy='false')
+            dates = dates + [asset.first_date]
+
         if isinstance(df, pd.Series):  # required to convert Series to DataFrame for single asset list
             df = df.to_frame()
+        self.first_date = max(dates)
         self.ror = df
+
     
     def _set_currency(self, returns: pd.Series, currency: str):
         """
