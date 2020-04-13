@@ -128,7 +128,7 @@ class AssetList:
         for i, x in enumerate(ls):
             asset = Asset(x)
             if i == 0:
-                dates = []
+                dates = {}
                 if asset.asset_currency == self.currency:
                     df = asset.ror
                 else:
@@ -139,13 +139,15 @@ class AssetList:
                 else:
                     new = self._set_currency(asset.ror, self.currency)                   
                 df = pd.concat([df,new], axis = 1, join='inner', copy='false')
-            dates = dates + [asset.first_date]
-
+            dates.update({asset.ticker: asset.first_date})
+        dates = sorted(dates.items(), key=lambda x: x[1])
         if isinstance(df, pd.Series):  # required to convert Series to DataFrame for single asset list
             df = df.to_frame()
-        self.first_date = max(dates)
+        self.first_date = dates[-1][1]
+        self.newest_asset = dates[-1][0]
+        self.eldest_asset = dates[0][0]
+        self.assets_first_dates = dates
         self.ror = df
-
     
     def _set_currency(self, returns: pd.Series, currency: str):
         """

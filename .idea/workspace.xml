@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="7dc874c2-507d-46d7-add8-5c09cde49419" name="Default Changelist" comment="">
+    <list default="true" id="7dc874c2-507d-46d7-add8-5c09cde49419" name="Default Changelist" comment="New attributes for AssetList:&#10;- newest_asset&#10;- eldest_asset">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Assets.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/okama/assets.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/assets.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okama/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okama/helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/helpers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okama/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/okama/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/сравнение индексных фондов.ipynb" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -202,9 +200,9 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.okama" />
       <item itemvalue="Python.api (1)" />
       <item itemvalue="Python.api" />
+      <item itemvalue="Python.okama" />
       <item itemvalue="Python tests.Unittests for test_frontier.TestEfficientFrontierReb" />
       <item itemvalue="Python tests.Unittests in test_assets.py" />
       <item itemvalue="Python tests.Unittests in test_frontier.py" />
@@ -290,7 +288,14 @@
       <option name="project" value="LOCAL" />
       <updated>1586410018715</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="First month of ror is sliced if having less then 15 trading days in return.&#10;&#10;Data functions added:&#10;- search (EOD database)&#10;- get_market_data (get tickers for a market with names, type etc)&#10;- get_ticker_data (get ticker info from market data)&#10;&#10;new Asset class methods:&#10;- name&#10;- exchange&#10;- type">
+      <created>1586676316013</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1586676316013</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -304,7 +309,8 @@
     <MESSAGE value="Issue with weights sum check" />
     <MESSAGE value="Wealth_indexes are now in helpers.py&#10;wealth_index is added to Portfolio" />
     <MESSAGE value="nav_ts property is available for mutual funds to get NAV time series.&#10;get_eod_data has 3 types: return, close, nav" />
-    <option name="LAST_COMMIT_MESSAGE" value="nav_ts property is available for mutual funds to get NAV time series.&#10;get_eod_data has 3 types: return, close, nav" />
+    <MESSAGE value="First month of ror is sliced if having less then 15 trading days in return.&#10;&#10;Data functions added:&#10;- search (EOD database)&#10;- get_market_data (get tickers for a market with names, type etc)&#10;- get_ticker_data (get ticker info from market data)&#10;&#10;new Asset class methods:&#10;- name&#10;- exchange&#10;- type" />
+    <option name="LAST_COMMIT_MESSAGE" value="First month of ror is sliced if having less then 15 trading days in return.&#10;&#10;Data functions added:&#10;- search (EOD database)&#10;- get_market_data (get tickers for a market with names, type etc)&#10;- get_ticker_data (get ticker info from market data)&#10;&#10;new Asset class methods:&#10;- name&#10;- exchange&#10;- type" />
   </component>
   <component name="WindowStateProjectService">
     <state x="402" y="12" key="#Unittests_for_test_setup.TestAsset" timestamp="1584069507629">
@@ -332,10 +338,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="834" y="273" key="#xdebugger.XInspectDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586242142321" />
-    <state x="792" y="126" key="CommitChangelistDialog2" timestamp="1586676053818">
+    <state x="792" y="29" key="CommitChangelistDialog2" timestamp="1586781196259">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="792" y="126" key="CommitChangelistDialog2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586676053818" />
+    <state x="792" y="29" key="CommitChangelistDialog2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586781196259" />
     <state x="526" y="198" key="FileChooserDialogImpl" timestamp="1584069962408">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
@@ -385,19 +391,19 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="461" y="162" width="1204" height="715" key="SettingsEditor/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1584170259243" />
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1586410080757">
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1586676328095">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586410080757" />
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586676328095" />
     <state x="92" y="92" width="1736" height="856" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1583848217423">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="92" y="92" width="1736" height="856" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1583848217423" />
-    <state x="725" y="438" key="com.intellij.ide.util.TipDialog" timestamp="1586534856772">
+    <state x="725" y="438" key="com.intellij.ide.util.TipDialog" timestamp="1586779601823">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="516" y="307" key="com.intellij.ide.util.TipDialog/0.0.1366.728@0.0.1366.728" timestamp="1584944278355" />
-    <state x="725" y="438" key="com.intellij.ide.util.TipDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586534856772" />
+    <state x="725" y="438" key="com.intellij.ide.util.TipDialog/0.0.1920.1040/1920.0.1366.728@0.0.1920.1040" timestamp="1586779601823" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
