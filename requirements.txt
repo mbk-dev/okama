@@ -1,0 +1,6 @@
+pytest
+pandas
+requests
+itertools
+numpy
+scipy

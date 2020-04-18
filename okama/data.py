@@ -10,7 +10,7 @@ from .helpers import String
 from .settings import default_ticker, EOD_url, eod_search_url, eod_exchanges_url, api_token
 
 
-def get_eod_data(symbol=default_ticker, type='return', session=None) -> pd.Series:
+def get_eod_data(symbol=default_ticker, type='return', session=None, check_zeros=True) -> pd.Series:
     """
     Get rate of return for a set of ror in the same currency. Returns daily data.
     type: return - Rate of Return pd.Series
@@ -36,10 +36,11 @@ def get_eod_data(symbol=default_ticker, type='return', session=None) -> pd.Serie
             df = df['Adjusted_close']
         df.index = df.index.to_period('D')
         df.sort_index(ascending = True, inplace=True)
-        if (df == 0).any():
-            raise Exception("Zero close values in data")
-        if df.isna().any():
-            raise Exception("NaN values in data")
+        if check_zeros:
+            if (df == 0).any():
+                raise Exception("Zero close values in data")
+            if df.isna().any():
+                raise Exception("NaN values in data")
         if type == 'close':
             df.rename(symbol, inplace=True)
             return df

@@ -13,9 +13,9 @@ class Asset:
     An asset, that could be used in a list or portfolio.
     """
 
-    def __init__(self, symbol=default_ticker):
+    def __init__(self, symbol=default_ticker, check_zeros=True):
         self.ticker = symbol
-        self.ror = self._get_monthly_ror(symbol)
+        self.ror = self._get_monthly_ror(symbol, check_zeros=check_zeros)
         self.market = self._define_market(symbol)
         self.asset_currency = self._define_currency()
         self.first_date = self.ror.index[0].to_timestamp()
@@ -36,12 +36,12 @@ class Asset:
     #     else:
     #         raise ValueError(f'asset type is not defined for {self.market}')
 
-    def _get_monthly_ror(self, ticker: str) -> pd.Series:
+    def _get_monthly_ror(self, ticker: str, check_zeros=True) -> pd.Series:
         """
         Calculate monthly mean return time series given the ticker.
         Time Series with low number of days (<15) in the first month are sliced (monthly data begins from th second month)
         """
-        s = get_eod_data(ticker)
+        s = get_eod_data(ticker, check_zeros=check_zeros)
         name = s.name
 
         y = s.index[0].year
@@ -106,11 +106,11 @@ class AssetList:
     """
     The list of assets implementation.
     """
-    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD'):
+    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD', check_zeros=True):
         main_start_time = time.time()
         self.tickers = symbols
         self.currency = curr
-        self._make_asset_list(symbols)
+        self._make_asset_list(symbols, check_zeros=check_zeros)
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
         self.ror = self.ror[self.first_date:]
@@ -120,13 +120,13 @@ class AssetList:
         main_end_time = time.time()
         print(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
              
-    def _make_asset_list(self, ls: list):
+    def _make_asset_list(self, ls: list, check_zeros=True):
         """
         Makes an asset list from a list of symbols. Returns dataframe (even for one asset) of returns (monthly)
         as an attribute.
         """
         for i, x in enumerate(ls):
-            asset = Asset(x)
+            asset = Asset(x, check_zeros=check_zeros)
             if i == 0:
                 dates = {}
                 if asset.asset_currency == self.currency:
@@ -205,7 +205,8 @@ class Portfolio:
     Implementation of investment portfolio.
     Arguments are similar to AssetList (weights are added), but different behavior.
     """
-    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD', weights=None):
+    def __init__(self, symbols=[default_ticker], first_date=None, last_date=None, curr='USD',
+                 weights=None, check_zeros=True):
         self.currency = curr
         self.tickers = symbols
         if weights is None:
@@ -214,7 +215,8 @@ class Portfolio:
             self.weights = weights
         else:
            self.weights = weights
-        self._ror = AssetList(symbols=symbols, first_date=first_date, last_date=last_date, curr=curr).ror
+        self._ror = AssetList(symbols=symbols, first_date=first_date, last_date=last_date,
+                              curr=curr, check_zeros=check_zeros).ror
         self.first_date = self._ror.index[0].to_timestamp()
         self.last_date = self._ror.index[-1].to_timestamp()
 
