@@ -1,0 +1,11 @@
+pytest
+pandas
+requests
+requests_cache
+numpy
+scipy
+psycopg2
+urllib3
+matplotlib
+eurostat
+progress
