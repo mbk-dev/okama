@@ -91,15 +91,15 @@ class AssetList:
     The list of assets implementation.
     """
     def __init__(self,
-                 symbols: List[str] = [default_ticker],
+                 symbols: Optional[List[str]] = None, *,
                  first_date: Optional[str] = None,
                  last_date: Optional[str] = None,
                  curr: str = 'USD',
                  inflation: bool = True):
-        self.__symbols: List[str] = symbols
+        self.__symbols = symbols
         self.__tickers: List[str] = [x.split(".", 1)[0] for x in self.symbols]
         self.__currency: Asset = Asset(symbol=f'{curr}.FOREX')
-        self.__make_asset_list(symbols)
+        self.__make_asset_list(self.symbols)
         if inflation:
             self.inflation: str = f'{curr}.INFL'
             self._inflation_instance: Inflation = Inflation(self.inflation, self.first_date, self.last_date)
@@ -131,6 +131,9 @@ class AssetList:
             'inflation': self.inflation if hasattr(self, 'inflation') else 'None',
         }
         return repr(pd.Series(dic))
+
+    def __len__(self):
+        return len(self.symbols)
 
     def __make_asset_list(self, ls: list) -> None:
         """
@@ -193,7 +196,13 @@ class AssetList:
 
     @property
     def symbols(self):
-        return self.__symbols
+        if not self.__symbols:
+            symbols = [default_ticker]
+        else:
+            symbols = self.__symbols
+        if not isinstance(symbols, list):
+            raise ValueError('Symbols should be a list of string values.')
+        return symbols
 
     @property
     def tickers(self):
@@ -526,22 +535,22 @@ class Portfolio:
     Arguments are similar to AssetList (weights are added), but different behavior.
     """
     def __init__(self,
-                 symbols: List[str] = [default_ticker],
+                 symbols: Optional[List[str]] = None, *,
                  first_date: Optional[str] = None,
                  last_date: Optional[str] = None,
                  curr: str = 'USD',
                  inflation: bool = True,
                  weights: Optional[List[float]] = None):
-        self._weights = None
-        self.currency: str = curr  # as a reference only. "curr" used to initialize AssetList
-        self.symbols: List[str] = symbols
-        self.tickers: List[str] = [x.split(".", 1)[0] for x in symbols]
-        self.weights = weights
-        self.assets_weights = dict(zip(self.symbols, self.weights))
         self._list: AssetList = AssetList(symbols=symbols, first_date=first_date, last_date=last_date,
                                           curr=curr, inflation=inflation)
+        self.currency: str = self._list.currency.name
         self._ror: pd.DataFrame = self._list.ror
+        self.symbols: List[str] = self._list.symbols
+        self.tickers: List[str] = [x.split(".", 1)[0] for x in self.symbols]
         self.names: Dict[str, str] = self._list.names
+        self._weights = None
+        self.weights = weights
+        self.assets_weights = dict(zip(self.symbols, self.weights))
         self.assets_first_dates: Dict[str, pd.Timestamp] = self._list.assets_first_dates
         self.assets_last_dates: Dict[str, pd.Timestamp] = self._list.assets_last_dates
         self.first_date = self._list.first_date
@@ -561,6 +570,9 @@ class Portfolio:
             'period length': self.period_length
         }
         return repr(pd.Series(dic))
+
+    def __len__(self):
+        return len(self.symbols)
 
     @property
     def weights(self):

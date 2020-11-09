@@ -80,6 +80,15 @@ class QueryData:
         return ts
 
     @staticmethod
+    def get_adj_close(symbol: str, first_date: str = '1913-01-01', last_date: str = '2100-01-01', period='M') -> pd.Series:
+        """
+        Gets 'adjusted close' time series for a ticker.
+        """
+        csv_input = API.get_adjusted_close(symbol=symbol, first_date=first_date, last_date=last_date, period=period)
+        ts = QueryData.csv_to_series(csv_input, period)
+        return ts
+
+    @staticmethod
     def get_dividends(symbol: str, first_date: str = '1913-01-01', last_date: str = '2100-01-01',) -> pd.Series:
         """
         Dividends time series daily data (dividend payment day should be considered).

@@ -19,7 +19,7 @@ class Plots(AssetList):
                  last_date: Optional[str] = None,
                  curr: str = 'USD',
                  inflation: bool = True):
-        super().__init__(symbols, first_date, last_date, curr, inflation)
+        super().__init__(symbols, first_date=first_date, last_date=last_date, curr=curr, inflation=inflation)
         self.ax = None
         self._bool_inflation = inflation
 
@@ -30,7 +30,7 @@ class Plots(AssetList):
             del self.ax
             self.ax = plt.gca()
 
-    def plot_assets(self, kind='mean', tickers='tickers') -> plt.axes:
+    def plot_assets(self, kind='mean', tickers='tickers', pct_values=False) -> plt.axes:
         """
         Plots assets scatter (annual risks, annual returns) with the tickers annotations.
         type:
@@ -58,7 +58,11 @@ class Plots(AssetList):
         # set the plot
         self._verify_axes()
         plt.autoscale(enable=True, axis='y', tight=False)
-        self.ax.scatter(risks, returns)
+        if pct_values:
+            m = 100
+        else:
+            m = 1
+        self.ax.scatter(risks * m, returns * m)
         # Set the labels
         if tickers == 'tickers':
             asset_labels = self.symbols
@@ -76,7 +80,7 @@ class Plots(AssetList):
         for n, x, y in zip(asset_labels, risks, returns):
             label = n
             self.ax.annotate(label,  # this is the text
-                        (x, y),  # this is the point to label
+                        (x * m, y * m),  # this is the point to label
                         textcoords="offset points",  # how to position the text
                         xytext=(0, 10),  # distance from text to points (x,y)
                         ha='center')  # horizontal alignment can be left, right or center
@@ -148,7 +152,7 @@ class PlotPortfolio(Portfolio):
                  curr: str = 'USD',
                  inflation: bool = True,
                  weights: Optional[List[float]] = None):
-        super().__init__(symbols, first_date, last_date, curr, inflation, weights)
+        super().__init__(symbols=symbols, first_date=first_date, last_date=last_date, curr=curr, inflation=inflation, weights=weights)
         self.ax = None
 
     def _verify_axes(self):

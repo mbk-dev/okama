@@ -285,7 +285,7 @@ class Rebalance:
             wealth_index = assets_wealth_indexes.sum(axis=1)
             ror = wealth_index.pct_change()
             ror.loc[first_date] = return_first_period #  replaces NaN with the first period return
-            ror.sort_index(ascending = True, inplace=True)
+            ror.sort_index(ascending=True, inplace=True)
             return ror
         grouped = ror.resample(period)
         for i, x in enumerate(grouped):

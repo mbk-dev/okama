@@ -68,17 +68,13 @@ def test_ef_points(init_efficient_frontier):
     assert init_efficient_frontier.ef_points['Mean return'].iloc[-1] == approx(0.20007879286573038, rel=1e-2)
 
 
-
-
-
-
 @mark.rebalance
 @mark.frontier
 @mark.usefixtures('_init_efficient_frontier_reb')
 class TestEfficientFrontierReb:
 
     def test_ef_points_reb(self):
-        assert self.ef.ef_points['GLD.US'].iloc[-1] == 1.0
+        assert self.ef.ef_points['GLD.US'].iloc[-1] == approx(1.0, rel=1e-2)
 
 
 

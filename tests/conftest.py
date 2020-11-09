@@ -1,8 +1,8 @@
 import pytest
 from okama.assets import Asset, AssetList, Portfolio
 from okama.macro import Inflation, Rate
-from okama.frontier import EfficientFrontierReb, EfficientFrontier
-from okama import Plots
+from okama.frontier import EfficientFrontier
+from okama import Plots, EfficientFrontierReb
 
 
 @pytest.fixture(scope='class')
@@ -52,17 +52,17 @@ def init_plots():
 @pytest.fixture(scope='module')
 def init_efficient_frontier():
     ls = ['SPY.US', 'SBMX.MCX']
-    return EfficientFrontier(symbols=ls, curr='RUB', first_date='2018-11', last_date='2020-02', n=2)
+    return EfficientFrontier(symbols=ls, curr='RUB', first_date='2018-11', last_date='2020-02', n_points=2)
 
 
 @pytest.fixture(scope='module')
 def init_efficient_frontier_bounds():
     ls = ['SPY.US', 'SBMX.MCX']
     bounds = ((0, 0.5), (0, 1.))
-    return EfficientFrontier(symbols=ls, curr='RUB', first_date='2018-11', last_date='2020-02', n=2, bounds=bounds)
+    return EfficientFrontier(symbols=ls, curr='RUB', first_date='2018-11', last_date='2020-02', n_points=2, bounds=bounds)
 
 
 @pytest.fixture(scope='class')
 def _init_efficient_frontier_reb(request):
     ls = ['SPY.US', 'GLD.US']
-    request.cls.ef = EfficientFrontierReb(symbols=ls, curr='RUB', first_date='2019-01', last_date='2020-02', n=2)
+    request.cls.ef = EfficientFrontierReb(symbols=ls, curr='RUB', first_date='2019-01', last_date='2020-02', n_points=2)

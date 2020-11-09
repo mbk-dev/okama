@@ -5,7 +5,7 @@ from numpy.testing import assert_array_equal
 import pytest
 from pytest import approx
 from pytest import mark
-from okama.assets import Portfolio
+from okama.assets import Portfolio, AssetList
 
 
 @mark.asset
@@ -29,6 +29,12 @@ class TestAsset:
 
     def test_nav_ts(self):
         assert self.otkr.nav_ts[0] == 101820352.18
+
+
+@mark.asset_list
+def test_asset_list_init_failing():
+    with pytest.raises(Exception, match=r'Symbols should be a list of string values.'):
+        AssetList(symbols=('RUB.FOREX', 'MCFTR.INDX'))
 
 
 @mark.asset_list
