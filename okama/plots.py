@@ -98,7 +98,7 @@ class Plots(AssetList):
                                inflation=self._bool_inflation,
                                bounds=bounds,
                                full_frontier=full_frontier,
-                               n=10
+                               n_points=10
                                ).ef_points
         self._verify_axes()
         if cagr:
