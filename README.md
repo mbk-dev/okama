@@ -68,7 +68,7 @@ More examples in Jupyter Notebooks:
 ## Communication
 
 To communicate with the Okama developer community, create a Github issue or use the Okama mailing list. Please be respectful in your communications with the Okama community.
-For basic usage questions (e.g., "Why my portfolio is not showing CAGR?"), please use StackOverflow instead.
+For basic usage questions (e.g., "Is XXX currency supported by okama?"), please use **the community forums** instead.
 
 ## Issues
 
