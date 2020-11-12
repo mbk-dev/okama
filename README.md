@@ -50,9 +50,11 @@ All classes and methods of okama are supplied with **free** «end of day» histo
 1. Get information about a single asset (or an index):
 _import okama as ok_
 
+```python
 x = ok.Asset(&#39;SPY.US&#39;)
 
-print(x)
+x.name
+'''
 
 1. Study the performance and compare the performance of several assets
 2. Backtest the portfolio allocation
