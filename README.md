@@ -48,11 +48,10 @@ All classes and methods of okama are supplied with **free** «end of day» histo
 ## Getting started
 
 1. Get information about a single asset (or an index):
-_import okama as ok_
 
 ```python
+import okama as ok
 x = ok.Asset('SPY.US')
-
 x.name
 ```
 
