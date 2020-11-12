@@ -41,9 +41,9 @@ All classes and methods of okama are supplied with **free** «end of day» histo
 
 ## Installation
 
-pip install okama
+`pip install okama`
 
-conda install okama
+`conda install okama`
 
 ## Getting started
 
