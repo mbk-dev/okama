@@ -54,7 +54,7 @@ _import okama as ok_
 x = ok.Asset(&#39;SPY.US&#39;)
 
 x.name
-'''
+```
 
 1. Study the performance and compare the performance of several assets
 2. Backtest the portfolio allocation
