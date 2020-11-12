@@ -51,7 +51,7 @@ All classes and methods of okama are supplied with **free** «end of day» histo
 _import okama as ok_
 
 ```python
-x = ok.Asset(&#39;SPY.US&#39;)
+x = ok.Asset('SPY.US')
 
 x.name
 ```
