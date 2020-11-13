@@ -55,7 +55,7 @@ x = ok.AssetList(['SPY.US', 'BND.US', 'HZJ.F'], curr='USD')
 print(x)
 
 ```
-![](/images/image1.jpg?raw=true) 
+![](../images/images/image1.jpg?raw=true) 
 
 Get the main parameters for the set:
 ```
