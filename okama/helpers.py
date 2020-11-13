@@ -263,45 +263,44 @@ class Rebalance:
     Methods for rebalancing portfolio.
     """
     @staticmethod
-    def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period: str = 'Y') -> pd.Series:
+    def rebalanced_portfolio_wealth_ts(weights: list, ror: pd.DataFrame, *, period: str = 'Y') -> pd.Series:
         """
-        Returns mean return time series of rebalanced portfolio given returns time series of assets.
-        Can be used to calculate returns geometric mean for rebalanced portfolio.
+        Returns wealth index time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
         For not rebalanced portfolio set Period to 'N'
         """
         # Frame.weights_sum_is_one(weights)
         initial_inv = 1000
-
-        # define data of the first period
-        first_date = ror.index[0]
-        returns = ror @ weights
-        return_first_period = returns[0]
-
+        wealth_index = pd.Series(dtype='float64')
         if period == 'N':  # Not rebalanced portfolio
-            inv_period = initial_inv
-            inv_period_spread = np.asarray(weights) * inv_period
+            inv_period_spread = np.asarray(weights) * initial_inv
             assets_wealth_indexes = inv_period_spread * (1 + ror).cumprod()
             wealth_index = assets_wealth_indexes.sum(axis=1)
-            ror = wealth_index.pct_change()
-            ror.loc[first_date] = return_first_period #  replaces NaN with the first period return
-            ror.sort_index(ascending=True, inplace=True)
-            return ror
-        grouped = ror.resample(period)
-        for i, x in enumerate(grouped):
-            if i == 0:
-                inv_period = 1000
-                wealth_index = pd.Series(dtype='float64')
-                # wealth_index_local = pd.Series(dtype='float64')
-            df = x[1]
-            inv_period_spread = np.asarray(weights) * inv_period  # rebalancing
-            assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
-            wealth_index_local = assets_wealth_indexes.sum(axis=1)
-            wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=True)
-            inv_period = wealth_index.iloc[-1]
+        else:
+            for x in ror.resample(period):
+                df = x[1]  # select ror part of the grouped data
+                inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
+                assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
+                wealth_index_local = assets_wealth_indexes.sum(axis=1)
+                wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=True)
+                initial_inv = wealth_index.iloc[-1]
+        return wealth_index
+
+    @staticmethod
+    def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period: str = 'Y') -> pd.Series:
+        """
+        Returns mean return time series of rebalanced portfolio given returns time series of the assets.
+        Default rebalancing period is a Year (end of year)
+        For not rebalanced portfolio set Period to 'N'
+        """
+        # define data of the first period
+        first_date = ror.index[0]
+        return_first_period = ror.iloc[0] @ weights
+
+        wealth_index = Rebalance.rebalanced_portfolio_wealth_ts(weights, ror, period=period)
         ror = wealth_index.pct_change()
         ror.loc[first_date] = return_first_period  # replaces NaN with the first period return
-        ror.sort_index(ascending=True, inplace=True)
+        # ror.sort_index(ascending=True, inplace=True)
         return ror
 
 

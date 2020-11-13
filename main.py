@@ -1,5 +1,8 @@
 import okama as ok
 
-x = ok.AssetList()
-ok.Float.annualize_risk(12)
+ls = ['SPY.US', 'GLD.US']
+curr = 'USD'
+y = ok.EfficientFrontierReb(symbols=ls, last_date='2020-10', curr=curr, reb_period='Y', n_points=5)
+b = y.ef_points
+print(b)
 
