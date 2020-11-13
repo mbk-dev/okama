@@ -61,13 +61,13 @@ Get the main parameters for the set:
 ```
 x.describe(tickers=False)
 ```
-![](/images/image2.jpg?raw=true) 
+![](../images/images/image2.jpg?raw=true) 
 
 Get the assets accumulated return, plot it and compare with the USD inflation:
 ```
 x.wealth_indexes.plot()
 ```
-![](/images/image3.jpg?raw=true) 
+![](../images/images/image3.jpg?raw=true) 
 
 1. Study the performance and compare the performance of several assets
 2. Backtest the portfolio allocation
