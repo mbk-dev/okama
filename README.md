@@ -47,12 +47,18 @@ All classes and methods of okama are supplied with **free** «end of day» histo
 
 ## Getting started
 
-1. Get information about a single asset (or an index):
+1. Compare several assets from different stock markets. Get the USD-adjusted perfomance:
 
 ```python
 import okama as ok
-x = ok.Asset('SPY.US')
-x.name
+x = ok.AssetList(['SPY.US', 'BND.US', 'HZJ.F'], curr='USD')
+print(x)
+
+```
+img  
+
+```
+x.describe(tickers=False)
 ```
 
 1. Study the performance and compare the performance of several assets
