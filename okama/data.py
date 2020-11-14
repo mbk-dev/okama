@@ -38,7 +38,7 @@ class QueryData:
                          engine='python')
         if not ts.empty:
             ts.index = ts.index.to_period(period.upper())
-            ts = ts.squeeze()
+            ts = ts.squeeze('columns')
         return ts
 
     @staticmethod
