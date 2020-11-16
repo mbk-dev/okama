@@ -8,7 +8,7 @@ import requests
 import pandas as pd
 import numpy as np
 
-from .settings import default_ticker
+from .settings import default_ticker, no_dividends_namespaces
 
 
 def search(search_string: str) -> json:
@@ -64,7 +64,7 @@ class QueryData:
     @staticmethod
     def get_nav(symbol: str, first_date: str = '1913-01-01', last_date: str = '2100-01-01', period='M') -> pd.Series:
         """
-        NAV time series for funds (works for RUFUNDS namespace only).
+        NAV time series for funds (works for PIF namespace only).
         """
         csv_input = API.get_nav(symbol=symbol, first_date=first_date, last_date=last_date, period=period)
         ts = QueryData.csv_to_series(csv_input, period=period)
@@ -93,7 +93,7 @@ class QueryData:
         """
         Dividends time series daily data (dividend payment day should be considered).
         """
-        if symbol.split('.', 1)[-1] not in ['RUFUND', 'INFL', 'INDX', 'FOREX', 'COMM', 'RE']:
+        if symbol.split('.', 1)[-1] not in no_dividends_namespaces:
             csv_input = API.get_dividends(symbol, first_date=first_date, last_date=last_date)
             ts = QueryData.csv_to_series(csv_input, period='D')
         else:

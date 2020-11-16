@@ -190,4 +190,5 @@ class Rate(MacroABC):
         return Frame.get_okid_index(self.values_ts, self.symbol)
 
     def describe(self, years=[1, 5, 10]):
+        # TODO: Make describe for OKID indexes
         pass

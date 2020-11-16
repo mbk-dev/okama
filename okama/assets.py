@@ -64,7 +64,7 @@ class Asset:
     def dividends(self) -> pd.Series:
         """
         Dividends time series daily data.
-        Not defined for namespaces: 'RUFUND', 'INFL', 'INDX', 'FOREX', 'COMM'
+        Not defined for namespaces: 'PIF', 'INFL', 'INDX', 'FX', 'COMM'
         """
         div = QueryData.get_dividends(self.symbol)
         if div.empty:
@@ -80,7 +80,7 @@ class Asset:
         """
         NAV time series (monthly) for mutual funds when available in data.
         """
-        if self.exchange == 'RUFUND':
+        if self.exchange == 'PIF':
             s = QueryData.get_nav(self.symbol)
             return s
         return np.nan
@@ -98,7 +98,7 @@ class AssetList:
                  inflation: bool = True):
         self.__symbols = symbols
         self.__tickers: List[str] = [x.split(".", 1)[0] for x in self.symbols]
-        self.__currency: Asset = Asset(symbol=f'{curr}.FOREX')
+        self.__currency: Asset = Asset(symbol=f'{curr}.FX')
         self.__make_asset_list(self.symbols)
         if inflation:
             self.inflation: str = f'{curr}.INFL'
@@ -183,7 +183,7 @@ class AssetList:
         """
         Set return to a certain currency. Input is a pd.Series of mean returns and a currency symbol.
         """
-        currency = Asset(symbol=f'{asset_currency}{self.currency.name}.FOREX')
+        currency = Asset(symbol=f'{asset_currency}{self.currency.name}.FX')
         asset_mult = returns + 1.
         currency_mult = currency.ror + 1.
         # join dataframes to have the same Time Series Index
