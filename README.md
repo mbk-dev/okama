@@ -47,7 +47,7 @@ All classes and methods of okama are supplied with **free** «end of day» histo
 
 ## Getting started
 
-1. Compare several assets from different stock markets. Get the USD-adjusted perfomance:
+### 1. Compare several assets from different stock markets. Get the USD-adjusted perfomance:
 
 ```python
 import okama as ok
@@ -69,7 +69,7 @@ x.wealth_indexes.plot()
 ```
 ![](../images/images/image3.jpg?raw=true) 
 
-2. Create a dividend stocks portfolio with base currency EUR.
+### 2. Create a dividend stocks portfolio with base currency EUR.
 ```python
 weights = [0.3, 0.2, 0.2, 0.2, 0.1]
 assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
@@ -77,12 +77,14 @@ pf = ok.Portfolio(assets, weights=weights, curr='EUR')
 print(pf)
 ```
 img
+
 Plot the dividend yield for each group of assets (based on stock currency).
 ```python
 pf.dividend_yield.plot()
 ```
 img
-3. Draw an Efficient Frontier for 2 poular ETF: SPY and GLD.
+
+### 3. Draw an Efficient Frontier for 2 poular ETF: SPY and GLD.
 ```python
 ls = ['SPY.US', 'GLD.US']
 curr = 'USD'
@@ -103,7 +105,7 @@ ax.plot(points.Risk, points.CAGR)
 ```
 img
 
-4. Get a Transition Map for allocations.
+### 4. Get a Transition Map for allocations.
 ```python
 ls = ['SPY.US', 'GLD.US', 'BND.US']
 map = ok.Plots(ls, curr='USD').plot_transition_map(cagr=False)
