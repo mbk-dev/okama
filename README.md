@@ -51,7 +51,7 @@ All classes and methods of okama are supplied with **free** «end of day» histo
 
 ```python
 import okama as ok
-x = ok.AssetList(['SPY.US', 'BND.US', 'HZJ.F'], curr='USD')
+x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], curr='USD')
 print(x)
 
 ```
@@ -69,11 +69,45 @@ x.wealth_indexes.plot()
 ```
 ![](../images/images/image3.jpg?raw=true) 
 
-1. Study the performance and compare the performance of several assets
-2. Backtest the portfolio allocation
- Portfolio is an AssetList with weights.
-3. Draw an Efficient Frontier
-4. Get a Transition Map for allocations
+2. Create a dividend stocks portfolio with base currency EUR.
+'''
+weights = [0.3, 0.2, 0.2, 0.2, 0.1]
+assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
+pf = ok.Portfolio(assets, weights=weights, curr='EUR')
+print(pf)
+'''
+img
+Plot the dividend yield for each group of assets (based on stock currency).
+'''
+pf.dividend_yield.plot()
+'''
+img
+3. Draw an Efficient Frontier for 2 poular ETF: SPY and GLD.
+```
+ls = ['SPY.US', 'GLD.US']
+curr = 'USD'
+frontier = ok.EfficientFrontierReb(ls, last_date='2020-10', curr=curr, reb_period='Y')  # Rebalancing periods is one year (dafault value)
+frontier.names
+```
+img
+
+Get the Efficient Frontier points and plot the chart with the assets risk/CAGR points:
+```
+points = frontier.ef_points
+
+fig = plt.figure(figsize=(12,6))
+fig.subplots_adjust(bottom=0.2, top=1.5)
+ok.Plots(ls, curr=curr).plot_assets(kind='cagr')  # plots the assets points on the chart
+ax = plt.gca()
+ax.plot(points.Risk, points.CAGR) 
+```
+img
+
+4. Get a Transition Map for allocations.
+```
+ls = ['SPY.US', 'GLD.US', 'BND.US']
+map = ok.Plots(ls, curr='USD').plot_transition_map(cagr=False)
+```
 
 More examples in Jupyter Notebooks:
 
