@@ -58,32 +58,32 @@ print(x)
 ![](../images/images/image1.jpg?raw=true) 
 
 Get the main parameters for the set:
-```
+```python
 x.describe(tickers=False)
 ```
 ![](../images/images/image2.jpg?raw=true) 
 
 Get the assets accumulated return, plot it and compare with the USD inflation:
-```
+```python
 x.wealth_indexes.plot()
 ```
 ![](../images/images/image3.jpg?raw=true) 
 
 2. Create a dividend stocks portfolio with base currency EUR.
-'''
+```python
 weights = [0.3, 0.2, 0.2, 0.2, 0.1]
 assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
 pf = ok.Portfolio(assets, weights=weights, curr='EUR')
 print(pf)
-'''
+```
 img
 Plot the dividend yield for each group of assets (based on stock currency).
-'''
+```python
 pf.dividend_yield.plot()
-'''
+```
 img
 3. Draw an Efficient Frontier for 2 poular ETF: SPY and GLD.
-```
+```python
 ls = ['SPY.US', 'GLD.US']
 curr = 'USD'
 frontier = ok.EfficientFrontierReb(ls, last_date='2020-10', curr=curr, reb_period='Y')  # Rebalancing periods is one year (dafault value)
@@ -92,7 +92,7 @@ frontier.names
 img
 
 Get the Efficient Frontier points and plot the chart with the assets risk/CAGR points:
-```
+```python
 points = frontier.ef_points
 
 fig = plt.figure(figsize=(12,6))
@@ -104,7 +104,7 @@ ax.plot(points.Risk, points.CAGR)
 img
 
 4. Get a Transition Map for allocations.
-```
+```python
 ls = ['SPY.US', 'GLD.US', 'BND.US']
 map = ok.Plots(ls, curr='USD').plot_transition_map(cagr=False)
 ```
