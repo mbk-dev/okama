@@ -24,7 +24,7 @@ setup(
                       'eurostat',
                       'progress'],
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers, End Users/Desktop, Financial and Insurance Industry, Science/Research",
         "Topic :: Scientific/Engineering :: Mathematics",
         "Programming Language :: Python :: 3",
