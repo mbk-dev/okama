@@ -649,7 +649,8 @@ class Portfolio:
         """
         div_yield_assets = self._list.dividend_yield
         currencies_dict = self._list.currencies
-        del currencies_dict['asset list']
+        if 'asset list' in currencies_dict:
+            del currencies_dict['asset list']
         currencies_list = list(set(currencies_dict.values()))
         div_yield_df = pd.DataFrame(dtype=float)
         for currency in currencies_list:

@@ -19,4 +19,3 @@ namespaces = {'US': 'US Stock Exchanges and mutual funds',
               'INFL': 'Inflation',
               'RATE': 'Bank deposit rates'
               }
-
