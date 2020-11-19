@@ -126,7 +126,7 @@ map = ok.Plots(ls, curr='USD').plot_transition_map(cagr=False)
 ## Communication
 
 To communicate with the Okama developer community, create a Github issue or use the Okama mailing list. Please be respectful in your communications with the Okama community.
-For basic usage questions (e.g., "__Is XXX currency supported by okama?__"), please use [the community mailing list](https://groups.google.com/g/okama_mpt) instead.
+For basic usage questions (e.g., "_Is XXX currency supported by okama?_"), please use [the community mailing list](https://groups.google.com/g/okama_mpt) instead.
 
 ## Issues
 
