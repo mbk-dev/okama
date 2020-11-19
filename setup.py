@@ -9,7 +9,7 @@ setup(
     author_email='sergey@rostsber.ru',
     url='https://okama.io/',
     download_url='https://github.com/mbk-dev/okama/archive/v0.8.tar.gz',
-    keywords=['finance', 'investments', 'efficient frontier', 'python'],
+    keywords=['finance', 'investments', 'efficient frontier', 'python', 'optimization'],
     packages=['okama', 'tests'],
     package_data={'tests': ['*.csv']},
     install_requires=['pytest',
@@ -23,7 +23,10 @@ setup(
                       'setuptools'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers, End Users/Desktop, Financial and Insurance Industry, Science/Research",
+        "Intended Audience :: Developers, "
+        "Intended Audience :: End Users/Desktop, "
+        "Intended Audience :: Financial and Insurance Industry, "
+        "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Mathematics",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3 :: Only",
