@@ -1,4 +1,3 @@
-import time
 from typing import List, Tuple, Dict, Optional
 
 import numpy as np
@@ -8,7 +7,6 @@ from scipy.optimize import minimize
 
 from .helpers import Float, Frame, Rebalance
 from .assets import AssetList
-from .settings import default_tickers_list
 
 
 class EfficientFrontierReb(AssetList):
@@ -202,7 +200,6 @@ class EfficientFrontierReb(AssetList):
             risk_monthly = ts.std()
             mean_return = ts.mean()
             result = Float.annualize_risk(risk_monthly, mean_return)
-            # print(f'weights: {w}, risk: {result}, cagr: {cagr(w)}')  # for debugging
             return result
 
         def cagr(w):
@@ -260,7 +257,6 @@ class EfficientFrontierReb(AssetList):
             risk_monthly = ts.std()
             mean_return = ts.mean()
             result = - Float.annualize_risk(risk_monthly, mean_return)
-            # print(f'weights: {w}, w_sum: {sum(w)}, risk: {- result}, risk limit: {risk_limit} cagr: {cagr(w)}, target cagr: {target_return}')
             return result
 
         def cagr(w):
@@ -300,8 +296,6 @@ class EfficientFrontierReb(AssetList):
 
         # Calculate points of EF given optimal weights
         if weights.success:
-            # print(f'constrtaints: {weights.constr}')
-            # print(f'w_sum: {sum(weights.x)}, risk: {- weights.fun}, risk limit: {risk_limit}, cagr: {cagr(weights.x)}, target cagr: {target_return}')
             if not self.tickers:
                 asset_labels = list(self.names.values())
             else:
@@ -330,7 +324,6 @@ class EfficientFrontierReb(AssetList):
             risk_monthly = ts.std()
             mean_return = ts.mean()
             result = - Float.annualize_risk(risk_monthly, mean_return)
-            # print(f'weights: {w}, w_sum: {sum(w)}, risk: {- result}, risk limit: {risk_limit} cagr: {cagr(w)}, target cagr: {target_return}')
             return result
 
         def cagr(w):
@@ -359,8 +352,6 @@ class EfficientFrontierReb(AssetList):
 
         # Calculate points of EF given optimal weights
         if weights.success:
-            # print(f'constrtaints: {weights.constr}')
-            # print(f'w_sum: {sum(weights.x)}, risk: {- weights.fun}, risk limit: {risk_limit}, cagr: {cagr(weights.x)}, target cagr: {target_return}')
             if not self.tickers:
                 asset_labels = list(self.names.values())
             else:
@@ -442,7 +433,6 @@ class EfficientFrontierReb(AssetList):
         mean_return = self.ror.loc[:, ticker_with_largest_risk].mean()
         max_std = Float.annualize_risk(max_std_monthly, mean_return)
         target_range = np.linspace(min_std, max_std, self.n_points)
-        print(f'min risk = {min_std}, max risk = {max_std}')
         return target_range
 
     @property
@@ -455,32 +445,19 @@ class EfficientFrontierReb(AssetList):
         - CAGR (float)
         - Risk (float)
         """
-        main_start_time = time.time()
         df = pd.DataFrame()
         # left part
-        i = 0
         for target_cagr in self.target_cagr_range_left:
-            start_time = time.time()
             row = self.minimize_risk(target_cagr)
             df = df.append(row, ignore_index=True)
-            end_time = time.time()
-            print(f"left EF point #{i+1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
-            i += 1
         # right part
         range_right = self.target_cagr_range_right
-        i = 0
         if range_right is not None:  # range_right can be a DataFrame. Should put and explicit "is not None"
             n = len(range_right)
             for target_cagr in range_right:
-                start_time = time.time()
                 row = self.maximize_risk(target_cagr)
                 df = df.append(row, ignore_index=True)
-                end_time = time.time()
-                print(f"right EF point #{i + 1}/{n} is done in {end_time - start_time:.2f} sec.")
-                i += 1
         df = Frame.change_columns_order(df, ['Risk', 'CAGR'])
-        main_end_time = time.time()
-        print(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
         return df
 
     def get_monte_carlo(self, n: int = 100) -> pd.DataFrame:
@@ -488,7 +465,6 @@ class EfficientFrontierReb(AssetList):
         Calculates random risk / cagr point for rebalanced portfolios for a given asset list.
         Risk and cagr are calculated for a set of random weights.
         """
-        main_start_time = time.time()
         # Random weights
         rand_nos = np.random.rand(n, self.ror.shape[1])
         weights_transposed = rand_nos.transpose() / rand_nos.sum(axis=1)
@@ -511,6 +487,4 @@ class EfficientFrontierReb(AssetList):
                 'CAGR': cagr
             }
             random_portfolios = random_portfolios.append(row, ignore_index=True)
-        main_end_time = time.time()
-        print(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
         return random_portfolios
