@@ -126,7 +126,7 @@ class AssetList:
             'currency': self.currency.ticker,
             'first date': self.first_date.strftime("%Y-%m"),
             'last_date': self.last_date.strftime("%Y-%m"),
-            'period length': self.period_length,
+            'period length (Y)': self.period_length,
             'inflation': self.inflation if hasattr(self, 'inflation') else 'None',
         }
         return repr(pd.Series(dic))
@@ -566,7 +566,7 @@ class Portfolio:
             'currency': self.currency,
             'first date': self.first_date.strftime("%Y-%m"),
             'last_date': self.last_date.strftime("%Y-%m"),
-            'period length': self.period_length
+            'period length (Y)': self.period_length
         }
         return repr(pd.Series(dic))
 
@@ -689,8 +689,12 @@ class Portfolio:
         return Float.annualize_risk(self.risk_monthly, self.mean_return_monthly)
 
     @property
-    def semideviation(self) -> float:
+    def semideviation_monthly(self) -> float:
         return Frame.get_semideviation(self.returns_ts)
+
+    @property
+    def semideviation_annual(self) -> float:
+        return Frame.get_semideviation(self.returns_ts) * 12 ** 0.5
 
     def get_var_historic(self, level=5) -> float:
         rolling = self.returns_ts.rolling(12).apply(Frame.get_cagr)
