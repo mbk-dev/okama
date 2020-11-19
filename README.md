@@ -57,19 +57,19 @@ x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], curr='USD')
 print(x)
 
 ```
-![](../images/images/readme01.jpg?raw=true) 
+![](../images/images/readmi01.jpg?raw=true) 
 
 Get the main parameters for the set:
 ```python
 x.describe(tickers=False)
 ```
-![](../images/images/readme02.jpg?raw=true) 
+![](../images/images/readmi02.jpg?raw=true) 
 
 Get the assets accumulated return, plot it and compare with the USD inflation:
 ```python
 x.wealth_indexes.plot()
 ```
-![](../images/images/readme03.jpg?raw=true) 
+![](../images/images/readmi03.jpg?raw=true) 
 
 ### 2. Create a dividend stocks portfolio with base currency EUR.
 ```python
@@ -78,13 +78,13 @@ assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
 pf = ok.Portfolio(assets, weights=weights, curr='EUR')
 print(pf)
 ```
-![](../images/images/readme04.jpg?raw=true) 
+![](../images/images/readmi04.jpg?raw=true) 
 
 Plot the dividend yield for each group of assets (based on stock currency).
 ```python
 pf.dividend_yield.plot()
 ```
-![](../images/images/readme05.jpg?raw=true) 
+![](../images/images/readmi05.jpg?raw=true) 
 
 ### 3. Draw an Efficient Frontier for 2 poular ETF: SPY and GLD.
 ```python
@@ -93,7 +93,7 @@ curr = 'USD'
 frontier = ok.EfficientFrontierReb(ls, last_date='2020-10', curr=curr, reb_period='Y')  # Rebalancing periods is one year (dafault value)
 frontier.names
 ```
-![](../images/images/readme06.jpg?raw=true) 
+![](../images/images/readmi06.jpg?raw=true) 
 
 Get the Efficient Frontier points and plot the chart with the assets risk/CAGR points:
 ```python
@@ -105,14 +105,14 @@ ok.Plots(ls, curr=curr).plot_assets(kind='cagr')  # plots the assets points on t
 ax = plt.gca()
 ax.plot(points.Risk, points.CAGR) 
 ```
-![](../images/images/readme07.jpg?raw=true) 
+![](../images/images/readmi07.jpg?raw=true) 
 
 ### 4. Get a Transition Map for allocations.
 ```python
 ls = ['SPY.US', 'GLD.US', 'BND.US']
 map = ok.Plots(ls, curr='USD').plot_transition_map(cagr=False)
 ```
-![](../images/images/readme08.jpg?raw=true) 
+![](../images/images/readmi08.jpg?raw=true) 
 <!---
 More examples in Jupyter Notebooks:
 
