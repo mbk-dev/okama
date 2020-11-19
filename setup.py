@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='okama',
-    version='0.8',
+    version='0.81',
     license='MIT',
     description='Modern Portfolio Theory (MPT) Python package',
     author='Sergey Kikevich',
