@@ -1,3 +1,18 @@
+<!-- buttons -->
+<p align="center">
+    <a href="https://www.python.org/">
+        <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
+            alt="python"></a> &nbsp;
+    <a href="https://pypi.org/project/PyPortfolioOpt/">
+        <img src="https://img.shields.io/badge/pypi-v0.82-brightgreen.svg"
+            alt="pypi"></a> &nbsp;
+    <a href="https://opensource.org/licenses/MIT">
+        <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg"
+            alt="MIT license"></a> &nbsp;
+</p>
+
+<!-- content -->
+
 # Okama
 
 _okama_ is a Python package developed for asset allocation and investments portfolio optimization tasks according to Modern Portfolio Theory.
