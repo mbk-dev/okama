@@ -37,15 +37,9 @@ All classes and methods of okama are supplied with **free** «end of day» histo
 - Real estate prices
 - Top bank rates
 
-<!---
-## Table of contents
-
 ## Installation
 
 `pip install okama`
-
-`conda install okama`
---->
 
 ## Getting started
 
@@ -113,11 +107,7 @@ ls = ['SPY.US', 'GLD.US', 'BND.US']
 map = ok.Plots(ls, curr='USD').plot_transition_map(cagr=False)
 ```
 ![](../images/images/readmi08.jpg?raw=true) 
-<!---
-More examples in Jupyter Notebooks:
 
--
---->
 ## Communication
 
 To communicate with the Okama developer community, create a Github issue or use the Okama mailing list. Please be respectful in your communications with the Okama community.
