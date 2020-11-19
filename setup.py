@@ -8,7 +8,7 @@ setup(
     author='Sergey Kikevich',
     author_email='sergey@rostsber.ru',
     url='https://okama.io/',
-    download_url='https://github.com/mbk-dev/okama/archive/v0.8.tar.gz',
+    download_url='https://github.com/mbk-dev/okama/archive/v0.81.tar.gz',
     keywords=['finance', 'investments', 'efficient frontier', 'python', 'optimization'],
     packages=['okama', 'tests'],
     package_data={'tests': ['*.csv']},
