@@ -121,7 +121,9 @@ ax.plot(points.Risk, points.CAGR)
 ls = ['SPY.US', 'GLD.US', 'BND.US']
 map = ok.Plots(ls, curr='USD').plot_transition_map(cagr=False)
 ```
-![](../images/images/readmi08.jpg?raw=true) 
+![](../images/images/readmi08.jpg?raw=true)
+
+More examples are available in [Jupyter Notebooks](https://github.com/mbk-dev/okama/tree/master/notebooks).
 
 ## Communication
 
