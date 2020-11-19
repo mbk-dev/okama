@@ -1,10 +1,19 @@
 from setuptools import setup
 
+# read the contents of your README file
+from os import path
+
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
     name='okama',
     version='0.81',
     license='MIT',
     description='Modern Portfolio Theory (MPT) Python package',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Sergey Kikevich',
     author_email='sergey@rostsber.ru',
     url='https://okama.io/',
