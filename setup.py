@@ -23,9 +23,9 @@ setup(
                       'setuptools'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers, "
-        "Intended Audience :: End Users/Desktop, "
-        "Intended Audience :: Financial and Insurance Industry, "
+        "Intended Audience :: Developers",
+        "Intended Audience :: End Users/Desktop",
+        "Intended Audience :: Financial and Insurance Industry",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Mathematics",
         "Programming Language :: Python :: 3",
