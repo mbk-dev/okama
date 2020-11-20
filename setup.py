@@ -28,8 +28,7 @@ setup(
                       'scipy',
                       'psycopg2',
                       'urllib3',
-                      'matplotlib',
-                      'setuptools'],
+                      'matplotlib'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
