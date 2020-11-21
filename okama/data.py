@@ -1,6 +1,5 @@
 from typing import Dict
 
-from urllib3.exceptions import InsecureRequestWarning
 from io import StringIO
 import json
 
@@ -134,7 +133,6 @@ class API:
                 last_date: str = '2100-01-01',
                 period: str = 'd',
                 ) -> str:
-        requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
         session = requests.session()
         request_url = cls.api_url + endpoint + symbol
         params = {'first_date': first_date, 'last_date': last_date, 'period': period}

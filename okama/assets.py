@@ -12,6 +12,7 @@ from .data import QueryData
 class Asset:
     """
     An asset, that could be used in a list of assets or in portfolio.
+    Works with monthly end of day historical rate of return data.
     """
 
     def __init__(self, symbol: str = default_ticker):
@@ -88,6 +89,7 @@ class Asset:
 class AssetList:
     """
     The list of assets implementation.
+    Works with monthly end of day historical rate of return data.
     """
     def __init__(self,
                  symbols: Optional[List[str]] = None, *,
@@ -236,8 +238,12 @@ class AssetList:
         return Float.annualize_risk(risk, mean_return)
 
     @property
-    def semideviation(self) -> pd.Series:
+    def semideviation_monthly(self) -> pd.Series:
         return Frame.get_semideviation(self.ror)
+
+    @property
+    def semideviation_annual(self) -> float:
+        return Frame.get_semideviation(self.returns_ts) * 12 ** 0.5
 
     def get_var_historic(self, level: int = 5) -> pd.Series:
         return Frame.get_var_historic(self.ror, level)
@@ -532,6 +538,7 @@ class Portfolio:
     """
     Implementation of investment portfolio.
     Arguments are similar to AssetList (weights are added), but different behavior.
+    Works with monthly end of day historical rate of return data.
     """
     def __init__(self,
                  symbols: Optional[List[str]] = None, *,

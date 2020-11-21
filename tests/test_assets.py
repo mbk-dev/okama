@@ -62,7 +62,7 @@ class TestAssetList:
         assert self.asset_list.risk_monthly.sum() == approx(0.05629007764823986, rel=1e-2)
         assert self.asset_list.risk_annual.sum() == approx(0.2192108407516287, rel=1e-2)
 
-    def test_semideviation(self):
+    def test_semideviation_monthly(self):
         assert self.asset_list.semideviation_monthly.sum() == approx(0.01811879168832453, rel=1e-2)
 
     def test_get_var(self):

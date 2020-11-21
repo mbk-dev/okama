@@ -1,3 +1,4 @@
+import time
 from typing import List, Tuple, Dict, Optional
 
 import numpy as np
@@ -18,6 +19,7 @@ class EfficientFrontierReb(AssetList):
     Asset labels are set with 'tickers':
     True - for tickers
     False - for full asset names
+    TODO: Add bounds
     """
     def __init__(self,
                  symbols: List[str], *,
@@ -27,13 +29,16 @@ class EfficientFrontierReb(AssetList):
                  inflation: bool = True,
                  reb_period: str = 'Y',
                  n_points: int = 20,
-                 tickers: bool = True):
+                 verbose: bool = False,
+                 tickers: bool = True,
+                 ):
         if len(symbols) < 2:
             raise ValueError('The number of symbols cannot be less than two')
         super().__init__(symbols=symbols, first_date=first_date, last_date=last_date, curr=curr, inflation=inflation)
         self.reb_period: str = reb_period
         self.n_points: int = n_points
         self.tickers: bool = tickers
+        self.verbose: bool = verbose
 
     @property
     def n_points(self):
@@ -64,6 +69,16 @@ class EfficientFrontierReb(AssetList):
         if not isinstance(tickers, bool):
             raise ValueError('tickers should be True or False')
         self._tickers = tickers
+
+    @property
+    def verbose(self):
+        return self._verbose
+
+    @verbose.setter
+    def verbose(self, verbose: bool):
+        if not isinstance(verbose, bool):
+            raise ValueError('verbose should be True or False')
+        self._verbose = verbose
 
     @property
     def gmv_monthly_weights(self) -> np.ndarray:
@@ -148,7 +163,7 @@ class EfficientFrontierReb(AssetList):
     @property
     def max_return(self) -> dict:
         """
-        Returns the weights and risk / return of the maximum return portfolio.
+        Returns the weights and risk / CAGR of the maximum return portfolio.
         """
         ror = self.ror
         period = self.reb_period
@@ -263,9 +278,6 @@ class EfficientFrontierReb(AssetList):
             ts = Rebalance.rebalanced_portfolio_return_ts(w, ror, period=period)
             acc_return = (ts + 1.).prod() - 1.
             return (1. + acc_return)**(12 / ror.shape[0]) - 1.
-
-        # def constr_hess(x, v):
-        #     return np.zeros([n, n])
 
         # construct the constraints
         bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples for Weights constrains
@@ -386,17 +398,21 @@ class EfficientFrontierReb(AssetList):
     def max_cagr_asset_right_to_max_cagr(self) -> Optional[dict]:
         """
         The asset with max CAGR lieing to the right of max CAGR point (risk is more than self.max_return['Risk']).
+        Max return point should not be an asset.
         """
-        condition = self.risk_annual.values > self.max_return['Risk']
-        ror_selected = self.ror.loc[:, condition]
-        if not ror_selected.empty:
-            cagr_selected = Frame.get_cagr(ror_selected)
-            max_asset_cagr = cagr_selected.max()
-            ticker_with_largest_cagr = cagr_selected.nlargest(1, keep='first').index.values[0]
-            return {'max_asset_cagr': max_asset_cagr,
-                    'ticker_with_largest_cagr': ticker_with_largest_cagr,
-                    'list_position': self.symbols.index(ticker_with_largest_cagr)
-                    }
+        tolerance = 0.01  # assets CAGR should be less than max CAGR with certain tolerance
+        max_cagr_is_not_asset = (self.get_cagr() < self.max_return['CAGR'] * (1 - tolerance)).all()
+        if max_cagr_is_not_asset:
+            condition = self.risk_annual.values > self.max_return['Risk']
+            ror_selected = self.ror.loc[:, condition]
+            if not ror_selected.empty:
+                cagr_selected = Frame.get_cagr(ror_selected)
+                max_asset_cagr = cagr_selected.max()
+                ticker_with_largest_cagr = cagr_selected.nlargest(1, keep='first').index.values[0]
+                return {'max_asset_cagr': max_asset_cagr,
+                        'ticker_with_largest_cagr': ticker_with_largest_cagr,
+                        'list_position': self.symbols.index(ticker_with_largest_cagr)
+                        }
 
     @property
     def max_annual_risk_asset(self):
@@ -445,19 +461,31 @@ class EfficientFrontierReb(AssetList):
         - CAGR (float)
         - Risk (float)
         """
+        main_start_time = time.time()
         df = pd.DataFrame()
-        # left part
-        for target_cagr in self.target_cagr_range_left:
+        # left part of the EF
+        for i, target_cagr in enumerate(self.target_cagr_range_left):
+            start_time = time.time()
             row = self.minimize_risk(target_cagr)
             df = df.append(row, ignore_index=True)
-        # right part
+            end_time = time.time()
+            if self.verbose:
+                print(f"left EF point #{i + 1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
+        # right part of the EF
         range_right = self.target_cagr_range_right
         if range_right is not None:  # range_right can be a DataFrame. Should put and explicit "is not None"
             n = len(range_right)
-            for target_cagr in range_right:
+            for i, target_cagr in enumerate(range_right):
+                start_time = time.time()
                 row = self.maximize_risk(target_cagr)
                 df = df.append(row, ignore_index=True)
+                end_time = time.time()
+                if self.verbose:
+                    print(f"right EF point #{i + 1}/{n} is done in {end_time - start_time:.2f} sec.")
         df = Frame.change_columns_order(df, ['Risk', 'CAGR'])
+        main_end_time = time.time()
+        if self.verbose:
+            print(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
         return df
 
     def get_monte_carlo(self, n: int = 100) -> pd.DataFrame:

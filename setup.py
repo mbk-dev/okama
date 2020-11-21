@@ -21,14 +21,12 @@ setup(
     keywords=['finance', 'investments', 'efficient frontier', 'python', 'optimization'],
     packages=['okama', 'tests'],
     package_data={'tests': ['*.csv']},
-    install_requires=['pytest',
-                      'pandas',
-                      'requests',
+    install_requires=['pandas',
                       'numpy',
                       'scipy',
-                      'psycopg2',
-                      'urllib3',
-                      'matplotlib'],
+                      'matplotlib',
+                      'requests',
+                      'pytest'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -38,10 +36,11 @@ setup(
         "Topic :: Scientific/Engineering :: Mathematics",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.7'
+    python_requires='>=3.6'
 )

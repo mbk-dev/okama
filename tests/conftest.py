@@ -62,7 +62,7 @@ def init_efficient_frontier_bounds():
     return EfficientFrontier(symbols=ls, curr='RUB', first_date='2018-11', last_date='2020-02', n_points=2, bounds=bounds)
 
 
-@pytest.fixture(scope='class')
-def _init_efficient_frontier_reb(request):
+@pytest.fixture(scope='module')
+def init_efficient_frontier_reb():
     ls = ['SPY.US', 'GLD.US']
-    request.cls.ef = EfficientFrontierReb(symbols=ls, curr='RUB', first_date='2019-01', last_date='2020-02', n_points=2)
+    return EfficientFrontierReb(symbols=ls, curr='RUB', first_date='2019-01', last_date='2020-02', n_points=3)
