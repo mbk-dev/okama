@@ -25,8 +25,7 @@ setup(
                       'numpy',
                       'scipy',
                       'matplotlib',
-                      'requests',
-                      'pytest'],
+                      'requests'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
