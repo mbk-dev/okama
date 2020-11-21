@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='okama',
-    version='0.83',
+    version='0.84',
     license='MIT',
     description='Modern Portfolio Theory (MPT) Python package',
     long_description=long_description,
