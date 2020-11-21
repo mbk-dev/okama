@@ -1,6 +1,6 @@
 from setuptools import setup
 
-# read the contents of your README file
+# read the contents of README file
 from os import path
 
 this_directory = path.abspath(path.dirname(__file__))
@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='okama',
-    version='0.84',
+    version='0.85',
     license='MIT',
     description='Modern Portfolio Theory (MPT) Python package',
     long_description=long_description,
