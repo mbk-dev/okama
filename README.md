@@ -3,7 +3,7 @@
     <a href="https://www.python.org/">
         <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
             alt="python"></a> &nbsp;
-    <a href="https://pypi.org/project/PyPortfolioOpt/">
+    <a href="https://pypi.org/project/okama/">
         <img src="https://img.shields.io/badge/pypi-v0.87-brightgreen.svg"
             alt="pypi"></a> &nbsp;
     <a href="https://opensource.org/licenses/MIT">
