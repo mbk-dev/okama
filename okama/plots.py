@@ -72,7 +72,7 @@ class Plots(AssetList):
             if not isinstance(tickers, list):
                 raise ValueError(f'tickers parameter should be a list of string labels.')
             if len(tickers) != len(self.symbols):
-                raise ValueError(f'The number of labels ({len(labels)}) should be equal '
+                raise ValueError(f'The number of labels ({len(tickers)}) should be equal '
                                  f'to the number of tickers ({len(self.symbols)}).')
             else:
                 asset_labels = tickers
@@ -114,9 +114,13 @@ class Plots(AssetList):
         fig.tight_layout()
         return self.ax
 
-    def plot_pair_ef(self, tickers=True, bounds=None) -> plt.axes:
+    def plot_pair_ef(self, tickers='tickers', bounds=None) -> plt.axes:
         """
         Plots efficient frontier of every pair of assets in a set.
+        tickers:
+        - 'tickers' - shows tickers values (default)
+        - 'names' - shows assets names from database
+        - list of string labels
         """
         if len(self.symbols) < 3:
             raise ValueError('The number of symbols cannot be less than 3')

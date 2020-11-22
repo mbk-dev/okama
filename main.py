@@ -1,6 +1,6 @@
 import okama as ok
 
-weights = [0.3, 0.2, 0.2, 0.2, 0.1]
-assets = ['T.US', 'XOM.US', 'JNJ.US', 'SBERP.MOEX', 'LKOH.MOEX']
-y = ok.Portfolio(assets, weights=weights, curr='RUB')
-print(y.dividend_yield)
+ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
+curr = 'USD'
+four_assets = ok.EfficientFrontier(symbols=ls4, curr=curr, n_points=100)
+ok.Plots(ls4, curr=curr).plot_pair_ef()
