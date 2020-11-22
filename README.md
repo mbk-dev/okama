@@ -17,7 +17,7 @@
 
 _okama_ is a Python package developed for asset allocation and investments portfolio optimization tasks according to Modern Portfolio Theory.
 
-All classes and methods of okama are supplied with **free** «end of day» historical stock markets data and macroeconomic indicators through API.
+The package is supplied with **free** «end of day» historical stock markets data and macroeconomic indicators through API.
 
 ## Okama main features
 
