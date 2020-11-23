@@ -58,7 +58,7 @@ The package is supplied with **free** «end of day» historical stock markets da
 
 ## Getting started
 
-### 1. Compare several assets from different stock markets. Get the USD-adjusted perfomance:
+### 1. Compare several assets from different stock markets. Get the USD-adjusted perfomance
 
 ```python
 import okama as ok
@@ -80,7 +80,7 @@ x.wealth_indexes.plot()
 ```
 ![](../images/images/readmi03.jpg?raw=true) 
 
-### 2. Create a dividend stocks portfolio with base currency EUR.
+### 2. Create a dividend stocks portfolio with base currency EUR
 ```python
 weights = [0.3, 0.2, 0.2, 0.2, 0.1]
 assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
@@ -95,7 +95,7 @@ pf.dividend_yield.plot()
 ```
 ![](../images/images/readmi05.jpg?raw=true) 
 
-### 3. Draw an Efficient Frontier for 2 poular ETF: SPY and GLD.
+### 3. Draw an Efficient Frontier for 2 poular ETF: SPY and GLD
 ```python
 ls = ['SPY.US', 'GLD.US']
 curr = 'USD'
@@ -116,7 +116,7 @@ ax.plot(points.Risk, points.CAGR)
 ```
 ![](../images/images/readmi07.jpg?raw=true) 
 
-### 4. Get a Transition Map for allocations.
+### 4. Get a Transition Map for allocations
 ```python
 ls = ['SPY.US', 'GLD.US', 'BND.US']
 map = ok.Plots(ls, curr='USD').plot_transition_map(cagr=False)
