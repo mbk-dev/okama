@@ -89,7 +89,7 @@ class Plots(AssetList):
     def plot_transition_map(self, bounds=None, full_frontier=False, cagr=True) -> plt.axes:
         """
         Plots EF weights transition map given a EF points DataFrame.
-        cagr - sets X axe to cagr (if true) or to risk (if false).
+        cagr - sets X axe to CAGR (if true) or to risk (if false).
         """
         ef = EfficientFrontier(symbols=self.symbols,
                                first_date=self.first_date,
@@ -110,6 +110,11 @@ class Plots(AssetList):
             if i not in ('Risk', 'Mean return', 'CAGR (approx)'):  # select only columns with tickers
                 self.ax.plot(ef[x_axe], ef.loc[:, i], label=i)
         self.ax.set_xlim(ef[x_axe].min(), ef[x_axe].max())
+        if cagr:
+            self.ax.set_xlabel('CAGR (compound annual growth rate)')
+        else:
+            self.ax.set_xlabel('Risk (volatility)')
+        self.ax.set_ylabel('Weights of assets')
         self.ax.legend(loc='upper left', frameon=False)
         fig.tight_layout()
         return self.ax
