@@ -201,16 +201,4 @@ class PlotPortfolio(Portfolio):
             else:
                 self.ax.plot(x, y, linestyle='dashed', linewidth=1, label=f'Percentile {percentile}')
         self.ax.legend(loc='upper left')
-        # place a text box in upper left in axes coords
-        # max_value = y_end_values[percentiles[-1]]
-        # min_value = y_end_values[percentiles[0]]
-        # median_value = y_end_values[percentiles[1]]
-        # textstr = '\n'.join((
-        #     f'Значение портфеля сегодня: {today_value}',
-        #     f'Максимальное значение через {years} лет: {max_value}',
-        #     f'Минимальное значение через {years} лет: {min_value}',
-        #     f'Наиболее вероятное значение через {years} лет: {median_value}'
-        # ))
-        # props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        # self.ax.text(0.02, 0.85, textstr, transform=self.ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
         return self.ax

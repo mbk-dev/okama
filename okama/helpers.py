@@ -226,6 +226,8 @@ class Frame:
         """
         Computes the Conditional VaR (CVaR) of Series or DataFrame at a specified level.
         """
+        if not isinstance(level, int):
+            raise TypeError("Level should be an integer.")
         if isinstance(ror, pd.Series) or isinstance(ror, pd.DataFrame):
             is_beyond = ror <= ror.quantile(level / 100)  # mask: return is less than quantile
             return -ror[is_beyond].mean()
@@ -303,6 +305,25 @@ class Rebalance:
         # ror.sort_index(ascending=True, inplace=True)
         return ror
 
+    @staticmethod
+    def create_fn_list_ror_ts(ror: pd.DataFrame, *, period: str = 'Y') -> list:
+        """
+        Returns a list of functions of weights.
+        """
+        # Frame.weights_sum_is_one(weights)
+        initial_inv = 1000
+        fn_list = []
+        for x in ror.resample(period):
+            def ror_list_fn(weights, y=x):
+                df = y[1]  # select ror part of the grouped data
+                inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
+                assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
+                wealth_index_local = assets_wealth_indexes.sum(axis=1)
+                ror_local = wealth_index_local.pct_change()
+                return ror_local
+            fn_list.append(ror_list_fn)
+        return fn_list
+
 
 class Date:
     @staticmethod
@@ -319,4 +340,73 @@ class Date:
         else:
             raise TypeError('The period should be integer')
         return dt
+
+
+class Index:
+    @staticmethod
+    def tracking_difference(accumulated_return: pd.DataFrame) -> pd.DataFrame:
+        """
+        Returns tracking difference for a rate of return time series.
+        Assets are compared with the index or another benchmark.
+        Index should be in the first position (first column).
+        """
+        if accumulated_return.shape[1] < 2:
+            raise ValueError('At least 2 symbols should be provided to calculate Tracking Difference.')
+        initial_value = accumulated_return.iloc[0]
+        difference = accumulated_return.subtract(accumulated_return.iloc[:, 0], axis=0) / initial_value
+        difference.drop(difference.columns[0], axis=1, inplace=True)  # drop the first column (stock index data)
+        return difference
+
+    @staticmethod
+    def tracking_difference_annualized(tracking_diff: pd.DataFrame) -> pd.DataFrame:
+        """
+        Annualizes the values of tracking difference time series.
+        Annual values are available for periods of more than 12 months.
+        Returns for less than 12 months can't be annualized.
+        """
+        pwr = 12 / (1. + np.arange(tracking_diff.shape[0]))
+        y = abs(tracking_diff)
+        diff = np.sign(tracking_diff) * (y + 1.).pow(pwr, axis=0) - 1.
+        return diff.iloc[_MONTHS_PER_YEAR - 1:]  # returns for the first 11 months can't be annualized
+
+    @staticmethod
+    def tracking_error(ror: pd.DataFrame) -> pd.DataFrame:
+        """
+        Returns tracking error for a rate of return time series.
+        Assets are compared with the index or another benchmark.
+        Index should be in the first position (first column).
+        """
+        if ror.shape[1] < 2:
+            raise ValueError('At least 2 symbols should be provided to calculate Tracking Error.')
+        cumsum = ror.subtract(ror.iloc[:, 0], axis=0).pow(2, axis=0).cumsum()
+        cumsum.drop(cumsum.columns[0], axis=1, inplace=True)  # drop the first column (stock index data)
+        tracking_error = cumsum.divide((1. + np.arange(ror.shape[0])), axis=0).pow(0.5, axis=0)
+        return tracking_error * np.sqrt(12)
+
+    @staticmethod
+    def cov_cor(ror: pd.DataFrame, fn: str) -> pd.DataFrame:
+        """
+        Returns the accumulated correlation or covariance time series.
+        The period should be at least 12 months.
+        """
+        if ror.shape[1] < 2:
+            raise ValueError('At least 2 symbols should be provided.')
+        if fn not in ['cov', 'corr']:
+            raise ValueError('fn should be cor or cov')
+        cov_matrix_ts = getattr(ror.expanding(), fn)()
+        cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
+        cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
+        return cov_matrix_ts.iloc[_MONTHS_PER_YEAR:]
+
+    @staticmethod
+    def beta(ror: pd.DataFrame) -> pd.DataFrame:
+        """
+        Returns beta coefficient the rate of return time series.
+        Index (or benchmark) should be in the first position (first column).
+        The period should be at least 12 months.
+        """
+        cov = Index.cov_cor(ror, fn='cov')
+        std = ror.expanding().std().drop(columns=ror.columns[0])
+        std = std[_MONTHS_PER_YEAR:]
+        return cov / std
 

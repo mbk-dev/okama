@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 from .macro import Inflation
-from .helpers import Float, Frame, Rebalance, Date
+from .helpers import Float, Frame, Rebalance, Date, Index
 from .settings import default_ticker, assets_namespaces
 from .data import QueryData
 
@@ -215,6 +215,10 @@ class AssetList:
 
     @property
     def wealth_indexes(self) -> pd.DataFrame:
+        """
+        Wealth index time series for the assets and accumulated inflation.
+        Wealth index is obtained from the accumulated return multiplicated by the initial investments (1000).
+        """
         if hasattr(self, 'inflation'):
             df = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
         else:
@@ -239,25 +243,42 @@ class AssetList:
 
     @property
     def semideviation_monthly(self) -> pd.Series:
+        """
+        Returns semideviation monthly values for each asset (full period).
+        """
         return Frame.get_semideviation(self.ror)
 
     @property
     def semideviation_annual(self) -> float:
+        """
+        Returns semideviation annual values for each asset (full period).
+        """
         return Frame.get_semideviation(self.returns_ts) * 12 ** 0.5
 
     def get_var_historic(self, level: int = 5) -> pd.Series:
+        """
+        Calculates historic VAR for the assets (full period).
+        VAR levels could be set by level attribute (integer).
+        """
         return Frame.get_var_historic(self.ror, level)
 
     def get_cvar_historic(self, level: int = 5) -> pd.Series:
+        """
+        Calculates historic CVAR for the assets (full period).
+        CVAR levels could be set by level attribute (integer).
+        """
         return Frame.get_cvar_historic(self.ror, level)
 
     @property
     def drawdowns(self) -> pd.DataFrame:
+        """
+        Calculates drawdowns time series for the assets.
+        """
         return Frame.get_drawdowns(self.ror)
 
     def get_cagr(self, period: Union[str, int, None] = None) -> pd.Series:
         """
-        Calculates Compound Annual Growth Rate for a given period:
+        Calculates Compound Annual Growth Rate (CAGR) for a given period:
         None: full time
         'YTD': Year To Date compound rate of return (formally not a CAGR)
         Integer: several years
@@ -286,6 +307,9 @@ class AssetList:
 
     @property
     def annual_return_ts(self) -> pd.DataFrame:
+        """
+        Calculates annual rate of return time series for the assets.
+        """
         return Frame.get_annual_return_ts_from_monthly(self.ror)
 
     def describe(self, years: tuple = (1, 5, 10), tickers: bool = True) -> pd.DataFrame:
@@ -394,6 +418,9 @@ class AssetList:
 
     @property
     def mean_return(self) -> pd.Series:
+        """
+        Calculates mean return (arithmetic mean) for the assets.
+        """
         if hasattr(self, 'inflation'):
             df = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
         else:
@@ -404,7 +431,7 @@ class AssetList:
     @property
     def real_mean_return(self) -> pd.Series:
         """
-        Calculates real mean return (arithmetic mean).
+        Calculates real mean return (arithmetic mean) for the assets.
         """
         if hasattr(self, 'inflation'):
             df = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
@@ -532,6 +559,53 @@ class AssetList:
         else:
             raise TypeError(f'{period} is not a valid value for period')
         return mean_growth_rate
+
+    # index methods
+    @property
+    def tracking_difference(self):
+        """
+        Returns tracking difference for the rate of return of assets.
+        Assets are compared with the index or another benchmark.
+        Index should be in the first position (first column).
+        """
+        accumulated_return = Frame.get_wealth_indexes(self.ror)  # we don't need inflation here
+        return Index.tracking_difference(accumulated_return)
+
+    @property
+    def tracking_difference_annualized(self):
+        """
+        Annualizes the values of tracking difference time series.
+        Annual values are available for periods of more than 12 months.
+        Returns for less than 12 months can't be annualized.
+        """
+        return Index.tracking_difference_annualized(self.tracking_difference)
+
+    @property
+    def tracking_error(self):
+        """
+        Returns tracking error for the rate of return time series of assets.
+        Assets are compared with the index or another benchmark.
+        Index should be in the first position (first column).
+        """
+        return Index.tracking_error(self.ror)
+
+    @property
+    def index_corr(self):
+        """
+        Returns the accumulated correlation with the index (or benchmark) time series for the assets.
+        Index should be in the first position (first column).
+        The period should be at least 12 months.
+        """
+        return Index.cov_cor(self.ror, fn='corr')
+
+    @property
+    def index_beta(self):
+        """
+        Returns beta coefficient time series for the assets.
+        Index (or benchmark) should be in the first position (first column).
+        The period should be at least 12 months.
+        """
+        return Index.beta(self.ror)
 
 
 class Portfolio:

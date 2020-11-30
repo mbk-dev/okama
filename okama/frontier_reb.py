@@ -163,7 +163,7 @@ class EfficientFrontierReb(AssetList):
     @property
     def max_return(self) -> dict:
         """
-        Returns the weights and risk / CAGR of the maximum return portfolio.
+        Returns the weights and risk / CAGR of the maximum return portfolio point.
         """
         ror = self.ror
         period = self.reb_period

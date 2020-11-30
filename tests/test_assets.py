@@ -115,16 +115,33 @@ class TestAssetList:
     def test_paying_dividend_years(self):
         assert self.spy.dividend_paying_years.iloc[-2, 0] == 2
 
+    def test_tracking_difference_failing(self):
+        with pytest.raises(Exception, match='At least 2 symbols should be provided to calculate Tracking Difference.'):
+            self.spy.tracking_difference
+
+    def test_tracking_difference(self):
+        assert self.asset_list.tracking_difference.iloc[-1, 0] == approx(0.4832375074686104, rel=1e-2)
+
+    def test_tracking_difference_annualized(self):
+        assert self.asset_list.tracking_difference_annualized.iloc[-1, 0] == approx(0.438933, rel=1e-2)
+
+    def test_tracking_error(self):
+        assert self.asset_list.tracking_error.iloc[-1, 0] == approx(0.203372, rel=1e-2)
+
+    def test_index_corr(self):
+        assert self.asset_list.index_corr.iloc[-1, 0] == approx(-0.62177, rel=1e-2)
+
+    @mark.test
+    def test_index_beta(self):
+        assert self.asset_list.index_beta.iloc[-1, 0] == approx(-0.018598, rel=1e-2)
+
+
 @mark.portfolio
 def test_init_portfolio_failing():
     with pytest.raises(Exception, match=r'Number of tickers \(2\) should be equal to the weights number \(3\)'):
         Portfolio(symbols=['RUB.FX', 'MCFTR.INDX'], weights=[0.1, 0.2, 0.7]).symbols
     with pytest.raises(Exception, match='Weights sum is not equal to one.'):
         Portfolio(symbols=['RUB.FX', 'MCFTR.INDX'], weights=[0.1, 0.2]).symbols
-    # with pytest.raises(Exception, match=r'RUB is not in allowed assets namespaces*'):
-    #     Portfolio(symbols=['RUB.RUB'], weights=[1])
-    # # with pytest.raises(Exception):
-    # #     Portfolio(symbols=['XXXX.RE'], weights=[1])
 
 
 @mark.portfolio
