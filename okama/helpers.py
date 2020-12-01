@@ -427,7 +427,7 @@ class Index:
         The period should be at least 12 months.
         """
         cov = Index.cov_cor(ror, fn='cov')
-        std = ror.expanding().std().drop(columns=ror.columns[0])
-        std = std[_MONTHS_PER_YEAR:]
-        return cov / std
+        var = ror.expanding().var().drop(columns=ror.columns[0])
+        var = std[_MONTHS_PER_YEAR:]
+        return cov / var
 
