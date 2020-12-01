@@ -1,6 +1,6 @@
 import okama as ok
 
-ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
-curr = 'USD'
-four_assets = ok.EfficientFrontier(symbols=ls4, curr=curr, n_points=100)
-ok.Plots(ls4, curr=curr).plot_pair_ef()
+funds1 = ['MCFTR.INDX', '0177-71671092.PIF', '0890-94127385.PIF']
+curr = 'RUB'
+x1 = ok.AssetList(funds1, curr=curr)
+x1.tracking_difference_annualized

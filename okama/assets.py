@@ -598,12 +598,21 @@ class AssetList:
         """
         return Index.cov_cor(self.ror, fn='corr')
 
+    def index_rolling_corr(self, window=60):
+        """
+        Returns the rolling correlation with the index (or benchmark) time series for the assets.
+        Index should be in the first position (first column).
+        The period should be at least 12 months.
+        window - the rolling window size (default is 5 years).
+        """
+        return Index.rolling_cov_cor(self.ror, window=window, fn='corr')
+
     @property
     def index_beta(self):
         """
         Returns beta coefficient time series for the assets.
         Index (or benchmark) should be in the first position (first column).
-        The period should be at least 12 months.
+        Rolling window size should be at least 12 months.
         """
         return Index.beta(self.ror)
 

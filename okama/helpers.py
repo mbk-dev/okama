@@ -366,7 +366,8 @@ class Index:
         """
         pwr = 12 / (1. + np.arange(tracking_diff.shape[0]))
         y = abs(tracking_diff)
-        diff = np.sign(tracking_diff) * (y + 1.).pow(pwr, axis=0) - 1.
+        diff = (y + 1.).pow(pwr, axis=0) - 1.
+        diff = np.sign(tracking_diff) * diff
         return diff.iloc[_MONTHS_PER_YEAR - 1:]  # returns for the first 11 months can't be annualized
 
     @staticmethod
@@ -392,11 +393,31 @@ class Index:
         if ror.shape[1] < 2:
             raise ValueError('At least 2 symbols should be provided.')
         if fn not in ['cov', 'corr']:
-            raise ValueError('fn should be cor or cov')
+            raise ValueError('fn should be corr or cov')
         cov_matrix_ts = getattr(ror.expanding(), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
         cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
         return cov_matrix_ts.iloc[_MONTHS_PER_YEAR:]
+
+    @staticmethod
+    def rolling_cov_cor(ror: pd.DataFrame, window: int = 60, fn: str = 'corr') -> pd.DataFrame:
+        """
+        Returns the rolling correlation (or covariance) time series.
+        The period should be at least 12 months.
+        """
+        if ror.shape[1] < 2:
+            raise ValueError('At least 2 symbols should be provided.')
+        if fn not in ['cov', 'corr']:
+            raise ValueError('fn should be corr or cov')
+        if window < _MONTHS_PER_YEAR:
+            raise ValueError('window size should be at least 12 months')
+        if not isinstance(window, int):
+            raise ValueError('window should be an integer')
+        cov_matrix_ts = getattr(ror.rolling(window=window), fn)()
+        cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
+        cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
+        cov_matrix_ts.dropna(inplace=True)
+        return cov_matrix_ts
 
     @staticmethod
     def beta(ror: pd.DataFrame) -> pd.DataFrame:
