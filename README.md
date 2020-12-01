@@ -4,7 +4,7 @@
         <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
             alt="python"></a> &nbsp;
     <a href="https://pypi.org/project/okama/">
-        <img src="https://img.shields.io/badge/pypi-v0.87-brightgreen.svg"
+        <img src="https://img.shields.io/badge/pypi-v0.88-brightgreen.svg"
             alt="pypi"></a> &nbsp;
     <a href="https://opensource.org/licenses/MIT">
         <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg"
