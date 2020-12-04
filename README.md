@@ -116,7 +116,7 @@ ax = plt.gca()
 ax.plot(points.Risk, points.CAGR) 
 ```
 ![](../images/images/readmi07.jpg?raw=true) 
-* - rebalancing period is one year.  
+<nowiki>*</nowiki> - rebalancing period is one year.  
 
 ### 4. Get a Transition Map for allocations
 ```python
