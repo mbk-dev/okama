@@ -105,7 +105,7 @@ frontier.names
 ```
 ![](../images/images/readmi06.jpg?raw=true) 
 
-Get the Efficient Frontier points and plot the chart with the assets risk/CAGR points:
+Get the Efficient Frontier points for rebalanced portfolios and plot the chart with the assets risk/CAGR points:
 ```python
 points = frontier.ef_points
 
@@ -116,6 +116,7 @@ ax = plt.gca()
 ax.plot(points.Risk, points.CAGR) 
 ```
 ![](../images/images/readmi07.jpg?raw=true) 
+* - rebalancing period is one year.  
 
 ### 4. Get a Transition Map for allocations
 ```python
