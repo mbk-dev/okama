@@ -115,15 +115,15 @@ ok.Plots(ls, curr=curr).plot_assets(kind='cagr')  # plots the assets points on t
 ax = plt.gca()
 ax.plot(points.Risk, points.CAGR) 
 ```
-![](../images/images/readmi07.jpg?raw=true) 
-<nowiki>*</nowiki> - rebalancing period is one year.  
+![](../images/images/readmi07.jpg?raw=true)   
+<nowiki>*</nowiki> - *rebalancing period is one year*.
 
 ### 4. Get a Transition Map for allocations
 ```python
 ls = ['SPY.US', 'GLD.US', 'BND.US']
 map = ok.Plots(ls, curr='USD').plot_transition_map(cagr=False)
 ```
-![](../images/images/readmi08.jpg?v23-11-2020,raw=true "Transition map")
+![](../images/images/readmi08.jpg?v23-11-2020,raw=true "Transition map")  
 
 More examples are available in [Jupyter Notebooks](https://github.com/mbk-dev/okama/tree/master/notebooks).
 
