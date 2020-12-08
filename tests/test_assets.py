@@ -131,9 +131,23 @@ class TestAssetList:
     def test_index_corr(self):
         assert self.asset_list.index_corr.iloc[-1, 0] == approx(-0.62177, rel=1e-2)
 
-    @mark.test
     def test_index_beta(self):
-        assert self.asset_list.index_beta.iloc[-1, 0] == approx(-0.018598, rel=1e-2)
+        assert self.asset_list.index_beta.iloc[-1, 0] == approx(-0.705084, rel=1e-2)
+
+    def test_skewness(self):
+        assert self.asset_list.skewness.iloc[-1].sum() == approx(0.221851, rel=1e-2)
+
+    def test_rolling_skewness(self):
+        assert self.asset_list_lt.skewness_rolling(window=24).iloc[-1].sum() == approx(0.99836, rel=1e-2)
+
+    def test_kurtosis(self):
+        assert self.asset_list.kurtosis.iloc[-1].sum() == approx(-1.3480340, rel=1e-2)
+
+    def test_kurtosis_rolling(self):
+        assert self.asset_list_lt.kurtosis_rolling(window=24).iloc[-1].sum() == approx(1.373639, rel=1e-2)
+
+    def test_jarque_bera(self):
+        assert self.asset_list.jarque_bera.iloc[-1].sum() == approx(1.55029, rel=1e-2)
 
 
 @mark.portfolio
@@ -198,8 +212,23 @@ class TestPortfolio:
         assert self.portfolio.get_rolling_return(years=1).iloc[-1] == approx(0.13738896976831327, rel=1e-2)
 
     def test_forecast_monte_carlo_norm_wealth_indexes(self):
-        assert self.portfolio.forecast_monte_carlo_norm_wealth_indexes(years=1, n=1000).iloc[-1, :].mean() == approx(2121, rel=1e-1)
+        assert self.portfolio.forecast_monte_carlo_wealth_indexes(years=1, n=1000).iloc[-1, :].mean() == approx(2121, rel=1e-1)
 
     def test_forecast_monte_carlo_percentile_wealth_indexes(self):
         dic = self.portfolio.forecast_monte_carlo_percentile_wealth_indexes(years=1, n=100, percentiles=[50])
         assert dic[50] == approx(2121, rel=1e-1)
+
+    def test_skewness(self):
+        assert self.portfolio.skewness.iloc[-1].sum() == approx(1.939020, rel=1e-2)
+
+    def test_rolling_skewness(self):
+        assert self.portfolio.skewness_rolling(window=24).iloc[-1].sum() == approx(0.89413, rel=1e-2)
+
+    def test_kurtosis(self):
+        assert self.portfolio.kurtosis.iloc[-1].sum() == approx(10.24161, rel=1e-2)
+
+    def test_kurtosis_rolling(self):
+        assert self.portfolio.kurtosis_rolling(window=24).iloc[-1].sum() == approx(1.58931, rel=1e-2)
+
+    def test_jarque_bera(self):
+        assert self.portfolio.jarque_bera[0] == approx(257.3396, rel=1e-2)
