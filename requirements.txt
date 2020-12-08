@@ -1,4 +1,4 @@
-pandas
+pandas >= 0.25.0
 numpy<=1.19.3
 scipy
 matplotlib

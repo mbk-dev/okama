@@ -592,29 +592,83 @@ class AssetList:
     @property
     def index_corr(self):
         """
-        Returns the accumulated correlation with the index (or benchmark) time series for the assets.
+        Compute expanding correlation with the index (or benchmark) time series for the assets.
         Index should be in the first position (first column).
         The period should be at least 12 months.
         """
         return Index.cov_cor(self.ror, fn='corr')
 
-    def index_rolling_corr(self, window=60):
+    def index_rolling_corr(self, window: int = 60):
         """
-        Returns the rolling correlation with the index (or benchmark) time series for the assets.
+        Compute rolling correlation with the index (or benchmark) time series for the assets.
         Index should be in the first position (first column).
         The period should be at least 12 months.
-        window - the rolling window size (default is 5 years).
+        window - the rolling window size in months (default is 5 years).
         """
         return Index.rolling_cov_cor(self.ror, window=window, fn='corr')
 
     @property
     def index_beta(self):
         """
-        Returns beta coefficient time series for the assets.
+        Compute beta coefficient time series for the assets.
         Index (or benchmark) should be in the first position (first column).
         Rolling window size should be at least 12 months.
         """
         return Index.beta(self.ror)
+
+    # distributions
+    @property
+    def skewness(self):
+        """
+        Compute expanding skewness of the return time series for each asset.
+        For normally distributed data, the skewness should be about zero.
+        A skewness value greater than zero means that there is more weight in the right tail of the distribution.
+        """
+        return Frame.skewness(self.ror)
+
+    def skewness_rolling(self, window: int = 60):
+        """
+        Compute rolling skewness of the return time series for each asset.
+        For normally distributed data, the skewness should be about zero.
+        A skewness value greater than zero means that there is more weight in the right tail of the distribution.
+
+        window - the rolling window size in months (default is 5 years).
+        The window size should be at least 12 months.
+        """
+        return Frame.skewness_rolling(self.ror, window=window)
+
+    @property
+    def kurtosis(self):
+        """
+        Calculate expanding Fisher (normalized) kurtosis time series for each asset.
+        Kurtosis is the fourth central moment divided by the square of the variance.
+        Kurtosis should be close to zero for normal distribution.
+        """
+        return Frame.kurtosis(self.ror)
+
+    def kurtosis_rolling(self, window: int = 60):
+        """
+        Calculate rolling Fisher (normalized) kurtosis time series for each asset.
+        Kurtosis is the fourth central moment divided by the square of the variance.
+        Kurtosis should be close to zero for normal distribution.
+
+        window - the rolling window size in months (default is 5 years).
+        The window size should be at least 12 months.
+        """
+        return Frame.kurtosis_rolling(self.ror, window=window)
+
+    @property
+    def jarque_bera(self):
+        """
+        Jarque-Bera is a test for normality.
+        It shows whether the returns have the skewness and kurtosis matching a normal distribution.
+
+        Returns:
+            (The test statistic, The p-value for the hypothesis test)
+            Low statistic numbers correspond to normal distribution.
+        TODO: implement for daily values
+        """
+        return Frame.jarque_bera(self.ror)
 
 
 class Portfolio:
@@ -683,6 +737,11 @@ class Portfolio:
 
     @property
     def returns_ts(self) -> pd.Series:
+        """
+        Rate of return time series for portfolio.
+        Returns:
+            pd.Series
+        """
         s = Frame.get_portfolio_return_ts(self.weights, self._ror)
         s.rename('portfolio', inplace=True)
         return s
@@ -947,11 +1006,7 @@ class Portfolio:
         df.index.rename('years', inplace=True)
         return df
 
-    def forecast_monte_carlo_norm_returns(self, years: int = 5, n: int = 100) -> pd.DataFrame:
-        """
-        Generates N random returns time series with normal distribution.
-        Forecast period should not exceed 1/2 of portfolio history period length.
-        """
+    def _forecast_preparation(self, years):
         max_period_years = round(self.period_length / 2)
         if max_period_years < 1:
             raise ValueError(f'Time series does not have enough history to forecast.'
@@ -964,32 +1019,55 @@ class Portfolio:
         start_period = self.last_date.to_period('M')
         end_period = self.last_date.to_period('M') + period_months - 1
         ts_index = pd.period_range(start_period, end_period, freq='M')
+        return period_months, ts_index
+
+    def forecast_monte_carlo_returns(self, distr: str = 'norm', years: int = 5, n: int = 100) -> pd.DataFrame:
+        """
+        Generates N random returns time series with normal or lognormal distributions.
+        Forecast period should not exceed 1/2 of portfolio history period length.
+        """
+        period_months, ts_index = self._forecast_preparation(years)
         # random returns
-        random_returns = np.random.normal(self.mean_return_monthly, self.risk_monthly, (period_months, n))
+        if distr == 'norm':
+            random_returns = np.random.normal(self.mean_return_monthly, self.risk_monthly, (period_months, n))
+        elif distr == 'lognorm':
+            ln_ret = np.log(self.returns_ts + 1.)
+            mu = ln_ret.mean()  # arithmetic mean of logarithmic returns
+            std = ln_ret.std()  # standard deviation of logarithmic returns
+            random_returns = np.random.lognormal(mu, std, size=(period_months, n)) - 1.
+        else:
+            raise ValueError('distr should be "norm" (default) or "lognormal".')
         return_ts = pd.DataFrame(data=random_returns, index=ts_index)
         return return_ts
 
-    def forecast_monte_carlo_norm_wealth_indexes(self, years: int = 5, n: int = 100) -> pd.DataFrame:
+    def forecast_monte_carlo_wealth_indexes(self, distr: str = 'norm', years: int = 5, n: int = 100) -> pd.DataFrame:
         """
-        Generates N future wealth indexes with normally distributed monthly returns for a given period.
+        Generates N future random wealth indexes with monthly returns for a given period.
+        Random distribution could be normal or lognormal.
         """
-        return_ts = self.forecast_monte_carlo_norm_returns(years=years, n=n)
+        if distr not in ['norm', 'lognorm']:
+            raise ValueError('distr should be "norm" (default) or "lognormal".')
+        return_ts = self.forecast_monte_carlo_returns(distr=distr, years=years, n=n)
         first_value = self.wealth_index['portfolio'].values[-1]
         forecast_wealth = Frame.get_wealth_indexes(return_ts, first_value)
         return forecast_wealth
 
     def forecast_monte_carlo_percentile_wealth_indexes(self,
+                                                       distr: str = 'norm',
                                                        years: int = 5,
                                                        percentiles: List[int] = [10, 50, 90],
                                                        today_value: Optional[int] = None,
                                                        n: int = 1000,
                                                        ) -> Dict[int, float]:
         """
-        Calculates the final values of N forecasted wealth indexes with normal distribution assumption.
-        Final values are taken for given percentiles.
-        today_value - the value of portfolio today (before forecast period)
+        Calculates the final values of N forecasted random wealth indexes.
+        Random distribution could be normal or lognormal.
+        Final values are taken for a given percentiles list.
+        today_value - the value of portfolio today (before forecast period).
         """
-        wealth_indexes = self.forecast_monte_carlo_norm_wealth_indexes(years=years, n=n)
+        if distr not in ['norm', 'lognorm']:
+            raise ValueError('distr should be "norm" (default) or "lognormal".')
+        wealth_indexes = self.forecast_monte_carlo_wealth_indexes(distr=distr, years=years, n=n)
         results = dict()
         for percentile in percentiles:
             value = wealth_indexes.iloc[-1, :].quantile(percentile / 100)
@@ -998,3 +1076,56 @@ class Portfolio:
             modifier = today_value / self.wealth_index['portfolio'].values[-1]
             results.update((x, y * modifier)for x, y in results.items())
         return results
+
+    # distributions
+    @property
+    def skewness(self):
+        """
+        Compute expanding skewness of the return time series.
+        For normally distributed data, the skewness should be about zero.
+        A skewness value greater than zero means that there is more weight in the right tail of the distribution.
+        """
+        return Frame.skewness(self.returns_ts)
+
+    def skewness_rolling(self, window: int = 60):
+        """
+        Compute rolling skewness of the return time series.
+        For normally distributed data, the skewness should be about zero.
+        A skewness value greater than zero means that there is more weight in the right tail of the distribution.
+
+        window - the rolling window size in months (default is 5 years).
+        The window size should be at least 12 months.
+        """
+        return Frame.skewness_rolling(self.returns_ts, window=window)
+
+    @property
+    def kurtosis(self):
+        """
+        Calculate expanding Fisher (normalized) kurtosis time series for portfolio returns.
+        Kurtosis is the fourth central moment divided by the square of the variance.
+        Kurtosis should be close to zero for normal distribution.
+        """
+        return Frame.kurtosis(self.returns_ts)
+
+    def kurtosis_rolling(self, window: int = 60):
+        """
+        Calculate rolling Fisher (normalized) kurtosis time series for portfolio returns.
+        Kurtosis is the fourth central moment divided by the square of the variance.
+        Kurtosis should be close to zero for normal distribution.
+
+        window - the rolling window size in months (default is 5 years).
+        The window size should be at least 12 months.
+        """
+        return Frame.kurtosis_rolling(self.returns_ts, window=window)
+
+    @property
+    def jarque_bera(self):
+        """
+        Jarque-Bera is a test for normality.
+        It shows whether the returns have the skewness and kurtosis matching a normal distribution.
+
+        Returns:
+            (The test statistic, The p-value for the hypothesis test)
+            Low statistic numbers correspond to normal distribution.
+        """
+        return Frame.jarque_bera(self.returns_ts)

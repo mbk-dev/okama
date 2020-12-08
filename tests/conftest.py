@@ -15,6 +15,8 @@ def _init_asset(request):
 def _init_asset_list(request) -> None:
     request.cls.asset_list = AssetList(symbols=['RUB.FX', 'MCFTR.INDX'], curr='RUB',
                                        first_date='2019-01', last_date='2020-01', inflation=True)
+    request.cls.asset_list_lt = AssetList(symbols=['RUB.FX', 'MCFTR.INDX'], curr='RUB',
+                                       first_date='2003-03', last_date='2020-01', inflation=True)
     request.cls.currencies = AssetList(['RUBUSD.FX', 'EURUSD.FX', 'CNYUSD.FX'], curr='USD',
                                        first_date='2019-01', last_date='2020-01', inflation=True)
     request.cls.spy = AssetList(first_date='2000-01', last_date='2002-01', inflation=True)

@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='okama',
-    version='0.88',
+    version='0.89',
     license='MIT',
     description='Modern Portfolio Theory (MPT) Python package',
     long_description=long_description,
@@ -21,7 +21,7 @@ setup(
     keywords=['finance', 'investments', 'efficient frontier', 'python', 'optimization'],
     packages=['okama', 'tests'],
     package_data={'tests': ['*.csv']},
-    install_requires=['pandas',
+    install_requires=['pandas >= 0.25.0',
                       'numpy<=1.19.3',
                       'scipy',
                       'matplotlib',

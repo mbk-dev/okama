@@ -3,8 +3,16 @@ from typing import Union
 
 import pandas as pd
 import numpy as np
+import scipy.stats
 
 _MONTHS_PER_YEAR = 12
+
+
+def check_rolling_window(window):
+    if window < _MONTHS_PER_YEAR:
+        raise ValueError('window size should be at least 12 months')
+    if not isinstance(window, int):
+        raise ValueError('window should be an integer')
 
 
 class Float:
@@ -115,7 +123,7 @@ class Frame:
         """
         if ror.shape[0] < 12:
             return pd.Series({x: None for x in ror.columns})  # CAGR is not defined for time periods < 1 year
-        return ((ror + 1.).prod()) ** (12 / ror.shape[0]) - 1
+        return ((ror + 1.).prod()) ** (12 / ror.shape[0]) - 1.
 
     @staticmethod
     def get_compound_return(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
@@ -132,7 +140,7 @@ class Frame:
         return ror_monthly.resample('A').apply(lambda x: np.prod(x + 1.) - 1)
 
     @staticmethod
-    def get_wealth_indexes(ror: pd.DataFrame, first_value: float = 1000.) -> pd.Series:
+    def get_wealth_indexes(ror: Union[pd.Series, pd.DataFrame], first_value: float = 1000.) -> Union[pd.Series, pd.DataFrame]:
         """
         Returns wealth indexes for a list of assets (or for portfolio).
         Works also with pd.Series inputs.
@@ -258,6 +266,65 @@ class Frame:
         elif position == 'last':
             df = df[cols + selected_columns]
         return df
+
+    @staticmethod
+    def skewness(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
+        """
+        Calculate expanding skewness.
+        The shape of time series should be at least 12. In the opposite case empty time series is returned.
+        TODO: implement skewtest (from scipy)
+        """
+        sk = ror.expanding(min_periods=1).skew()
+        return sk.iloc[_MONTHS_PER_YEAR:]
+
+    @staticmethod
+    def skewness_rolling(ror: Union[pd.DataFrame, pd.Series], window: int = 60) -> Union[pd.Series, float]:
+        """
+        Calculate rolling skewness.
+        Window should be at least 12 months.
+        """
+        check_rolling_window(window)
+        sk = ror.rolling(window=window).skew()
+        sk.dropna(inplace=True)
+        return sk
+
+    @staticmethod
+    def kurtosis(ror: pd.Series):
+        """
+        Calculate expanding Fisher (normalized) kurtosis time series.
+        Kurtosis should be close to zero for normal distribution.
+        """
+        kt = ror.expanding(min_periods=1).kurt()
+        return kt.iloc[_MONTHS_PER_YEAR:]
+
+    @staticmethod
+    def kurtosis_rolling(ror: pd.Series, window: int = 60):
+        """
+        Calculate rolling Fisher (normalized) kurtosis time series.
+        Kurtosis should be close to zero for normal distribution.
+        Window should be at least 12 months.
+        """
+        check_rolling_window(window)
+        kt = ror.rolling(window=window).kurt()
+        kt.dropna(inplace=True)
+        return kt
+
+    @staticmethod
+    def jarque_bera(ror: Union[pd.Series, pd.DataFrame]) -> Union[tuple, pd.DataFrame]:
+        """
+        Jarque-Bera goodness of fit test on time series.
+        The Jarque-Bera test shows whether the returns have the skewness and kurtosis matching a normal distribution.
+
+        Returns:
+            (The test statistic, The p-value for the hypothesis test)
+            Low statistic numbers correspond to normal distribution.
+        """
+        if isinstance(ror, pd.DataFrame):
+            return ror.apply(scipy.stats.jarque_bera, axis=0)
+        elif isinstance(ror, pd.Series):
+            return scipy.stats.jarque_bera(ror)[0], scipy.stats.jarque_bera(ror)[1]
+        else:
+            raise ValueError('ror should be pd.DataFrame or pd.Series')
 
 
 class Rebalance:
@@ -409,10 +476,7 @@ class Index:
             raise ValueError('At least 2 symbols should be provided.')
         if fn not in ['cov', 'corr']:
             raise ValueError('fn should be corr or cov')
-        if window < _MONTHS_PER_YEAR:
-            raise ValueError('window size should be at least 12 months')
-        if not isinstance(window, int):
-            raise ValueError('window should be an integer')
+        check_rolling_window(window)
         cov_matrix_ts = getattr(ror.rolling(window=window), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
         cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
@@ -428,6 +492,6 @@ class Index:
         """
         cov = Index.cov_cor(ror, fn='cov')
         var = ror.expanding().var().drop(columns=ror.columns[0])
-        var = std[_MONTHS_PER_YEAR:]
+        var = var[_MONTHS_PER_YEAR:]
         return cov / var
 
