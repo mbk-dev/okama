@@ -129,8 +129,7 @@ More examples are available in [Jupyter Notebooks](https://github.com/mbk-dev/ok
 
 ## Communication
 
-To communicate with the Okama developer community, create a Github issue or use the Okama mailing list. Please be respectful in your communications with the Okama community.
-For basic usage questions (e.g., "_Is XXX currency supported by okama?_"), please use [the community mailing list](https://groups.google.com/g/okama_mpt) instead.
+For basic usage questions (e.g., "_Is XXX currency supported by okama?_") and for sharing ideas please use [Discussions](https://github.com/mbk-dev/okama/discussions/3).
 
 ## Issues
 
