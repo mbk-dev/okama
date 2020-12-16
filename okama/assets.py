@@ -2,6 +2,8 @@ from typing import Union, Optional, List, Tuple, Dict
 
 import pandas as pd
 import numpy as np
+import scipy.stats
+from matplotlib import pyplot as plt
 
 from .macro import Inflation
 from .helpers import Float, Frame, Rebalance, Date, Index
@@ -620,7 +622,7 @@ class AssetList:
     @property
     def skewness(self):
         """
-        Compute expanding skewness of the return time series for each asset.
+        Compute expanding skewness of the return time series for each asset returns.
         For normally distributed data, the skewness should be about zero.
         A skewness value greater than zero means that there is more weight in the right tail of the distribution.
         """
@@ -628,7 +630,7 @@ class AssetList:
 
     def skewness_rolling(self, window: int = 60):
         """
-        Compute rolling skewness of the return time series for each asset.
+        Compute rolling skewness of the return time series for each asset returns.
         For normally distributed data, the skewness should be about zero.
         A skewness value greater than zero means that there is more weight in the right tail of the distribution.
 
@@ -640,7 +642,7 @@ class AssetList:
     @property
     def kurtosis(self):
         """
-        Calculate expanding Fisher (normalized) kurtosis time series for each asset.
+        Calculate expanding Fisher (normalized) kurtosis time series for each asset returns.
         Kurtosis is the fourth central moment divided by the square of the variance.
         Kurtosis should be close to zero for normal distribution.
         """
@@ -648,7 +650,7 @@ class AssetList:
 
     def kurtosis_rolling(self, window: int = 60):
         """
-        Calculate rolling Fisher (normalized) kurtosis time series for each asset.
+        Calculate rolling Fisher (normalized) kurtosis time series for each asset returns.
         Kurtosis is the fourth central moment divided by the square of the variance.
         Kurtosis should be close to zero for normal distribution.
 
@@ -660,15 +662,24 @@ class AssetList:
     @property
     def jarque_bera(self):
         """
-        Jarque-Bera is a test for normality.
+        Perform Jarque-Bera test for normality of assets returns historical data.
         It shows whether the returns have the skewness and kurtosis matching a normal distribution.
 
         Returns:
             (The test statistic, The p-value for the hypothesis test)
             Low statistic numbers correspond to normal distribution.
-        TODO: implement for daily values
         """
-        return Frame.jarque_bera(self.ror)
+        return Frame.jarque_bera_dataframe(self.ror)
+
+    def kstest(self, distr: str = 'norm') -> dict:
+        """
+        Perform Kolmogorov-Smirnov test for goodness of fit the asset returns to a given distribution.
+
+        Returns:
+            (The test statistic, The p-value for the hypothesis test)
+            Low statistic numbers correspond to normal distribution.
+        """
+        return Frame.kstest_dataframe(self.ror, distr=distr)
 
 
 class Portfolio:
@@ -978,42 +989,91 @@ class Portfolio:
         x['weights'] = self.weights
         return x
 
-    def get_rolling_return(self, years: int = 1) -> pd.Series:
+    def get_rolling_cagr(self, years: int = 1) -> pd.Series:
         """
-        Rolling portfolio rate of return time series.
+        Rolling portfolio CAGR (annualized rate of return) time series.
+        TODO: check if self.period_length is below 1 year
         """
         rolling_return = (self.returns_ts + 1.).rolling(12 * years).apply(np.prod, raw=True) ** (1 / years) - 1.
         rolling_return.dropna(inplace=True)
         return rolling_return
 
-    def forecast_from_history(self, percentiles: List[int] = [10, 50, 90]) -> pd.DataFrame:
+    # Forecasting
+
+    def _test_forecast_period(self, years):
+        max_period_years = round(self.period_length / 2)
+        if max_period_years < 1:
+            raise ValueError(f'Time series does not have enough history to forecast. '
+                             f'Period length is {self.period_length:.2f} years. At least 2 years are required.')
+        if not isinstance(years, int) or years == 0:
+            raise ValueError('years must be an integer number (not equal to zero).')
+        if years > max_period_years:
+            raise ValueError(f'Forecast period {years} years is not credible. '
+                             f'It should not exceed 1/2 of portfolio history period length {self.period_length / 2} years')
+
+    def percentile_inverse(self, distr: str = 'norm', years: int = 1, score: float = 0, n: Optional[int] = None) -> float:
         """
-        Time series of future portfolio rate of returns for a given percentiles.
-        Each percentile is calculated for a period range from 1 year to max forecast period
-        from historic data rolling returns.
-        Forecast max period is limited with half history of period length.
+        Compute the percentile rank of a score relative to an array of CAGR values.
+        A percentile_inverse of, for example, 80% means that 80% of the scores in distr are below the given score.
+
+        Args:
+            distr: norm, lognorm, hist - distribution type (normal or lognormal) or hist for CAGR array from history
+            years: period length when CAGR is calculated
+            score: score that is compared to the elements in CAGR array.
+            n: number of random time series (for 'norm' or 'lognorm' only)
+
+        Returns:
+            Percentile-position of score (0-100) relative to distr.
         """
-        max_period = round(self.period_length / 2)
-        if max_period < 1:
-            raise Exception(f'Time series does not have enough history to forecast. '
-                            f'Period length is {self.period_length:.2f} years. At least 2 years are required.')
-        period_range = range(1, max_period + 1)
+        if distr == 'hist':
+            cagr_distr = self.get_rolling_cagr(years)
+        elif distr in ['norm', 'lognorm']:
+            if not n:
+                n = 1000
+            cagr_distr = self._get_monte_carlo_cagr_distribution(distr=distr, years=years, n=n)
+        else:
+            raise ValueError('distr should be "norm", "lognormal" or "hist".')
+        return scipy.stats.percentileofscore(cagr_distr, score, kind='rank')
+
+    def percentile_from_history(self, years: int, percentiles: List[int] = [10, 50, 90]) -> pd.DataFrame:
+        """
+        Calculate given percentiles for portfolio CAGR (annualized rolling returns) distribution from the historical data.
+        Each percentile is calculated for a period range from 1 year to 'years'.
+
+        years - max window size for rolling CAGR (limited with half history of period length).
+        percentiles - list of percentiles to be calculated
+        """
+        self._test_forecast_period(years)
+        period_range = range(1, years + 1)
         returns_dict = dict()
         for percentile in percentiles:
-            percentile_returns_list = [self.get_rolling_return(years).quantile(percentile / 100) for years in period_range]
-            returns_dict.update({str(percentile): percentile_returns_list})
+            percentile_returns_list = [self.get_rolling_cagr(years).quantile(percentile / 100) for years in period_range]
+            returns_dict.update({percentile: percentile_returns_list})
         df = pd.DataFrame(returns_dict, index=list(period_range))
         df.index.rename('years', inplace=True)
         return df
 
-    def _forecast_preparation(self, years):
-        max_period_years = round(self.period_length / 2)
-        if max_period_years < 1:
-            raise ValueError(f'Time series does not have enough history to forecast.'
-                             f'Period length is {self.period_length:.2f} years. At least 2 years are required.')
-        if years > max_period_years:
-            raise ValueError(f'Forecast period {years} years is not credible. '
-                             f'It should not exceed 1/2 of portfolio history period length {self.period_length / 2} years')
+    def forecast_wealth_history(self, years: int = 1, percentiles: List[int] = [10, 50, 90]) -> pd.DataFrame:
+        """
+        Compute accumulated wealth for each CAGR derived by 'percentile_from_history' method.
+        CAGRs are taken from the historical data.
+
+        Initial portfolio wealth is adjusted to the last known historical value (from wealth_index). It is useful
+        for a chart with historical wealth index and forecasted values.
+
+        Args:
+            years:
+            percentiles:
+
+        Returns:
+            Dataframe of percentiles for period range from 1 to 'years'
+        """
+        first_value = self.wealth_index['portfolio'].values[-1]
+        percentile_returns = self.percentile_from_history(years=years, percentiles=percentiles)
+        return first_value * (percentile_returns + 1.).pow(percentile_returns.index.values, axis=0)
+
+    def _forecast_preparation(self, years: int):
+        self._test_forecast_period(years)
         period_months = years * 12
         # make periods index where the shape is max_period
         start_period = self.last_date.to_period('M')
@@ -1021,9 +1081,9 @@ class Portfolio:
         ts_index = pd.period_range(start_period, end_period, freq='M')
         return period_months, ts_index
 
-    def forecast_monte_carlo_returns(self, distr: str = 'norm', years: int = 5, n: int = 100) -> pd.DataFrame:
+    def forecast_monte_carlo_returns(self, distr: str = 'norm', years: int = 1, n: int = 100) -> pd.DataFrame:
         """
-        Generates N random returns time series with normal or lognormal distributions.
+        Generates N random monthly returns time series with normal or lognormal distributions.
         Forecast period should not exceed 1/2 of portfolio history period length.
         """
         period_months, ts_index = self._forecast_preparation(years)
@@ -1031,19 +1091,20 @@ class Portfolio:
         if distr == 'norm':
             random_returns = np.random.normal(self.mean_return_monthly, self.risk_monthly, (period_months, n))
         elif distr == 'lognorm':
-            ln_ret = np.log(self.returns_ts + 1.)
-            mu = ln_ret.mean()  # arithmetic mean of logarithmic returns
-            std = ln_ret.std()  # standard deviation of logarithmic returns
-            random_returns = np.random.lognormal(mu, std, size=(period_months, n)) - 1.
+            std, loc, scale = scipy.stats.lognorm.fit(self.returns_ts)
+            random_returns = scipy.stats.lognorm(std, loc=loc, scale=scale).rvs(size=[period_months, n])
         else:
             raise ValueError('distr should be "norm" (default) or "lognormal".')
         return_ts = pd.DataFrame(data=random_returns, index=ts_index)
         return return_ts
 
-    def forecast_monte_carlo_wealth_indexes(self, distr: str = 'norm', years: int = 5, n: int = 100) -> pd.DataFrame:
+    def forecast_monte_carlo_wealth_indexes(self, distr: str = 'norm', years: int = 1, n: int = 100) -> pd.DataFrame:
         """
-        Generates N future random wealth indexes with monthly returns for a given period.
+        Generates N future random wealth indexes.
         Random distribution could be normal or lognormal.
+
+        First value for the forecasted wealth indexes is the last historical portfolio index value. It is useful
+        for a chart with historical wealth index and forecasted values.
         """
         if distr not in ['norm', 'lognorm']:
             raise ValueError('distr should be "norm" (default) or "lognormal".')
@@ -1052,30 +1113,128 @@ class Portfolio:
         forecast_wealth = Frame.get_wealth_indexes(return_ts, first_value)
         return forecast_wealth
 
-    def forecast_monte_carlo_percentile_wealth_indexes(self,
-                                                       distr: str = 'norm',
-                                                       years: int = 5,
-                                                       percentiles: List[int] = [10, 50, 90],
-                                                       today_value: Optional[int] = None,
-                                                       n: int = 1000,
-                                                       ) -> Dict[int, float]:
+    def _get_monte_carlo_cagr_distribution(self,
+                                           distr: str = 'norm',
+                                           years: int = 1,
+                                           n: int = 100,
+                                           ) -> pd.Series:
         """
-        Calculates the final values of N forecasted random wealth indexes.
+        Generate random CAGR distribution.
+        CAGR is calculated for each of N future random returns time series.
         Random distribution could be normal or lognormal.
-        Final values are taken for a given percentiles list.
-        today_value - the value of portfolio today (before forecast period).
         """
         if distr not in ['norm', 'lognorm']:
             raise ValueError('distr should be "norm" (default) or "lognormal".')
-        wealth_indexes = self.forecast_monte_carlo_wealth_indexes(distr=distr, years=years, n=n)
+        return_ts = self.forecast_monte_carlo_returns(distr=distr, years=years, n=n)
+        return Frame.get_cagr(return_ts)
+
+    def forecast_monte_carlo_cagr(self,
+                                  distr: str = 'norm',
+                                  years: int = 1,
+                                  percentiles: List[int] = [10, 50, 90],
+                                  n: int = 10000,
+                                  ) -> pd.Series:
+        """
+        Calculate percentiles for forecasted CAGR distribution.
+        CAGR is calculated for each of N future random returns time series.
+        Random distribution could be normal or lognormal.
+        """
+        if distr not in ['norm', 'lognorm']:
+            raise ValueError('distr should be "norm" (default) or "lognormal".')
+        cagr_distr = self._get_monte_carlo_cagr_distribution(distr=distr, years=years, n=n)
         results = dict()
         for percentile in percentiles:
-            value = wealth_indexes.iloc[-1, :].quantile(percentile / 100)
+            value = cagr_distr.quantile(percentile / 100)
             results.update({percentile: value})
+        return results
+
+    def forecast_wealth(self,
+                        distr: str = 'norm',
+                        years: int = 1,
+                        percentiles: List[int] = [10, 50, 90],
+                        today_value: Optional[int] = None,
+                        n: int = 1000,
+                        ) -> Dict[int, float]:
+        """
+        Calculate percentiles of forecasted random accumulated wealth distribution.
+        Random distribution could be normal or lognormal.
+
+        today_value - the value of portfolio today (before forecast period). If today_value is None
+        the last value of the historical wealth indexes is taken.
+        """
+        if distr == 'hist':
+            results = self.forecast_wealth_history(years=years, percentiles=percentiles).iloc[-1].to_dict()
+        elif distr in ['norm', 'lognorm']:
+            results = dict()
+            wealth_indexes = self.forecast_monte_carlo_wealth_indexes(distr=distr, years=years, n=n)
+            for percentile in percentiles:
+                value = wealth_indexes.iloc[-1, :].quantile(percentile / 100)
+                results.update({percentile: value})
+        else:
+            raise ValueError('distr should be "norm", "lognormal" or "hist".')
         if today_value:
             modifier = today_value / self.wealth_index['portfolio'].values[-1]
             results.update((x, y * modifier)for x, y in results.items())
         return results
+
+    def plot_forecast(self,
+                      distr: str = 'norm',
+                      years: int = 5,
+                      percentiles: List[int] = [10, 50, 90],
+                      today_value: Optional[int] = None,
+                      n: int = 1000,
+                      figsize: Optional[tuple] = None,
+                      ):
+        """
+        Plots forecasted ranges of wealth indexes (lines) for a given set of percentiles.
+
+        distr - the distribution model type:
+            norm - normal distribution
+            lognorm - lognormal distribution
+            hist - percentiles are taken from historical data
+        today_value - the value of portfolio today (before forecast period)
+        n - number of random wealth time series used to calculate percentiles (not needed if distr='hist')
+        """
+        wealth = self.wealth_index
+        x1 = self.last_date
+        x2 = x1.replace(year=x1.year + years)
+        y_start_value = wealth['portfolio'].iloc[-1]
+        y_end_values = self.forecast_wealth(distr=distr,
+                                            years=years,
+                                            percentiles=percentiles,
+                                            n=n)
+        if today_value:
+            modifier = today_value / y_start_value
+            wealth *= modifier
+            y_start_value = y_start_value * modifier
+            y_end_values.update((x, y * modifier)for x, y in y_end_values.items())
+        fig, ax = plt.subplots(figsize=figsize)
+        ax.plot(wealth.index.to_timestamp(), wealth['portfolio'], linewidth=1, label='Historical data')
+        for percentile in percentiles:
+            x, y = [x1, x2], [y_start_value, y_end_values[percentile]]
+            if percentile == 50:
+                ax.plot(x, y, color='blue', linestyle='-', linewidth=2, label='Median')
+            else:
+                ax.plot(x, y, linestyle='dashed', linewidth=1, label=f'Percentile {percentile}')
+        ax.legend(loc='upper left')
+        return ax
+
+    def plot_forecast_monte_carlo(self,
+                                  distr: str = 'norm',
+                                  years: int = 1,
+                                  n: int = 20,
+                                  figsize: Optional[tuple] = None,
+                                  ):
+        """
+        Plots N random wealth indexes and historical wealth index.
+        Forecasted indexes are generated accorded to a given distribution (Monte Carlo simulation).
+        Normal and lognormal distributions could be used for Monte Carlo simulation.
+        """
+        s1 = self.wealth_index
+        s2 = self.forecast_monte_carlo_wealth_indexes(distr=distr, years=years, n=n)
+        s1['portfolio'].plot(legend=None, figsize=figsize)
+        for n in s2:
+            s2[n].plot(legend=None)
 
     # distributions
     @property
@@ -1121,11 +1280,62 @@ class Portfolio:
     @property
     def jarque_bera(self):
         """
-        Jarque-Bera is a test for normality.
+        Performs Jarque-Bera test for normality.
         It shows whether the returns have the skewness and kurtosis matching a normal distribution.
 
         Returns:
             (The test statistic, The p-value for the hypothesis test)
             Low statistic numbers correspond to normal distribution.
         """
-        return Frame.jarque_bera(self.returns_ts)
+        return Frame.jarque_bera_series(self.returns_ts)
+
+    def kstest(self, distr: str = 'norm') -> dict:
+        """
+        Performs Kolmogorov-Smirnov test on portfolio returns and evaluate goodness of fit.
+        Test works with normal and lognormal distributions.
+
+        Returns:
+            (The test statistic, The p-value for the hypothesis test)
+        """
+        return Frame.kstest_series(self.returns_ts, distr=distr)
+
+    def plot_percentiles_fit(self, distr: str = 'norm', figsize: Optional[tuple] = None):
+        """
+        Generates a probability plot of portfolio returns against percentiles of a specified
+        theoretical distribution (the normal distribution by default).
+        Works with normal and lognormal distributions.
+        """
+        plt.figure(figsize=figsize)
+        if distr == 'norm':
+            scipy.stats.probplot(self.returns_ts, dist=distr, plot=plt)
+        elif distr == 'lognorm':
+            scipy.stats.probplot(self.returns_ts, sparams=(scipy.stats.lognorm.fit(self.returns_ts)), dist=distr, plot=plt)
+        else:
+            raise ValueError('distr should be "norm" (default) or "lognormal".')
+        plt.show()
+
+    def plot_hist_fit(self, distr: str = 'norm', bins: int = None):
+        """
+        Plots historical distribution histogram and theoretical PDF (Probability Distribution Function).
+        Lognormal and normal distributions could be used.
+        """
+        data = self.returns_ts
+        # Plot the histogram
+        plt.hist(data, bins=bins, density=True, alpha=0.6, color='g')
+        # Plot the PDF.Probability Density Function
+        xmin, xmax = plt.xlim()
+        x = np.linspace(xmin, xmax, 100)
+        if distr == 'norm':  # Generate PDF
+            mu, std = scipy.stats.norm.fit(data)
+            p = scipy.stats.norm.pdf(x, mu, std)
+        elif distr == 'lognorm':
+            std, loc, scale = scipy.stats.lognorm.fit(data)
+            mu = np.log(scale)
+            p = scipy.stats.lognorm.pdf(x, std, loc, scale)
+        else:
+            raise ValueError('distr should be "norm" (default) or "lognormal".')
+        plt.plot(x, p, 'k', linewidth=2)
+        title = "Fit results: mu = %.3f,  std = %.3f" % (mu, std)
+        plt.title(title)
+        plt.show()
+

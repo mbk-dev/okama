@@ -310,22 +310,68 @@ class Frame:
         return kt
 
     @staticmethod
-    def jarque_bera(ror: Union[pd.Series, pd.DataFrame]) -> Union[tuple, pd.DataFrame]:
+    def jarque_bera_series(ror: pd.Series) -> dict:
         """
-        Jarque-Bera goodness of fit test on time series.
+        Jarque-Bera goodness of fit test on a single time series (Pandas Series).
         The Jarque-Bera test shows whether the returns have the skewness and kurtosis matching a normal distribution.
 
         Returns:
             (The test statistic, The p-value for the hypothesis test)
             Low statistic numbers correspond to normal distribution.
         """
-        if isinstance(ror, pd.DataFrame):
-            return ror.apply(scipy.stats.jarque_bera, axis=0)
-        elif isinstance(ror, pd.Series):
-            return scipy.stats.jarque_bera(ror)[0], scipy.stats.jarque_bera(ror)[1]
-        else:
-            raise ValueError('ror should be pd.DataFrame or pd.Series')
+        result_tuple = scipy.stats.jarque_bera(ror)[0], scipy.stats.jarque_bera(ror)[1]
+        result = {
+            'statistic': result_tuple[0],
+            'p-value': result_tuple[1]
+        }
+        return result
 
+    @staticmethod
+    def jarque_bera_dataframe(ror: pd.DataFrame) -> pd.DataFrame:
+        """
+        Jarque-Bera goodness of fit test on time series in form of Pandas DataFrame.
+        The Jarque-Bera test shows whether the returns have the skewness and kurtosis matching a normal distribution.
+
+        Returns:
+            (The test statistic, The p-value for the hypothesis test)
+            Low statistic numbers correspond to normal distribution.
+        """
+        result = ror.apply(scipy.stats.jarque_bera, axis=0)
+        return result.set_index(pd.Index(['statistic', 'p-value']))
+
+    @staticmethod
+    def kstest_series(ror: pd.Series, distr: str = 'norm') -> dict:
+        """
+        Kolmogorov-Smirnov test goodness of fit test on a single time series (Pandas Series).
+
+        Returns:
+            {'statistics': The test statistic, 'p-value': The p-value for the hypothesis test}
+        """
+        if distr == 'norm':
+            kstest = scipy.stats.kstest(ror, distr, scipy.stats.norm.fit(ror))
+        elif distr == 'lognorm':
+            kstest = scipy.stats.kstest(ror, distr, scipy.stats.lognorm.fit(ror))
+        else:
+            raise ValueError('distr should be "norm" (default) or "lognormal".')
+        result = {
+            'statistic': kstest[0],
+            'p-value': kstest[1]
+        }
+        return result
+
+    @staticmethod
+    def kstest_dataframe(ror: pd.DataFrame, distr: str = 'norm') -> pd.DataFrame:
+        """
+        Kolmogorov-Smirnov test for goodness of fit test on time series in form of Pandas DataFrame.
+
+        Returns:
+            (The test statistic, The p-value for the hypothesis test)
+        """
+        test_dict = dict()
+        for label, content in ror.items():
+            test_values = Frame.kstest_series(content, distr=distr)
+            test_dict.update({label: test_values})
+        return pd.DataFrame.from_dict(test_dict, orient='columns')
 
 class Rebalance:
     """

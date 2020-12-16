@@ -1,4 +1,4 @@
 import okama as ok
 
-y = ok.Asset('LKOH.MOEX')
-print(y.dividends)
+ln = ok.Portfolio(['EDV.US'], inflation=False)
+ln.plot_forecast(distr='lognorm', years=2)

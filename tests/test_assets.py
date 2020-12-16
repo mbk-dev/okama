@@ -199,23 +199,23 @@ class TestPortfolio:
         assert description.loc[0, 'portfolio'] == approx(0.022350000000000092, rel=1e-2)
         assert description.loc[0, 'inflation'] == approx(0.0040000000000000036, rel=1e-2)
 
-    def test_forecast_from_history(self):
-        assert self.portfolio.forecast_from_history().iloc[-1, :].sum() == approx(0.2844073190898566, rel=1e-2)
+    def test_percentile_from_history(self):
+        assert self.portfolio.percentile_from_history(years=1).iloc[-1, :].sum() == approx(0.30392, rel=1e-2)
         with pytest.raises(Exception, match="Time series does not have enough history to forecast. "
                                             "Period length is 0.90 years. At least 2 years are required."):
-            self.portfolio_short_history.forecast_from_history()
+            self.portfolio_short_history.percentile_from_history(years=1)
 
     def test_table(self):
         assert_array_equal(self.portfolio.table['ticker'].values, np.array(['RUB.FX', 'MCFTR.INDX']))
 
     def test_get_rolling_return(self):
-        assert self.portfolio.get_rolling_return(years=1).iloc[-1] == approx(0.13738896976831327, rel=1e-2)
+        assert self.portfolio.get_rolling_cagr(years=1).iloc[-1] == approx(0.13738896976831327, rel=1e-2)
 
     def test_forecast_monte_carlo_norm_wealth_indexes(self):
         assert self.portfolio.forecast_monte_carlo_wealth_indexes(years=1, n=1000).iloc[-1, :].mean() == approx(2121, rel=1e-1)
 
     def test_forecast_monte_carlo_percentile_wealth_indexes(self):
-        dic = self.portfolio.forecast_monte_carlo_percentile_wealth_indexes(years=1, n=100, percentiles=[50])
+        dic = self.portfolio.forecast_wealth(years=1, n=100, percentiles=[50])
         assert dic[50] == approx(2121, rel=1e-1)
 
     def test_skewness(self):
@@ -231,4 +231,4 @@ class TestPortfolio:
         assert self.portfolio.kurtosis_rolling(window=24).iloc[-1].sum() == approx(1.58931, rel=1e-2)
 
     def test_jarque_bera(self):
-        assert self.portfolio.jarque_bera[0] == approx(257.3396, rel=1e-2)
+        assert self.portfolio.jarque_bera['statistic'] == approx(257.3396, rel=1e-2)
