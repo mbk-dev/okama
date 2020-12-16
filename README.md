@@ -129,8 +129,8 @@ More examples are available in [Jupyter Notebooks](https://github.com/mbk-dev/ok
 
 ## Communication
 
-For basic usage questions (e.g., "_Is XXX currency supported by okama?_") and for sharing ideas please use [Discussions](https://github.com/mbk-dev/okama/discussions/3).
-
+For basic usage questions (e.g., "_Is XXX currency supported by okama?_") and for sharing ideas please use [GitHub Discussions](https://github.com/mbk-dev/okama/discussions/3).
+Russian language community is available at [okama.io forums](https://community.okama.io/c/python-okama).
 ## Issues
 
 We encourage you to report issues using the [Github tracker](https://github.com/mbk-dev/okama/issues). We welcome all kinds of issues, especially those related to correctness, documentation, performance, and feature requests.
