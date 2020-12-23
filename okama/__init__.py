@@ -29,3 +29,5 @@ from okama.data import QueryData, API, search
 from okama.helpers import Float, Frame, Rebalance, Date
 from okama.settings import namespaces
 import okama.settings
+
+__version__ = '0.91'

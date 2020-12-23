@@ -35,7 +35,6 @@ class Plots(AssetList):
         Plots assets scatter (annual risks, annual returns) with the tickers annotations.
         type:
         mean - mean return
-        cagr_app - CAGR by approximation
         cagr - CAGR from monthly returns time series
         tickers:
         - 'tickers' - shows tickers values (default)
@@ -45,12 +44,14 @@ class Plots(AssetList):
         if kind == 'mean':
             risks = self.risk_annual
             returns = Float.annualize_return(self.ror.mean())
-        elif kind == 'cagr_app':
-            risks = self.risk_annual
-            returns = Float.approx_return_risk_adjusted(Float.annualize_return(self.ror.mean()), risks)
+        # elif kind == 'cagr_app':
+        #     risks = self.risk_annual
+        #     returns = Float.approx_return_risk_adjusted(Float.annualize_return(self.ror.mean()), risks)
         elif kind == 'cagr':
             risks = self.risk_annual
             returns = self.get_cagr().loc[self.symbols]
+        else:
+            raise ValueError('kind should be "mean", "cagr" or "cagr_app".')
         # set lists for single point scatter
         if len(self.symbols) < 2:
             risks = [risks]

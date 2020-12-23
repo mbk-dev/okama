@@ -53,6 +53,18 @@ class Float:
         """
         return np.exp(np.log(1. + mean_return) - 0.5 * std ** 2 / (1. + mean_return) ** 2) - 1.
 
+    @staticmethod
+    def get_random_weights(n: int, w_shape: int) -> pd.Series:
+        """
+        Produce N random normalized weights of a given shape.
+        """
+        # Random weights
+        rand_nos = np.random.rand(n, w_shape)
+        weights_transposed = rand_nos.transpose() / rand_nos.sum(axis=1)
+        weights = weights_transposed.transpose()
+        weights_df = pd.DataFrame(weights)
+        return weights_df.aggregate(np.array, axis=1)  # Converts df to DataFrame of np.array
+
 
 class Frame:
     """
@@ -81,40 +93,13 @@ class Frame:
     @classmethod
     def get_portfolio_mean_return(cls, weights: list, ror: pd.DataFrame) -> float:
         """
-        Computes mean return of a portfolio (month scale).
+        Computes mean return of a portfolio (monthly).
         """
         # cls.weights_sum_is_one(weights)
         weights = np.asarray(weights)
         if isinstance(ror.mean(), float):  # required for a single asset portfolio
             return ror.mean()
         return weights.T @ ror.mean()
-
-    @staticmethod
-    def get_ror(close_ts: pd.Series, period: str = 'M') -> pd.Series:
-        """
-        Calculates rate of return time series given a close ts.
-        Periods:
-        'D' - daily return
-        'M' - monthly return
-        """
-        if period == 'D':
-            ror = close_ts.pct_change().iloc[1:]
-            return ror
-        if period == 'M':
-            close_ts = close_ts.resample('M').last()
-            # Replacing zeroes by NaN and padding
-            # TODO: replace with pd .where(condition, value, inplace=True)
-            if (close_ts == 0).any():
-                toxic = close_ts[close_ts == 0]
-                for i in toxic.index:
-                    close_ts[i] = None
-                close_ts.fillna(method='backfill', inplace=True, limit=3)
-                if close_ts.isna().any():
-                    raise Exception("Too many NaN or zeros in data. Can't pad the data.")
-            ror = close_ts.pct_change().iloc[1:]
-            return ror
-        else:
-            raise TypeError(f"{period} is not a supported period")
 
     @staticmethod
     def get_cagr(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:

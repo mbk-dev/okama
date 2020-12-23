@@ -490,16 +490,10 @@ class EfficientFrontierReb(AssetList):
 
     def get_monte_carlo(self, n: int = 100) -> pd.DataFrame:
         """
-        Calculates random risk / cagr point for rebalanced portfolios for a given asset list.
+        Generate N random risk / cagr point for rebalanced portfolios.
         Risk and cagr are calculated for a set of random weights.
         """
-        # Random weights
-        rand_nos = np.random.rand(n, self.ror.shape[1])
-        weights_transposed = rand_nos.transpose() / rand_nos.sum(axis=1)
-        weights = weights_transposed.transpose()
-        weights_df = pd.DataFrame(weights)
-        # weights_df = weights_df.aggregate(list, axis=1)  # Converts df to DataFrame of lists
-        weights_df = weights_df.aggregate(np.array, axis=1)  # Converts df to DataFrame of np.array
+        weights_df = Float.get_random_weights(n, self.ror.shape[1])
 
         # Portfolio risk and cagr for each set of weights
         portfolios_ror = weights_df.aggregate(Rebalance.rebalanced_portfolio_return_ts, ror=self.ror, period=self.reb_period)

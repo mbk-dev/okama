@@ -154,7 +154,7 @@ class EfficientFrontier(AssetList):
         Returns a "point" with monthly values:
         - weights
         - mean return
-        - aproximate vaue for the CAGR
+        - CAGR
         - risk (std)
         Target return is a monthly or annual value:
         monthly_return = False / True
@@ -190,15 +190,19 @@ class EfficientFrontier(AssetList):
             # Annualize risk and return
             a_r = Float.annualize_return(target_return)
             a_risk = Float.annualize_risk(risk=risk, mean_return=target_return)
-            # Risk adjusted return approximation
-            r_gmean = Float.approx_return_risk_adjusted(mean_return=a_r, std=a_risk)
+            # # Risk adjusted return approximation
+            # r_gmean = Float.approx_return_risk_adjusted(mean_return=a_r, std=a_risk)
+            # CAGR calculation
+            portfolio_return_ts = Frame.get_portfolio_return_ts(weights.x, ror)
+            cagr = Frame.get_cagr(portfolio_return_ts)
             if not self.labels_are_tickers:
                 asset_labels = list(self.names.values())
             else:
                 asset_labels = self.symbols
             point = {x: y for x, y in zip(asset_labels, weights.x)}
             point['Mean return'] = a_r
-            point['CAGR (approx)'] = r_gmean
+            point['CAGR'] = cagr
+            # point['CAGR (approx)'] = r_gmean
             point['Risk'] = a_risk
         else:
             raise Exception("No solutions were found")
@@ -234,7 +238,7 @@ class EfficientFrontier(AssetList):
         The columns of the DataFrame:
         - weights
         - mean return
-        - aproximate vaue for the CAGR
+        - CAGR
         - risk (std)
         All the values are annualized.
         """
@@ -243,5 +247,29 @@ class EfficientFrontier(AssetList):
         for x in target_rs:
             row = self.minimize_risk(x, monthly_return=True)
             df = df.append(row, ignore_index=True)
-        df = Frame.change_columns_order(df, ['Risk', 'Mean return', 'CAGR (approx)'])
+        df = Frame.change_columns_order(df, ['Risk', 'Mean return', 'CAGR'])
         return df
+
+    def get_monte_carlo(self, n: int = 100, kind: str = 'mean') -> pd.DataFrame:
+        """
+        Generate N random risk / cagr point for portfolios.
+        Risk and cagr are calculated for a set of random weights.
+        """
+        weights_series = Float.get_random_weights(n, self.ror.shape[1])
+
+        # Portfolio risk and return for each set of weights
+        random_portfolios = pd.DataFrame(dtype=float)
+        for weights in weights_series:
+            risk_monthly = Frame.get_portfolio_risk(weights, self.ror)
+            mean_return_monthly = Frame.get_portfolio_mean_return(weights, self.ror)
+            risk = Float.annualize_risk(risk_monthly, mean_return_monthly)
+            mean_return = Float.annualize_return(mean_return_monthly)
+            if kind == 'cagr':
+                cagr = Float.approx_return_risk_adjusted(mean_return, risk)
+                row = dict(Risk=risk, CAGR=cagr)
+            elif kind == 'mean':
+                row = dict(Risk=risk, Return=mean_return)
+            else:
+                raise ValueError('kind should be "mean" or "cagr"')
+            random_portfolios = random_portfolios.append(row, ignore_index=True)
+        return random_portfolios
