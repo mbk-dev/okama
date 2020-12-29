@@ -1,32 +1,19 @@
 from setuptools import setup
-import codecs
-import os.path
+from pathlib import Path
 
-# read the contents of README file
-this_directory = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+# read description from README.md and version from okama/__init__.py
+(long_description, version) = (None, None)
+with (Path(__file__).parent / 'README.md').open(encoding='utf-8') as f:
     long_description = f.read()
-
-
-# read version information from __init__.py
-def read(rel_path):
-    here = os.path.abspath(os.path.dirname(__file__))
-    with codecs.open(os.path.join(here, rel_path), 'r') as fp:
-        return fp.read()
-
-
-def get_version(rel_path):
-    for line in read(rel_path).splitlines():
-        if line.startswith('__version__'):
-            delim = '"' if '"' in line else "'"
-            return line.split(delim)[1]
-    else:
-        raise RuntimeError("Unable to find version string.")
-
+with (Path(__file__).parent / 'okama' / '__init__.py').open(encoding='utf-8') as f:
+    for version_line in [l for l in f if l.startswith('__version__') and '=' in l]:
+        version = version_line.split('=')[-1].strip().strip('\'').strip('"')
+if not (long_description and version):
+    raise RuntimeError("Unable to get description and version string.")
 
 setup(
     name='okama',
-    version=get_version("okama/__init__.py"),
+    version=version,
     license='MIT',
     description='Modern Portfolio Theory (MPT) Python package',
     long_description=long_description,

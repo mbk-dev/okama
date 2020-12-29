@@ -11,12 +11,14 @@ _MONTHS_PER_YEAR = 12
 
 
 class MacroABC(ABC):
+    # in other places first_date is 1913-01-01
     def __init__(self, symbol: str = default_macro, first_date: str = '1800-01', last_date: str = '2030-01'):
         self.symbol: str = symbol
         self._get_symbol_data(symbol)
         self.values_ts: pd.Series = QueryData.get_macro_ts(symbol, first_date, last_date)
         self.first_date: pd.Timestamp = self.values_ts.index[0].to_timestamp()
         self.last_date: pd.Timestamp = self.values_ts.index[-1].to_timestamp()
+        # what about leap year?
         self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, 'D'), ndigits=1)
 
     def __repr__(self):
@@ -55,10 +57,9 @@ class Inflation(MacroABC):
         """
         Return cumulative inflation rate time series for a period from first_date to last_date.
         """
-        if self.symbol.split(".", 1)[-1] == 'INFL':
-            return (self.values_ts + 1.).cumprod() - 1.
-        else:
+        if self.symbol.split(".", 1)[-1] != 'INFL':
             raise Exception('cumulative_inflation is defined for inflation only')
+        return (self.values_ts + 1.).cumprod() - 1.
 
     @property
     def annual_inflation_ts(self):
@@ -107,6 +108,7 @@ class Inflation(MacroABC):
         row2.update({'period': 'YTD'})
         row2.update({'property': '1000 purchasing power'})
 
+        # BUG?: double assignment
         description = description.append(row1, ignore_index=True)
         description = description.append(row2, ignore_index=True)
 
@@ -171,6 +173,7 @@ class Inflation(MacroABC):
         row.update({'property': 'max 12m inflation'})
         description = description.append(row, ignore_index=True)
         # purchase power
+        # 1k / (1 + x) function is used 4 times. maybe helper function should be introduced?
         row = {self.name: 1000. / (1. + comp_inflation)}
         row.update({'period': f'{self.period_length} years'})
         row.update({'property': '1000 purchasing power'})

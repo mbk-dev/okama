@@ -17,18 +17,16 @@ class Plots(AssetList):
                  symbols: List[str] = [default_ticker],
                  first_date: Optional[str] = None,
                  last_date: Optional[str] = None,
-                 curr: str = 'USD',
+                 ccy: str = 'USD',
                  inflation: bool = True):
-        super().__init__(symbols, first_date=first_date, last_date=last_date, curr=curr, inflation=inflation)
+        super().__init__(symbols, first_date=first_date, last_date=last_date, ccy=ccy, inflation=inflation)
         self.ax = None
         self._bool_inflation = inflation
 
     def _verify_axes(self):
-        if not self.ax:
-            self.ax = plt.gca()
-        else:
+        if self.ax:
             del self.ax
-            self.ax = plt.gca()
+         self.ax = plt.gca()
 
     def plot_assets(self, kind='mean', tickers='tickers', pct_values=False) -> plt.axes:
         """
@@ -59,10 +57,7 @@ class Plots(AssetList):
         # set the plot
         self._verify_axes()
         plt.autoscale(enable=True, axis='y', tight=False)
-        if pct_values:
-            m = 100
-        else:
-            m = 1
+        m = 100 if pct_values else 1
         self.ax.scatter(risks * m, returns * m)
         # Set the labels
         if tickers == 'tickers':
@@ -70,16 +65,17 @@ class Plots(AssetList):
         elif tickers == 'names':
             asset_labels = list(self.names.values())
         else:
+            # BUG?: default tickers valie is 'tickers' but the check requires it to be a list of strings
             if not isinstance(tickers, list):
                 raise ValueError(f'tickers parameter should be a list of string labels.')
             if len(tickers) != len(self.symbols):
+                # may be just: "labels and tickers must be of the same length"?
                 raise ValueError(f'The number of labels ({len(tickers)}) should be equal '
                                  f'to the number of tickers ({len(self.symbols)}).')
             else:
                 asset_labels = tickers
         # draw the points and print the labels
-        for n, x, y in zip(asset_labels, risks, returns):
-            label = n
+        for label, x, y in zip(asset_labels, risks, returns):
             self.ax.annotate(label,  # this is the text
                         (x * m, y * m),  # this is the point to label
                         textcoords="offset points",  # how to position the text
@@ -102,10 +98,7 @@ class Plots(AssetList):
                                n_points=10
                                ).ef_points
         self._verify_axes()
-        if cagr:
-            x_axe = 'CAGR (approx)'
-        else:
-            x_axe = 'Risk'
+        x_axe = 'CAGR (approx)' if cagr else 'Risk'
         fig = plt.figure(figsize=(12, 6))
         for i in ef:
             if i not in ('Risk', 'Mean return', 'CAGR (approx)'):  # select only columns with tickers

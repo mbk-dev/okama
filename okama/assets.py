@@ -97,14 +97,14 @@ class AssetList:
                  symbols: Optional[List[str]] = None, *,
                  first_date: Optional[str] = None,
                  last_date: Optional[str] = None,
-                 curr: str = 'USD',
+                 ccy: str = 'USD',
                  inflation: bool = True):
         self.__symbols = symbols
         self.__tickers: List[str] = [x.split(".", 1)[0] for x in self.symbols]
-        self.__currency: Asset = Asset(symbol=f'{curr}.FX')
+        self.__currency: Asset = Asset(symbol=f'{ccy}.FX')
         self.__make_asset_list(self.symbols)
         if inflation:
-            self.inflation: str = f'{curr}.INFL'
+            self.inflation: str = f'{ccy}.INFL'
             self._inflation_instance: Inflation = Inflation(self.inflation, self.first_date, self.last_date)
             self.inflation_ts: pd.Series = self._inflation_instance.values_ts
             self.inflation_first_date: pd.Timestamp = self._inflation_instance.first_date
@@ -167,6 +167,7 @@ class AssetList:
         first_dates.update({self.currency.name: self.currency.first_date})
         last_dates.update({self.currency.name: self.currency.last_date})
 
+        # one can be sure that sorted returns list!
         first_dates_sorted: list = sorted(first_dates.items(), key=lambda x: x[1])
         last_dates_sorted: list = sorted(last_dates.items(), key=lambda x: x[1])
         self.first_date: pd.Timestamp = first_dates_sorted[-1][1]
@@ -692,11 +693,11 @@ class Portfolio:
                  symbols: Optional[List[str]] = None, *,
                  first_date: Optional[str] = None,
                  last_date: Optional[str] = None,
-                 curr: str = 'USD',
+                 ccy: str = 'USD',
                  inflation: bool = True,
                  weights: Optional[List[float]] = None):
         self._list: AssetList = AssetList(symbols=symbols, first_date=first_date, last_date=last_date,
-                                          curr=curr, inflation=inflation)
+                                          ccy=ccy, inflation=inflation)
         self.currency: str = self._list.currency.name
         self._ror: pd.DataFrame = self._list.ror
         self.symbols: List[str] = self._list.symbols
@@ -994,6 +995,7 @@ class Portfolio:
         Rolling portfolio CAGR (annualized rate of return) time series.
         TODO: check if self.period_length is below 1 year
         """
+        # 12 -> _MONTHS_PER_YEAR?
         rolling_return = (self.returns_ts + 1.).rolling(12 * years).apply(np.prod, raw=True) ** (1 / years) - 1.
         rolling_return.dropna(inplace=True)
         return rolling_return
@@ -1032,7 +1034,7 @@ class Portfolio:
                 n = 1000
             cagr_distr = self._get_monte_carlo_cagr_distribution(distr=distr, years=years, n=n)
         else:
-            raise ValueError('distr should be "norm", "lognormal" or "hist".')
+            raise ValueError('distr should be one of "norm", "lognorm", "hist".')
         return scipy.stats.percentileofscore(cagr_distr, score, kind='rank')
 
     def percentile_from_history(self, years: int, percentiles: List[int] = [10, 50, 90]) -> pd.DataFrame:
@@ -1074,6 +1076,7 @@ class Portfolio:
 
     def _forecast_preparation(self, years: int):
         self._test_forecast_period(years)
+        # 12 -> _MONTHS_PER_YEAR?
         period_months = years * 12
         # make periods index where the shape is max_period
         start_period = self.last_date.to_period('M')
@@ -1094,7 +1097,7 @@ class Portfolio:
             std, loc, scale = scipy.stats.lognorm.fit(self.returns_ts)
             random_returns = scipy.stats.lognorm(std, loc=loc, scale=scale).rvs(size=[period_months, n])
         else:
-            raise ValueError('distr should be "norm" (default) or "lognormal".')
+            raise ValueError('distr should be "norm" (default) or "lognorm".')
         return_ts = pd.DataFrame(data=random_returns, index=ts_index)
         return return_ts
 
@@ -1107,7 +1110,7 @@ class Portfolio:
         for a chart with historical wealth index and forecasted values.
         """
         if distr not in ['norm', 'lognorm']:
-            raise ValueError('distr should be "norm" (default) or "lognormal".')
+            raise ValueError('distr should be "norm" (default) or "lognorm".')
         return_ts = self.forecast_monte_carlo_returns(distr=distr, years=years, n=n)
         first_value = self.wealth_index['portfolio'].values[-1]
         forecast_wealth = Frame.get_wealth_indexes(return_ts, first_value)
@@ -1124,7 +1127,7 @@ class Portfolio:
         Random distribution could be normal or lognormal.
         """
         if distr not in ['norm', 'lognorm']:
-            raise ValueError('distr should be "norm" (default) or "lognormal".')
+            raise ValueError('distr should be "norm" (default) or "lognorm".')
         return_ts = self.forecast_monte_carlo_returns(distr=distr, years=years, n=n)
         return Frame.get_cagr(return_ts)
 
@@ -1140,7 +1143,7 @@ class Portfolio:
         Random distribution could be normal or lognormal.
         """
         if distr not in ['norm', 'lognorm']:
-            raise ValueError('distr should be "norm" (default) or "lognormal".')
+            raise ValueError('distr should be "norm" (default) or "lognorm".')
         cagr_distr = self._get_monte_carlo_cagr_distribution(distr=distr, years=years, n=n)
         results = dict()
         for percentile in percentiles:
@@ -1171,7 +1174,7 @@ class Portfolio:
                 value = wealth_indexes.iloc[-1, :].quantile(percentile / 100)
                 results.update({percentile: value})
         else:
-            raise ValueError('distr should be "norm", "lognormal" or "hist".')
+            raise ValueError('distr should be "norm", "lognorm" or "hist".')
         if today_value:
             modifier = today_value / self.wealth_index['portfolio'].values[-1]
             results.update((x, y * modifier)for x, y in results.items())
@@ -1311,7 +1314,7 @@ class Portfolio:
         elif distr == 'lognorm':
             scipy.stats.probplot(self.returns_ts, sparams=(scipy.stats.lognorm.fit(self.returns_ts)), dist=distr, plot=plt)
         else:
-            raise ValueError('distr should be "norm" (default) or "lognormal".')
+            raise ValueError('distr should be "norm" (default) or "lognorm".')
         plt.show()
 
     def plot_hist_fit(self, distr: str = 'norm', bins: int = None):
@@ -1333,7 +1336,7 @@ class Portfolio:
             mu = np.log(scale)
             p = scipy.stats.lognorm.pdf(x, std, loc, scale)
         else:
-            raise ValueError('distr should be "norm" (default) or "lognormal".')
+            raise ValueError('distr should be "norm" (default) or "lognorm".')
         plt.plot(x, p, 'k', linewidth=2)
         title = "Fit results: mu = %.3f,  std = %.3f" % (mu, std)
         plt.title(title)
