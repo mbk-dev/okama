@@ -21,7 +21,7 @@ class EfficientFrontier(AssetList):
                  symbols: str = default_tickers_list, *,
                  first_date: Optional[str] = None,
                  last_date: Optional[str] = None,
-                 curr: str = 'USD',
+                 ccy: str = 'USD',
                  bounds: Optional[Tuple[Tuple[float]]] = None,
                  inflation: bool = True,
                  full_frontier: bool = True,
@@ -29,9 +29,10 @@ class EfficientFrontier(AssetList):
                  tickers: bool = True):
         if len(symbols) < 2:
             raise ValueError('The number of symbols cannot be less than two')
-        super().__init__(symbols, first_date=first_date, last_date=last_date, curr=curr, inflation=inflation)
+        super().__init__(symbols, first_date=first_date, last_date=last_date, ccy=ccy, inflation=inflation)
         self._bounds = None
         self.bounds = bounds
+        # type check dup
         self.full_frontier: bool = full_frontier
         self.n_points: int = n_points
         self.labels_are_tickers: bool = tickers
@@ -69,6 +70,7 @@ class EfficientFrontier(AssetList):
                            constraints=(weights_sum_to_1,),
                            bounds=self.bounds)
         if weights.success:
+            # assert -> raise?
             assert np.around(np.sum(weights.x), decimals=3) == 1.
             return weights.x
         else:

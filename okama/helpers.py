@@ -8,12 +8,9 @@ import scipy.stats
 _MONTHS_PER_YEAR = 12
 
 
-def check_rolling_window(window):
+def check_rolling_window(window: int):
     if window < _MONTHS_PER_YEAR:
-        raise ValueError('window size should be at least 12 months')
-    if not isinstance(window, int):
-        raise ValueError('window should be an integer')
-
+        raise ValueError('window size should be at least 1 year')
 
 class Float:
     """
@@ -26,11 +23,10 @@ class Float:
         """
         Gets value of monthly return for a given annual return.
         """
-        periods_per_year = 12
-        return (1. + annual_return)**(1/periods_per_year) - 1.
+        return (1. + annual_return)**(1/_MONTHS_PER_YEAR) - 1.
 
     @staticmethod
-    def annualize_return(rate_of_return: Union[float, pd.Series], periods_per_year: int = 12) -> Union[float, pd.Series]:
+    def annualize_return(rate_of_return: Union[float, pd.Series], periods_per_year: int = _MONTHS_PER_YEAR) -> Union[float, pd.Series]:
         """
         Annualizes a return.
         Default annualization is from month to year.
@@ -44,6 +40,7 @@ class Float:
         Annualization from month to year (from standard deviation) is by default. Monthly mean return is also required.
         Works with DataFrame inputs (in math.sqrt is not used).
         """
+        # use _MONTHS_PER_YEAR instead of 12 and 24?
         return ((risk ** 2 + (1 + mean_return) ** 2) ** 12 - (1 + mean_return) ** 24) ** 0.5
 
     @staticmethod
@@ -108,6 +105,7 @@ class Frame:
         """
         if ror.shape[0] < 12:
             return pd.Series({x: None for x in ror.columns})  # CAGR is not defined for time periods < 1 year
+        # use _MONTHS_PER_YEAR instead of 12?
         return ((ror + 1.).prod()) ** (12 / ror.shape[0]) - 1.
 
     @staticmethod
