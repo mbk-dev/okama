@@ -29,7 +29,7 @@ class MacroABC(ABC):
             'type': self.type,
             'first date': self.first_date.strftime("%Y-%m"),
             'last date': self.last_date.strftime("%Y-%m"),
-            'period length (Y)': self._pl_txt
+            'period length': self._pl_txt
         }
         return repr(pd.Series(dic))
 

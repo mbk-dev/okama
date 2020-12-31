@@ -36,7 +36,7 @@ class Asset:
             'type': self.type,
             'first date': self.first_date.strftime("%Y-%m"),
             'last date': self.last_date.strftime("%Y-%m"),
-            'period length (Y)': "{:.2f}".format(self.period_length)
+            'period length': "{:.2f}".format(self.period_length)
         }
         return repr(pd.Series(dic))
 
@@ -132,7 +132,7 @@ class AssetList:
             'currency': self.currency.ticker,
             'first date': self.first_date.strftime("%Y-%m"),
             'last_date': self.last_date.strftime("%Y-%m"),
-            'period length (Y)': self._pl_txt,
+            'period length': self._pl_txt,
             'inflation': self.inflation if hasattr(self, 'inflation') else 'None',
         }
         return repr(pd.Series(dic))
@@ -717,7 +717,7 @@ class Portfolio:
             'currency': self.currency,
             'first date': self.first_date.strftime("%Y-%m"),
             'last_date': self.last_date.strftime("%Y-%m"),
-            'period length (Y)': self._pl_txt
+            'period length': self._pl_txt
         }
         return repr(pd.Series(dic))
 
