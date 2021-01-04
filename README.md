@@ -4,7 +4,7 @@
         <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
             alt="python"></a> &nbsp;
     <a href="https://pypi.org/project/okama/">
-        <img src="https://img.shields.io/badge/pypi-v0.91-brightgreen.svg"
+        <img src="https://img.shields.io/badge/pypi-v0.92-brightgreen.svg"
             alt="pypi"></a> &nbsp;
     <a href="https://opensource.org/licenses/MIT">
         <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg"
@@ -26,7 +26,7 @@ The package is supplied with **free** «end of day» historical stock markets da
 - Investment portfolio constrained Markowitz Mean-Variance Analysis (MVA) and optimization
 - Rebalanced portfolio optimization
 - Monte Carlo Simulations for financial assets and investment portfolios
-- Popular risk metrics: VAR, CVaR, semidiviation, variance and drawdowns
+- Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
 - Forecasting models according to normal and lognormal distribution
 - Testing distribution on historical data
 - Dividend yield and other dividend indicators for stocks
@@ -65,7 +65,7 @@ The package is supplied with **free** «end of day» historical stock markets da
 
 ```python
 import okama as ok
-x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], curr='USD')
+x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], ccy='USD')
 print(x)
 
 ```
@@ -87,7 +87,7 @@ x.wealth_indexes.plot()
 ```python
 weights = [0.3, 0.2, 0.2, 0.2, 0.1]
 assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
-pf = ok.Portfolio(assets, weights=weights, curr='EUR')
+pf = ok.Portfolio(assets, weights=weights, ccy='EUR')
 print(pf)
 ```
 ![](../images/images/readmi04.jpg?raw=true) 
@@ -102,7 +102,7 @@ pf.dividend_yield.plot()
 ```python
 ls = ['SPY.US', 'GLD.US']
 curr = 'USD'
-frontier = ok.EfficientFrontierReb(ls, last_date='2020-10', curr=curr, reb_period='Y')  # Rebalancing periods is one year (dafault value)
+frontier = ok.EfficientFrontierReb(ls, last_date='2020-10', ccy=curr, reb_period='year')  # Rebalancing periods is one year (dafault value)
 frontier.names
 ```
 ![](../images/images/readmi06.jpg?raw=true) 
@@ -113,7 +113,7 @@ points = frontier.ef_points
 
 fig = plt.figure(figsize=(12,6))
 fig.subplots_adjust(bottom=0.2, top=1.5)
-ok.Plots(ls, curr=curr).plot_assets(kind='cagr')  # plots the assets points on the chart
+ok.Plots(ls, ccy=curr).plot_assets(kind='cagr')  # plots the assets points on the chart
 ax = plt.gca()
 ax.plot(points.Risk, points.CAGR) 
 ```
@@ -123,7 +123,7 @@ ax.plot(points.Risk, points.CAGR)
 ### 4. Get a Transition Map for allocations
 ```python
 ls = ['SPY.US', 'GLD.US', 'BND.US']
-map = ok.Plots(ls, curr='USD').plot_transition_map(cagr=False)
+map = ok.Plots(ls, ccy='USD').plot_transition_map(cagr=False)
 ```
 ![](../images/images/readmi08.jpg?v23-11-2020,raw=true "Transition map")  
 

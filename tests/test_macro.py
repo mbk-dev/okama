@@ -10,7 +10,8 @@ class TestInflation:
 
     def test_get_infl_rub_data(self):
         assert self.infl_rub.first_date == pd.to_datetime('1991-01')
-        assert self.infl_rub.period_length == 10.
+        assert self.infl_rub.pl.years == 10
+        assert self.infl_rub.pl.months == 1
         assert self.infl_rub.name == 'Russia Inflation Rate'
         assert self.infl_rub.type == 'inflation'
         assert self.infl_rub.cumulative_inflation[-1] == approx(19576.47386585591, rel=1e-4)
@@ -19,7 +20,8 @@ class TestInflation:
 
     def test_get_infl_usd_data(self):
         assert self.infl_usd.first_date == pd.to_datetime('1913-02')
-        assert self.infl_usd.period_length == 9.9
+        assert self.infl_usd.pl.years == 10
+        assert self.infl_usd.pl.months == 0
         assert self.infl_usd.name == 'US Inflation Rate'
         assert self.infl_usd.type == 'inflation'
         assert self.infl_usd.cumulative_inflation[-1] == approx(0.7145424753209466, rel=1e-4)
@@ -28,7 +30,8 @@ class TestInflation:
 
     def test_get_infl_eur_data(self):
         assert self.infl_eur.first_date == pd.to_datetime('1996-02')
-        assert self.infl_eur.period_length == 10.
+        assert self.infl_eur.pl.years == 10
+        assert self.infl_eur.pl.years == 10
         assert self.infl_eur.name == 'EU Inflation Rate'
         assert self.infl_eur.type == 'inflation'
         assert self.infl_eur.cumulative_inflation[-1] == approx(0.20267532488218776, rel=1e-4)

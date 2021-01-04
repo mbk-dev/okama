@@ -32,10 +32,9 @@ class EfficientFrontier(AssetList):
         super().__init__(symbols, first_date=first_date, last_date=last_date, ccy=ccy, inflation=inflation)
         self._bounds = None
         self.bounds = bounds
-        # type check dup
-        self.full_frontier: bool = full_frontier
-        self.n_points: int = n_points
-        self.labels_are_tickers: bool = tickers
+        self.full_frontier = full_frontier
+        self.n_points = n_points
+        self.labels_are_tickers = tickers
 
     @property
     def bounds(self):
@@ -70,33 +69,29 @@ class EfficientFrontier(AssetList):
                            constraints=(weights_sum_to_1,),
                            bounds=self.bounds)
         if weights.success:
-            # assert -> raise?
-            assert np.around(np.sum(weights.x), decimals=3) == 1.
             return weights.x
         else:
             raise Exception('No solutions where found')
 
     @property
-    def gmv_monthly(self) -> Tuple[float]:
+    def gmv_monthly(self) -> Tuple[float, float]:
         """
         Returns the monthly risk and return of the Global Minimum Volatility portfolio
         """
-        gmv_monthly = (
+        return (
             Frame.get_portfolio_risk(self.gmv_weights, self.ror),
-            Frame.get_portfolio_mean_return(self.gmv_weights, self.ror)
+            Frame.get_portfolio_mean_return(self.gmv_weights, self.ror),
         )
-        return gmv_monthly
 
     @property
-    def gmv_annualized(self) -> Tuple[float]:
+    def gmv_annualized(self) -> Tuple[float, float]:
         """
         Returns the annualized risk and return of the Global Minimum Volatility portfolio
         """
-        gmv_annualized = (
+        return (
             Float.annualize_risk(self.gmv_monthly[0], self.gmv_monthly[1]),
-            Float.annualize_return(self.gmv_monthly[1])
+            Float.annualize_return(self.gmv_monthly[1]),
         )
-        return gmv_annualized
 
     def optimize_return(self, option: str ='max') -> dict:
         """
@@ -216,22 +211,21 @@ class EfficientFrontier(AssetList):
         Returns the range of mean monthly returns (from the min to max).
         """
         if self.full_frontier:
-            if not self.bounds:
+            if self.bounds:
+                min_return = self.optimize_return(option='min')['Mean_return_monthly']
+                max_return = self.optimize_return(option='max')['Mean_return_monthly']
+            else:
                 er = self.ror.mean()
                 min_return = er.min()
                 max_return = er.max()
-            else:
-                min_return = self.optimize_return(option='min')['Mean_return_monthly']
-                max_return = self.optimize_return(option='max')['Mean_return_monthly']
         else:
             min_return = self.gmv_monthly[1]
-            if not self.bounds:
+            if self.bounds:
+                max_return = self.optimize_return(option='max')['Mean_return_monthly']
+            else:
                 er = self.ror.mean()
                 max_return = er.max()
-            else:
-                max_return = self.optimize_return(option='max')['Mean_return_monthly']
-        return_range = np.linspace(min_return, max_return, self.n_points)
-        return return_range
+        return np.linspace(min_return, max_return, self.n_points)
 
     @property
     def ef_points(self) -> pd.DataFrame:

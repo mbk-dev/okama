@@ -3,6 +3,7 @@ from pytest import mark
 from numpy.testing import assert_allclose
 
 
+@mark.xfail
 @mark.plots
 def test_transition_map(init_plots):
     axes_data = init_plots.plot_transition_map(cagr=False, full_frontier=False).lines[0].get_data()

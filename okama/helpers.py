@@ -5,12 +5,15 @@ import pandas as pd
 import numpy as np
 import scipy.stats
 
-_MONTHS_PER_YEAR = 12
+from .settings import _MONTHS_PER_YEAR
 
 
-def check_rolling_window(window: int):
+def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame]):
     if window < _MONTHS_PER_YEAR:
         raise ValueError('window size should be at least 1 year')
+    if window > ror.shape[0]:
+        raise ValueError('window size is less than data history depth')
+
 
 class Float:
     """
@@ -26,7 +29,9 @@ class Float:
         return (1. + annual_return)**(1/_MONTHS_PER_YEAR) - 1.
 
     @staticmethod
-    def annualize_return(rate_of_return: Union[float, pd.Series], periods_per_year: int = _MONTHS_PER_YEAR) -> Union[float, pd.Series]:
+    def annualize_return(rate_of_return: Union[float, pd.Series],
+                         periods_per_year: int = _MONTHS_PER_YEAR
+                         ) -> Union[float, pd.Series]:
         """
         Annualizes a return.
         Default annualization is from month to year.
@@ -40,8 +45,7 @@ class Float:
         Annualization from month to year (from standard deviation) is by default. Monthly mean return is also required.
         Works with DataFrame inputs (in math.sqrt is not used).
         """
-        # use _MONTHS_PER_YEAR instead of 12 and 24?
-        return ((risk ** 2 + (1 + mean_return) ** 2) ** 12 - (1 + mean_return) ** 24) ** 0.5
+        return ((risk ** 2 + (1 + mean_return) ** 2) ** _MONTHS_PER_YEAR - (1 + mean_return) ** (_MONTHS_PER_YEAR * 2)) ** 0.5
 
     @staticmethod
     def approx_return_risk_adjusted(mean_return: float, std: float) -> float:
@@ -61,6 +65,10 @@ class Float:
         weights = weights_transposed.transpose()
         weights_df = pd.DataFrame(weights)
         return weights_df.aggregate(np.array, axis=1)  # Converts df to DataFrame of np.array
+
+    @staticmethod
+    def get_purchasing_power(inflation: float, value: float = 1000.):
+        return value / (1. + inflation)
 
 
 class Frame:
@@ -105,8 +113,7 @@ class Frame:
         """
         if ror.shape[0] < 12:
             return pd.Series({x: None for x in ror.columns})  # CAGR is not defined for time periods < 1 year
-        # use _MONTHS_PER_YEAR instead of 12?
-        return ((ror + 1.).prod()) ** (12 / ror.shape[0]) - 1.
+        return ((ror + 1.).prod()) ** (_MONTHS_PER_YEAR / ror.shape[0]) - 1.
 
     @staticmethod
     def get_compound_return(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
@@ -207,33 +214,23 @@ class Frame:
         """
         Returns the historic Value at Risk (VaR) at a specified level
         """
-        if isinstance(ror, pd.DataFrame) or isinstance(ror, pd.Series):
-            return -ror.quantile(level / 100)
-        else:
-            raise TypeError("Expected ror to be a pd.Series or pd.DataFrame")
+        return -ror.quantile(level / 100)
 
     @staticmethod
     def get_cvar_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:
         """
         Computes the Conditional VaR (CVaR) of Series or DataFrame at a specified level.
         """
-        if not isinstance(level, int):
-            raise TypeError("Level should be an integer.")
-        if isinstance(ror, pd.Series) or isinstance(ror, pd.DataFrame):
-            is_beyond = ror <= ror.quantile(level / 100)  # mask: return is less than quantile
-            return -ror[is_beyond].mean()
-        else:
-            raise TypeError("Expected ror to be a pd.Series or pd.DataFrame")
+        is_beyond = ror <= ror.quantile(level / 100)  # mask: return is less than quantile
+        return -ror[is_beyond].mean()
 
-    @staticmethod
     def get_drawdowns(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
         """
         From returns time series gets drawdowns.
         """
         wealth_index = 1000 * (1 + ror).cumprod()
         previous_peaks = wealth_index.cummax()
-        drawdowns = (wealth_index - previous_peaks) / previous_peaks
-        return drawdowns
+        return (wealth_index - previous_peaks) / previous_peaks
 
     @staticmethod
     def change_columns_order(df: pd.DataFrame, selected_columns: list, position: str ='first') -> pd.DataFrame:
@@ -266,7 +263,7 @@ class Frame:
         Calculate rolling skewness.
         Window should be at least 12 months.
         """
-        check_rolling_window(window)
+        check_rolling_window(window, ror)
         sk = ror.rolling(window=window).skew()
         sk.dropna(inplace=True)
         return sk
@@ -281,13 +278,13 @@ class Frame:
         return kt.iloc[_MONTHS_PER_YEAR:]
 
     @staticmethod
-    def kurtosis_rolling(ror: pd.Series, window: int = 60):
+    def kurtosis_rolling(ror: Union[pd.Series, pd.DataFrame], window: int = 60):
         """
         Calculate rolling Fisher (normalized) kurtosis time series.
         Kurtosis should be close to zero for normal distribution.
         Window should be at least 12 months.
         """
-        check_rolling_window(window)
+        check_rolling_window(window, ror)
         kt = ror.rolling(window=window).kurt()
         kt.dropna(inplace=True)
         return kt
@@ -303,11 +300,10 @@ class Frame:
             Low statistic numbers correspond to normal distribution.
         """
         result_tuple = scipy.stats.jarque_bera(ror)[0], scipy.stats.jarque_bera(ror)[1]
-        result = {
+        return {
             'statistic': result_tuple[0],
             'p-value': result_tuple[1]
         }
-        return result
 
     @staticmethod
     def jarque_bera_dataframe(ror: pd.DataFrame) -> pd.DataFrame:
@@ -336,11 +332,10 @@ class Frame:
             kstest = scipy.stats.kstest(ror, distr, scipy.stats.lognorm.fit(ror))
         else:
             raise ValueError('distr should be "norm" (default) or "lognormal".')
-        result = {
+        return {
             'statistic': kstest[0],
             'p-value': kstest[1]
         }
-        return result
 
     @staticmethod
     def kstest_dataframe(ror: pd.DataFrame, distr: str = 'norm') -> pd.DataFrame:
@@ -350,32 +345,33 @@ class Frame:
         Returns:
             (The test statistic, The p-value for the hypothesis test)
         """
-        test_dict = dict()
+        test_dict = {}
         for label, content in ror.items():
             test_values = Frame.kstest_series(content, distr=distr)
             test_dict.update({label: test_values})
         return pd.DataFrame.from_dict(test_dict, orient='columns')
+
 
 class Rebalance:
     """
     Methods for rebalancing portfolio.
     """
     @staticmethod
-    def rebalanced_portfolio_wealth_ts(weights: list, ror: pd.DataFrame, *, period: str = 'Y') -> pd.Series:
+    def rebalanced_portfolio_wealth_ts(weights: list, ror: pd.DataFrame, *, period: str = 'year') -> pd.Series:
         """
         Returns wealth index time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
-        For not rebalanced portfolio set Period to 'N'
+        For not rebalanced portfolio set Period to 'none'
         """
         # Frame.weights_sum_is_one(weights)
         initial_inv = 1000
         wealth_index = pd.Series(dtype='float64')
-        if period == 'N':  # Not rebalanced portfolio
+        if period == 'none':  # Not rebalanced portfolio
             inv_period_spread = np.asarray(weights) * initial_inv
             assets_wealth_indexes = inv_period_spread * (1 + ror).cumprod()
             wealth_index = assets_wealth_indexes.sum(axis=1)
         else:
-            for x in ror.resample(period):
+            for x in ror.resample('Y'):
                 df = x[1]  # select ror part of the grouped data
                 inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
                 assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
@@ -385,11 +381,11 @@ class Rebalance:
         return wealth_index
 
     @staticmethod
-    def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period: str = 'Y') -> pd.Series:
+    def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period: str = 'year') -> pd.Series:
         """
         Returns mean return time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
-        For not rebalanced portfolio set Period to 'N'
+        For not rebalanced portfolio set Period to 'none'
         """
         # define data of the first period
         first_date = ror.index[0]
@@ -398,11 +394,10 @@ class Rebalance:
         wealth_index = Rebalance.rebalanced_portfolio_wealth_ts(weights, ror, period=period)
         ror = wealth_index.pct_change()
         ror.loc[first_date] = return_first_period  # replaces NaN with the first period return
-        # ror.sort_index(ascending=True, inplace=True)
         return ror
 
     @staticmethod
-    def create_fn_list_ror_ts(ror: pd.DataFrame, *, period: str = 'Y') -> list:
+    def create_fn_list_ror_ts(ror: pd.DataFrame, *, period: str = 'year') -> list:
         """
         Returns a list of functions of weights.
         """

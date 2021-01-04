@@ -1,5 +1,5 @@
 import itertools
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from matplotlib import pyplot as plt
 
@@ -26,25 +26,29 @@ class Plots(AssetList):
     def _verify_axes(self):
         if self.ax:
             del self.ax
-         self.ax = plt.gca()
+        self.ax = plt.gca()
 
-    def plot_assets(self, kind='mean', tickers='tickers', pct_values=False) -> plt.axes:
+    def plot_assets(self,
+                    kind: str = 'mean',
+                    tickers: Union[str, list] = 'tickers',
+                    pct_values: bool = False
+                    ) -> plt.axes:
         """
         Plots assets scatter (annual risks, annual returns) with the tickers annotations.
-        type:
+        kind:
         mean - mean return
         cagr - CAGR from monthly returns time series
         tickers:
         - 'tickers' - shows tickers values (default)
         - 'names' - shows assets names from database
         - list of string labels
+        pct_values:
+        False - for algebraic notation
+        True - for percent notation
         """
         if kind == 'mean':
             risks = self.risk_annual
             returns = Float.annualize_return(self.ror.mean())
-        # elif kind == 'cagr_app':
-        #     risks = self.risk_annual
-        #     returns = Float.approx_return_risk_adjusted(Float.annualize_return(self.ror.mean()), risks)
         elif kind == 'cagr':
             risks = self.risk_annual
             returns = self.get_cagr().loc[self.symbols]
@@ -56,7 +60,7 @@ class Plots(AssetList):
             returns = [returns]
         # set the plot
         self._verify_axes()
-        plt.autoscale(enable=True, axis='y', tight=False)
+        plt.autoscale(enable=True, axis='year', tight=False)
         m = 100 if pct_values else 1
         self.ax.scatter(risks * m, returns * m)
         # Set the labels
@@ -65,22 +69,20 @@ class Plots(AssetList):
         elif tickers == 'names':
             asset_labels = list(self.names.values())
         else:
-            # BUG?: default tickers valie is 'tickers' but the check requires it to be a list of strings
             if not isinstance(tickers, list):
                 raise ValueError(f'tickers parameter should be a list of string labels.')
             if len(tickers) != len(self.symbols):
-                # may be just: "labels and tickers must be of the same length"?
-                raise ValueError(f'The number of labels ({len(tickers)}) should be equal '
-                                 f'to the number of tickers ({len(self.symbols)}).')
-            else:
-                asset_labels = tickers
+                raise ValueError('labels and tickers must be of the same length')
+            asset_labels = tickers
         # draw the points and print the labels
         for label, x, y in zip(asset_labels, risks, returns):
-            self.ax.annotate(label,  # this is the text
-                        (x * m, y * m),  # this is the point to label
-                        textcoords="offset points",  # how to position the text
-                        xytext=(0, 10),  # distance from text to points (x,y)
-                        ha='center')  # horizontal alignment can be left, right or center
+            self.ax.annotate(
+                label,  # this is the text
+                (x * m, y * m),  # this is the point to label
+                textcoords="offset points",  # how to position the text
+                xytext=(0, 10),  # distance from text to points (x,y)
+                ha='center',  # horizontal alignment can be left, right or center
+            )
         return self.ax
 
     def plot_transition_map(self, bounds=None, full_frontier=False, cagr=True) -> plt.axes:
@@ -91,7 +93,7 @@ class Plots(AssetList):
         ef = EfficientFrontier(symbols=self.symbols,
                                first_date=self.first_date,
                                last_date=self.last_date,
-                               curr=self.currency.name,
+                               ccy=self.currency.name,
                                inflation=self._bool_inflation,
                                bounds=bounds,
                                full_frontier=full_frontier,
@@ -133,7 +135,7 @@ class Plots(AssetList):
             else:
                 bounds_pair = None
             ef = EfficientFrontier(symbols=sym_pair,
-                                   curr=self.currency.currency,
+                                   ccy=self.currency.currency,
                                    first_date=self.first_date,
                                    last_date=self.last_date,
                                    inflation=self._bool_inflation,

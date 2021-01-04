@@ -7,8 +7,8 @@ from matplotlib import pyplot as plt
 
 from .macro import Inflation
 from .helpers import Float, Frame, Rebalance, Date, Index
-from .settings import default_ticker, assets_namespaces
-from .data import QueryData
+from .settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
+from .data import QueryData, get_assets_namespaces
 
 
 class Asset:
@@ -42,8 +42,9 @@ class Asset:
 
     def _check_namespace(self):
         namespace = self.symbol.split('.', 1)[-1]
-        if namespace not in assets_namespaces:
-            raise Exception(f'{namespace} is not in allowed assets namespaces: {assets_namespaces}')
+        allowed_namespaces = get_assets_namespaces()
+        if namespace not in allowed_namespaces:
+            raise Exception(f'{namespace} is not in allowed assets namespaces: {allowed_namespaces}')
 
     def _get_symbol_data(self, symbol) -> None:
         x = QueryData.get_symbol_info(symbol)
@@ -83,8 +84,7 @@ class Asset:
         NAV time series (monthly) for mutual funds when available in data.
         """
         if self.exchange == 'PIF':
-            s = QueryData.get_nav(self.symbol)
-            return s
+            return QueryData.get_nav(self.symbol)
         return np.nan
 
 
@@ -121,6 +121,8 @@ class AssetList:
             self.last_date: pd.Timestamp = min(self.last_date, pd.to_datetime(last_date))
         self.ror: pd.DataFrame = self.ror[self.first_date: self.last_date]
         self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, 'D'), ndigits=1)
+        self.pl = PeriodLength(self.ror.shape[0] // _MONTHS_PER_YEAR, self.ror.shape[0] % _MONTHS_PER_YEAR)
+        self._pl_txt = f'{self.pl.years} years, {self.pl.months} months'
         self._dividend_yield: pd.DataFrame = pd.DataFrame(dtype=float)
         self._dividends_ts: pd.DataFrame = pd.DataFrame(dtype=float)
 
@@ -130,7 +132,7 @@ class AssetList:
             'currency': self.currency.ticker,
             'first date': self.first_date.strftime("%Y-%m"),
             'last_date': self.last_date.strftime("%Y-%m"),
-            'period length (Y)': self.period_length,
+            'period length (Y)': self._pl_txt,
             'inflation': self.inflation if hasattr(self, 'inflation') else 'None',
         }
         return repr(pd.Series(dic))
@@ -167,9 +169,8 @@ class AssetList:
         first_dates.update({self.currency.name: self.currency.first_date})
         last_dates.update({self.currency.name: self.currency.last_date})
 
-        # one can be sure that sorted returns list!
-        first_dates_sorted: list = sorted(first_dates.items(), key=lambda x: x[1])
-        last_dates_sorted: list = sorted(last_dates.items(), key=lambda x: x[1])
+        first_dates_sorted = sorted(first_dates.items(), key=lambda x: x[1])
+        last_dates_sorted = sorted(last_dates.items(), key=lambda x: x[1])
         self.first_date: pd.Timestamp = first_dates_sorted[-1][1]
         self.last_date: pd.Timestamp = last_dates_sorted[0][1]
         self.newest_asset: str = first_dates_sorted[-1][0]
@@ -200,10 +201,7 @@ class AssetList:
 
     @property
     def symbols(self):
-        if not self.__symbols:
-            symbols = [default_ticker]
-        else:
-            symbols = self.__symbols
+        symbols = [default_ticker] if not self.__symbols else self.__symbols
         if not isinstance(symbols, list):
             raise ValueError('Symbols should be a list of string values.')
         return symbols
@@ -353,7 +351,7 @@ class AssetList:
             description = description.append(row, ignore_index=True)
         # CAGR for full period
         row = self.get_cagr(period=None).to_dict()
-        row.update({'period': f'{self.period_length} years'})
+        row.update({'period': self._pl_txt})
         row.update({'property': 'CAGR'})
         description = description.append(row, ignore_index=True)
         # Dividend Yield
@@ -363,22 +361,22 @@ class AssetList:
         description = description.append(row, ignore_index=True)
         # risk for full period
         row = self.risk_annual.to_dict()
-        row.update({'period': f'{self.period_length} years'})
+        row.update({'period': self._pl_txt})
         row.update({'property': 'Risk'})
         description = description.append(row, ignore_index=True)
         # CVAR
         row = self.get_cvar_historic().to_dict()
-        row.update({'period': f'{self.period_length} years'})
+        row.update({'period': self._pl_txt})
         row.update({'property': 'CVAR'})
         description = description.append(row, ignore_index=True)
         # max drawdowns
         row = self.drawdowns.min().to_dict()
-        row.update({'period': f'{self.period_length} years'})
+        row.update({'period': self._pl_txt})
         row.update({'property': 'Max drawdowns'})
         description = description.append(row, ignore_index=True)
         # max drawdowns dates
         row = self.drawdowns.idxmin().to_dict()
-        row.update({'period': f'{self.period_length} years'})
+        row.update({'period': self._pl_txt})
         row.update({'property': 'Max drawdowns dates'})
         description = description.append(row, ignore_index=True)
         # inception dates
@@ -456,8 +454,7 @@ class AssetList:
         index = pd.date_range(start=first_day, end=last_day, freq='D')
         period = index.to_period('D')
         pad_s = pd.Series(data=0, index=period)
-        z = s.add(pad_s, fill_value=0)
-        return z
+        return s.add(pad_s, fill_value=0)
 
     def _get_dividends(self, remove_forecast=True) -> pd.DataFrame:
         if self._dividends_ts.empty:
@@ -491,7 +488,7 @@ class AssetList:
                     div_yield = div.asfreq(freq='M')
                     frame.update({tick: div_yield})
                     continue
-                if price.index[-1].month == pd.Timestamp.today().month:
+                if price.index[-1] == pd.Period(pd.Timestamp.today(), freq='M'):
                     price.loc[f'{pd.Timestamp.today().year}-{pd.Timestamp.today().month}'] = Asset(tick).price
                 # Get dividend yield time series
                 div_yield = pd.Series(dtype=float)
@@ -514,9 +511,7 @@ class AssetList:
         """
         Time series of dividends for a calendar year.
         """
-        df = self._get_dividends()
-        df = df.resample('Y').sum()
-        return df
+        return self._get_dividends().resample('Y').sum()
 
     @property
     def dividend_growing_years(self) -> pd.DataFrame:
@@ -554,14 +549,12 @@ class AssetList:
         Calculates geometric mean of dividends growth rate time series for a certain period.
         Period should be integer and not exceed the available data period_length.
         """
-        if period <= self.period_length and isinstance(period, int):
-            growth_ts = self.dividends_annual.pct_change().iloc[1:-1]  # Slice the last year for full dividends
-            dt0 = self.last_date
-            dt = Date.subtract_years(dt0, period)
-            mean_growth_rate = ((growth_ts[dt:] + 1.).prod()) ** (1 / period) - 1.
-        else:
+        if period > self.pl.years or not isinstance(period, int):
             raise TypeError(f'{period} is not a valid value for period')
-        return mean_growth_rate
+        growth_ts = self.dividends_annual.pct_change().iloc[1:-1]  # Slice the last year for full dividends
+        dt0 = self.last_date
+        dt = Date.subtract_years(dt0, period)
+        return ((growth_ts[dt:] + 1.).prod()) ** (1 / period) - 1.
 
     # index methods
     @property
@@ -711,6 +704,8 @@ class Portfolio:
         self.first_date = self._list.first_date
         self.last_date = self._list.last_date
         self.period_length = self._list.period_length
+        self.pl = PeriodLength(self.returns_ts.shape[0] // _MONTHS_PER_YEAR, self.returns_ts.shape[0] % _MONTHS_PER_YEAR)
+        self._pl_txt = f'{self.pl.years} years, {self.pl.months} months'
         if inflation:
             self.inflation = self._list.inflation
             self.inflation_ts: pd.Series = self._list.inflation_ts
@@ -722,7 +717,7 @@ class Portfolio:
             'currency': self.currency,
             'first date': self.first_date.strftime("%Y-%m"),
             'last_date': self.last_date.strftime("%Y-%m"),
-            'period length (Y)': self.period_length
+            'period length (Y)': self._pl_txt
         }
         return repr(pd.Series(dic))
 
@@ -739,13 +734,12 @@ class Portfolio:
             # Equally weighted portfolio
             n = len(self.symbols)  # number of assets
             weights = list(np.repeat(1/n, n))
-            self._weights = weights
         else:
             Frame.weights_sum_is_one(weights)
             if len(weights) != len(self.symbols):
                 raise Exception(f'Number of tickers ({len(self.symbols)}) should be equal '
                                 f'to the weights number ({len(weights)})')
-            self._weights = weights
+        self._weights = weights
 
     @property
     def returns_ts(self) -> pd.Series:
@@ -778,7 +772,7 @@ class Portfolio:
             df = pd.concat([self.returns_ts, self._ror], axis=1, join='inner', copy='false')
         return Frame.get_wealth_indexes(df)
 
-    def get_rebalanced_portfolio_return_ts(self, period='Y') -> pd.Series:
+    def get_rebalanced_portfolio_return_ts(self, period='year') -> pd.Series:
         return Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror, period=period)
 
     @property
@@ -825,20 +819,18 @@ class Portfolio:
 
     @property
     def real_mean_return(self) -> float:
-        if hasattr(self, 'inflation'):
-            infl_mean = Float.annualize_return(self.inflation_ts.mean())
-            ror_mean = Float.annualize_return(self.returns_ts.mean())
-        else:
+        if not hasattr(self, 'inflation'):
             raise Exception('Real Return is not defined. Set inflation=True to calculate.')
+        infl_mean = Float.annualize_return(self.inflation_ts.mean())
+        ror_mean = Float.annualize_return(self.returns_ts.mean())
         return (1. + ror_mean) / (1. + infl_mean) - 1.
 
     @property
     def real_cagr(self) -> float:
-        if hasattr(self, 'inflation'):
-            infl_cagr = Frame.get_cagr(self.inflation_ts)
-            ror_cagr = Frame.get_cagr(self.returns_ts)
-        else:
+        if not hasattr(self, 'inflation'):
             raise Exception('Real Return is not defined. Set inflation=True to calculate.')
+        infl_cagr = Frame.get_cagr(self.inflation_ts)
+        ror_cagr = Frame.get_cagr(self.returns_ts)
         return (1. + ror_cagr) / (1. + infl_cagr) - 1.
 
     @property
@@ -887,8 +879,8 @@ class Portfolio:
         else:
             df = self.returns_ts
         # YTD return
-        year = pd.Timestamp.today().year
-        ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror[str(year):], period='N')
+        year = dt0.year
+        ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror[str(year):], period='none')
         value = Frame.get_compound_return(ts)
         if hasattr(self, 'inflation'):
             ts = df[str(year):].loc[:, self.inflation]
@@ -904,7 +896,7 @@ class Portfolio:
         for i in years:
             dt = Date.subtract_years(dt0, i)
             if dt >= self.first_date:
-                ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror[dt:], period='Y')
+                ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror[dt:], period='year')
                 value = Frame.get_cagr(ts)
                 if hasattr(self, 'inflation'):
                     ts = df[dt:].loc[:, self.inflation]
@@ -919,7 +911,7 @@ class Portfolio:
             row.update({'property': 'CAGR'})
             description = description.append(row, ignore_index=True)
         # CAGR for full period (rebalanced 1 year)
-        ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror, period='Y')
+        ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror, period='year')
         value = Frame.get_cagr(ts)
         if hasattr(self, 'inflation'):
             ts = df.loc[:, self.inflation]
@@ -943,7 +935,7 @@ class Portfolio:
         row.update({'property': 'CAGR'})
         description = description.append(row, ignore_index=True)
         # CAGR not rebalanced
-        value = Frame.get_cagr(self.get_rebalanced_portfolio_return_ts(period='N'))
+        value = Frame.get_cagr(self.get_rebalanced_portfolio_return_ts(period='none'))
         if hasattr(self, 'inflation'):
             row = {'portfolio': value, self.inflation: full_inflation}
         else:
@@ -995,8 +987,7 @@ class Portfolio:
         Rolling portfolio CAGR (annualized rate of return) time series.
         TODO: check if self.period_length is below 1 year
         """
-        # 12 -> _MONTHS_PER_YEAR?
-        rolling_return = (self.returns_ts + 1.).rolling(12 * years).apply(np.prod, raw=True) ** (1 / years) - 1.
+        rolling_return = (self.returns_ts + 1.).rolling(_MONTHS_PER_YEAR * years).apply(np.prod, raw=True) ** (1 / years) - 1.
         rolling_return.dropna(inplace=True)
         return rolling_return
 
@@ -1047,7 +1038,7 @@ class Portfolio:
         """
         self._test_forecast_period(years)
         period_range = range(1, years + 1)
-        returns_dict = dict()
+        returns_dict = {}
         for percentile in percentiles:
             percentile_returns_list = [self.get_rolling_cagr(years).quantile(percentile / 100) for years in period_range]
             returns_dict.update({percentile: percentile_returns_list})
@@ -1076,8 +1067,7 @@ class Portfolio:
 
     def _forecast_preparation(self, years: int):
         self._test_forecast_period(years)
-        # 12 -> _MONTHS_PER_YEAR?
-        period_months = years * 12
+        period_months = years * _MONTHS_PER_YEAR
         # make periods index where the shape is max_period
         start_period = self.last_date.to_period('M')
         end_period = self.last_date.to_period('M') + period_months - 1
@@ -1098,8 +1088,7 @@ class Portfolio:
             random_returns = scipy.stats.lognorm(std, loc=loc, scale=scale).rvs(size=[period_months, n])
         else:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
-        return_ts = pd.DataFrame(data=random_returns, index=ts_index)
-        return return_ts
+        return pd.DataFrame(data=random_returns, index=ts_index)
 
     def forecast_monte_carlo_wealth_indexes(self, distr: str = 'norm', years: int = 1, n: int = 100) -> pd.DataFrame:
         """
@@ -1113,8 +1102,7 @@ class Portfolio:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
         return_ts = self.forecast_monte_carlo_returns(distr=distr, years=years, n=n)
         first_value = self.wealth_index['portfolio'].values[-1]
-        forecast_wealth = Frame.get_wealth_indexes(return_ts, first_value)
-        return forecast_wealth
+        return Frame.get_wealth_indexes(return_ts, first_value)
 
     def _get_monte_carlo_cagr_distribution(self,
                                            distr: str = 'norm',
@@ -1145,7 +1133,7 @@ class Portfolio:
         if distr not in ['norm', 'lognorm']:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
         cagr_distr = self._get_monte_carlo_cagr_distribution(distr=distr, years=years, n=n)
-        results = dict()
+        results = {}
         for percentile in percentiles:
             value = cagr_distr.quantile(percentile / 100)
             results.update({percentile: value})
@@ -1168,7 +1156,7 @@ class Portfolio:
         if distr == 'hist':
             results = self.forecast_wealth_history(years=years, percentiles=percentiles).iloc[-1].to_dict()
         elif distr in ['norm', 'lognorm']:
-            results = dict()
+            results = {}
             wealth_indexes = self.forecast_monte_carlo_wealth_indexes(distr=distr, years=years, n=n)
             for percentile in percentiles:
                 value = wealth_indexes.iloc[-1, :].quantile(percentile / 100)

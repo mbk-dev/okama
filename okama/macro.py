@@ -3,23 +3,22 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-from okama.data import QueryData
+from okama.data import QueryData, get_macro_namespaces
 from okama.helpers import Float, Frame, Date
-from okama.settings import default_macro
-
-_MONTHS_PER_YEAR = 12
+from okama.settings import default_macro, PeriodLength, _MONTHS_PER_YEAR
 
 
 class MacroABC(ABC):
-    # in other places first_date is 1913-01-01
     def __init__(self, symbol: str = default_macro, first_date: str = '1800-01', last_date: str = '2030-01'):
         self.symbol: str = symbol
+        self._check_namespace()
         self._get_symbol_data(symbol)
         self.values_ts: pd.Series = QueryData.get_macro_ts(symbol, first_date, last_date)
         self.first_date: pd.Timestamp = self.values_ts.index[0].to_timestamp()
         self.last_date: pd.Timestamp = self.values_ts.index[-1].to_timestamp()
-        # what about leap year?
-        self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, 'D'), ndigits=1)
+        self.pl = PeriodLength(self.values_ts.shape[0] // _MONTHS_PER_YEAR,
+                               self.values_ts.shape[0] % _MONTHS_PER_YEAR)
+        self._pl_txt = f'{self.pl.years} years, {self.pl.months} months'
 
     def __repr__(self):
         dic = {
@@ -30,9 +29,15 @@ class MacroABC(ABC):
             'type': self.type,
             'first date': self.first_date.strftime("%Y-%m"),
             'last date': self.last_date.strftime("%Y-%m"),
-            'period length (Y)': "{:.2f}".format(self.period_length)
+            'period length (Y)': self._pl_txt
         }
         return repr(pd.Series(dic))
+
+    def _check_namespace(self):
+        namespace = self.symbol.split('.', 1)[-1]
+        allowed_namespaces = get_macro_namespaces()
+        if namespace not in allowed_namespaces:
+            raise Exception(f'{namespace} is not in allowed namespaces: {allowed_namespaces}')
 
     def _get_symbol_data(self, symbol):
         x = QueryData.get_symbol_info(symbol)
@@ -70,7 +75,7 @@ class Inflation(MacroABC):
         """
         Return purchasing power of 1000 (in a currency of inflation) after period from first_date to last_date.
         """
-        return 1000. / (1. + self.cumulative_inflation[-1])
+        return Float.get_purchasing_power(self.cumulative_inflation[-1])
 
     @property
     def rolling_inflation(self) -> pd.Series:
@@ -104,13 +109,11 @@ class Inflation(MacroABC):
         row1.update({'period': 'YTD'})
         row1.update({'property': 'compound inflation'})
 
-        row2 = {self.name: 1000. / (1. + inflation)}
+        row2 = {self.name: Float.get_purchasing_power(inflation)}
         row2.update({'period': 'YTD'})
         row2.update({'property': '1000 purchasing power'})
 
-        # BUG?: double assignment
-        description = description.append(row1, ignore_index=True)
-        description = description.append(row2, ignore_index=True)
+        description = description.append([row1, row2], ignore_index=True)
 
         # inflation properties for a given list of periods
         for i in years:
@@ -131,7 +134,7 @@ class Inflation(MacroABC):
                 row3.update({'period': max_inflation.index.values[0].strftime('%Y-%m')})
 
                 # purchase power
-                row4 = {self.name: 1000. / (1. + comp_inflation)}
+                row4 = {self.name: Float.get_purchasing_power(comp_inflation)}
             else:
                 row1 = {self.name: None}
                 row2 = {self.name: None}
@@ -157,13 +160,13 @@ class Inflation(MacroABC):
         ts = df
         full_inflation = Frame.get_cagr(ts)
         row = {self.name: full_inflation}
-        row.update({'period': f'{self.period_length} years'})
+        row.update({'period': self._pl_txt})
         row.update({'property': 'annual inflation'})
         description = description.append(row, ignore_index=True)
         # compound inflation
         comp_inflation = Frame.get_compound_return(ts)
         row = {self.name: comp_inflation}
-        row.update({'period': f'{self.period_length} years'})
+        row.update({'period': self._pl_txt})
         row.update({'property': 'compound inflation'})
         description = description.append(row, ignore_index=True)
         # max inflation for full period available
@@ -174,13 +177,11 @@ class Inflation(MacroABC):
         description = description.append(row, ignore_index=True)
         # purchase power
         # 1k / (1 + x) function is used 4 times. maybe helper function should be introduced?
-        row = {self.name: 1000. / (1. + comp_inflation)}
-        row.update({'period': f'{self.period_length} years'})
+        row = {self.name: Float.get_purchasing_power(comp_inflation)}
+        row.update({'period': self._pl_txt})
         row.update({'property': '1000 purchasing power'})
         description = description.append(row, ignore_index=True)
-
-        description = Frame.change_columns_order(description, ['property', 'period'], position='first')
-        return description
+        return Frame.change_columns_order(description, ['property', 'period'], position='first')
 
 
 class Rate(MacroABC):
