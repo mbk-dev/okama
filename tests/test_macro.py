@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 from pytest import mark
 from pytest import approx
 

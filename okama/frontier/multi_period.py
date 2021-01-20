@@ -6,9 +6,9 @@ import pandas as pd
 
 from scipy.optimize import minimize
 
-from .helpers import Float, Frame, Rebalance
-from .assets import AssetList
-from .settings import _MONTHS_PER_YEAR
+from okama.helpers import Float, Frame, Rebalance
+from okama.assets import AssetList
+from okama.settings import _MONTHS_PER_YEAR
 
 
 class EfficientFrontierReb(AssetList):

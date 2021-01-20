@@ -3,9 +3,9 @@ from typing import List, Optional, Union
 
 from matplotlib import pyplot as plt
 
-from .assets import AssetList, Portfolio
+from .assets import AssetList
 from .helpers import Float
-from .frontier import EfficientFrontier
+from .frontier.single_period import EfficientFrontier
 from .settings import default_ticker
 
 

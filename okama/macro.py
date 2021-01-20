@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-from okama.data import QueryData, get_macro_namespaces
+from okama.api.data_queries import QueryData
+from okama.api.namespaces import get_macro_namespaces
 from okama.helpers import Float, Frame, Date
 from okama.settings import default_macro, PeriodLength, _MONTHS_PER_YEAR
 

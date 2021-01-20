@@ -5,9 +5,9 @@ import numpy as np
 
 from scipy.optimize import minimize
 
-from .assets import AssetList
-from .helpers import Float, Frame
-from .settings import default_tickers_list
+from ..assets import AssetList
+from ..helpers import Float, Frame
+from ..settings import default_tickers_list
 
 
 class EfficientFrontier(AssetList):

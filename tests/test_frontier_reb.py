@@ -5,7 +5,7 @@ from pytest import mark
 import numpy as np
 from numpy.testing import assert_allclose
 
-from okama import EfficientFrontierReb
+from okama.frontier.multi_period import EfficientFrontierReb
 
 
 @mark.rebalance

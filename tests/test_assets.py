@@ -5,7 +5,8 @@ from numpy.testing import assert_array_equal
 import pytest
 from pytest import approx
 from pytest import mark
-from okama.assets import Portfolio, AssetList
+from okama.assets import AssetList
+from okama import Portfolio
 
 
 @mark.asset

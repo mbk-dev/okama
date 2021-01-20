@@ -4,7 +4,7 @@
         <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
             alt="python"></a> &nbsp;
     <a href="https://pypi.org/project/okama/">
-        <img src="https://img.shields.io/badge/pypi-v0.92-brightgreen.svg"
+        <img src="https://img.shields.io/badge/pypi-v0.93-brightgreen.svg"
             alt="pypi"></a> &nbsp;
     <a href="https://opensource.org/licenses/MIT">
         <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg"
@@ -84,10 +84,13 @@ x.wealth_indexes.plot()
 ![](../images/images/readmi03.jpg?raw=true) 
 
 ### 2. Create a dividend stocks portfolio with base currency EUR
+
 ```python
+import okama.portfolio
+
 weights = [0.3, 0.2, 0.2, 0.2, 0.1]
 assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
-pf = ok.Portfolio(assets, weights=weights, ccy='EUR')
+pf = okama.portfolio.Portfolio(assets, weights=weights, ccy='EUR')
 print(pf)
 ```
 ![](../images/images/readmi04.jpg?raw=true) 

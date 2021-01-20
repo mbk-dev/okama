@@ -20,13 +20,16 @@ Main features:
 
 """
 
-from okama.assets import Asset, AssetList, Portfolio
+from okama.assets import Asset, AssetList
+from okama.portfolio import Portfolio
 from okama.macro import Inflation, Rate
-from okama.frontier import EfficientFrontier
-from okama.frontier_reb import EfficientFrontierReb
+from okama.frontier.multi_period import EfficientFrontierReb
 from okama.plots import Plots
-from okama.data import QueryData, API, search, namespaces, assets_namespaces, macro_namespaces
+from okama.api.data_queries import QueryData
+from okama.api.search import search
+from okama.api.api_methods import API
+from okama.api.namespaces import namespaces, assets_namespaces, macro_namespaces, symbols_in_namespace
 from okama.helpers import Float, Frame, Rebalance, Date
 import okama.settings
 
-__version__ = '0.92'
+__version__ = '0.93'

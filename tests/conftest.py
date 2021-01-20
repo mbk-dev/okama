@@ -1,8 +1,10 @@
 import pytest
-from okama.assets import Asset, AssetList, Portfolio
+from okama.assets import Asset, AssetList
+from okama.portfolio import Portfolio
 from okama.macro import Inflation, Rate
-from okama.frontier import EfficientFrontier
-from okama import Plots, EfficientFrontierReb
+from okama.frontier.single_period import EfficientFrontier
+from okama.frontier.multi_period import EfficientFrontierReb
+from okama.plots import Plots
 
 
 @pytest.fixture(scope='class')
