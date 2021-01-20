@@ -61,7 +61,7 @@ The package is supplied with **free** «end of day» historical stock markets da
 
 ## Getting started
 
-### 1. Compare several assets from different stock markets. Get the USD-adjusted perfomance
+### 1. Compare several assets from different stock markets. Get USD-adjusted performance
 
 ```python
 import okama as ok

@@ -425,12 +425,12 @@ class Date:
         """
         if isinstance(years, int):
             if dt.month == 12:
-                dt = dt.replace(year=dt.year - years, month=1)  # for December
+                new_dt = dt.replace(year=dt.year - years + 1, month=1)  # for December
             else:
-                dt = dt.replace(year=dt.year - years, month=dt.month + 1)
+                new_dt = dt.replace(year=dt.year - years, month=dt.month + 1)
         else:
             raise TypeError('The period should be integer')
-        return dt
+        return new_dt
 
 
 class Index:

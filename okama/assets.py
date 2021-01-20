@@ -117,6 +117,7 @@ class AssetList:
             self.first_date: pd.Timestamp = max(self.first_date, pd.to_datetime(first_date))
         self.ror = self.ror[self.first_date:]
         if last_date:
+            # TODO: self.assets_last_dates should be less or equal to self.last_date
             self.last_date: pd.Timestamp = min(self.last_date, pd.to_datetime(last_date))
         self.ror: pd.DataFrame = self.ror[self.first_date: self.last_date]
         self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, 'D'), ndigits=1)
