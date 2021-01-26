@@ -108,17 +108,16 @@ class AssetList:
             self.inflation_ts: pd.Series = self._inflation_instance.values_ts
             self.inflation_first_date: pd.Timestamp = self._inflation_instance.first_date
             self.inflation_last_date: pd.Timestamp = self._inflation_instance.last_date
-            self.first_date: pd.Timestamp = max(self.first_date, self.inflation_first_date)
+            self.first_date = max(self.first_date, self.inflation_first_date)
             self.last_date: pd.Timestamp = min(self.last_date, self.inflation_last_date)
             # Add inflation to the date range dict
             self.assets_first_dates.update({self.inflation: self.inflation_first_date})
             self.assets_last_dates.update({self.inflation: self.inflation_last_date})
         if first_date:
-            self.first_date: pd.Timestamp = max(self.first_date, pd.to_datetime(first_date))
+            self.first_date = max(self.first_date, pd.to_datetime(first_date))
         self.ror = self.ror[self.first_date:]
         if last_date:
-            # TODO: self.assets_last_dates should be less or equal to self.last_date
-            self.last_date: pd.Timestamp = min(self.last_date, pd.to_datetime(last_date))
+            self.last_date = min(self.last_date, pd.to_datetime(last_date))
         self.ror: pd.DataFrame = self.ror[self.first_date: self.last_date]
         self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, 'D'), ndigits=1)
         self.pl = PeriodLength(self.ror.shape[0] // _MONTHS_PER_YEAR, self.ror.shape[0] % _MONTHS_PER_YEAR)
@@ -148,6 +147,7 @@ class AssetList:
         last_dates: Dict[str, pd.Timestamp] = {}
         names: Dict[str, str] = {}
         currencies: Dict[str, str] = {}
+        df = pd.DataFrame()
         for i, x in enumerate(ls):
             asset = Asset(x)
             if i == 0:
@@ -169,8 +169,8 @@ class AssetList:
         first_dates.update({self.currency.name: self.currency.first_date})
         last_dates.update({self.currency.name: self.currency.last_date})
 
-        first_dates_sorted = sorted(first_dates.items(), key=lambda x: x[1])
-        last_dates_sorted = sorted(last_dates.items(), key=lambda x: x[1])
+        first_dates_sorted = sorted(first_dates.items(), key=lambda y: y[1])
+        last_dates_sorted = sorted(last_dates.items(), key=lambda y: y[1])
         self.first_date: pd.Timestamp = first_dates_sorted[-1][1]
         self.last_date: pd.Timestamp = last_dates_sorted[0][1]
         self.newest_asset: str = first_dates_sorted[-1][0]
@@ -254,7 +254,7 @@ class AssetList:
         """
         Returns semideviation annual values for each asset (full period).
         """
-        return Frame.get_semideviation(self.returns_ts) * 12 ** 0.5
+        return Frame.get_semideviation(self.ror) * 12 ** 0.5
 
     def get_var_historic(self, level: int = 5) -> pd.Series:
         """
@@ -292,7 +292,7 @@ class AssetList:
 
         if not period:
             cagr = Frame.get_cagr(df)
-        elif period == 'YTD':
+        elif str(period).lower() == 'ytd':
             year = dt0.year
             cagr = (df[str(year):] + 1.).prod() - 1.
         elif isinstance(period, int):
@@ -665,7 +665,7 @@ class AssetList:
         """
         return Frame.jarque_bera_dataframe(self.ror)
 
-    def kstest(self, distr: str = 'norm') -> dict:
+    def kstest(self, distr: str = 'norm') -> pd.DataFrame:
         """
         Perform Kolmogorov-Smirnov test for goodness of fit the asset returns to a given distribution.
 

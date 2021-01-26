@@ -117,13 +117,34 @@ class Portfolio:
     def mean_return_annual(self) -> float:
         return Float.annualize_return(self.mean_return_monthly)
 
-    @property
-    def cagr(self) -> Union[pd.Series, float]:
+    def get_cagr(self, period: Union[str, int, None] = None) -> pd.Series:
+        """
+        Calculates Compound Annual Growth Rate (CAGR) for a given period:
+        None: full time
+        'YTD': Year To Date compound rate of return (formally not a CAGR)
+        Integer: several years
+        """
         if hasattr(self, 'inflation'):
             df = pd.concat([self.returns_ts, self.inflation_ts], axis=1, join='inner', copy='false')
         else:
             df = self.returns_ts
-        return Frame.get_cagr(df)
+        dt0 = self.last_date
+
+        if not period:
+            cagr = Frame.get_cagr(df)
+        elif str(period).lower() == 'ytd':
+            year = dt0.year
+            cagr = (df[str(year):] + 1.).prod() - 1.
+        elif isinstance(period, int):
+            dt = Date.subtract_years(dt0, period)
+            if dt >= self.first_date:
+                cagr = Frame.get_cagr(df[dt:])
+            else:
+                row = {x: None for x in df.columns}
+                cagr = pd.Series(row)
+        else:
+            raise ValueError(f'{period} is not a valid value for period')
+        return cagr
 
     @property
     def annual_return_ts(self) -> pd.DataFrame:
@@ -134,6 +155,8 @@ class Portfolio:
         """
         Calculates dividend yield time series in all base currencies of portfolio assets.
         For every currency dividend yield is a weighted sum of the assets dividend yields.
+        Portfolio asset allocation (weights) is a constant (monthly rebalanced portfolios).
+        TODO: calculate for not rebalance portfolios (and arbitrary reb period).
         """
         div_yield_assets = self._list.dividend_yield
         currencies_dict = self._list.currencies
@@ -144,6 +167,7 @@ class Portfolio:
         for currency in currencies_list:
             assets_with_the_same_currency = [x for x in currencies_dict if currencies_dict[x] == currency]
             df = div_yield_assets[assets_with_the_same_currency]
+            # for monthly rebalanced portfolio
             weights = [self.assets_weights[k] for k in self.assets_weights if k in assets_with_the_same_currency]
             weighted_weights = np.asarray(weights) / np.asarray(weights).sum()
             div_yield_series = Frame.get_portfolio_return_ts(weighted_weights, df)
@@ -223,10 +247,10 @@ class Portfolio:
         else:
             row = {'portfolio': value}
         row.update({'period': 'YTD'})
-        row.update({'rebalancing': 'Not rebalanced'})
+        row.update({'rebalancing': '1 year'})
         row.update({'property': 'compound return'})
         description = description.append(row, ignore_index=True)
-        # CAGR for a list of periods (rebalanced 1 month)
+        # CAGR for a list of periods (rebalanced 1 year)
         for i in years:
             dt = Date.subtract_years(dt0, i)
             if dt >= self.first_date:
@@ -258,7 +282,7 @@ class Portfolio:
         row.update({'property': 'CAGR'})
         description = description.append(row, ignore_index=True)
         # CAGR rebalanced 1 month
-        value = self.cagr
+        value = self.get_cagr()
         if hasattr(self, 'inflation'):
             row = value.to_dict()
             full_inflation = value.loc[self.inflation]  # full period inflation is required for following calc
@@ -278,6 +302,15 @@ class Portfolio:
         row.update({'rebalancing': 'Not rebalanced'})
         row.update({'property': 'CAGR'})
         description = description.append(row, ignore_index=True)
+        # Dividend Yield
+        dy = self.dividend_yield
+        for i, ccy in enumerate(dy):
+            value = self.dividend_yield.iloc[-1, i]
+            row = {'portfolio': value}
+            row.update({'period': 'LTM'})
+            row.update({'rebalancing': '1 month'})
+            row.update({'property': f'Dividend yield ({ccy})'})
+            description = description.append(row, ignore_index=True)
         # risk (rebalanced 1 month)
         row = {'portfolio': self.risk_annual}
         row.update({'period': f'{self.period_length} years'})
@@ -319,8 +352,9 @@ class Portfolio:
     def get_rolling_cagr(self, years: int = 1) -> pd.Series:
         """
         Rolling portfolio CAGR (annualized rate of return) time series.
-        TODO: check if self.period_length is below 1 year
         """
+        if self.pl.years < 1:
+            raise ValueError('Portfolio history data period length should be at least 12 months.')
         rolling_return = (self.returns_ts + 1.).rolling(_MONTHS_PER_YEAR * years).apply(np.prod, raw=True) ** (1 / years) - 1.
         rolling_return.dropna(inplace=True)
         return rolling_return

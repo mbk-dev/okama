@@ -207,7 +207,8 @@ class Frame:
         Returns semideviation for each asset given returns time series.
         """
         is_negative = ror < 0
-        return ror[is_negative].std(ddof=0)
+        sem = ror[is_negative].std(ddof=0)
+        return sem
 
     @staticmethod
     def get_var_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:
@@ -269,7 +270,7 @@ class Frame:
         return sk
 
     @staticmethod
-    def kurtosis(ror: pd.Series):
+    def kurtosis(ror: Union[pd.Series, pd.DataFrame]):
         """
         Calculate expanding Fisher (normalized) kurtosis time series.
         Kurtosis should be close to zero for normal distribution.
@@ -286,8 +287,7 @@ class Frame:
         """
         check_rolling_window(window, ror)
         kt = ror.rolling(window=window).kurt()
-        kt.dropna(inplace=True)
-        return kt
+        return kt.dropna()
 
     @staticmethod
     def jarque_bera_series(ror: pd.Series) -> dict:

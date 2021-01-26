@@ -1,16 +1,21 @@
 from abc import ABC, abstractmethod
+from typing import Union
 
 import numpy as np
 import pandas as pd
 
-from okama.api.data_queries import QueryData
-from okama.api.namespaces import get_macro_namespaces
-from okama.helpers import Float, Frame, Date
-from okama.settings import default_macro, PeriodLength, _MONTHS_PER_YEAR
+from .api.data_queries import QueryData
+from .api.namespaces import get_macro_namespaces
+from .helpers import Float, Frame, Date
+from .settings import default_macro, PeriodLength, _MONTHS_PER_YEAR
 
 
 class MacroABC(ABC):
-    def __init__(self, symbol: str = default_macro, first_date: str = '1800-01', last_date: str = '2030-01'):
+    def __init__(self,
+                 symbol: str = default_macro,
+                 first_date: Union[str, pd.Timestamp] = '1800-01',
+                 last_date: Union[str, pd.Timestamp] = '2030-01'
+                 ):
         self.symbol: str = symbol
         self._check_namespace()
         self._get_symbol_data(symbol)

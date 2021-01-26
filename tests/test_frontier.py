@@ -5,13 +5,13 @@ from pytest import mark
 import numpy as np
 from numpy.testing import assert_allclose
 
-from okama.frontier.single_period import EfficientFrontier
+import okama as ok
 
 
 @mark.frontier
 def test_init_efficient_frontier():
     with pytest.raises(Exception, match=r'The number of symbols cannot be less than two'):
-        EfficientFrontier(symbols=['MCFTR.INDX'])
+        ok.EfficientFrontier(symbols=['MCFTR.INDX'])
 
 
 @mark.frontier

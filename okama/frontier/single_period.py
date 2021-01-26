@@ -43,7 +43,6 @@ class EfficientFrontier(AssetList):
             'first date': self.first_date.strftime("%Y-%m"),
             'last_date': self.last_date.strftime("%Y-%m"),
             'period length': self._pl_txt,
-            'rebalancing period': self.reb_period,
             'inflation': self.inflation if hasattr(self, 'inflation') else 'None',
         }
         return repr(pd.Series(dic))
