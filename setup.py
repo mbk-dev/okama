@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from pathlib import Path
 
 # read description from README.md and version from okama/__init__.py
@@ -23,7 +23,7 @@ setup(
     url='https://okama.io/',
     download_url='https://github.com/mbk-dev/okama/archive/v0.81.tar.gz',
     keywords=['finance', 'investments', 'efficient frontier', 'python', 'optimization'],
-    packages=['okama', 'tests'],
+    packages=find_packages(),
     package_data={'tests': ['*.csv']},
     install_requires=['pandas>=0.25.0',
                       'numpy<=1.19.3',

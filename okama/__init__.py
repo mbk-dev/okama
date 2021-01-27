@@ -33,4 +33,4 @@ from okama.api.namespaces import namespaces, assets_namespaces, macro_namespaces
 from okama.helpers import Float, Frame, Rebalance, Date
 import okama.settings
 
-__version__ = '0.96'
+__version__ = '0.97'
