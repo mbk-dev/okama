@@ -6,7 +6,7 @@ import scipy.stats
 from matplotlib import pyplot as plt
 
 from .assets import AssetList
-from .helpers import Frame, Rebalance, Float, Date
+from .common.helpers import Frame, Rebalance, Float, Date
 from .settings import PeriodLength, _MONTHS_PER_YEAR
 
 
@@ -78,7 +78,7 @@ class Portfolio:
     @property
     def returns_ts(self) -> pd.Series:
         """
-        Rate of return time series for portfolio.
+        Rate of return time series for portfolio (monthly rebalanced).
         Returns:
             pd.Series
         """
@@ -239,10 +239,10 @@ class Portfolio:
         # YTD return
         year = dt0.year
         ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror[str(year):], period='none')
-        value = Frame.get_compound_return(ts)
+        value = Frame.get_cumulative_return(ts)
         if hasattr(self, 'inflation'):
             ts = df[str(year):].loc[:, self.inflation]
-            inflation = Frame.get_compound_return(ts)
+            inflation = Frame.get_cumulative_return(ts)
             row = {'portfolio': value, self.inflation: inflation}
         else:
             row = {'portfolio': value}

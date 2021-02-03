@@ -1,16 +1,17 @@
 import math
-from typing import Union
+from typing import Union, Callable
 
 import pandas as pd
 import numpy as np
 import scipy.stats
 
-from .settings import _MONTHS_PER_YEAR
+from ..settings import _MONTHS_PER_YEAR
 
 
-def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame]):
-    if window < _MONTHS_PER_YEAR:
-        raise ValueError('window size should be at least 1 year')
+def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame], window_below_year: bool = False):
+    if not window_below_year:
+        if window < _MONTHS_PER_YEAR:
+            raise ValueError('window size should be at least 1 year')
     if window > ror.shape[0]:
         raise ValueError('window size is less than data history depth')
 
@@ -116,11 +117,20 @@ class Frame:
         return ((ror + 1.).prod()) ** (_MONTHS_PER_YEAR / ror.shape[0]) - 1.
 
     @staticmethod
-    def get_compound_return(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
+    def get_cumulative_return(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
         """
         Return Compound Return for time series of return (one or several).
         """
         return (ror + 1.).prod() - 1.
+
+    @staticmethod
+    def get_rolling_fn(ror: Union[pd.DataFrame, pd.Series],
+                       window: int,
+                       fn: Callable,
+                       window_below_year: bool = False) -> Union[pd.DataFrame, pd.Series]:
+        check_rolling_window(window=window, ror=ror, window_below_year=window_below_year)
+        x = ror.rolling(window).apply(fn)
+        return x.dropna()
 
     @staticmethod
     def get_annual_return_ts_from_monthly(ror_monthly: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
@@ -213,9 +223,11 @@ class Frame:
     @staticmethod
     def get_var_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:
         """
-        Returns the historic Value at Risk (VaR) at a specified level
+        Return monthly historic Value at Risk (VaR) at a specified level.
         """
-        return -ror.quantile(level / 100)
+        s = -ror.quantile(level / 100)
+        s.name = 'VaR'
+        return s
 
     @staticmethod
     def get_cvar_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:
@@ -225,6 +237,7 @@ class Frame:
         is_beyond = ror <= ror.quantile(level / 100)  # mask: return is less than quantile
         return -ror[is_beyond].mean()
 
+    @staticmethod
     def get_drawdowns(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
         """
         From returns time series gets drawdowns.
@@ -262,7 +275,7 @@ class Frame:
     def skewness_rolling(ror: Union[pd.DataFrame, pd.Series], window: int = 60) -> Union[pd.Series, float]:
         """
         Calculate rolling skewness.
-        Window should be at least 12 months.
+        Window size should be at least 12 months.
         """
         check_rolling_window(window, ror)
         sk = ror.rolling(window=window).skew()
@@ -500,7 +513,7 @@ class Index:
             raise ValueError('At least 2 symbols should be provided.')
         if fn not in ['cov', 'corr']:
             raise ValueError('fn should be corr or cov')
-        check_rolling_window(window)
+        check_rolling_window(window, ror)
         cov_matrix_ts = getattr(ror.rolling(window=window), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
         cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)

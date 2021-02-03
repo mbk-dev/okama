@@ -6,7 +6,7 @@ import pandas as pd
 
 from .api.data_queries import QueryData
 from .api.namespaces import get_macro_namespaces
-from .helpers import Float, Frame, Date
+from .common.helpers import Float, Frame, Date
 from .settings import default_macro, PeriodLength, _MONTHS_PER_YEAR
 
 
@@ -110,7 +110,7 @@ class Inflation(MacroABC):
         # YTD inflation properties
         year = pd.Timestamp.today().year
         ts = df[str(year):]
-        inflation = Frame.get_compound_return(ts)
+        inflation = Frame.get_cumulative_return(ts)
         row1 = {self.name: inflation}
         row1.update({'period': 'YTD'})
         row1.update({'property': 'compound inflation'})
@@ -131,7 +131,7 @@ class Inflation(MacroABC):
                 row1 = {self.name: inflation}
 
                 # compound inflation
-                comp_inflation = Frame.get_compound_return(ts)
+                comp_inflation = Frame.get_cumulative_return(ts)
                 row2 = {self.name: comp_inflation}
 
                 # max inflation
@@ -170,7 +170,7 @@ class Inflation(MacroABC):
         row.update({'property': 'annual inflation'})
         description = description.append(row, ignore_index=True)
         # compound inflation
-        comp_inflation = Frame.get_compound_return(ts)
+        comp_inflation = Frame.get_cumulative_return(ts)
         row = {self.name: comp_inflation}
         row.update({'period': self._pl_txt})
         row.update({'property': 'compound inflation'})

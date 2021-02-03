@@ -6,7 +6,7 @@ import pandas as pd
 
 from scipy.optimize import minimize
 
-from ..helpers import Float, Frame, Rebalance
+from okama.common.helpers import Float, Frame, Rebalance
 from ..assets import AssetList
 from ..settings import _MONTHS_PER_YEAR
 
@@ -40,6 +40,7 @@ class EfficientFrontierReb(AssetList):
         self.n_points = n_points
         self.tickers = tickers
         self.verbose = verbose
+        self._ef_points = None
 
     def __repr__(self):
         dic = {
@@ -65,12 +66,24 @@ class EfficientFrontierReb(AssetList):
 
     @property
     def reb_period(self):
+        """
+        Rebalancing period for multi-period Efficient Frontier.
+
+        Rebalancing periods could be:
+        'year' - one Year (default)
+        'none' - not rebalanced portfolios
+
+        Returns
+        -------
+        pd.DataFrame
+        """
         return self._reb_period
 
     @reb_period.setter
     def reb_period(self, reb_period: str):
         if reb_period not in ['year', 'none']:
             raise ValueError('reb_period: Rebalancing period should be "year" - year or "none" - not rebalanced.')
+        self._ef_points = None
         self._reb_period = reb_period
 
     @property
@@ -440,14 +453,26 @@ class EfficientFrontierReb(AssetList):
         return np.linspace(min_std, max_std, self.n_points)
 
     @property
-    def ef_points(self) -> pd.DataFrame:
+    def ef_points(self):
         """
-        Returns a DataFrame of points for Efficient Frontier when the Objective Function is the risk (std)
+        Return a DataFrame of points for Efficient Frontier when the Objective Function is the risk (std)
         for rebalanced portfolio.
+
         Each point has:
         - Weights (float)
         - CAGR (float)
         - Risk (float)
+        ... and the weights for each asset.
+        """
+        if self._ef_points is None:
+            self.get_ef_points()
+        return self._ef_points
+
+    def get_ef_points(self):
+        """
+        Get all the points for the Efficient Frontier running optimizer.
+
+        If verbose=True calculates elapsed time for each point and the total elapsed time.
         """
         main_start_time = time.time()
         df = pd.DataFrame()
@@ -474,7 +499,7 @@ class EfficientFrontierReb(AssetList):
         main_end_time = time.time()
         if self.verbose:
             print(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
-        return df
+        self._ef_points = df
 
     def get_monte_carlo(self, n: int = 100) -> pd.DataFrame:
         """

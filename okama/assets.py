@@ -4,7 +4,8 @@ import pandas as pd
 import numpy as np
 
 from .macro import Inflation
-from .helpers import Float, Frame, Date, Index
+from .common.helpers import Float, Frame, Date, Index
+# from .common._decorators import doc
 from .settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
 from .api.data_queries import QueryData
 from .api.namespaces import get_assets_namespaces
@@ -12,8 +13,7 @@ from .api.namespaces import get_assets_namespaces
 
 class Asset:
     """
-    An asset, that could be used in a list of assets or in portfolio.
-    Works with monthly end of day historical rate of return data.
+    A financial asset, that could be used in a list of assets or in portfolio.
     """
 
     def __init__(self, symbol: str = default_ticker):
@@ -89,8 +89,7 @@ class Asset:
 
 class AssetList:
     """
-    The list of assets implementation.
-    Works with monthly end of day historical rate of return data.
+    The list of financial assets implementation.
     """
     def __init__(self,
                  symbols: Optional[List[str]] = None, *,
@@ -141,7 +140,7 @@ class AssetList:
 
     def __make_asset_list(self, ls: list) -> None:
         """
-        Makes an asset list from a list of symbols. Returns DataFrame of returns (monthly) as an attribute.
+        Make an asset list from a list of symbols.
         """
         first_dates: Dict[str, pd.Timestamp] = {}
         last_dates: Dict[str, pd.Timestamp] = {}
@@ -199,44 +198,57 @@ class AssetList:
         x.rename(returns.name, inplace=True)
         return x
 
+    def _add_inflation(self):
+        if hasattr(self, 'inflation'):
+            df = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
+        else:
+            df = self.ror
+        return df
+
     @property
-    def symbols(self):
+    def symbols(self) -> List[str]:
+        """
+        Return a list of financial symbols used to set the AssetList.
+        """
         symbols = [default_ticker] if not self.__symbols else self.__symbols
         if not isinstance(symbols, list):
             raise ValueError('Symbols should be a list of string values.')
         return symbols
 
     @property
-    def tickers(self):
+    def tickers(self) -> List[str]:
+        """
+        Return a list of tickers (symbols without a namespace) used to set the AssetList.
+        """
         return self.__tickers
 
     @property
-    def currency(self):
+    def currency(self) -> str:
+        """
+        Return the base currency. Such properties as rate of return and volatility are adjusted to the base currency.
+        """
         return self.__currency
 
     @property
     def wealth_indexes(self) -> pd.DataFrame:
         """
-        Wealth index time series for the assets and accumulated inflation.
+        Return wealth index time series for the assets and accumulated inflation.
         Wealth index is obtained from the accumulated return multiplicated by the initial investments (1000).
         """
-        if hasattr(self, 'inflation'):
-            df = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
-        else:
-            df = self.ror
+        df = self._add_inflation()
         return Frame.get_wealth_indexes(df)
 
     @property
     def risk_monthly(self) -> pd.Series:
         """
-        Takes assets returns DataFrame and calculates monthly risks (std) for each asset.
+        Return monthly risks (standard deviation) for each asset.
         """
         return self.ror.std()
 
     @property
     def risk_annual(self) -> pd.Series:
         """
-        Takes assets returns DataFrame and calculates annulized risks (std) for each asset.
+        Return annulized risks (standard deviation) for each asset.
         """
         risk = self.ror.std()
         mean_return = self.ror.mean()
@@ -245,23 +257,44 @@ class AssetList:
     @property
     def semideviation_monthly(self) -> pd.Series:
         """
-        Returns semideviation monthly values for each asset (full period).
+        Return semideviation monthly values for each asset.
         """
         return Frame.get_semideviation(self.ror)
 
     @property
     def semideviation_annual(self) -> float:
         """
-        Returns semideviation annual values for each asset (full period).
+        Return semideviation annualized values for each asset.
         """
         return Frame.get_semideviation(self.ror) * 12 ** 0.5
 
-    def get_var_historic(self, level: int = 5) -> pd.Series:
+    def get_var_historic(self, time_frame: int = 12, level: int = 5) -> pd.Series:
         """
-        Calculates historic VAR for the assets (full period).
-        VAR levels could be set by level attribute (integer).
+        Calculate monthly historic Value at Risk (VaR) for the assets.
+
+        The VaR calculates the potential loss of an investment with a given time frame and confidence level.
+        Loss is a positive number (expressed in cumulative return).
+        If VaR is negative it means there are gains at this confidence level.
+
+        Parameters
+        ----------
+        time_frame : int, default 12 (12 months)
+        level : int, default 5 (5% quantile)
+
+        Returns
+        -------
+        Series
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['SPY.US', 'AGG.US'])
+        >>> x.get_var_historic(time_frame=60, level=1)
+        SPY.US    0.2101
+        AGG.US    -0.0867
+        Name: VaR, dtype: float64
         """
-        return Frame.get_var_historic(self.ror, level)
+        df = self.get_rolling_cumulative_return(window=time_frame).drop(columns=[self.inflation])
+        return Frame.get_var_historic(df, level)
 
     def get_cvar_historic(self, level: int = 5) -> pd.Series:
         """
@@ -284,10 +317,7 @@ class AssetList:
         'YTD': Year To Date compound rate of return (formally not a CAGR)
         Integer: several years
         """
-        if hasattr(self, 'inflation'):
-            df: pd.DataFrame = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
-        else:
-            df = self.ror
+        df = self._add_inflation()
         dt0 = self.last_date
 
         if not period:
@@ -305,6 +335,51 @@ class AssetList:
         else:
             raise ValueError(f'{period} is not a valid value for period')
         return cagr
+
+    def get_rolling_cagr(self, window: int = 12) -> pd.DataFrame:
+        """
+        Calculate rolling CAGR (Compound Annual Growth Rate) for each asset.
+
+        Parameters
+        ----------
+        window : int, default 12
+            Window size in months. Window size should be at least 12 months for CAGR.
+
+        Returns
+        -------
+        DataFrame
+            Time series of rolling CAGR.
+        """
+        df = self._add_inflation()
+        return Frame.get_rolling_fn(df, window=window, fn=Frame.get_cagr)
+
+    @property
+    def cumulative_return(self) -> pd.Series:
+        """
+        Calculate cumulative return for all assets.
+        """
+        df = self._add_inflation()
+        return Frame.get_cumulative_return(df)
+
+    def get_rolling_cumulative_return(self, window: int = 12):
+        """
+        Calculate rolling cumulative return for each asset.
+
+        Parameters
+        ----------
+        window : int, default 12
+            Window size in months.
+
+        Returns
+        -------
+            DataFrame
+            Time series of rolling cumulative return.
+        """
+        df = self._add_inflation()
+        return Frame.get_rolling_fn(df,
+                                    window=window,
+                                    fn=Frame.get_cumulative_return,
+                                    window_below_year=True)
 
     @property
     def annual_return_ts(self) -> pd.DataFrame:
@@ -329,10 +404,7 @@ class AssetList:
         """
         description = pd.DataFrame()
         dt0 = self.last_date
-        if hasattr(self, 'inflation'):
-            df = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
-        else:
-            df = self.ror
+        df = self._add_inflation()
         # YTD return
         ytd_return = self.get_cagr(period='YTD')
         row = ytd_return.to_dict()
@@ -422,11 +494,8 @@ class AssetList:
         """
         Calculates mean return (arithmetic mean) for the assets.
         """
-        if hasattr(self, 'inflation'):
-            df = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
-        else:
-            df = self.ror
-        mean: pd.Series = df.mean()
+        df = self._add_inflation()
+        mean = df.mean()
         return Float.annualize_return(mean)
 
     @property

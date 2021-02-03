@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 from matplotlib import pyplot as plt
 
 from .assets import AssetList
-from .helpers import Float
+from .common.helpers import Float
 from .frontier.single_period import EfficientFrontier
 from .settings import default_ticker
 

@@ -1,6 +1,7 @@
 import okama as ok
 
-x = ok.Portfolio(symbols=['SBER.MOEX', 'T.US'], ccy='RUB', last_date='2020-01', inflation=True)
-# print(x.get_cagr('YTD'))
-print(x.describe())
+ls = ['AGG.US', 'GLD.US', 'SPY.US']
+y = ok.EfficientFrontierReb(symbols=ls, n_points=2, verbose=True)
+ef = y.ef_points
+print(y.ef_points)
 
