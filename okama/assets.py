@@ -270,11 +270,11 @@ class AssetList:
 
     def get_var_historic(self, time_frame: int = 12, level: int = 5) -> pd.Series:
         """
-        Calculate monthly historic Value at Risk (VaR) for the assets.
+        Calculate historic Value at Risk (VaR) for the assets.
 
         The VaR calculates the potential loss of an investment with a given time frame and confidence level.
         Loss is a positive number (expressed in cumulative return).
-        If VaR is negative it means there are gains at this confidence level.
+        If VaR is negative there are gains at this confidence level.
 
         Parameters
         ----------
@@ -296,12 +296,33 @@ class AssetList:
         df = self.get_rolling_cumulative_return(window=time_frame).drop(columns=[self.inflation])
         return Frame.get_var_historic(df, level)
 
-    def get_cvar_historic(self, level: int = 5) -> pd.Series:
+    def get_cvar_historic(self, time_frame: int = 12, level: int = 5) -> pd.Series:
         """
-        Calculates historic CVAR for the assets (full period).
-        CVAR levels could be set by level attribute (integer).
+        Calculates historic Conditional Value at Risk (CVAR, expected shortfall) for the assets.
+
+        CVaR is the average loss over a specified time period of unlikely scenarios beyond the confidence level.
+        Loss is a positive number (expressed in cumulative return).
+        If CVaR is negative there are gains at this confidence level.
+        Parameters
+        ----------
+        time_frame : int, default 12 (12 months)
+        level : int, default 5 (5% quantile)
+
+        Returns
+        -------
+        Series
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['SPY.US', 'AGG.US'])
+        >>> x.get_cvar_historic(time_frame=60, level=1)
+        SPY.US    0.2574
+        AGG.US   -0.0766
+        dtype: float64
+        Name: VaR, dtype: float64
         """
-        return Frame.get_cvar_historic(self.ror, level)
+        df = self.get_rolling_cumulative_return(window=time_frame).drop(columns=[self.inflation])
+        return Frame.get_cvar_historic(df, level)
 
     @property
     def drawdowns(self) -> pd.DataFrame:
