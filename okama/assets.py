@@ -17,7 +17,9 @@ class Asset:
     """
 
     def __init__(self, symbol: str = default_ticker):
-        self.symbol: str = symbol
+        if symbol is None or len(str(symbol).strip()) == 0:
+            raise ValueError('Symbol can not be empty')
+        self._symbol = str(symbol).strip()
         self._check_namespace()
         self._get_symbol_data(symbol)
         self.ror: pd.Series = QueryData.get_ror(symbol)
@@ -40,10 +42,14 @@ class Asset:
         return repr(pd.Series(dic))
 
     def _check_namespace(self):
-        namespace = self.symbol.split('.', 1)[-1]
+        namespace = self._symbol.split('.', 1)[-1]
         allowed_namespaces = get_assets_namespaces()
         if namespace not in allowed_namespaces:
-            raise Exception(f'{namespace} is not in allowed assets namespaces: {allowed_namespaces}')
+            raise ValueError(f'{namespace} is not in allowed assets namespaces: {allowed_namespaces}')
+
+    @property
+    def symbol(self):
+        return self._symbol
 
     def _get_symbol_data(self, symbol) -> None:
         x = QueryData.get_symbol_info(symbol)
@@ -303,6 +309,7 @@ class AssetList:
         CVaR is the average loss over a specified time period of unlikely scenarios beyond the confidence level.
         Loss is a positive number (expressed in cumulative return).
         If CVaR is negative there are gains at this confidence level.
+
         Parameters
         ----------
         time_frame : int, default 12 (12 months)
@@ -327,25 +334,41 @@ class AssetList:
     @property
     def drawdowns(self) -> pd.DataFrame:
         """
-        Calculates drawdowns time series for the assets.
+        Calculate drawdowns time series for the assets.
+
+        The drawdown is the percent decline from a previous peak in wealth index.
         """
         return Frame.get_drawdowns(self.ror)
 
-    def get_cagr(self, period: Union[str, int, None] = None) -> pd.Series:
+    def get_cagr(self, period: Union[int, None] = None) -> pd.Series:
         """
-        Calculates Compound Annual Growth Rate (CAGR) for a given period:
-        None: full time
-        'YTD': Year To Date compound rate of return (formally not a CAGR)
-        Integer: several years
+        Calculate assets Compound Annual Growth Rate (CAGR) for a given trailing period.
+
+        Annual inflation data is shown for the same period if inflation=True (default) in the AssetList.
+        CAGR is not defined for periods less than 1 year.
+
+        Parameters
+        ----------
+        period: int, optional
+            CAGR trailing period in years. None for full time CAGR.
+
+        Returns
+        -------
+        Series
+
+        Examples
+        --------
+        >>> x = ok.AssetList()
+        >>> x.get_cagr(period=5)
+        SPY.US    0.1510
+        USD.INFL   0.0195
+        dtype: float64
         """
         df = self._add_inflation()
         dt0 = self.last_date
 
         if not period:
             cagr = Frame.get_cagr(df)
-        elif str(period).lower() == 'ytd':
-            year = dt0.year
-            cagr = (df[str(year):] + 1.).prod() - 1.
         elif isinstance(period, int):
             dt = Date.subtract_years(dt0, period)
             if dt >= self.first_date:
@@ -374,13 +397,49 @@ class AssetList:
         df = self._add_inflation()
         return Frame.get_rolling_fn(df, window=window, fn=Frame.get_cagr)
 
-    @property
-    def cumulative_return(self) -> pd.Series:
+    def get_cumulative_return(self, period: Union[str, int, None] = None) -> pd.Series:
         """
-        Calculate cumulative return for all assets.
+        Calculate cumulative return of return for the assets.
+
+        Annual inflation data is shown for the same period if inflation=True (default) in the AssetList.
+
+        Parameters
+        ----------
+        period: str, int or None, default None
+            Trailing period in years.
+            None - full time cumulative return.
+            'YTD' - (Year To Date) period of time beginning the first day of the calendar year up to the last month.
+
+        Returns
+        -------
+        Series
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['MCFTR.INDX'], ccy='RUB')
+        >>> x.get_cumulative_return(period='YTD')
+        MCFTR.INDX   0.1483
+        RUB.INFL     0.0485
+        dtype: float64
         """
         df = self._add_inflation()
-        return Frame.get_cumulative_return(df)
+        dt0 = self.last_date
+
+        if not period:
+            cr = Frame.get_cumulative_return(df)
+        elif str(period).lower() == 'ytd':
+            year = dt0.year
+            cr = (df[str(year):] + 1.).prod() - 1.
+        elif isinstance(period, int):
+            dt = Date.subtract_years(dt0, period)
+            if dt >= self.first_date:
+                cr = Frame.get_cumulative_return(df[dt:])
+            else:
+                row = {x: None for x in df.columns}
+                cr = pd.Series(row)
+        else:
+            raise ValueError(f'{period} is not a valid value for period')
+        return cr
 
     def get_rolling_cumulative_return(self, window: int = 12):
         """
@@ -427,7 +486,7 @@ class AssetList:
         dt0 = self.last_date
         df = self._add_inflation()
         # YTD return
-        ytd_return = self.get_cagr(period='YTD')
+        ytd_return = self.get_cumulative_return(period='YTD')
         row = ytd_return.to_dict()
         row.update({'period': 'YTD'})
         row.update({'property': 'Compound return'})

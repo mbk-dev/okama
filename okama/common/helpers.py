@@ -240,7 +240,7 @@ class Frame:
     @staticmethod
     def get_drawdowns(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
         """
-        From returns time series gets drawdowns.
+        Get drawdowns from return time series.
         """
         wealth_index = 1000 * (1 + ror).cumprod()
         previous_peaks = wealth_index.cummax()

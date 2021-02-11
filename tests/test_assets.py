@@ -83,39 +83,48 @@ class TestAssetList:
         assert self.asset_list.semideviation_annual[0] == approx(0.05408, rel=1e-2)
         assert self.asset_list.semideviation_annual[1] == approx(0, abs=1e-2)
 
-    @mark.test
     def test_get_var_historic(self):
         assert self.asset_list.get_var_historic(time_frame=1, level=5)['RUB.FX'] == approx(0.0411, rel=1e-2)
         assert self.asset_list.get_var_historic(time_frame=5, level=1)['MCFTR.INDX'] == approx(-0.1048, rel=1e-2)
 
+    @mark.test
     def test_get_cvar_historic(self):
-        assert self.asset_list.get_cvar_historic(level=5).sum() == approx(0.0659, rel=1e-2)
+        assert self.asset_list.get_cvar_historic(level=5, time_frame=12)['RUB.FX'] == approx(0.1120, rel=1e-2)
+        assert self.asset_list.get_cvar_historic(level=5, time_frame=12)['MCFTR.INDX'] == approx(-0.3130, rel=1e-2)
 
     def test_drawdowns(self):
         assert self.asset_list.drawdowns.min().sum() == approx(-0.082932, rel=1e-2)
 
     testdata = [
-        ('YTD', 0.0183, 0.0118, 0.0405),
-        (1, -0.0463, 0.3131, 0.2975),
-        (None, -0.0888, 0.3651, 0.1617),
+        (1, -0.0463, 0.3131, 0.0242),
+        (None, -0.0888, 0.3651, 0.0318),
     ]
 
     # input_data - period (tuple[0]), expected1 - expected value 1 (tuple[1]), expected2 - expected value 2(tuple[2])
-    @mark.parametrize("input_data,expected1,expected2,expected3", testdata, ids=["YTD", "1 year", "full period"])
+    @mark.parametrize("input_data,expected1,expected2,expected3", testdata, ids=["1 year", "full period"])
     def test_get_cagr(self, input_data, expected1, expected2, expected3):
         assert self.asset_list.get_cagr(period=input_data)['RUB.FX'] == approx(expected1, rel=1e-2)
         assert self.asset_list.get_cagr(period=input_data)['MCFTR.INDX'] == approx(expected2, rel=1e-2)
-        assert self.real_estate.get_cagr(period=input_data).sum() == approx(expected3, rel=1e-2)
+        assert self.asset_list.get_cagr(period=input_data)['RUB.INFL'] == approx(expected3, rel=1e-2)
 
     def test_get_rolling_cagr(self):
         assert self.asset_list_lt.get_rolling_cagr(window=24)['RUB.FX'].iloc[-1] == approx(0.05822, rel=1e-2)
         assert self.asset_list_lt.get_rolling_cagr(window=24)['MCFTR.INDX'].iloc[-1] == approx(0.2393, rel=1e-2)
 
-    def test_get_cumulative_return(self):
-        assert self.asset_list.cumulative_return['RUB.FX'] == approx(-0.0957, rel=1e-2)
-        assert self.asset_list.cumulative_return['MCFTR.INDX'] == approx(0.4009, rel=1e-2)
+    testdata = [
+        ('YTD', 0.0182, 0.0118, 0.0040),
+        (1, -0.0463, 0.3131, 0.0242),
+        (None, -0.0957, 0.4009,  0.0345),
+    ]
 
+    # input_data - period (tuple[0]), expected1 - expected value 1 (tuple[1]), expected2 - expected value 2(tuple[2])
     @mark.test
+    @mark.parametrize("input_data,expected1,expected2,expected3", testdata, ids=["YTD", "1 year", "full period"])
+    def test_get_cumulative_return(self, input_data, expected1, expected2, expected3):
+        assert self.asset_list.get_cumulative_return(period=input_data)['RUB.FX'] == approx(expected1, rel=1e-2)
+        assert self.asset_list.get_cumulative_return(period=input_data)['MCFTR.INDX'] == approx(expected2, rel=1e-2)
+        assert self.asset_list.get_cumulative_return(period=input_data)['RUB.INFL'] == approx(expected3, rel=1e-2)
+
     def test_get_rolling_cumulative_return(self):
         assert self.asset_list_lt.get_rolling_cumulative_return(window=12)['RUB.FX'].iloc[-1] == approx(-0.0462, rel=1e-2)
         assert self.asset_list_lt.get_rolling_cumulative_return(window=12)['MCFTR.INDX'].iloc[-1] == approx(0.3130, rel=1e-2)

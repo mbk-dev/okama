@@ -57,7 +57,6 @@ class TestPortfolio:
         assert_series_equal(self.portfolio.get_cagr(), values, rtol=1e-4)
         assert self.portfolio.get_cagr('YTD').iloc[0] == approx(0.01505, rel=1e-2)
 
-    @mark.xfail
     def test_describe(self):
         description = self.portfolio.describe()
         description_sample = pd.read_pickle('data/portfolio_description.pkl')
