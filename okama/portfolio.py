@@ -228,7 +228,6 @@ class Portfolio:
         - risk (std) for a full period
         - CVAR for a full period
         - max drawdowns (and dates) for a full period
-        TODO: add dividend yield
         """
         description = pd.DataFrame()
         dt0 = self.last_date
@@ -251,66 +250,67 @@ class Portfolio:
         row.update({'property': 'compound return'})
         description = description.append(row, ignore_index=True)
         # CAGR for a list of periods (rebalanced 1 year)
-        for i in years:
-            dt = Date.subtract_years(dt0, i)
-            if dt >= self.first_date:
-                ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror[dt:], period='year')
-                value = Frame.get_cagr(ts)
-                if hasattr(self, 'inflation'):
-                    ts = df[dt:].loc[:, self.inflation]
-                    inflation = Frame.get_cagr(ts)
-                    row = {'portfolio': value, self.inflation: inflation}
+        if self.pl.years >= 1:
+            for i in years:
+                dt = Date.subtract_years(dt0, i)
+                if dt >= self.first_date:
+                    ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror[dt:], period='year')
+                    value = Frame.get_cagr(ts)
+                    if hasattr(self, 'inflation'):
+                        ts = df[dt:].loc[:, self.inflation]
+                        inflation = Frame.get_cagr(ts)
+                        row = {'portfolio': value, self.inflation: inflation}
+                    else:
+                        row = {'portfolio': value}
                 else:
-                    row = {'portfolio': value}
+                    row = {x: None for x in df.columns}
+                row.update({'period': f'{i} years'})
+                row.update({'rebalancing': '1 year'})
+                row.update({'property': 'CAGR'})
+                description = description.append(row, ignore_index=True)
+            # CAGR for full period (rebalanced 1 year)
+            ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror, period='year')
+            value = Frame.get_cagr(ts)
+            if hasattr(self, 'inflation'):
+                ts = df.loc[:, self.inflation]
+                full_inflation = Frame.get_cagr(ts)  # full period inflation is required for following calc
+                row = {'portfolio': value, self.inflation: full_inflation}
             else:
-                row = {x: None for x in df.columns}
-            row.update({'period': f'{i} years'})
+                row = {'portfolio': value}
+            row.update({'period': f'{self.period_length} years'})
             row.update({'rebalancing': '1 year'})
             row.update({'property': 'CAGR'})
             description = description.append(row, ignore_index=True)
-        # CAGR for full period (rebalanced 1 year)
-        ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror, period='year')
-        value = Frame.get_cagr(ts)
-        if hasattr(self, 'inflation'):
-            ts = df.loc[:, self.inflation]
-            full_inflation = Frame.get_cagr(ts)  # full period inflation is required for following calc
-            row = {'portfolio': value, self.inflation: full_inflation}
-        else:
-            row = {'portfolio': value}
-        row.update({'period': f'{self.period_length} years'})
-        row.update({'rebalancing': '1 year'})
-        row.update({'property': 'CAGR'})
-        description = description.append(row, ignore_index=True)
-        # CAGR rebalanced 1 month
-        value = self.get_cagr()
-        if hasattr(self, 'inflation'):
-            row = value.to_dict()
-            full_inflation = value.loc[self.inflation]  # full period inflation is required for following calc
-        else:
-            row = {'portfolio': value}
-        row.update({'period': f'{self.period_length} years'})
-        row.update({'rebalancing': '1 month'})
-        row.update({'property': 'CAGR'})
-        description = description.append(row, ignore_index=True)
-        # CAGR not rebalanced
-        value = Frame.get_cagr(self.get_rebalanced_portfolio_return_ts(period='none'))
-        if hasattr(self, 'inflation'):
-            row = {'portfolio': value, self.inflation: full_inflation}
-        else:
-            row = {'portfolio': value}
-        row.update({'period': f'{self.period_length} years'})
-        row.update({'rebalancing': 'Not rebalanced'})
-        row.update({'property': 'CAGR'})
-        description = description.append(row, ignore_index=True)
-        # Dividend Yield
-        dy = self.dividend_yield
-        for i, ccy in enumerate(dy):
-            value = self.dividend_yield.iloc[-1, i]
-            row = {'portfolio': value}
-            row.update({'period': 'LTM'})
+            # CAGR rebalanced 1 month
+            value = self.get_cagr()
+            if hasattr(self, 'inflation'):
+                row = value.to_dict()
+                full_inflation = value.loc[self.inflation]  # full period inflation is required for following calc
+            else:
+                row = {'portfolio': value}
+            row.update({'period': f'{self.period_length} years'})
             row.update({'rebalancing': '1 month'})
-            row.update({'property': f'Dividend yield ({ccy})'})
+            row.update({'property': 'CAGR'})
             description = description.append(row, ignore_index=True)
+            # CAGR not rebalanced
+            value = Frame.get_cagr(self.get_rebalanced_portfolio_return_ts(period='none'))
+            if hasattr(self, 'inflation'):
+                row = {'portfolio': value, self.inflation: full_inflation}
+            else:
+                row = {'portfolio': value}
+            row.update({'period': f'{self.period_length} years'})
+            row.update({'rebalancing': 'Not rebalanced'})
+            row.update({'property': 'CAGR'})
+            description = description.append(row, ignore_index=True)
+            # Dividend Yield
+            dy = self.dividend_yield
+            for i, ccy in enumerate(dy):
+                value = self.dividend_yield.iloc[-1, i]
+                row = {'portfolio': value}
+                row.update({'period': 'LTM'})
+                row.update({'rebalancing': '1 month'})
+                row.update({'property': f'Dividend yield ({ccy})'})
+                description = description.append(row, ignore_index=True)
         # risk (rebalanced 1 month)
         row = {'portfolio': self.risk_annual}
         row.update({'period': f'{self.period_length} years'})
@@ -677,6 +677,9 @@ class Portfolio:
         """
         Plots historical distribution histogram and theoretical PDF (Probability Distribution Function).
         Lognormal and normal distributions could be used.
+
+        normal distribution - 'norm'
+        lognormal distribution - 'lognorm'
         """
         data = self.returns_ts
         # Plot the histogram

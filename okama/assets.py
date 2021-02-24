@@ -441,7 +441,7 @@ class AssetList:
             raise ValueError(f'{period} is not a valid value for period')
         return cr
 
-    def get_rolling_cumulative_return(self, window: int = 12):
+    def get_rolling_cumulative_return(self, window: int = 12) -> pd.DataFrame:
         """
         Calculate rolling cumulative return for each asset.
 
@@ -464,23 +464,41 @@ class AssetList:
     @property
     def annual_return_ts(self) -> pd.DataFrame:
         """
-        Calculates annual rate of return time series for the assets.
+        Calculate annual rate of return time series for each asset.
+
+        Rate of return is calculated for each calendar year.
         """
         return Frame.get_annual_return_ts_from_monthly(self.ror)
 
     def describe(self, years: tuple = (1, 5, 10), tickers: bool = True) -> pd.DataFrame:
         """
-        Generate descriptive statistics for a given list of tickers.
+        Generate descriptive statistics for a list of assets.
+
         Statistics includes:
-        - YTD compound return
+        - YTD (Year To date) compound return
         - CAGR for a given list of periods
         - Dividend yield - yield for last 12 months (LTM)
-        - risk (std) for a full period
-        - CVAR for a full period
-        - max drawdowns (and dates) for a full period
+
+        Risk metrics (full available period):
+        - risk (standard deviation)
+        - CVAR
+        - max drawdowns (and dates)
+
+        Statistics also shows for each asset:
         - inception date - first date available for each asset
         - last asset date - available for each asset date
-        - last data data - common for all assets data (may be set by last_date manually)
+        - Common last data date - common for the asset list data (may be set by last_date manually)
+
+        Parameters
+        ----------
+        years : tuple, default (1, 5, 10)
+            List of periods for CAGR.
+
+        tickers
+
+        Returns
+        -------
+
         """
         description = pd.DataFrame()
         dt0 = self.last_date
@@ -492,25 +510,26 @@ class AssetList:
         row.update({'property': 'Compound return'})
         description = description.append(row, ignore_index=True)
         # CAGR for a list of periods
-        for i in years:
-            dt = Date.subtract_years(dt0, i)
-            if dt >= self.first_date:
-                row = self.get_cagr(period=i).to_dict()
-            else:
-                row = {x: None for x in df.columns}
-            row.update({'period': f'{i} years'})
+        if self.pl.years >= 1:
+            for i in years:
+                dt = Date.subtract_years(dt0, i)
+                if dt >= self.first_date:
+                    row = self.get_cagr(period=i).to_dict()
+                else:
+                    row = {x: None for x in df.columns}
+                row.update({'period': f'{i} years'})
+                row.update({'property': 'CAGR'})
+                description = description.append(row, ignore_index=True)
+            # CAGR for full period
+            row = self.get_cagr(period=None).to_dict()
+            row.update({'period': self._pl_txt})
             row.update({'property': 'CAGR'})
             description = description.append(row, ignore_index=True)
-        # CAGR for full period
-        row = self.get_cagr(period=None).to_dict()
-        row.update({'period': self._pl_txt})
-        row.update({'property': 'CAGR'})
-        description = description.append(row, ignore_index=True)
-        # Dividend Yield
-        row = self.dividend_yield.iloc[-1].to_dict()
-        row.update({'period': 'LTM'})
-        row.update({'property': 'Dividend yield'})
-        description = description.append(row, ignore_index=True)
+            # Dividend Yield
+            row = self.dividend_yield.iloc[-1].to_dict()
+            row.update({'period': 'LTM'})
+            row.update({'property': 'Dividend yield'})
+            description = description.append(row, ignore_index=True)
         # risk for full period
         row = self.risk_annual.to_dict()
         row.update({'period': self._pl_txt})

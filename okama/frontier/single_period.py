@@ -59,7 +59,7 @@ class EfficientFrontier(AssetList):
                                  f'and the length of bounds ({len(bounds)}) should be equal.')
             self._bounds = bounds
         else:
-            self._bounds = ((0.0, 1.0),) * len(self.symbols)  # an N-tuple of 2-tuples!
+            self._bounds = ((0.0, 1.0),) * len(self.symbols)  # an N-tuple of 2-tuples
 
     @property
     def gmv_weights(self) -> np.ndarray:
