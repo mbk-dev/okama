@@ -536,10 +536,11 @@ class AssetList:
         row.update({'property': 'Risk'})
         description = description.append(row, ignore_index=True)
         # CVAR
-        row = self.get_cvar_historic().to_dict()
-        row.update({'period': self._pl_txt})
-        row.update({'property': 'CVAR'})
-        description = description.append(row, ignore_index=True)
+        if self.pl.years >= 1:
+            row = self.get_cvar_historic().to_dict()
+            row.update({'period': self._pl_txt})
+            row.update({'property': 'CVAR'})
+            description = description.append(row, ignore_index=True)
         # max drawdowns
         row = self.drawdowns.min().to_dict()
         row.update({'period': self._pl_txt})

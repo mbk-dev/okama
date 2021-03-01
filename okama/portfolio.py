@@ -318,11 +318,12 @@ class Portfolio:
         row.update({'property': 'Risk'})
         description = description.append(row, ignore_index=True)
         # CVAR (rebalanced 1 month)
-        row = {'portfolio': self.get_cvar_historic()}
-        row.update({'period': f'{self.period_length} years'})
-        row.update({'rebalancing': '1 month'})
-        row.update({'property': 'CVAR'})
-        description = description.append(row, ignore_index=True)
+        if self.pl.years >= 1:
+            row = {'portfolio': self.get_cvar_historic()}
+            row.update({'period': f'{self.period_length} years'})
+            row.update({'rebalancing': '1 month'})
+            row.update({'property': 'CVAR'})
+            description = description.append(row, ignore_index=True)
         # max drawdowns (rebalanced 1 month)
         row = {'portfolio': self.drawdowns.min()}
         row.update({'period': f'{self.period_length} years'})
@@ -516,7 +517,7 @@ class Portfolio:
                         ) -> Dict[int, float]:
         """
         Calculate percentiles of forecasted random accumulated wealth distribution.
-        Random distribution could be normal or lognormal.
+        Random distribution could be normal lognormal or from history.
 
         today_value - the value of portfolio today (before forecast period). If today_value is None
         the last value of the historical wealth indexes is taken.

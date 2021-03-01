@@ -139,7 +139,7 @@ class EfficientFrontier(AssetList):
                            )
         if weights.success:
             portfolio_risk = Frame.get_portfolio_risk(weights.x, self.ror)
-            if option == 'max':
+            if option.lower() == 'max':
                 optimized_return = -weights.fun
             else:
                 optimized_return = weights.fun
@@ -271,10 +271,10 @@ class EfficientFrontier(AssetList):
             mean_return_monthly = Frame.get_portfolio_mean_return(weights, self.ror)
             risk = Float.annualize_risk(risk_monthly, mean_return_monthly)
             mean_return = Float.annualize_return(mean_return_monthly)
-            if kind == 'cagr':
+            if kind.lower() == 'cagr':
                 cagr = Float.approx_return_risk_adjusted(mean_return, risk)
                 row = dict(Risk=risk, CAGR=cagr)
-            elif kind == 'mean':
+            elif kind.lower() == 'mean':
                 row = dict(Risk=risk, Return=mean_return)
             else:
                 raise ValueError('kind should be "mean" or "cagr"')

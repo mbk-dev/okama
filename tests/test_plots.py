@@ -23,4 +23,3 @@ def test_plot_pair_ef(init_plots):
     axes_data = init_plots.plot_pair_ef(tickers='names').lines[0].get_data()
     values = np.genfromtxt('data/test_plot_pair_ef.csv', delimiter=',')
     assert_allclose(axes_data, values, rtol=1e-1, atol=1e-1)
-
