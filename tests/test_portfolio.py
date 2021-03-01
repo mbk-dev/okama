@@ -22,7 +22,7 @@ def test_init_portfolio_failing():
 class TestPortfolio:
 
     def test_ror(self):
-        portfolio_sample = pd.read_pickle('data/portfolio.pkl')
+        portfolio_sample = pd.read_pickle('./data/portfolio.pkl')
         assert_series_equal(self.portfolio.returns_ts, portfolio_sample)
 
     def test_weights(self):
@@ -59,7 +59,7 @@ class TestPortfolio:
 
     def test_describe(self):
         description = self.portfolio.describe()
-        description_sample = pd.read_pickle('data/portfolio_description.pkl')
+        description_sample = pd.read_pickle('./data/portfolio_description.pkl')
         assert_frame_equal(description, description_sample)
 
     def test_percentile_from_history(self):
