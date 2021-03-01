@@ -6,6 +6,8 @@ from pytest import mark
 
 import okama as ok
 
+from .conftest import data_folder
+
 
 @mark.asset
 @mark.usefixtures('_init_asset')
@@ -41,11 +43,11 @@ def test_asset_list_init_failing():
 class TestAssetList:
 
     def test_ror(self):
-        asset_list_sample = pd.read_pickle('./data/asset_list.pkl')
-        asset_list_lt_sample = pd.read_pickle('./data/asset_list_lt.pkl')
-        currencies_sample = pd.read_pickle('./data/currencies.pkl')
-        real_estate_sample = pd.read_pickle('./data/real_estate.pkl')
-        spy_sample = pd.read_pickle('./data/spy.pkl')
+        asset_list_sample = pd.read_pickle(data_folder / 'asset_list.pkl')
+        asset_list_lt_sample = pd.read_pickle(data_folder / 'asset_list_lt.pkl')
+        currencies_sample = pd.read_pickle(data_folder / 'currencies.pkl')
+        real_estate_sample = pd.read_pickle(data_folder / 'real_estate.pkl')
+        spy_sample = pd.read_pickle(data_folder / 'spy.pkl')
         assert_frame_equal(self.asset_list.ror, asset_list_sample)
         assert_frame_equal(self.asset_list_lt.ror, asset_list_lt_sample)
         assert_frame_equal(self.currencies.ror, currencies_sample)
@@ -144,7 +146,7 @@ class TestAssetList:
 
     def test_describe(self):
         description = self.asset_list.describe(tickers=False).iloc[:-2, :]  # last 2 rows are fresh lastdate
-        description_sample = pd.read_pickle('./data/asset_list_describe.pkl').iloc[:-2, :]
+        description_sample = pd.read_pickle(data_folder / 'asset_list_describe.pkl').iloc[:-2, :]
         assert_frame_equal(description, description_sample)
 
     def test_dividend_yield(self):
