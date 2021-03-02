@@ -1,15 +1,8 @@
 import pytest
 import okama as ok
 from pathlib import Path
-# from okama.assets import Asset, AssetList
-# from okama.portfolio import Portfolio
-# from okama.macro import Inflation, Rate
-# from okama.frontier.single_period import EfficientFrontier
-# from okama.frontier.multi_period import EfficientFrontierReb
-# from okama.plots import Plots
 
-
-data_folder = Path.cwd() / 'data'
+data_folder = Path(__file__).parent / 'data'
 
 
 @pytest.fixture(scope='class')
