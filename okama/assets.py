@@ -1,4 +1,4 @@
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional, List, Dict, Tuple
 
 import pandas as pd
 import numpy as np
@@ -254,7 +254,7 @@ class AssetList:
     @property
     def risk_annual(self) -> pd.Series:
         """
-        Return annulized risks (standard deviation) for each asset.
+        Return annualized risks (standard deviation) for each asset.
         """
         risk = self.ror.std()
         mean_return = self.ror.mean()
@@ -304,7 +304,7 @@ class AssetList:
 
     def get_cvar_historic(self, time_frame: int = 12, level: int = 5) -> pd.Series:
         """
-        Calculates historic Conditional Value at Risk (CVAR, expected shortfall) for the assets.
+        Calculate historic Conditional Value at Risk (CVAR, expected shortfall) for the assets.
 
         CVaR is the average loss over a specified time period of unlikely scenarios beyond the confidence level.
         Loss is a positive number (expressed in cumulative return).
@@ -328,7 +328,10 @@ class AssetList:
         dtype: float64
         Name: VaR, dtype: float64
         """
-        df = self.get_rolling_cumulative_return(window=time_frame).drop(columns=[self.inflation])
+        if hasattr(self, 'inflation'):
+            df = self.get_rolling_cumulative_return(window=time_frame).drop(columns=[self.inflation])
+        else:
+            df = self.get_rolling_cumulative_return(window=time_frame)
         return Frame.get_cvar_historic(df, level)
 
     @property
@@ -470,7 +473,7 @@ class AssetList:
         """
         return Frame.get_annual_return_ts_from_monthly(self.ror)
 
-    def describe(self, years: tuple = (1, 5, 10), tickers: bool = True) -> pd.DataFrame:
+    def describe(self, years: Tuple[int, ...] = (1, 5, 10), tickers: bool = True) -> pd.DataFrame:
         """
         Generate descriptive statistics for a list of assets.
 
@@ -491,14 +494,24 @@ class AssetList:
 
         Parameters
         ----------
-        years : tuple, default (1, 5, 10)
+        years : tuple of (int,), default (1, 5, 10)
             List of periods for CAGR.
 
-        tickers
+        tickers : bool, default True
+            Defines whether show tickers (True) or assets names in the header.
 
         Returns
         -------
+            DataFrame
 
+        See Also
+        --------
+            get_cumulative_return : Calculate cumulative return.
+            get_cagr : Calculate assets Compound Annual Growth Rate (CAGR).
+            dividend_yield : Calculate dividend yield (LTM).
+            risk_annual : Return annualized risks (standard deviation).
+            get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
+            drawdowns : Calculate drawdowns.
         """
         description = pd.DataFrame()
         dt0 = self.last_date
@@ -592,7 +605,8 @@ class AssetList:
     @property
     def mean_return(self) -> pd.Series:
         """
-        Calculates mean return (arithmetic mean) for the assets.
+        TODO: Finish description
+        Calculate mean return (arithmetic mean) for the assets.
         """
         df = self._add_inflation()
         mean = df.mean()
@@ -637,7 +651,7 @@ class AssetList:
     @property
     def dividend_yield(self) -> pd.DataFrame:
         """
-        Dividend yield (LTM) time series monthly.
+        Calculate last twelve months (LTM) dividend yield time series monthly.
         Calculates yield assuming original asset currency (not adjusting to AssetList currency).
         Forecast dividends are removed.
         """
