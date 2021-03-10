@@ -146,6 +146,64 @@ class Portfolio:
             raise ValueError(f'{period} is not a valid value for period')
         return cagr
 
+    def get_cumulative_return(self, period: Union[str, int, None] = None) -> pd.Series:
+        """
+        Calculate cumulative return of return for the portfolio.
+
+        Parameters
+        ----------
+        period: str, int or None, default None
+            Trailing period in years.
+            None - full time cumulative return.
+            'YTD' - (Year To Date) period of time beginning the first day of the calendar year up to the last month.
+
+        Returns
+        -------
+        Series
+
+        Examples
+        --------
+        >>> x = ok.Portfolio()  # using default ticker 'SPY.US'
+        >>> x.get_cumulative_return(period=2)
+        0.4230970729863084
+        """
+        df = self.returns_ts
+        dt0 = self.last_date
+
+        if not period:
+            cr = Frame.get_cumulative_return(df)
+        elif str(period).lower() == 'ytd':
+            year = dt0.year
+            cr = (df[str(year):] + 1.).prod() - 1.
+        elif isinstance(period, int) and period > 0:
+            dt = Date.subtract_years(dt0, period)
+            if dt >= self.first_date:
+                cr = Frame.get_cumulative_return(df[dt:])
+            else:
+                raise ValueError(f'period {period} years is beyond historical data range.')
+        else:
+            raise ValueError(f'{period} is not a valid value for period')
+        return cr
+
+    def get_rolling_cumulative_return(self, window: int = 12) -> pd.DataFrame:
+        """
+        Calculate rolling cumulative return.
+
+        Parameters
+        ----------
+        window : int, default 12
+            Window size in months.
+
+        Returns
+        -------
+            DataFrame
+            Time series of rolling cumulative return.
+        """
+        return Frame.get_rolling_fn(self.returns_ts,
+                                    window=window,
+                                    fn=Frame.get_cumulative_return,
+                                    window_below_year=True)
+
     @property
     def annual_return_ts(self) -> pd.DataFrame:
         return Frame.get_annual_return_ts_from_monthly(self.returns_ts)
@@ -207,12 +265,12 @@ class Portfolio:
     def semideviation_annual(self) -> float:
         return Frame.get_semideviation(self.returns_ts) * 12 ** 0.5
 
-    def get_var_historic(self, level=5) -> float:
-        rolling = self.returns_ts.rolling(12).apply(Frame.get_cagr)
+    def get_var_historic(self, time_frame: int = 12, level=5) -> float:
+        rolling = self.get_rolling_cumulative_return(window=time_frame)
         return Frame.get_var_historic(rolling, level)
 
-    def get_cvar_historic(self, level=5) -> float:
-        rolling = self.returns_ts.rolling(12).apply(Frame.get_cagr)
+    def get_cvar_historic(self, time_frame: int = 12, level=5) -> float:
+        rolling = self.get_rolling_cumulative_return(window=time_frame)
         return Frame.get_cvar_historic(rolling, level)
 
     @property

@@ -49,6 +49,11 @@ class TestPortfolio:
         assert self.portfolio.risk_monthly == approx(0.035718, rel=1e-2)
         assert self.portfolio.risk_annual == approx(0.139814, rel=1e-2)
 
+    @mark.test
+    def test_get_var_historic(self):
+        assert self.portfolio.get_var_historic(time_frame=1, level=5) == approx(0.03815, rel=1e-2)
+        assert self.portfolio.get_var_historic(time_frame=5, level=1) == approx(0.0969, rel=1e-2)
+
     def test_rebalanced_portfolio_return(self):
         assert self.portfolio.get_rebalanced_portfolio_return_ts().mean() == approx(0.011220, rel=1e-2)
         assert self.portfolio.get_rebalanced_portfolio_return_ts(period='none').mean() == \

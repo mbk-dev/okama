@@ -9,9 +9,8 @@ from ..settings import _MONTHS_PER_YEAR
 
 
 def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame], window_below_year: bool = False):
-    if not window_below_year:
-        if window < _MONTHS_PER_YEAR:
-            raise ValueError('window size should be at least 1 year')
+    if not window_below_year and window < _MONTHS_PER_YEAR:
+        raise ValueError('window size should be at least 1 year')
     if window > ror.shape[0]:
         raise ValueError('window size is less than data history depth')
 
@@ -93,8 +92,7 @@ class Frame:
         cls.weights_sum_is_one(weights)
         if isinstance(ror, pd.Series):  # required for a single asset portfolio
             return ror
-        return_ts = ror @ weights
-        return return_ts
+        return ror @ weights
 
     @classmethod
     def get_portfolio_mean_return(cls, weights: list, ror: pd.DataFrame) -> float:
@@ -217,25 +215,28 @@ class Frame:
         Returns semideviation for each asset given returns time series.
         """
         is_negative = ror < 0
-        sem = ror[is_negative].std(ddof=0)
-        return sem
+        return ror[is_negative].std(ddof=0)
 
     @staticmethod
     def get_var_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:
         """
-        Return monthly historic Value at Risk (VaR) at a specified level.
+        Compute monthly historic Value at Risk (VaR) at a specified level.
         """
         s = -ror.quantile(level / 100)
-        s.name = 'VaR'
+        if isinstance(s, pd.Series):
+            s.name = 'VaR'
         return s
 
     @staticmethod
     def get_cvar_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:
         """
-        Computes the Conditional VaR (CVaR) of Series or DataFrame at a specified level.
+        Compute the Conditional VaR (CVaR) at a specified level.
         """
         is_beyond = ror <= ror.quantile(level / 100)  # mask: return is less than quantile
-        return -ror[is_beyond].mean()
+        s = -ror[is_beyond].mean()
+        if isinstance(s, pd.Series):
+            s.name = 'CVaR'
+        return s
 
     @staticmethod
     def get_drawdowns(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:

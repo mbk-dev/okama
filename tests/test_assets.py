@@ -85,11 +85,11 @@ class TestAssetList:
         assert self.asset_list.semideviation_annual[0] == approx(0.05408, rel=1e-2)
         assert self.asset_list.semideviation_annual[1] == approx(0, abs=1e-2)
 
+    @mark.test
     def test_get_var_historic(self):
         assert self.asset_list.get_var_historic(time_frame=1, level=5)['RUB.FX'] == approx(0.0411, rel=1e-2)
         assert self.asset_list.get_var_historic(time_frame=5, level=1)['MCFTR.INDX'] == approx(-0.1048, rel=1e-2)
 
-    @mark.test
     def test_get_cvar_historic(self):
         assert self.asset_list.get_cvar_historic(level=5, time_frame=12)['RUB.FX'] == approx(0.1120, rel=1e-2)
         assert self.asset_list.get_cvar_historic(level=5, time_frame=12)['MCFTR.INDX'] == approx(-0.3130, rel=1e-2)
@@ -120,7 +120,6 @@ class TestAssetList:
     ]
 
     # input_data - period (tuple[0]), expected1 - expected value 1 (tuple[1]), expected2 - expected value 2(tuple[2])
-    @mark.test
     @mark.parametrize("input_data,expected1,expected2,expected3", testdata, ids=["YTD", "1 year", "full period"])
     def test_get_cumulative_return(self, input_data, expected1, expected2, expected3):
         assert self.asset_list.get_cumulative_return(period=input_data)['RUB.FX'] == approx(expected1, rel=1e-2)

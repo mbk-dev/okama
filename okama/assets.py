@@ -204,12 +204,24 @@ class AssetList:
         x.rename(returns.name, inplace=True)
         return x
 
-    def _add_inflation(self):
+    def _add_inflation(self) -> pd.DataFrame:
+        """
+        Add inflation column to returns DataFrame.
+        """
         if hasattr(self, 'inflation'):
-            df = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
+            return pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
         else:
-            df = self.ror
-        return df
+            return self.ror
+
+    def _remove_inflation(self, time_frame: int) -> pd.DataFrame:
+        """
+        Remove inflation column from rolling returns if exists.
+        Parameters
+        """
+        if hasattr(self, 'inflation'):
+            return self.get_rolling_cumulative_return(window=time_frame).drop(columns=[self.inflation])
+        else:
+            return self.get_rolling_cumulative_return(window=time_frame)
 
     @property
     def symbols(self) -> List[str]:
@@ -299,7 +311,7 @@ class AssetList:
         AGG.US    -0.0867
         Name: VaR, dtype: float64
         """
-        df = self.get_rolling_cumulative_return(window=time_frame).drop(columns=[self.inflation])
+        df = self._remove_inflation(time_frame)
         return Frame.get_var_historic(df, level)
 
     def get_cvar_historic(self, time_frame: int = 12, level: int = 5) -> pd.Series:
@@ -328,10 +340,7 @@ class AssetList:
         dtype: float64
         Name: VaR, dtype: float64
         """
-        if hasattr(self, 'inflation'):
-            df = self.get_rolling_cumulative_return(window=time_frame).drop(columns=[self.inflation])
-        else:
-            df = self.get_rolling_cumulative_return(window=time_frame)
+        df = self._remove_inflation(time_frame)
         return Frame.get_cvar_historic(df, level)
 
     @property
@@ -372,7 +381,7 @@ class AssetList:
 
         if not period:
             cagr = Frame.get_cagr(df)
-        elif isinstance(period, int):
+        elif isinstance(period, int) and period > 0:
             dt = Date.subtract_years(dt0, period)
             if dt >= self.first_date:
                 cagr = Frame.get_cagr(df[dt:])
@@ -433,7 +442,7 @@ class AssetList:
         elif str(period).lower() == 'ytd':
             year = dt0.year
             cr = (df[str(year):] + 1.).prod() - 1.
-        elif isinstance(period, int):
+        elif isinstance(period, int) and period > 0:
             dt = Date.subtract_years(dt0, period)
             if dt >= self.first_date:
                 cr = Frame.get_cumulative_return(df[dt:])
