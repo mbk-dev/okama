@@ -26,7 +26,7 @@ class TestAsset:
         assert type(self.spy.price) == float
 
     def test_dividends(self):
-        assert self.spy.dividends['2019'].sum() == 5.6183
+        assert self.spy.dividends['2019'].iloc[-1] == 1.57
 
     def test_nav_ts(self):
         assert self.otkr.nav_ts[0] == 101820352.18
@@ -85,11 +85,11 @@ class TestAssetList:
         assert self.asset_list.semideviation_annual[0] == approx(0.05408, rel=1e-2)
         assert self.asset_list.semideviation_annual[1] == approx(0, abs=1e-2)
 
-    @mark.test
     def test_get_var_historic(self):
         assert self.asset_list.get_var_historic(time_frame=1, level=5)['RUB.FX'] == approx(0.0411, rel=1e-2)
         assert self.asset_list.get_var_historic(time_frame=5, level=1)['MCFTR.INDX'] == approx(-0.1048, rel=1e-2)
 
+    @mark.test
     def test_get_cvar_historic(self):
         assert self.asset_list.get_cvar_historic(level=5, time_frame=12)['RUB.FX'] == approx(0.1120, rel=1e-2)
         assert self.asset_list.get_cvar_historic(level=5, time_frame=12)['MCFTR.INDX'] == approx(-0.3130, rel=1e-2)

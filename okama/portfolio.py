@@ -15,6 +15,7 @@ class Portfolio:
     Implementation of investment portfolio.
     Arguments are similar to AssetList (weights are added), but different behavior.
     Works with monthly end of day historical rate of return data.
+    TODO: rebalance_period should be an attribute
     """
     def __init__(self,
                  symbols: Optional[List[str]] = None, *,
@@ -266,15 +267,64 @@ class Portfolio:
         return Frame.get_semideviation(self.returns_ts) * 12 ** 0.5
 
     def get_var_historic(self, time_frame: int = 12, level=5) -> float:
+        """
+        Calculate historic Value at Risk (VaR) for the portfolio.
+
+        The VaR calculates the potential loss of an investment with a given time frame and confidence level.
+        Loss is a positive number (expressed in cumulative return).
+        If VaR is negative there are gains at this confidence level.
+
+        Parameters
+        ----------
+        time_frame : int, default 12 (12 months)
+        level : int, default 5 (5% quantile)
+
+        Returns
+        -------
+        Float
+
+        Examples
+        --------
+        >>> x = ok.Portfolio(['SP500TR.INDX', 'SP500BDT.INDX'], last_date='2021-01')
+        >>> x.get_var_historic(time_frame=12, level=1)
+        0.24030006476701732
+        """
         rolling = self.get_rolling_cumulative_return(window=time_frame)
         return Frame.get_var_historic(rolling, level)
 
     def get_cvar_historic(self, time_frame: int = 12, level=5) -> float:
+        """
+        Calculate historic Conditional Value at Risk (CVAR, expected shortfall) for the portfolio.
+
+        CVaR is the average loss over a specified time period of unlikely scenarios beyond the confidence level.
+        Loss is a positive number (expressed in cumulative return).
+        If CVaR is negative there are gains at this confidence level.
+
+        Parameters
+        ----------
+        time_frame : int, default 12 (12 months)
+        level : int, default 5 (5% quantile)
+
+        Returns
+        -------
+        Float
+
+        Examples
+        --------
+        >>> x = ok.Portfolio(['USDEUR.FX', 'BTC-USD.CC'], last_date='2021-01')
+        >>> x.get_cvar_historic(time_frame=2, level=1)
+        0.3566909250442616
+        """
         rolling = self.get_rolling_cumulative_return(window=time_frame)
         return Frame.get_cvar_historic(rolling, level)
 
     @property
     def drawdowns(self) -> pd.Series:
+        """
+        Calculate drawdowns time series for the portfolio.
+
+        The drawdown is the percent decline from a previous peak in wealth index.
+        """
         return Frame.get_drawdowns(self.returns_ts)
 
     def describe(self, years: Tuple[int] = (1, 5, 10)) -> pd.DataFrame:
@@ -431,10 +481,18 @@ class Portfolio:
             raise ValueError(f'Forecast period {years} years is not credible. '
                              f'It should not exceed 1/2 of portfolio history period length {self.period_length / 2} years')
 
-    def percentile_inverse(self, distr: str = 'norm', years: int = 1, score: float = 0, n: Optional[int] = None) -> float:
+    def percentile_inverse(self,
+                           distr: str = 'norm',
+                           years: int = 1,
+                           score: float = 0,
+                           n: Optional[int] = None
+                           ) -> float:
         """
-        Compute the percentile rank of a score relative to an array of CAGR values.
-        A percentile_inverse of, for example, 80% means that 80% of the scores in distr are below the given score.
+        Compute the percentile rank of a score (CAGR value) in a given time frame.
+
+        If percentile_inverse of, for example, 0% (CAGR value) is equal to 8% for 1 year time frame
+        it means that 8% of the CAGR values in the distribution are negative in 1 year periods. Or in other words
+        the probability of getting negative result after 1 year of investments is 8%.
 
         Args:
             distr: norm, lognorm, hist - distribution type (normal or lognormal) or hist for CAGR array from history

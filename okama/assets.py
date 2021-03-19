@@ -5,7 +5,6 @@ import numpy as np
 
 from .macro import Inflation
 from .common.helpers import Float, Frame, Date, Index
-# from .common._decorators import doc
 from .settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
 from .api.data_queries import QueryData
 from .api.namespaces import get_assets_namespaces
@@ -614,8 +613,7 @@ class AssetList:
     @property
     def mean_return(self) -> pd.Series:
         """
-        TODO: Finish description
-        Calculate mean return (arithmetic mean) for the assets.
+        Calculate annualized mean return (arithmetic mean) for the assets.
         """
         df = self._add_inflation()
         mean = df.mean()
@@ -624,7 +622,9 @@ class AssetList:
     @property
     def real_mean_return(self) -> pd.Series:
         """
-        Calculates real mean return (arithmetic mean) for the assets.
+        Calculates annualized real mean return (arithmetic mean) for the assets.
+
+        Real rate of return is adjusted for inflation.
         """
         if hasattr(self, 'inflation'):
             df = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
@@ -635,6 +635,9 @@ class AssetList:
         return (1. + ror_mean) / (1. + infl_mean) - 1.
 
     def _get_asset_dividends(self, tick, remove_forecast=True) -> pd.Series:
+        """
+        Get dividend time series for a single symbol.
+        """
         first_period = pd.Period(self.first_date, freq='M')
         first_day = first_period.to_timestamp(how='Start')
         last_period = pd.Period(self.last_date, freq='M')
@@ -649,6 +652,11 @@ class AssetList:
         return s.add(pad_s, fill_value=0)
 
     def _get_dividends(self, remove_forecast=True) -> pd.DataFrame:
+        """
+        Get dividend time series for all assets.
+
+        If remove_forecast=True all forecasted (future) data is removed from time series.
+        """
         if self._dividends_ts.empty:
             dic = {}
             for tick in self.symbols:
@@ -660,9 +668,11 @@ class AssetList:
     @property
     def dividend_yield(self) -> pd.DataFrame:
         """
-        Calculate last twelve months (LTM) dividend yield time series monthly.
-        Calculates yield assuming original asset currency (not adjusting to AssetList currency).
+        Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
+
+        All yields are calculated in the original asset currency (not adjusting to AssetList currency).
         Forecast dividends are removed.
+        Zero value time series are created for assets without dividends.
         """
         if self._dividend_yield.empty:
             frame = {}
@@ -701,14 +711,16 @@ class AssetList:
     @property
     def dividends_annual(self) -> pd.DataFrame:
         """
-        Time series of dividends for a calendar year.
+        Return calendar year dividends time series for each asset.
         """
         return self._get_dividends().resample('Y').sum()
 
     @property
     def dividend_growing_years(self) -> pd.DataFrame:
         """
-        Returns the number of growing dividend years for each asset.
+        Return the number of growing dividend years for each asset.
+
+        TODO: finish description. Insert an example
         """
         div_growth = self.dividends_annual.pct_change()[1:]
         df = pd.DataFrame()
@@ -723,7 +735,7 @@ class AssetList:
     @property
     def dividend_paying_years(self) -> pd.DataFrame:
         """
-        Returns the number of years of consecutive dividend payments.
+        Return the number of years of consecutive dividend payments for each asset.
         """
         div_annual = self.dividends_annual
         frame = pd.DataFrame()
@@ -738,7 +750,7 @@ class AssetList:
 
     def get_dividend_mean_growth_rate(self, period=5) -> pd.Series:
         """
-        Calculates geometric mean of dividends growth rate time series for a certain period.
+        Calculate geometric mean of dividends growth rate time series for a given period.
         Period should be integer and not exceed the available data period_length.
         """
         if period > self.pl.years or not isinstance(period, int):
