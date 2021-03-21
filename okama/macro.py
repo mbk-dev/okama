@@ -88,12 +88,11 @@ class Inflation(MacroABC):
         """
         Return 12 months rolling inflation time series.
         """
-        if self.symbol.split(".", 1)[-1] == 'INFL':
-            x = (self.values_ts + 1.).rolling(_MONTHS_PER_YEAR).apply(np.prod, raw=True) - 1.
-            x.dropna(inplace=True)
-            return x
-        else:
+        if self.symbol.split(".", 1)[-1] != 'INFL':
             raise Exception('cumulative_inflation is defined for inflation only')
+        x = (self.values_ts + 1.).rolling(_MONTHS_PER_YEAR).apply(np.prod, raw=True) - 1.
+        x.dropna(inplace=True)
+        return x
 
     def describe(self, years=[1, 5, 10]) -> pd.DataFrame:
         """
@@ -112,12 +111,10 @@ class Inflation(MacroABC):
         ts = df[str(year):]
         inflation = Frame.get_cumulative_return(ts)
         row1 = {self.name: inflation}
-        row1.update({'period': 'YTD'})
-        row1.update({'property': 'compound inflation'})
+        row1.update(period='YTD', property='compound inflation')
 
         row2 = {self.name: Float.get_purchasing_power(inflation)}
-        row2.update({'period': 'YTD'})
-        row2.update({'property': '1000 purchasing power'})
+        row2.update(period='YTD', property='1000 purchasing power')
 
         description = description.append([row1, row2], ignore_index=True)
 
@@ -137,7 +134,7 @@ class Inflation(MacroABC):
                 # max inflation
                 max_inflation = self.rolling_inflation[dt:].nlargest(n=1)  # largest 12m inflation for selected period
                 row3 = {self.name: max_inflation.iloc[0]}
-                row3.update({'period': max_inflation.index.values[0].strftime('%Y-%m')})
+                row3.update(period=max_inflation.index.values[0].strftime('%Y-%m'))
 
                 # purchase power
                 row4 = {self.name: Float.get_purchasing_power(comp_inflation)}
@@ -145,18 +142,15 @@ class Inflation(MacroABC):
                 row1 = {self.name: None}
                 row2 = {self.name: None}
                 row3 = {self.name: None}
-                row3.update({'period': f'{i} years'})
+                row3.update(period=f'{i} years')
                 row4 = {self.name: None}
-            row1.update({'period': f'{i} years'})
-            row1.update({'property': 'annual inflation'})
+            row1.update(period=f'{i} years', property='annual inflation')
 
-            row2.update({'period': f'{i} years'})
-            row2.update({'property': 'compound inflation'})
+            row2.update(period=f'{i} years', property='compound inflation')
 
-            row3.update({'property': 'max 12m inflation'})
+            row3.update(property='max 12m inflation')
 
-            row4.update({'period': f'{i} years'})
-            row4.update({'property': '1000 purchasing power'})
+            row4.update(period=f'{i} years', property='1000 purchasing power')
 
             description = description.append(row1, ignore_index=True)
             description = description.append(row2, ignore_index=True)
@@ -166,26 +160,21 @@ class Inflation(MacroABC):
         ts = df
         full_inflation = Frame.get_cagr(ts)
         row = {self.name: full_inflation}
-        row.update({'period': self._pl_txt})
-        row.update({'property': 'annual inflation'})
+        row.update(period=self._pl_txt, property='annual inflation')
         description = description.append(row, ignore_index=True)
         # compound inflation
         comp_inflation = Frame.get_cumulative_return(ts)
         row = {self.name: comp_inflation}
-        row.update({'period': self._pl_txt})
-        row.update({'property': 'compound inflation'})
+        row.update(period=self._pl_txt, property='compound inflation')
         description = description.append(row, ignore_index=True)
         # max inflation for full period available
         max_inflation = self.rolling_inflation.nlargest(n=1)
         row = {self.name: max_inflation.iloc[0]}
-        row.update({'period': max_inflation.index.values[0].strftime('%Y-%m')})
-        row.update({'property': 'max 12m inflation'})
+        row.update(period=max_inflation.index.values[0].strftime('%Y-%m'), property='max 12m inflation')
         description = description.append(row, ignore_index=True)
         # purchase power
-        # 1k / (1 + x) function is used 4 times. maybe helper function should be introduced?
         row = {self.name: Float.get_purchasing_power(comp_inflation)}
-        row.update({'period': self._pl_txt})
-        row.update({'property': '1000 purchasing power'})
+        row.update(period=self._pl_txt, property='1000 purchasing power')
         description = description.append(row, ignore_index=True)
         return Frame.change_columns_order(description, ['property', 'period'], position='first')
 

@@ -329,13 +329,35 @@ class Portfolio:
 
     def describe(self, years: Tuple[int] = (1, 5, 10)) -> pd.DataFrame:
         """
-        Generate descriptive statistics for a given list of tickers.
+        Generate descriptive statistics for the portfolio.
+
         Statistics includes:
-        - YTD compound return
+        - YTD (Year To date) compound return
         - CAGR for a given list of periods
-        - risk (std) for a full period
-        - CVAR for a full period
-        - max drawdowns (and dates) for a full period
+        - Dividend yield - yield for last 12 months (LTM)
+
+        Risk metrics (full available period):
+        - risk (standard deviation)
+        - CVAR
+        - max drawdowns (and dates)
+
+        Parameters
+        ----------
+        years : tuple of (int,), default (1, 5, 10)
+            List of periods for CAGR.
+
+        Returns
+        -------
+            DataFrame
+
+        See Also
+        --------
+            get_cumulative_return : Calculate cumulative return.
+            get_cagr : Calculate assets Compound Annual Growth Rate (CAGR).
+            dividend_yield : Calculate dividend yield (LTM).
+            risk_annual : Return annualized risks (standard deviation).
+            get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
+            drawdowns : Calculate drawdowns.
         """
         description = pd.DataFrame()
         dt0 = self.last_date
@@ -353,9 +375,7 @@ class Portfolio:
             row = {'portfolio': value, self.inflation: inflation}
         else:
             row = {'portfolio': value}
-        row.update({'period': 'YTD'})
-        row.update({'rebalancing': '1 year'})
-        row.update({'property': 'compound return'})
+        row.update(period='YTD', rebalancing='1 year', property='compound return')
         description = description.append(row, ignore_index=True)
         # CAGR for a list of periods (rebalanced 1 year)
         if self.pl.years >= 1:
@@ -372,9 +392,7 @@ class Portfolio:
                         row = {'portfolio': value}
                 else:
                     row = {x: None for x in df.columns}
-                row.update({'period': f'{i} years'})
-                row.update({'rebalancing': '1 year'})
-                row.update({'property': 'CAGR'})
+                row.update(period=f'{i} years', rebalancing='1 year', property='CAGR')
                 description = description.append(row, ignore_index=True)
             # CAGR for full period (rebalanced 1 year)
             ts = Rebalance.rebalanced_portfolio_return_ts(self.weights, self._ror, period='year')
@@ -385,9 +403,7 @@ class Portfolio:
                 row = {'portfolio': value, self.inflation: full_inflation}
             else:
                 row = {'portfolio': value}
-            row.update({'period': f'{self.period_length} years'})
-            row.update({'rebalancing': '1 year'})
-            row.update({'property': 'CAGR'})
+            row.update(period=f'{self.period_length} years', rebalancing='1 year', property='CAGR')
             description = description.append(row, ignore_index=True)
             # CAGR rebalanced 1 month
             value = self.get_cagr()
@@ -396,9 +412,7 @@ class Portfolio:
                 full_inflation = value.loc[self.inflation]  # full period inflation is required for following calc
             else:
                 row = {'portfolio': value}
-            row.update({'period': f'{self.period_length} years'})
-            row.update({'rebalancing': '1 month'})
-            row.update({'property': 'CAGR'})
+            row.update(period=f'{self.period_length} years', rebalancing='1 month', property='CAGR')
             description = description.append(row, ignore_index=True)
             # CAGR not rebalanced
             value = Frame.get_cagr(self.get_rebalanced_portfolio_return_ts(period='none'))
@@ -406,43 +420,31 @@ class Portfolio:
                 row = {'portfolio': value, self.inflation: full_inflation}
             else:
                 row = {'portfolio': value}
-            row.update({'period': f'{self.period_length} years'})
-            row.update({'rebalancing': 'Not rebalanced'})
-            row.update({'property': 'CAGR'})
+            row.update(period=f'{self.period_length} years', rebalancing='Not rebalanced', property='CAGR')
             description = description.append(row, ignore_index=True)
             # Dividend Yield
             dy = self.dividend_yield
             for i, ccy in enumerate(dy):
                 value = self.dividend_yield.iloc[-1, i]
                 row = {'portfolio': value}
-                row.update({'period': 'LTM'})
-                row.update({'rebalancing': '1 month'})
-                row.update({'property': f'Dividend yield ({ccy})'})
+                row.update(period='LTM', rebalancing='1 month', property=f'Dividend yield ({ccy})')
                 description = description.append(row, ignore_index=True)
         # risk (rebalanced 1 month)
         row = {'portfolio': self.risk_annual}
-        row.update({'period': f'{self.period_length} years'})
-        row.update({'rebalancing': '1 month'})
-        row.update({'property': 'Risk'})
+        row.update(period=f'{self.period_length} years', rebalancing='1 month', property='Risk')
         description = description.append(row, ignore_index=True)
         # CVAR (rebalanced 1 month)
         if self.pl.years >= 1:
             row = {'portfolio': self.get_cvar_historic()}
-            row.update({'period': f'{self.period_length} years'})
-            row.update({'rebalancing': '1 month'})
-            row.update({'property': 'CVAR'})
+            row.update(period=f'{self.period_length} years', rebalancing='1 month', property='CVAR')
             description = description.append(row, ignore_index=True)
         # max drawdowns (rebalanced 1 month)
         row = {'portfolio': self.drawdowns.min()}
-        row.update({'period': f'{self.period_length} years'})
-        row.update({'rebalancing': '1 month'})
-        row.update({'property': 'Max drawdown'})
+        row.update(period=f'{self.period_length} years', rebalancing='1 month', property='Max drawdown')
         description = description.append(row, ignore_index=True)
         # max drawdowns dates
         row = {'portfolio': self.drawdowns.idxmin()}
-        row.update({'period': f'{self.period_length} years'})
-        row.update({'rebalancing': '1 month'})
-        row.update({'property': 'Max drawdown date'})
+        row.update(period=f'{self.period_length} years', rebalancing='1 month', property='Max drawdown date')
         description = description.append(row, ignore_index=True)
         if hasattr(self, 'inflation'):
             description.rename(columns={self.inflation: 'inflation'}, inplace=True)

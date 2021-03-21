@@ -527,8 +527,7 @@ class AssetList:
         # YTD return
         ytd_return = self.get_cumulative_return(period='YTD')
         row = ytd_return.to_dict()
-        row.update({'period': 'YTD'})
-        row.update({'property': 'Compound return'})
+        row.update(period='YTD', property='Compound return')
         description = description.append(row, ignore_index=True)
         # CAGR for a list of periods
         if self.pl.years >= 1:
@@ -538,39 +537,32 @@ class AssetList:
                     row = self.get_cagr(period=i).to_dict()
                 else:
                     row = {x: None for x in df.columns}
-                row.update({'period': f'{i} years'})
-                row.update({'property': 'CAGR'})
+                row.update(period=f'{i} years', property='CAGR')
                 description = description.append(row, ignore_index=True)
             # CAGR for full period
             row = self.get_cagr(period=None).to_dict()
-            row.update({'period': self._pl_txt})
-            row.update({'property': 'CAGR'})
+            row.update(period=self._pl_txt, property='CAGR')
             description = description.append(row, ignore_index=True)
             # Dividend Yield
             row = self.dividend_yield.iloc[-1].to_dict()
-            row.update({'period': 'LTM'})
-            row.update({'property': 'Dividend yield'})
+            row.update(period='LTM', property='Dividend yield')
             description = description.append(row, ignore_index=True)
         # risk for full period
         row = self.risk_annual.to_dict()
-        row.update({'period': self._pl_txt})
-        row.update({'property': 'Risk'})
+        row.update(period=self._pl_txt, property='Risk')
         description = description.append(row, ignore_index=True)
         # CVAR
         if self.pl.years >= 1:
             row = self.get_cvar_historic().to_dict()
-            row.update({'period': self._pl_txt})
-            row.update({'property': 'CVAR'})
+            row.update(period=self._pl_txt, property='CVAR')
             description = description.append(row, ignore_index=True)
         # max drawdowns
         row = self.drawdowns.min().to_dict()
-        row.update({'period': self._pl_txt})
-        row.update({'property': 'Max drawdowns'})
+        row.update(period=self._pl_txt, property='Max drawdowns')
         description = description.append(row, ignore_index=True)
         # max drawdowns dates
         row = self.drawdowns.idxmin().to_dict()
-        row.update({'period': self._pl_txt})
-        row.update({'property': 'Max drawdowns dates'})
+        row.update(period=self._pl_txt, property='Max drawdowns dates')
         description = description.append(row, ignore_index=True)
         # inception dates
         row = {}
@@ -578,8 +570,7 @@ class AssetList:
             # short_ticker = ti.split(".", 1)[0]
             value = self.assets_first_dates[ti].strftime("%Y-%m")
             row.update({ti: value})
-        row.update({'period': None})
-        row.update({'property': 'Inception date'})
+        row.update(period=None, property='Inception date')
         if hasattr(self, 'inflation'):
             row.update({self.inflation: self.inflation_first_date.strftime("%Y-%m")})
         description = description.append(row, ignore_index=True)
@@ -589,15 +580,13 @@ class AssetList:
             # short_ticker = ti.split(".", 1)[0]
             value = self.assets_last_dates[ti].strftime("%Y-%m")
             row.update({ti: value})
-        row.update({'period': None})
-        row.update({'property': 'Last asset date'})
+        row.update(period=None, property='Last asset date')
         if hasattr(self, 'inflation'):
             row.update({self.inflation: self.inflation_last_date.strftime("%Y-%m")})
         description = description.append(row, ignore_index=True)
         # last data date
         row = {x: self.last_date.strftime("%Y-%m") for x in df.columns}
-        row.update({'period': None})
-        row.update({'property': 'Common last data date'})
+        row.update(period=None, property='Common last data date')
         description = description.append(row, ignore_index=True)
         # rename columns
         if hasattr(self, 'inflation'):
