@@ -395,7 +395,10 @@ class Rebalance:
         return wealth_index
 
     @staticmethod
-    def rebalanced_portfolio_return_ts(weights: list, ror: pd.DataFrame, *, period: str = 'year') -> pd.Series:
+    def rebalanced_portfolio_return_ts(weights: Union[list, np.ndarray],
+                                       ror: pd.DataFrame, *,
+                                       period: str = 'year'
+                                       ) -> pd.Series:
         """
         Returns mean return time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
@@ -434,7 +437,7 @@ class Date:
     @staticmethod
     def subtract_years(dt: pd.Timestamp, years: int) -> pd.Timestamp:
         """
-        Subtracts N years (integer) from a date. Used for time series.
+        Subtract N years (integer) from a date. Used for time series.
         First month is +1 (if today is August the series should start at September to give 12 months).
         """
         if isinstance(years, int):

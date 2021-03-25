@@ -97,14 +97,15 @@ class Plots(AssetList):
                                inflation=self._bool_inflation,
                                bounds=bounds,
                                full_frontier=full_frontier,
-                               n_points=10
+                               n_points=20
                                ).ef_points
         self._verify_axes()
+        linestyle = itertools.cycle(('-', '--', ':', '-.'))
         x_axe = 'CAGR' if cagr else 'Risk'
         fig = plt.figure(figsize=(12, 6))
         for i in ef:
             if i not in ('Risk', 'Mean return', 'CAGR'):  # select only columns with tickers
-                self.ax.plot(ef[x_axe], ef.loc[:, i], label=i)
+                self.ax.plot(ef[x_axe], ef.loc[:, i], linestyle=next(linestyle), label=i)
         self.ax.set_xlim(ef[x_axe].min(), ef[x_axe].max())
         if cagr:
             self.ax.set_xlabel('CAGR (compound annual growth rate)')

@@ -23,9 +23,9 @@ class EfficientFrontierReb(AssetList):
     TODO: Add bounds
     """
     def __init__(self,
-                 symbols: List[str], *,
-                 first_date: str = None,
-                 last_date: str = None,
+                 symbols: Optional[List[str]] = None, *,
+                 first_date: Optional[str] = None,
+                 last_date: Optional[str] = None,
                  ccy: str = 'USD',
                  inflation: bool = True,
                  reb_period: str = 'year',
@@ -75,7 +75,7 @@ class EfficientFrontierReb(AssetList):
 
         Returns
         -------
-        pd.DataFrame
+        str
         """
         return self._reb_period
 
@@ -164,7 +164,7 @@ class EfficientFrontierReb(AssetList):
                            bounds=bounds)
         return weights.x
 
-    def _get_gmv_monthly(self) -> Tuple[float]:
+    def _get_gmv_monthly(self) -> Tuple[float, float]:
         """
         Returns the risk and return (mean, monthly) of the Global Minimum Volatility portfolio
         """
@@ -178,7 +178,7 @@ class EfficientFrontierReb(AssetList):
         )
 
     @property
-    def gmv_annual_values(self) -> Tuple[float]:
+    def gmv_annual_values(self) -> Tuple[float, float]:
         """
         Returns the annual risk (std) and CAGR of the Global Minimum Volatility portfolio.
         """
@@ -277,64 +277,9 @@ class EfficientFrontierReb(AssetList):
             raise Exception(f'There is no solution for target cagr {target_return}.')
         return point
 
-    def _maximize_risk_trust_constr(self, target_return: float) -> Dict[str, float]:
-        """
-        Returns the optimal weights and rick / cagr values for a max risk at the target cagr.
-        """
-        n = self.ror.shape[1]  # number of assets
-
-        init_guess = np.repeat(0, n)
-        init_guess[self.max_annual_risk_asset['list_position']] = 1.
-        risk_limit = self.gmv_annual_values[0]
-
-        def objective_function(w):
-            # - annual risk
-            ts = Rebalance.rebalanced_portfolio_return_ts(w, self.ror, period=self.reb_period)
-            risk_monthly = ts.std()
-            mean_return = ts.mean()
-            result = - Float.annualize_risk(risk_monthly, mean_return)
-            return result
-
-        # construct the constraints
-        bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples for Weights constrains
-        weights_sum_to_1 = {'type': 'eq',
-                            'fun': lambda weights: np.sum(weights) - 1
-                            }
-        cagr_is_target = {'type': 'eq',
-                          'fun': lambda weights: target_return - self._get_cagr(weights)
-                          }
-
-        risk_is_above = {'type': 'ineq',
-                         'fun': lambda weights: - objective_function(weights) - risk_limit
-                         }
-
-        weights = minimize(objective_function,
-                           init_guess,
-                           method='trust-constr',
-                           options={'disp': False,
-                                    'gtol': 1e-6,
-                                    'xtol': 1e-8,
-                                    # 'barrier_tol': 1e-01,
-                                    'maxiter': 100,
-                                    'factorization_method': 'QRFactorization',
-                                    'verbose': 0,
-                                    },
-                           constraints=(weights_sum_to_1, cagr_is_target, risk_is_above),
-                           bounds=bounds)
-
-        # Calculate points of EF given optimal weights
-        if weights.success:
-            asset_labels = self.symbols if self.tickers else list(self.names.values())
-            point = {x: y for x, y in zip(asset_labels, weights.x)}
-            point['CAGR'] = target_return
-            point['Risk'] = - weights.fun
-        else:
-            raise Exception(f'There is no solution for target cagr {target_return}.')
-        return point
-
     def maximize_risk(self, target_return: float) -> Dict[str, float]:
         """
-        Returns the optimal weights and rick / cagr values for a max risk at the target cagr.
+        Returns the optimal weights and risk / cagr values for a max risk at the target cagr.
         """
         n = self.ror.shape[1]  # number of assets
 
@@ -418,6 +363,9 @@ class EfficientFrontierReb(AssetList):
 
     @property
     def max_annual_risk_asset(self):
+        """
+        Calculate weights of portfolio with max annual risk.
+        """
         max_risk = self.risk_annual.max()
         ticker_with_largest_risk = self.risk_annual.nlargest(1, keep='first').index.values[0]
         return {'max_annual_risk': max_risk,

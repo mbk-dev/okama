@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict, List
 
 import pandas as pd
 import numpy as np
@@ -7,7 +7,6 @@ from scipy.optimize import minimize
 
 from ..assets import AssetList
 from okama.common.helpers import Float, Frame
-from ..settings import default_tickers_list
 
 
 class EfficientFrontier(AssetList):
@@ -18,7 +17,7 @@ class EfficientFrontier(AssetList):
     tickers = True - labels of data in DataFrame are tickers (asset long names if False)
     """
     def __init__(self,
-                 symbols: str = default_tickers_list, *,
+                 symbols: Optional[List[str]] = None, *,
                  first_date: Optional[str] = None,
                  last_date: Optional[str] = None,
                  ccy: str = 'USD',
