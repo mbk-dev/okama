@@ -26,7 +26,7 @@ setup(
     packages=find_packages(),
     package_data={'tests': ['*.csv']},
     install_requires=['pandas>=0.25.0',
-                      'numpy<=1.19.3',
+                      'numpy>=1.16.5',
                       'scipy>=0.14.0',
                       'matplotlib',
                       'requests'],

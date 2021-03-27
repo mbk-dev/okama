@@ -30,7 +30,7 @@ def test_gmv_annual_values(init_efficient_frontier_reb):
 @mark.rebalance
 @mark.frontier
 def test_max_return(init_efficient_frontier_reb):
-    assert init_efficient_frontier_reb.max_return['CAGR'] == approx(0.14904342, rel=1e-2)
+    assert init_efficient_frontier_reb.global_max_return_portfolio['CAGR'] == approx(0.14904342, rel=1e-2)
 
 
 @mark.rebalance

@@ -215,7 +215,6 @@ class AssetList:
     def _remove_inflation(self, time_frame: int) -> pd.DataFrame:
         """
         Remove inflation column from rolling returns if exists.
-        Parameters
         """
         if hasattr(self, 'inflation'):
             return self.get_rolling_cumulative_return(window=time_frame).drop(columns=[self.inflation])
@@ -226,6 +225,10 @@ class AssetList:
     def symbols(self) -> List[str]:
         """
         Return a list of financial symbols used to set the AssetList.
+
+        Returns
+        -------
+        list of str
         """
         symbols = [default_ticker] if not self.__symbols else self.__symbols
         if not isinstance(symbols, list):
@@ -236,6 +239,10 @@ class AssetList:
     def tickers(self) -> List[str]:
         """
         Return a list of tickers (symbols without a namespace) used to set the AssetList.
+
+        Returns
+        -------
+        list of str
         """
         return self.__tickers
 
@@ -243,6 +250,10 @@ class AssetList:
     def currency(self) -> str:
         """
         Return the base currency. Such properties as rate of return and volatility are adjusted to the base currency.
+
+        Returns
+        -------
+        str
         """
         return self.__currency
 
@@ -251,6 +262,10 @@ class AssetList:
         """
         Return wealth index time series for the assets and accumulated inflation.
         Wealth index is obtained from the accumulated return multiplicated by the initial investments (1000).
+
+        Returns
+        -------
+        DataFrame
         """
         df = self._add_inflation()
         return Frame.get_wealth_indexes(df)
@@ -259,6 +274,10 @@ class AssetList:
     def risk_monthly(self) -> pd.Series:
         """
         Return monthly risks (standard deviation) for each asset.
+
+        Returns
+        -------
+        Series
         """
         return self.ror.std()
 
@@ -266,6 +285,10 @@ class AssetList:
     def risk_annual(self) -> pd.Series:
         """
         Return annualized risks (standard deviation) for each asset.
+
+        Returns
+        -------
+        Series
         """
         risk = self.ror.std()
         mean_return = self.ror.mean()
@@ -275,13 +298,21 @@ class AssetList:
     def semideviation_monthly(self) -> pd.Series:
         """
         Return semideviation monthly values for each asset.
+
+        Returns
+        -------
+        Series
         """
         return Frame.get_semideviation(self.ror)
 
     @property
-    def semideviation_annual(self) -> float:
+    def semideviation_annual(self) -> pd.Series:
         """
         Return semideviation annualized values for each asset.
+
+        Returns
+        -------
+        Series
         """
         return Frame.get_semideviation(self.ror) * 12 ** 0.5
 
@@ -348,6 +379,11 @@ class AssetList:
         Calculate drawdowns time series for the assets.
 
         The drawdown is the percent decline from a previous peak in wealth index.
+
+        Returns
+        -------
+        DataFrame
+            Time series of drawdowns.
         """
         return Frame.get_drawdowns(self.ror)
 
@@ -463,7 +499,7 @@ class AssetList:
 
         Returns
         -------
-            DataFrame
+        DataFrame
             Time series of rolling cumulative return.
         """
         df = self._add_inflation()
@@ -478,6 +514,10 @@ class AssetList:
         Calculate annual rate of return time series for each asset.
 
         Rate of return is calculated for each calendar year.
+
+        Returns
+        -------
+        DataFrame
         """
         return Frame.get_annual_return_ts_from_monthly(self.ror)
 
@@ -510,16 +550,16 @@ class AssetList:
 
         Returns
         -------
-            DataFrame
+        DataFrame
 
         See Also
         --------
-            get_cumulative_return : Calculate cumulative return.
-            get_cagr : Calculate assets Compound Annual Growth Rate (CAGR).
-            dividend_yield : Calculate dividend yield (LTM).
-            risk_annual : Return annualized risks (standard deviation).
-            get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
-            drawdowns : Calculate drawdowns.
+        get_cumulative_return : Calculate cumulative return.
+        get_cagr : Calculate assets Compound Annual Growth Rate (CAGR).
+        dividend_yield : Calculate dividend yield (LTM).
+        risk_annual : Return annualized risks (standard deviation).
+        get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
+        drawdowns : Calculate drawdowns.
         """
         description = pd.DataFrame()
         dt0 = self.last_date
@@ -603,6 +643,10 @@ class AssetList:
     def mean_return(self) -> pd.Series:
         """
         Calculate annualized mean return (arithmetic mean) for the assets.
+
+        Returns
+        -------
+        Series
         """
         df = self._add_inflation()
         mean = df.mean()
@@ -614,6 +658,10 @@ class AssetList:
         Calculates annualized real mean return (arithmetic mean) for the assets.
 
         Real rate of return is adjusted for inflation.
+
+        Returns
+        -------
+        Series
         """
         if hasattr(self, 'inflation'):
             df = pd.concat([self.ror, self.inflation_ts], axis=1, join='inner', copy='false')
@@ -626,6 +674,10 @@ class AssetList:
     def _get_asset_dividends(self, tick, remove_forecast=True) -> pd.Series:
         """
         Get dividend time series for a single symbol.
+
+        Returns
+        -------
+        Series
         """
         first_period = pd.Period(self.first_date, freq='M')
         first_day = first_period.to_timestamp(how='Start')
@@ -645,6 +697,10 @@ class AssetList:
         Get dividend time series for all assets.
 
         If remove_forecast=True all forecasted (future) data is removed from time series.
+
+        Returns
+        -------
+        DataFrame
         """
         if self._dividends_ts.empty:
             dic = {}
@@ -662,6 +718,14 @@ class AssetList:
         All yields are calculated in the original asset currency (not adjusting to AssetList currency).
         Forecast dividends are removed.
         Zero value time series are created for assets without dividends.
+
+        Returns
+        -------
+        DataFrame
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
         """
         if self._dividend_yield.empty:
             frame = {}
@@ -700,16 +764,38 @@ class AssetList:
     @property
     def dividends_annual(self) -> pd.DataFrame:
         """
-        Return calendar year dividends time series for each asset.
+        Return calendar year dividends sum time series for each asset.
+
+        Returns
+        -------
+        DataFrame
         """
         return self._get_dividends().resample('Y').sum()
 
     @property
     def dividend_growing_years(self) -> pd.DataFrame:
         """
-        Return the number of growing dividend years for each asset.
+        Return the number of years when the annual dividend was growing for each asset.
 
-        TODO: finish description. Insert an example
+        Returns
+        -------
+        DataFrame
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
+        >>> x.dividend_growing_years
+                T.US  XOM.US
+        1985     1       1
+        1986     2       2
+        1987     3       3
+        1988     0       4
+        1989     1       5
+        1990     2       6
+        1991     3       7
+        1992     4       8
+        1993     5       9
+        1994     6      10
         """
         div_growth = self.dividends_annual.pct_change()[1:]
         df = pd.DataFrame()
@@ -725,6 +811,27 @@ class AssetList:
     def dividend_paying_years(self) -> pd.DataFrame:
         """
         Return the number of years of consecutive dividend payments for each asset.
+
+        Returns
+        -------
+        DataFrame
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12'
+        >>> x.dividend_paying_years
+              T.US  XOM.US
+        1984     1       1
+        1985     2       2
+        1986     3       3
+        1987     4       4
+        1988     5       5
+        1989     6       6
+        1990     7       7
+        1991     8       8
+        1992     9       9
+        1993    10      10
+        1994    11      11
         """
         div_annual = self.dividends_annual
         frame = pd.DataFrame()
@@ -739,11 +846,28 @@ class AssetList:
 
     def get_dividend_mean_growth_rate(self, period=5) -> pd.Series:
         """
-        Calculate geometric mean of dividends growth rate time series for a given period.
-        Period should be integer and not exceed the available data period_length.
+        Calculate geometric mean of dividends growth rate time series for a given trailing period.
+
+        Parameters
+        ----------
+        period : int, default 5
+            mean growth rate trailing period in years. Period should be a positive integer
+            and not exceed the available data period_length.
+
+        Returns
+        -------
+        Series
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12'
+        >>> x.get_dividend_mean_growth_rate(period=3)
+        T.US      0.020067
+        XOM.US    0.024281
+        dtype: float64
         """
-        if period > self.pl.years or not isinstance(period, int):
-            raise TypeError(f'{period} is not a valid value for period')
+        if period > self.pl.years or not isinstance(period, int) or period < 0 or period == 0:
+            raise ValueError(f'{period} is not a valid value for period')
         growth_ts = self.dividends_annual.pct_change().iloc[1:-1]  # Slice the last year for full dividends
         dt0 = self.last_date
         dt = Date.subtract_years(dt0, period)
@@ -751,43 +875,61 @@ class AssetList:
 
     # index methods
     @property
-    def tracking_difference(self):
+    def tracking_difference(self) -> pd.DataFrame:
         """
-        Returns tracking difference for the rate of return of assets.
+        Return tracking difference for the rate of return of assets.
+
         Assets are compared with the index or another benchmark.
-        Index should be in the first position (first column).
+        Index should be in the first position of the symbols list in AssetList parameters.
+
+        Returns
+        -------
+        DataFrame
         """
         accumulated_return = Frame.get_wealth_indexes(self.ror)  # we don't need inflation here
         return Index.tracking_difference(accumulated_return)
 
     @property
-    def tracking_difference_annualized(self):
+    def tracking_difference_annualized(self) -> pd.DataFrame:
         """
+        TODO: finilize the description
         Annualizes the values of tracking difference time series.
-        Annual values are available for periods of more than 12 months.
+        Annual values are available for history periods of more than 12 months.
         Returns for less than 12 months can't be annualized.
+
+        Returns
+        -------
+        DataFrame
         """
         return Index.tracking_difference_annualized(self.tracking_difference)
 
     @property
-    def tracking_error(self):
+    def tracking_error(self) -> pd.DataFrame:
         """
-        Returns tracking error for the rate of return time series of assets.
+        Return tracking error for the rate of return time series of assets.
         Assets are compared with the index or another benchmark.
         Index should be in the first position (first column).
+
+        Returns
+        -------
+        DataFrame
         """
         return Index.tracking_error(self.ror)
 
     @property
-    def index_corr(self):
+    def index_corr(self) -> pd.DataFrame:
         """
         Compute expanding correlation with the index (or benchmark) time series for the assets.
         Index should be in the first position (first column).
         The period should be at least 12 months.
+
+        Returns
+        -------
+        DataFrame
         """
         return Index.cov_cor(self.ror, fn='corr')
 
-    def index_rolling_corr(self, window: int = 60):
+    def index_rolling_corr(self, window: int = 60) -> pd.DataFrame:
         """
         Compute rolling correlation with the index (or benchmark) time series for the assets.
         Index should be in the first position (first column).

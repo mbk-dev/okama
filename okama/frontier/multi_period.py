@@ -189,7 +189,7 @@ class EfficientFrontierReb(AssetList):
         )
 
     @property
-    def max_return(self) -> dict:
+    def global_max_return_portfolio(self) -> dict:
         """
         Returns the weights and risk / CAGR of the maximum return portfolio point.
         """
@@ -270,7 +270,6 @@ class EfficientFrontierReb(AssetList):
         if weights.success:
             asset_labels = self.symbols if self.tickers else list(self.names.values())
             point = {x: y for x, y in zip(asset_labels, weights.x)}
-            # TODO: rename columns
             point['CAGR'] = target_return
             point['Risk'] = weights.fun
         else:
@@ -324,16 +323,10 @@ class EfficientFrontierReb(AssetList):
         return point
 
     @property
-    def target_cagr_range_left(self) -> np.ndarray:
+    def max_cagr_asset(self) -> dict:
         """
-        Full range of cagr values (from min to max).
+        Find an asset with max CAGR.
         """
-        max_cagr = self.max_return['CAGR']
-        min_cagr = Frame.get_cagr(self.ror).min()
-        return np.linspace(min_cagr, max_cagr, self.n_points)
-
-    @property
-    def max_cagr_asset(self):
         max_asset_cagr = Frame.get_cagr(self.ror).max()
         ticker_with_largest_cagr = Frame.get_cagr(self.ror).nlargest(1, keep='first').index.values[0]
         return {'max_asset_cagr': max_asset_cagr,
@@ -344,13 +337,14 @@ class EfficientFrontierReb(AssetList):
     @property
     def max_cagr_asset_right_to_max_cagr(self) -> Optional[dict]:
         """
-        The asset with max CAGR lieing to the right of max CAGR point (risk is more than self.max_return['Risk']).
-        Max return point should not be an asset.
+        The asset with max CAGR lieing to the right of the global
+        max CAGR point (risk should be more than self.max_return['Risk']).
+        Global max return point should not be an asset.
         """
         tolerance = 0.01  # assets CAGR should be less than max CAGR with certain tolerance
-        max_cagr_is_not_asset = (self.get_cagr() < self.max_return['CAGR'] * (1 - tolerance)).all()
-        if max_cagr_is_not_asset:
-            condition = self.risk_annual.values > self.max_return['Risk']
+        global_max_cagr_is_not_asset = (self.get_cagr() < self.global_max_return_portfolio['CAGR'] * (1 - tolerance)).all()
+        if global_max_cagr_is_not_asset:
+            condition = self.risk_annual.values > self.global_max_return_portfolio['Risk']
             ror_selected = self.ror.loc[:, condition]
             if not ror_selected.empty:
                 cagr_selected = Frame.get_cagr(ror_selected)
@@ -362,9 +356,9 @@ class EfficientFrontierReb(AssetList):
                         }
 
     @property
-    def max_annual_risk_asset(self):
+    def max_annual_risk_asset(self) -> dict:
         """
-        Calculate weights of portfolio with max annual risk.
+        Find an asset with max annual risk.
         """
         max_risk = self.risk_annual.max()
         ticker_with_largest_risk = self.risk_annual.nlargest(1, keep='first').index.values[0]
@@ -374,14 +368,23 @@ class EfficientFrontierReb(AssetList):
                 }
 
     @property
+    def target_cagr_range_left(self) -> np.ndarray:
+        """
+        Full range of cagr values (from min to max).
+        """
+        max_cagr = self.global_max_return_portfolio['CAGR']
+        min_cagr = Frame.get_cagr(self.ror).min()
+        return np.linspace(min_cagr, max_cagr, self.n_points)
+
+    @property
     def target_cagr_range_right(self) -> Optional[np.ndarray]:
         """
-        Range of cagr values from the global CAGR max to the max asset cagr
+        Range of cagr values from the Global CAGR max to the max asset cagr
         to the right of the max CAGR point (if exists).
         """
         if self.max_cagr_asset_right_to_max_cagr:
             ticker_cagr = self.max_cagr_asset_right_to_max_cagr['max_asset_cagr']
-            max_cagr = self.max_return['CAGR']
+            max_cagr = self.global_max_return_portfolio['CAGR']
             if not np.isclose(max_cagr, ticker_cagr, rtol=1e-3, atol=1e-05):
                 k = abs((self.target_cagr_range_left[0] - self.target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
                 number_of_points = round(self.n_points / k) + 1
