@@ -18,7 +18,7 @@ def symbols_in_namespace(namespace: str = default_namespace):
     string_response = API.get_symbols_in_namespace(namespace.upper())
     list_of_symbols = json.loads(string_response)
     df = pd.DataFrame(list_of_symbols[1:], columns=list_of_symbols[0])
-    return df.astype('string', copy=False)
+    return df.astype("string", copy=False)
 
 
 @lru_cache()

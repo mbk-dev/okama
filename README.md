@@ -62,6 +62,10 @@ The package is supplied with **free** «end of day» historical stock markets da
 
 `pip install okama`
 
+or:
+
+`pip install git+https://github.com/mbk-dev/okama`
+
 ## Getting started
 
 ### 1. Compare several assets from different stock markets. Get USD-adjusted performance

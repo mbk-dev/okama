@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Dict, List
+from typing import Optional, Tuple, Dict, List, Union
 
 import pandas as pd
 import numpy as np
@@ -16,19 +16,30 @@ class EfficientFrontier(AssetList):
     full_frontier = False - shows only the points with the return above GMV
     tickers = True - labels of data in DataFrame are tickers (asset long names if False)
     """
-    def __init__(self,
-                 symbols: Optional[List[str]] = None, *,
-                 first_date: Optional[str] = None,
-                 last_date: Optional[str] = None,
-                 ccy: str = 'USD',
-                 bounds: Optional[Tuple[Tuple[float]]] = None,
-                 inflation: bool = True,
-                 full_frontier: bool = True,
-                 n_points: int = 20,
-                 tickers: bool = True):
+
+    def __init__(
+        self,
+        symbols: Optional[List[str]] = None,
+        *,
+        first_date: Optional[str] = None,
+        last_date: Optional[str] = None,
+        ccy: str = "USD",
+        bounds: Optional[Tuple[Tuple[float]]] = None,
+        inflation: bool = True,
+        full_frontier: bool = True,
+        n_points: int = 20,
+        tickers: bool = True,
+    ):
         if len(symbols) < 2:
-            raise ValueError('The number of symbols cannot be less than two')
-        super().__init__(symbols, first_date=first_date, last_date=last_date, ccy=ccy, inflation=inflation)
+            raise ValueError("The number of symbols cannot be less than two")
+        super().__init__(
+            symbols,
+            first_date=first_date,
+            last_date=last_date,
+            ccy=ccy,
+            inflation=inflation,
+        )
+
         self._bounds = None
         self.bounds = bounds
         self.full_frontier = full_frontier
@@ -37,12 +48,12 @@ class EfficientFrontier(AssetList):
 
     def __repr__(self):
         dic = {
-            'symbols': self.symbols,
-            'currency': self.currency.ticker,
-            'first date': self.first_date.strftime("%Y-%m"),
-            'last_date': self.last_date.strftime("%Y-%m"),
-            'period length': self._pl_txt,
-            'inflation': self.inflation if hasattr(self, 'inflation') else 'None',
+            "symbols": self.symbols,
+            "currency": self.currency.ticker,
+            "first date": self.first_date.strftime("%Y-%m"),
+            "last_date": self.last_date.strftime("%Y-%m"),
+            "period length": self._pl_txt,
+            "inflation": self.inflation if hasattr(self, "inflation") else "None",
         }
         return repr(pd.Series(dic))
 
@@ -54,8 +65,10 @@ class EfficientFrontier(AssetList):
     def bounds(self, bounds):
         if bounds:
             if len(bounds) != len(self.symbols):
-                raise ValueError(f'The number of symbols ({len(self.symbols)}) '
-                                 f'and the length of bounds ({len(bounds)}) should be equal.')
+                raise ValueError(
+                    f"The number of symbols ({len(self.symbols)}) "
+                    f"and the length of bounds ({len(bounds)}) should be equal."
+                )
             self._bounds = bounds
         else:
             self._bounds = ((0.0, 1.0),) * len(self.symbols)  # an N-tuple of 2-tuples
@@ -68,20 +81,20 @@ class EfficientFrontier(AssetList):
         n = self.ror.shape[1]
         init_guess = np.repeat(1 / n, n)
         # construct the constraints
-        weights_sum_to_1 = {'type': 'eq',
-                            'fun': lambda weights: np.sum(weights) - 1
-                            }
-        weights = minimize(Frame.get_portfolio_risk,
-                           init_guess,
-                           args=(self.ror,),
-                           method='SLSQP',
-                           options={'disp': False},
-                           constraints=(weights_sum_to_1,),
-                           bounds=self.bounds)
+        weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
+        weights = minimize(
+            Frame.get_portfolio_risk,
+            init_guess,
+            args=(self.ror,),
+            method="SLSQP",
+            options={"disp": False},
+            constraints=(weights_sum_to_1,),
+            bounds=self.bounds,
+        )
         if weights.success:
             return weights.x
         else:
-            raise Exception('No solutions where found')
+            raise Exception("No solutions where found")
 
     @property
     def gmv_monthly(self) -> Tuple[float, float]:
@@ -103,7 +116,7 @@ class EfficientFrontier(AssetList):
             Float.annualize_return(self.gmv_monthly[1]),
         )
 
-    def optimize_return(self, option: str ='max') -> dict:
+    def optimize_return(self, option: str = "max") -> dict:
         """
         Finds global max or min for the rate of return.
         Returns monthly values for the risk, mean return and the weights.
@@ -113,49 +126,55 @@ class EfficientFrontier(AssetList):
         n = self.ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
         # Set the objective function
-        if option == 'max':
+        if option == "max":
+
             def objective_function(w, ror):
                 month_return_value = Frame.get_portfolio_mean_return(w, ror)
-                return - month_return_value
-        elif option == 'min':
+                return -month_return_value
+
+        elif option == "min":
+
             def objective_function(w, ror):
                 month_return_value = Frame.get_portfolio_mean_return(w, ror)
                 return month_return_value
+
         else:
             raise ValueError('option should be "max" or "min"')
         # construct the constraints
-        weights_sum_to_1 = {'type': 'eq',
-                            'fun': lambda weights: np.sum(weights) - 1
-                            }
-        weights = minimize(objective_function,
-                           init_guess,
-                           args=(self.ror,),
-                           method='SLSQP',
-                           constraints=(weights_sum_to_1,),
-                           bounds=self.bounds,
-                           options={'disp': False,
-                                    'ftol': 1e-08}  # 1e-06 is not enough to optimize monthly returns
-                           )
+        weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
+        weights = minimize(
+            objective_function,
+            init_guess,
+            args=(self.ror,),
+            method="SLSQP",
+            constraints=(weights_sum_to_1,),
+            bounds=self.bounds,
+            options={
+                "disp": False,
+                "ftol": 1e-08,
+            },  # 1e-06 is not enough to optimize monthly returns
+        )
         if weights.success:
             portfolio_risk = Frame.get_portfolio_risk(weights.x, self.ror)
-            if option.lower() == 'max':
+            if option.lower() == "max":
                 optimized_return = -weights.fun
             else:
                 optimized_return = weights.fun
             point = {
-                'Weights': weights.x,
-                'Mean_return_monthly': optimized_return,
-                'Risk_monthly': portfolio_risk
+                "Weights": weights.x,
+                "Mean_return_monthly": optimized_return,
+                "Risk_monthly": portfolio_risk,
             }
             return point
         else:
-            raise Exception('No solutions where found')
+            raise Exception("No solutions where found")
 
-    def minimize_risk(self,
-                      target_return: float,
-                      monthly_return: bool = False,
-                      tolerance: float = 1e-08
-                      ) -> Dict[str, float]:
+    def minimize_risk(
+        self,
+        target_return: float,
+        monthly_return: bool = False,
+        tolerance: float = 1e-08,
+    ) -> Dict[str, float]:
         """
         Finds minimal risk given the target return.
         Returns a "point" with monthly values:
@@ -177,20 +196,20 @@ class EfficientFrontier(AssetList):
             return Frame.get_portfolio_risk(w, ror)
 
         # construct the constraints
-        weights_sum_to_1 = {'type': 'eq',
-                            'fun': lambda weights: np.sum(weights) - 1
-                            }
-        return_is_target = {'type': 'eq',
-                            'fun': lambda weights: target_return - Frame.get_portfolio_mean_return(weights, ror)
-                            }
-        weights = minimize(objective_function,
-                           init_guess,
-                           method='SLSQP',
-                           constraints=(weights_sum_to_1, return_is_target),
-                           bounds=self.bounds,
-                           options={'disp': False,
-                                    'ftol': tolerance}
-                           )
+        weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
+        return_is_target = {
+            "type": "eq",
+            "fun": lambda weights: target_return
+            - Frame.get_portfolio_mean_return(weights, ror),
+        }
+        weights = minimize(
+            objective_function,
+            init_guess,
+            method="SLSQP",
+            constraints=(weights_sum_to_1, return_is_target),
+            bounds=self.bounds,
+            options={"disp": False, "ftol": tolerance},
+        )
         if weights.success:
             # Calculate point of EF given optimal weights
             risk = weights.fun
@@ -207,10 +226,10 @@ class EfficientFrontier(AssetList):
             else:
                 asset_labels = self.symbols
             point = {x: y for x, y in zip(asset_labels, weights.x)}
-            point['Mean return'] = a_r
-            point['CAGR'] = cagr
+            point["Mean return"] = a_r
+            point["CAGR"] = cagr
             # point['CAGR (approx)'] = r_gmean
-            point['Risk'] = a_risk
+            point["Risk"] = a_risk
         else:
             raise Exception("No solutions were found")
         return point
@@ -222,8 +241,8 @@ class EfficientFrontier(AssetList):
         """
         if self.full_frontier:
             if self.bounds:
-                min_return = self.optimize_return(option='min')['Mean_return_monthly']
-                max_return = self.optimize_return(option='max')['Mean_return_monthly']
+                min_return = self.optimize_return(option="min")["Mean_return_monthly"]
+                max_return = self.optimize_return(option="max")["Mean_return_monthly"]
             else:
                 er = self.ror.mean()
                 min_return = er.min()
@@ -231,7 +250,7 @@ class EfficientFrontier(AssetList):
         else:
             min_return = self.gmv_monthly[1]
             if self.bounds:
-                max_return = self.optimize_return(option='max')['Mean_return_monthly']
+                max_return = self.optimize_return(option="max")["Mean_return_monthly"]
             else:
                 er = self.ror.mean()
                 max_return = er.max()
@@ -249,14 +268,14 @@ class EfficientFrontier(AssetList):
         All the values are annualized.
         """
         target_rs = self.mean_return_range
-        df = pd.DataFrame(dtype='float')
+        df = pd.DataFrame(dtype="float")
         for x in target_rs:
             row = self.minimize_risk(x, monthly_return=True)
             df = df.append(row, ignore_index=True)
-        df = Frame.change_columns_order(df, ['Risk', 'Mean return', 'CAGR'])
+        df = Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
         return df
 
-    def get_monte_carlo(self, n: int = 100, kind: str = 'mean') -> pd.DataFrame:
+    def get_monte_carlo(self, n: int = 100, kind: str = "mean") -> pd.DataFrame:
         """
         Generate N random risk / cagr point for portfolios.
         Risk and cagr are calculated for a set of random weights.
@@ -270,10 +289,10 @@ class EfficientFrontier(AssetList):
             mean_return_monthly = Frame.get_portfolio_mean_return(weights, self.ror)
             risk = Float.annualize_risk(risk_monthly, mean_return_monthly)
             mean_return = Float.annualize_return(mean_return_monthly)
-            if kind.lower() == 'cagr':
+            if kind.lower() == "cagr":
                 cagr = Float.approx_return_risk_adjusted(mean_return, risk)
                 row = dict(Risk=risk, CAGR=cagr)
-            elif kind.lower() == 'mean':
+            elif kind.lower() == "mean":
                 row = dict(Risk=risk, Return=mean_return)
             else:
                 raise ValueError('kind should be "mean" or "cagr"')

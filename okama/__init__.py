@@ -29,8 +29,13 @@ from okama.plots import Plots
 from okama.api.data_queries import QueryData
 from okama.api.search import search
 from okama.api.api_methods import API
-from okama.api.namespaces import namespaces, assets_namespaces, macro_namespaces, symbols_in_namespace
+from okama.api.namespaces import (
+    namespaces,
+    assets_namespaces,
+    macro_namespaces,
+    symbols_in_namespace,
+)
 from okama.common.helpers import Float, Frame, Rebalance, Date
 import okama.settings
 
-__version__ = '0.98'
+__version__ = "0.98"

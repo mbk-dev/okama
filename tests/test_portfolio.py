@@ -79,7 +79,8 @@ class TestPortfolio:
     def test_get_cagr(self):
         values = pd.Series({'portfolio': 0.1303543, 'RUB.INFL': 0.05548082428015655})
         assert_series_equal(self.portfolio.get_cagr(), values, rtol=1e-4)
-        assert self.portfolio.get_cagr('YTD').iloc[0] == approx(0.01505, rel=1e-2)
+        with pytest.raises(TypeError):
+            self.portfolio.get_cagr('YTD')
 
     def test_describe(self):
         description = self.portfolio.describe()
