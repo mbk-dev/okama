@@ -20,16 +20,11 @@ def test_validate_integer_valid():
     )
 
 
-def test_validate_integer_type_error():
-    with pytest.raises(TypeError):
-        validate_integer("arg", 1.5)
-
-
-def test_validate_integer_min_std_err_msg():
-    with pytest.raises(ValueError) as ex:
-        validate_integer("arg", 10, min_value=100)
+@pytest.mark.parametrize("object_value, exception", [(1.5, TypeError), (-1, ValueError), (100, ValueError)])
+def test_validate_integer_error(object_value, exception):
+    with pytest.raises(exception) as ex:
+        validate_integer("arg", object_value, min_value=100, inclusive=False)
     assert "arg" in str(ex.value)
-    assert "100" in str(ex.value)
 
 
 def test_validate_integer_min_custom_msg():

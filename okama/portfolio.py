@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 from .assets import AssetList
 from .common.helpers import Frame, Rebalance, Float, Date
-from .common.validators import validate_integer
+from .common.validators import validate_integer, validate_real
 from .settings import PeriodLength, _MONTHS_PER_YEAR
 
 
@@ -83,9 +83,10 @@ class Portfolio:
             n = len(self.symbols)  # number of assets
             weights = list(np.repeat(1 / n, n))
         else:
+            [validate_real("weight", weight) for weight in weights]
             Frame.weights_sum_is_one(weights)
             if len(weights) != len(self.symbols):
-                raise Exception(
+                raise ValueError(
                     f"Number of tickers ({len(self.symbols)}) should be equal "
                     f"to the weights number ({len(weights)})"
                 )
@@ -436,7 +437,7 @@ class Portfolio:
                     else:
                         row = {"portfolio": value}
                 else:
-                    row = {x: None for x in df.columns}
+                    row = {x: None for x in df.columns} if hasattr(self, "inflation") else {'portfolio': None}
                 row.update(period=f"{i} years", rebalancing="1 year", property="CAGR")
                 description = description.append(row, ignore_index=True)
             # CAGR for full period (rebalanced 1 year)

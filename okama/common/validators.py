@@ -72,5 +72,25 @@ def validate_integer(
 
 
 def validate_real(arg_name: str, arg_value: Any) -> None:
+    """
+    Validate that `arg_value` is a real number.
+
+    Parameters
+    ----------
+    arg_name : str
+        The name of the argument (used in default error messages).
+    arg_value : Any
+        The value being validated.
+
+    Returns
+    -------
+    None
+        No exceptions raised if validation passes.
+
+    Raises
+    ------
+    TypeError
+        If `arg_value` is not an integer.
+    """
     if not isinstance(arg_value, numbers.Real):
         raise TypeError(f"{arg_name} should be a Real number.")

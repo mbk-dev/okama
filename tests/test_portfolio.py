@@ -12,11 +12,13 @@ from .conftest import data_folder
 
 
 @mark.portfolio
-def test_init_portfolio_failing():
-    with pytest.raises(Exception, match=r'Number of tickers \(2\) should be equal to the weights number \(3\)'):
-        ok.Portfolio(symbols=['RUB.FX', 'MCFTR.INDX'], weights=[0.1, 0.2, 0.7]).symbols
-    with pytest.raises(Exception, match='Weights sum is not equal to one.'):
-        ok.Portfolio(symbols=['RUB.FX', 'MCFTR.INDX'], weights=[0.1, 0.2]).symbols
+def test_init_portfolio_failing(_init_portfolio_values):
+    with pytest.raises(ValueError, match=r'Number of tickers \(2\) should be equal to the weights number \(3\)'):
+        _init_portfolio_values['weights'] = [0.1, 0.2, 0.7]
+        ok.Portfolio(**_init_portfolio_values)
+    with pytest.raises(ValueError, match='Weights sum is not equal to one.'):
+        _init_portfolio_values['weights'] = [0.1, 0.2]
+        ok.Portfolio(**_init_portfolio_values)
 
 
 @mark.portfolio
@@ -82,10 +84,13 @@ class TestPortfolio:
         with pytest.raises(TypeError):
             self.portfolio.get_cagr('YTD')
 
-    def test_describe(self):
+    def test_describe_inflation(self):
         description = self.portfolio.describe()
         description_sample = pd.read_pickle(data_folder / 'portfolio_description.pkl')
         assert_frame_equal(description, description_sample)
+
+    def test_describe_no_inflation(self):
+        self.portfolio_no_inflation.describe([5, 10])  # one limit should exceed the history
 
     def test_percentile_from_history(self):
         assert self.portfolio.percentile_from_history(years=1).iloc[-1, :].sum() == approx(0.29723, rel=1e-2)

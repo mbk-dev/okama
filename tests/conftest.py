@@ -25,13 +25,25 @@ def _init_asset_list(request) -> None:
 
 
 @pytest.fixture(scope='class')
-def _init_portfolio(request):
-    request.cls.portfolio = ok.Portfolio(symbols=['RUB.FX', 'MCFTR.INDX'], ccy='RUB',
-                                         first_date='2015-01', last_date='2020-01', inflation=True)
-    request.cls.portfolio_short_history = ok.Portfolio(symbols=['RUB.FX', 'MCFTR.INDX'], ccy='RUB',
-                                                       first_date='2019-02', last_date='2020-01', inflation=True)
-    request.cls.portfolio_no_inflation = ok.Portfolio(symbols=['RUB.FX', 'MCFTR.INDX'], ccy='RUB',
-                                                      first_date='2015-01', last_date='2020-01', inflation=False)
+def _init_portfolio_values():
+    return dict(
+        symbols=['RUB.FX', 'MCFTR.INDX'],
+        ccy='RUB',
+        first_date='2015-01',
+        last_date='2020-01',
+        inflation=True,
+    )
+
+
+@pytest.fixture(scope='class')
+def _init_portfolio(request, _init_portfolio_values):
+    request.cls.portfolio = ok.Portfolio(**_init_portfolio_values)
+
+    _init_portfolio_values['inflation'] = False
+    request.cls.portfolio_no_inflation = ok.Portfolio(**_init_portfolio_values)
+
+    _init_portfolio_values['first_date'] = '2019-02'
+    request.cls.portfolio_short_history = ok.Portfolio(**_init_portfolio_values)
 
 
 @pytest.fixture(scope='class')
@@ -52,16 +64,26 @@ def init_plots():
 
 
 @pytest.fixture(scope='module')
-def init_efficient_frontier():
-    ls = ['SPY.US', 'SBMX.MOEX']
-    return ok.EfficientFrontier(symbols=ls, ccy='RUB', first_date='2018-11', last_date='2020-02', n_points=2)
+def init_efficient_frontier_values():
+    return dict(
+        symbols=['SPY.US', 'SBMX.MOEX'],
+        ccy='RUB',
+        first_date='2018-11',
+        last_date='2020-02',
+        inflation=True,
+        n_points=2
+    )
 
 
 @pytest.fixture(scope='module')
-def init_efficient_frontier_bounds():
-    ls = ['SPY.US', 'SBMX.MOEX']
-    bounds = ((0, 0.5), (0, 1.))
-    return ok.EfficientFrontier(symbols=ls, ccy='RUB', first_date='2018-11', last_date='2020-02', n_points=2, bounds=bounds)
+def init_efficient_frontier(init_efficient_frontier_values):
+    return ok.EfficientFrontier(**init_efficient_frontier_values)
+
+
+@pytest.fixture(scope='module')
+def init_efficient_frontier_bounds(init_efficient_frontier_values):
+    bounds = ((0.0, 0.5), (0.0, 1.))
+    return ok.EfficientFrontier(**init_efficient_frontier_values, bounds=bounds)
 
 
 @pytest.fixture(scope='module')

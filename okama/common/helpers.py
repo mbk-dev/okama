@@ -100,7 +100,7 @@ class Frame:
         if np.around(np.sum(weights), decimals=3) != 1.0:
             raise ValueError("Weights sum is not equal to one.")
         if any(x < 0 for x in weights):
-            raise ValueError("Negative weights are detected.")
+            raise ValueError("Negative weights are not allowed.")
 
     @classmethod
     def get_portfolio_return_ts(cls, weights: list, ror: pd.DataFrame) -> pd.Series:

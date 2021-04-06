@@ -24,7 +24,7 @@ class EfficientFrontier(AssetList):
         first_date: Optional[str] = None,
         last_date: Optional[str] = None,
         ccy: str = "USD",
-        bounds: Optional[Tuple[Tuple[float]]] = None,
+        bounds: Optional[Tuple[Tuple[float, ...], ...]] = None,
         inflation: bool = True,
         full_frontier: bool = True,
         n_points: int = 20,
