@@ -536,6 +536,7 @@ class AssetList:
         USD.INFL   0.0195
         dtype: float64
         """
+        # TODO: add "real" attribute
         df = self._add_inflation()
         dt0 = self.last_date
 
