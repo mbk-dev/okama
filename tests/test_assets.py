@@ -274,7 +274,7 @@ class TestAssetList:
 
     def test_get_dividend_mean_growth_rate_value_err(self):
         with pytest.raises(
-            ValueError, match="'period' must be <= history period \\(2.0\\)"
+            ValueError, match="'period' \\(3\\) is beyond historical data range \\(2.0\\)"
         ):
             self.spy.get_dividend_mean_growth_rate(period=3)
 
