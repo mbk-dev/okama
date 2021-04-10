@@ -72,6 +72,21 @@ class Portfolio:
     def __len__(self):
         return len(self.symbols)
 
+    def _add_inflation(self):
+        if hasattr(self, "inflation"):
+            return pd.concat(
+                [self.returns_ts, self.inflation_ts], axis=1, join="inner", copy="false"
+            )
+        else:
+            return self.returns_ts
+
+    def _validate_period(self, period):
+        validate_integer("period", period, min_value=0, inclusive=False)
+        if period > self.pl.years:
+            raise ValueError(
+                f"'period' ({period}) is beyond historical data range ({self.period_length})."
+            )
+
     @property
     def weights(self):
         return self._weights
@@ -105,14 +120,9 @@ class Portfolio:
 
     @property
     def wealth_index(self) -> pd.DataFrame:
-        if hasattr(self, "inflation"):
-            df = pd.concat(
-                [self.returns_ts, self.inflation_ts], axis=1, join="inner", copy="false"
-            )
-        else:
-            df = self.returns_ts
+        df = self._add_inflation()
         df = Frame.get_wealth_indexes(df)
-        if isinstance(df, pd.Series):  # return should always be DataFrame
+        if isinstance(df, pd.Series):  # should always return a DataFrame
             df = df.to_frame()
             df.rename({1: "portfolio"}, axis="columns", inplace=True)
         return df
@@ -145,35 +155,29 @@ class Portfolio:
     def mean_return_annual(self) -> float:
         return Float.annualize_return(self.mean_return_monthly)
 
-    def get_cagr(self, period: Optional[int] = None) -> pd.Series:
+    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
         """
-        Calculates Compound Annual Growth Rate (CAGR) for a given period.
+        Calculate Compound Annual Growth Rate (CAGR) for a given period.
         """
-        if hasattr(self, "inflation"):
-            df = pd.concat(
-                [self.returns_ts, self.inflation_ts], axis=1, join="inner", copy="false"
-            )
-        else:
-            df = self.returns_ts
+        df = self._add_inflation()
         dt0 = self.last_date
-
         if period is None:
-            cagr = Frame.get_cagr(df)
+            dt = self.first_date
         else:
-            validate_integer("period", period, min_value=0, inclusive=False)
-            if period > self.pl.years:
-                raise ValueError(
-                    f"'period' must be <= history period ({self.period_length})"
-                )
+            self._validate_period(period)
             dt = Date.subtract_years(dt0, period)
-            if dt >= self.first_date:
-                cagr = Frame.get_cagr(df[dt:])
-            else:
-                row = {x: None for x in df.columns}
-                cagr = pd.Series(row)
+        cagr = Frame.get_cagr(df[dt:])
+        if real:
+            if not hasattr(self, "inflation"):
+                raise Exception(
+                    "Real CAGR is not defined. Set inflation=True in Portfolio to calculate it."
+                )
+            mean_inflation = Frame.get_cagr(self.inflation_ts[dt:])
+            cagr = (1. + cagr) / (1. + mean_inflation) - 1.
+            cagr.drop(self.inflation, inplace=True)
         return cagr
 
-    def get_cumulative_return(self, period: Union[str, int, None] = None) -> pd.Series:
+    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
         """
         Calculate cumulative return of return for the portfolio.
 
@@ -183,6 +187,9 @@ class Portfolio:
             Trailing period in years.
             None - full time cumulative return.
             'YTD' - (Year To Date) period of time beginning the first day of the calendar year up to the last month.
+        real: bool, default False
+            Cumulative return is adjusted for inflation (real cumulative return) if True.
+            Portfolio should be initiated with `Inflation=True` for real cumulative return.
 
         Returns
         -------
@@ -190,28 +197,39 @@ class Portfolio:
 
         Examples
         --------
-        >>> x = ok.Portfolio()  # using default ticker 'SPY.US'
+        >>> x = ok.Portfolio(['BTC-USD.CC', 'LTC-USD.CC'], weights=[.8, .2], last_date='2021-03')
         >>> x.get_cumulative_return(period=2)
-        0.4230970729863084
+        portfolio    8.589341
+        USD.INFL     0.040569
+        dtype: float64
+
+        To get inflation adjusted return (real annualized return) add `real=True` option:
+        >>> x.get_cumulative_return(period=2, real=True)
+        portfolio    8.215476
+        dtype: float64
         """
-        df = self.returns_ts
+        df = self._add_inflation()
         dt0 = self.last_date
 
-        if not period:
-            cr = Frame.get_cumulative_return(df)
+        if period is None:
+            dt = self.first_date
         elif str(period).lower() == "ytd":
             year = dt0.year
-            cr = (df[str(year) :] + 1.0).prod() - 1.0
-        elif isinstance(period, int) and period > 0:
-            dt = Date.subtract_years(dt0, period)
-            if dt >= self.first_date:
-                cr = Frame.get_cumulative_return(df[dt:])
-            else:
-                raise ValueError(
-                    f"period {period} years is beyond historical data range."
-                )
+            dt = str(year)
         else:
-            raise ValueError(f"{period} is not a valid value for period")
+            self._validate_period(period)
+            dt = Date.subtract_years(dt0, period)
+
+        cr = Frame.get_cumulative_return(df[dt:])
+        if real:
+            if not hasattr(self, "inflation"):
+                raise Exception(
+                    "Real cumulative return is not defined (no inflation information is available)."
+                    "Set inflation=True in Portfolio to calculate it."
+                )
+            cumulative_inflation = Frame.get_cumulative_return(self.inflation_ts[dt:])
+            cr = (1. + cr) / (1. + cumulative_inflation) - 1.
+            cr.drop(self.inflation, inplace=True)
         return cr
 
     def get_rolling_cumulative_return(self, window: int = 12) -> pd.DataFrame:
@@ -279,16 +297,6 @@ class Portfolio:
         infl_mean = Float.annualize_return(self.inflation_ts.mean())
         ror_mean = Float.annualize_return(self.returns_ts.mean())
         return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
-
-    @property
-    def real_cagr(self) -> float:
-        if not hasattr(self, "inflation"):
-            raise Exception(
-                "Real Return is not defined. Set inflation=True to calculate."
-            )
-        infl_cagr = Frame.get_cagr(self.inflation_ts)
-        ror_cagr = Frame.get_cagr(self.returns_ts)
-        return (1.0 + ror_cagr) / (1.0 + infl_cagr) - 1.0
 
     @property
     def risk_monthly(self) -> float:
@@ -401,12 +409,7 @@ class Portfolio:
         """
         description = pd.DataFrame()
         dt0 = self.last_date
-        if hasattr(self, "inflation"):
-            df = pd.concat(
-                [self.returns_ts, self.inflation_ts], axis=1, join="inner", copy="false"
-            )
-        else:
-            df = self.returns_ts
+        df = self._add_inflation()
         # YTD return
         year = dt0.year
         ts = Rebalance.rebalanced_portfolio_return_ts(

@@ -39,22 +39,6 @@ class TestPortfolio:
     def test_real_mean_return(self):
         assert self.portfolio.real_mean_return == approx(0.05286, rel=1e-2)
 
-    def test_real_cagr(self):
-        assert self.portfolio.real_cagr == approx(0.045684, rel=1e-2)
-        with pytest.raises(Exception, match="Real Return is not defined. Set inflation=True to calculate."):
-            self.portfolio_no_inflation.real_cagr
-
-    testdata = [
-        ('YTD', 0.01505),
-        (1, 0.1226),
-        (None, 0.8642),
-    ]
-
-    # input_data - period (tuple[0]), expected - expected value (tuple[1])
-    @mark.parametrize("input_data,expected", testdata, ids=["YTD", "1 year", "full period"])
-    def test_get_cumulative_return(self, input_data, expected):
-        assert self.portfolio.get_cumulative_return(period=input_data) == approx(expected, rel=1e-2)
-
     def test_get_rolling_cumulative_return(self):
         assert self.portfolio.get_rolling_cumulative_return(window=12).iloc[-1] == approx(0.1226, rel=1e-2)
 
@@ -82,7 +66,35 @@ class TestPortfolio:
         values = pd.Series({'portfolio': 0.1303543, 'RUB.INFL': 0.05548082428015655})
         assert_series_equal(self.portfolio.get_cagr(), values, rtol=1e-4)
         with pytest.raises(TypeError):
-            self.portfolio.get_cagr('YTD')
+            self.portfolio.get_cagr(period='one year')
+
+    cagr_testdata1 = [
+        (1, 0.0794),
+        (None, 0.0710),
+    ]
+
+    @mark.parametrize(
+        "input_data,expected",
+        cagr_testdata1,
+        ids=["1 year", "full period"],
+    )
+    def test_get_cagr_real(self, input_data, expected):
+        assert self.portfolio.get_cagr(period=input_data, real=True).values[0] == approx(expected, rel=1e-2)
+
+    def test_get_cagr_real_no_inflation_exception(self):
+        with pytest.raises(Exception):
+            self.portfolio_no_inflation.get_cagr(period=1, real=True)
+
+    @mark.parametrize("period, real, expected", [('YTD', False, 0.01505), (1, False, 0.12269), (2, True, 0.1608)])
+    def test_cumulative_return(self, period, real, expected):
+        assert self.portfolio.get_cumulative_return(period=period, real=real)['portfolio'] == approx(expected, rel=1e-2)
+
+    cumulative_return_fail = [(1.5, False, TypeError), (-1, False, ValueError), (1, True, Exception)]
+
+    @pytest.mark.parametrize("period, real, exception", cumulative_return_fail)
+    def test_cumulative_return_error(self, period, real, exception):
+        with pytest.raises(exception):
+            self.portfolio_no_inflation.get_cumulative_return(period=period, real=real)
 
     def test_describe_inflation(self):
         description = self.portfolio.describe()

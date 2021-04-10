@@ -512,17 +512,24 @@ class AssetList:
         """
         return Frame.get_drawdowns(self.ror)
 
-    def get_cagr(self, period: Optional[int] = None) -> pd.Series:
+    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
         """
         Calculate assets Compound Annual Growth Rate (CAGR) for a given trailing period.
 
-        Annual inflation data is shown for the same period if inflation=True (default) in the AssetList.
+        Compound annual growth rate (CAGR) is the rate of return that would be required for an investment to grow from
+        its initial to its final value, assuming all incomes were reinvested.
+
+        Inflation adjusted annualized returns (real CAGR) are shown with `real=True` option.
+        Annual inflation value is calculated for the same period if inflation=True in the AssetList.
         CAGR is not defined for periods less than 1 year.
 
         Parameters
         ----------
         period: int, optional
             CAGR trailing period in years. None for full time CAGR.
+        real: bool, default False
+            CAGR is adjusted for inflation (real CAGR) if True.
+            AssetList should be initiated with Inflation=True for real CAGR.
 
         Returns
         -------
@@ -535,21 +542,30 @@ class AssetList:
         SPY.US    0.1510
         USD.INFL   0.0195
         dtype: float64
+
+        To get inflation adjusted return (real annualized return) add `real=True` option:
+        >>> x = ok.AssetList(['EURUSD.FX', 'CNYUSD.FX'], inflation=True)
+        >>> x.get_cagr(period=5, real=True)
+        EURUSD.FX    0.000439
+        CNYUSD.FX   -0.017922
+        dtype: float64
         """
         df = self._add_inflation()
         dt0 = self.last_date
-
         if period is None:
-            cagr = Frame.get_cagr(df)
+            dt = self.first_date
         else:
-
             self._validate_period(period)
             dt = Date.subtract_years(dt0, period)
-            if dt >= self.first_date:
-                cagr = Frame.get_cagr(df[dt:])
-            else:
-                row = {x: None for x in df.columns}
-                cagr = pd.Series(row)
+        cagr = Frame.get_cagr(df[dt:])
+        if real:
+            if not hasattr(self, "inflation"):
+                raise Exception(
+                    "Real CAGR is not defined. Set inflation=True in AssetList to calculate it."
+                )
+            mean_inflation = Frame.get_cagr(self.inflation_ts[dt:])
+            cagr = (1. + cagr) / (1. + mean_inflation) - 1.
+            cagr.drop(self.inflation, inplace=True)
         return cagr
 
     def _validate_period(self, period: Any) -> None:
@@ -571,7 +587,7 @@ class AssetList:
         validate_integer("period", period, min_value=0, inclusive=False)
         if period > self.pl.years:
             raise ValueError(
-                f"'period' must be <= history period ({self.period_length})"
+                f"'period' ({period}) is beyond historical data range ({self.period_length})."
             )
 
     def get_rolling_cagr(self, window: int = 12) -> pd.DataFrame:
@@ -591,13 +607,14 @@ class AssetList:
         df = self._add_inflation()
         return Frame.get_rolling_fn(df, window=window, fn=Frame.get_cagr)
 
-    def get_cumulative_return(self, period: Union[str, int, None] = None) -> pd.Series:
+    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
         """
         Calculate cumulative return over a given trailing period for each asset.
 
-        The cumulative return is the total change in the asset price.
+        The cumulative return is the total change in the asset price during the investment period.
 
-        Annual inflation data is shown for the same period if inflation=True (default) in the AssetList.
+        Inflation adjusted cumulative returns (real cumulative returns) are shown with `real=True` option.
+        Annual inflation data is calculated for the same period if `inflation=True` in the AssetList.
 
         Parameters
         ----------
@@ -605,6 +622,9 @@ class AssetList:
             Trailing period in years. Period should be more then 0.
             None - full time cumulative return.
             'YTD' - (Year To Date) period of time beginning the first day of the calendar year up to the last month.
+        real: bool, default False
+            Cumulative return is adjusted for inflation (real cumulative return) if True.
+            AssetList should be initiated with `Inflation=True` for real cumulative return.
 
         Returns
         -------
@@ -622,18 +642,24 @@ class AssetList:
         dt0 = self.last_date
 
         if period is None:
-            cr = Frame.get_cumulative_return(df)
+            dt = self.first_date
         elif str(period).lower() == "ytd":
             year = dt0.year
-            cr = (df[str(year) :] + 1.0).prod() - 1.0
+            dt = str(year)
         else:
             self._validate_period(period)
             dt = Date.subtract_years(dt0, period)
-            if dt >= self.first_date:
-                cr = Frame.get_cumulative_return(df[dt:])
-            else:
-                row = {x: None for x in df.columns}
-                cr = pd.Series(row)
+
+        cr = Frame.get_cumulative_return(df[dt:])
+        if real:
+            if not hasattr(self, "inflation"):
+                raise Exception(
+                    "Real cumulative return is not defined (no inflation information is available)."
+                    "Set inflation=True in AssetList to calculate it."
+                )
+            cumulative_inflation = Frame.get_cumulative_return(self.inflation_ts[dt:])
+            cr = (1. + cr) / (1. + cumulative_inflation) - 1.
+            cr.drop(self.inflation, inplace=True)
         return cr
 
     def get_rolling_cumulative_return(self, window: int = 12) -> pd.DataFrame:
@@ -667,6 +693,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Calendar annual rate of return time series.
         """
         return Frame.get_annual_return_ts_from_monthly(self.ror)
 
@@ -810,7 +837,7 @@ class AssetList:
     @property
     def real_mean_return(self) -> pd.Series:
         """
-        Calculates annualized real mean return (arithmetic mean) for the assets.
+        Calculate annualized real mean return (arithmetic mean) for the assets.
 
         Real rate of return is adjusted for inflation.
 
@@ -818,17 +845,16 @@ class AssetList:
         -------
         Series
         """
-        if hasattr(self, "inflation"):
-            df = pd.concat(
-                [self.ror, self.inflation_ts], axis=1, join="inner", copy="false"
-            )
-        else:
+        if not hasattr(self, "inflation"):
             raise Exception(
                 "Real Return is not defined. Set inflation=True to calculate."
             )
+        df = pd.concat(
+            [self.ror, self.inflation_ts], axis=1, join="inner", copy="false"
+        )
         infl_mean = Float.annualize_return(self.inflation_ts.values.mean())
         ror_mean = Float.annualize_return(df.loc[:, self.symbols].mean())
-        return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
+        return (1. + ror_mean) / (1. + infl_mean) - 1.
 
     def _get_asset_dividends(self, tick, remove_forecast=True) -> pd.Series:
         """
