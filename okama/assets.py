@@ -192,7 +192,7 @@ class AssetList:
         self.ror = self.ror[self.first_date :]
         if last_date:
             self.last_date = min(self.last_date, pd.to_datetime(last_date))
-        self.ror: pd.DataFrame = self.ror[self.first_date : self.last_date]
+        self.ror: pd.DataFrame = self.ror[self.first_date: self.last_date]
         self.period_length: float = round(
             (self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1
         )
@@ -590,21 +590,56 @@ class AssetList:
                 f"'period' ({period}) is beyond historical data range ({self.period_length})."
             )
 
-    def get_rolling_cagr(self, window: int = 12) -> pd.DataFrame:
+    def _make_real_return_time_series(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate real monthly return time series.
+
+        Rate of return monthly data is adjusted for inflation.
+        """
+        if not hasattr(self, "inflation"):
+            raise Exception(
+                "Real return is not defined. Set inflation=True in AssetList to calculate it."
+            )
+        df = (1. + df).divide(1. + self.inflation_ts, axis=0) - 1.
+        df.drop(columns=[self.inflation], inplace=True)
+        return df
+
+    def get_rolling_cagr(self, window: int = 12, real: bool = False) -> pd.DataFrame:
         """
         Calculate rolling CAGR (Compound Annual Growth Rate) for each asset.
 
         Parameters
         ----------
         window : int, default 12
-            Window size in months. Window size should be at least 12 months for CAGR.
+            Size of the moving window in months. Window size should be at least 12 months for CAGR.
+        real: bool, default False
+            CAGR is adjusted for inflation (real CAGR) if True.
+            AssetList should be initiated with Inflation=True for real CAGR.
 
         Returns
         -------
         DataFrame
             Time series of rolling CAGR.
+
+        Examples
+        --------
+        Get inflation adjusted rolling return (real annualized return) win 5 years window:
+        >>> x = ok.AssetList(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True)
+        >>> x.get_rolling_cagr(window=5*12, real=True)
+                         DXET.XETR  DBXN.XETR
+        2013-09   0.012148   0.034538
+        2013-10   0.058834   0.034235
+        2013-11   0.072305   0.027890
+        2013-12   0.056456   0.022916
+                    ...        ...
+        2020-12   0.038441   0.020781
+        2021-01   0.045849   0.012216
+        2021-02   0.062271   0.006188
+        2021-03   0.074446   0.006124
         """
         df = self._add_inflation()
+        if real:
+            df = self._make_real_return_time_series(df)
         return Frame.get_rolling_fn(df, window=window, fn=Frame.get_cagr)
 
     def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
@@ -662,7 +697,7 @@ class AssetList:
             cr.drop(self.inflation, inplace=True)
         return cr
 
-    def get_rolling_cumulative_return(self, window: int = 12) -> pd.DataFrame:
+    def get_rolling_cumulative_return(self, window: int = 12, real: bool = False) -> pd.DataFrame:
         """
         Calculate rolling cumulative return for each asset.
 
@@ -671,7 +706,10 @@ class AssetList:
         Parameters
         ----------
         window : int, default 12
-            Window size in months.
+            Size of the moving window in months.
+        real: bool, default False
+            Cumulative return is adjusted for inflation (real cumulative return) if True.
+            AssetList should be initiated with `Inflation=True` for real cumulative return.
 
         Returns
         -------
@@ -679,6 +717,8 @@ class AssetList:
             Time series of rolling cumulative return.
         """
         df = self._add_inflation()
+        if real:
+            df = self._make_real_return_time_series(df)
         return Frame.get_rolling_fn(
             df, window=window, fn=Frame.get_cumulative_return, window_below_year=True
         )
@@ -708,10 +748,10 @@ class AssetList:
         - CAGR for a given list of periods
         - Dividend yield - yield for last 12 months (LTM)
 
-        Risk metrics (full available period):
+        Risk metrics (full period):
         - risk (standard deviation)
         - CVAR
-        - max drawdowns (and dates)
+        - max drawdowns (and dates of the drawdowns)
 
         Statistics also shows for each asset:
         - inception date - first date available for each asset
@@ -729,6 +769,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Table of descriptive statistics for a list of assets.
 
         See Also
         --------
@@ -826,9 +867,22 @@ class AssetList:
         """
         Calculate annualized mean return (arithmetic mean) for the assets.
 
+        Mean return calculated for the full history period. Arithmetic mean for the inflation is also shown
+        if there is an `inflation=True` option in AssetList.
+
         Returns
         -------
         Series
+            Mean return value for each asset.
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['MCFTR.INDX', 'RGBITR.INDX'], ccy='RUB', inflation=True)
+        >>> x.mean_return
+        MCFTR.INDX     0.209090
+        RGBITR.INDX    0.100133
+        RUB.INFL       0.081363
+        dtype: float64
         """
         df = self._add_inflation()
         mean = df.mean()
@@ -839,11 +893,21 @@ class AssetList:
         """
         Calculate annualized real mean return (arithmetic mean) for the assets.
 
-        Real rate of return is adjusted for inflation.
+        Real rate of return is adjusted for inflation. Real return is defined if
+        there is an `inflation=True` option in AssetList.
 
         Returns
         -------
         Series
+            Mean real return value for each asset.
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['MCFTR.INDX', 'RGBITR.INDX'], ccy='RUB', inflation=True)
+        >>> x.real_mean_return
+        MCFTR.INDX     0.118116
+        RGBITR.INDX    0.017357
+        dtype: float64
         """
         if not hasattr(self, "inflation"):
             raise Exception(
@@ -856,13 +920,9 @@ class AssetList:
         ror_mean = Float.annualize_return(df.loc[:, self.symbols].mean())
         return (1. + ror_mean) / (1. + infl_mean) - 1.
 
-    def _get_asset_dividends(self, tick, remove_forecast=True) -> pd.Series:
+    def _get_asset_dividends(self, tick: str, remove_forecast: bool = True) -> pd.Series:
         """
         Get dividend time series for a single symbol.
-
-        Returns
-        -------
-        Series
         """
         first_period = pd.Period(self.first_date, freq="M")
         first_day = first_period.to_timestamp(how="Start")
@@ -883,11 +943,7 @@ class AssetList:
         """
         Get dividend time series for all assets.
 
-        If remove_forecast=True all forecasted (future) data is removed from time series.
-
-        Returns
-        -------
-        DataFrame
+        If `remove_forecast=True` all forecasted (future) data is removed from the time series.
         """
         if self._dividends_ts.empty:
             dic = {}
@@ -902,17 +958,30 @@ class AssetList:
         """
         Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
 
-        All yields are calculated in the original asset currency (not adjusting to AssetList currency).
-        Forecast dividends are removed.
+        All yields are calculated in the original asset currency (not adjusting to AssetList base currency).
+        Forecasted (future) dividends are removed.
         Zero value time series are created for assets without dividends.
 
         Returns
         -------
         DataFrame
+            Time series of LTM dividend yield for each asset.
 
         Examples
         --------
         >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
+        >>> x.dividend_yield
+                   T.US    XOM.US
+        1984-01  0.000000  0.000000
+        1984-02  0.000000  0.002597
+        1984-03  0.002038  0.002589
+        1984-04  0.001961  0.002346
+                   ...       ...
+        1994-09  0.018165  0.012522
+        1994-10  0.018651  0.011451
+        1994-11  0.018876  0.012050
+        1994-12  0.019344  0.011975
+        [132 rows x 2 columns]
         """
         if self._dividend_yield.empty:
             frame = {}
@@ -960,6 +1029,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Annual dividends time series for each asset.
         """
         return self._get_dividends().resample("Y").sum()
 
@@ -971,6 +1041,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Dividend growth length periods time series for each asset.
 
         Examples
         --------
@@ -1006,6 +1077,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Dividend payment period length time series for each asset.
 
         Examples
         --------
@@ -1042,12 +1114,13 @@ class AssetList:
         Parameters
         ----------
         period : int, default 5
-            mean growth rate trailing period in years. Period should be a positive integer
+            Growth rate trailing period in years. Period should be a positive integer
             and not exceed the available data period_length.
 
         Returns
         -------
         Series
+            Dividend growth geometric mean values for each asset.
 
         Examples
         --------
