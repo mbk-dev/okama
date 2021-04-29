@@ -1,5 +1,6 @@
 """Various validators"""
 import numbers
+import operator
 from typing import Optional, Any
 
 
@@ -49,26 +50,27 @@ def validate_integer(
     if not isinstance(arg_value, int):
         raise TypeError(f"{arg_name} must be an integer.")
 
-    if not inclusive:
-        if min_value is not None and arg_value <= min_value:
-            if custom_min_message is not None:
-                raise ValueError(custom_min_message)
-            raise ValueError(f"'{arg_name:s}' must be > {min_value:d}")
+    ops = {'<=': operator.le,
+           '>=': operator.ge,
+           '>': operator.gt,
+           '<': operator.lt}
 
-        if max_value is not None and arg_value >= max_value:
-            if custom_max_message is not None:
-                raise ValueError(custom_max_message)
-            raise ValueError(f"'{arg_name:s}' must be < {max_value:d}")
-    else:  # Test for inclusive conditions
-        if min_value is not None and arg_value < min_value:
-            if custom_min_message is not None:
-                raise ValueError(custom_min_message)
-            raise ValueError(f"'{arg_name:s}' must be >= {min_value:d}")
+    if inclusive:
+        operator_less = '<'
+        operator_greater = '>'
+    else:
+        operator_less = '<='
+        operator_greater = '>='
 
-        if max_value is not None and arg_value > max_value:
-            if custom_max_message is not None:
-                raise ValueError(custom_max_message)
-            raise ValueError(f"'{arg_name:s}' must <= {max_value}")
+    if min_value is not None and ops[operator_less](arg_value, min_value):
+        if custom_min_message is not None:
+            raise ValueError(custom_min_message)
+        raise ValueError(f"'{arg_name:s}' must be {operator_greater} {min_value:d}")
+
+    if max_value is not None and ops[operator_greater](arg_value, max_value):
+        if custom_max_message is not None:
+            raise ValueError(custom_max_message)
+        raise ValueError(f"'{arg_name:s}' must be {operator_less} {max_value:d}")
 
 
 def validate_real(arg_name: str, arg_value: Any) -> None:

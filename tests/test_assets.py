@@ -33,7 +33,7 @@ class TestAsset:
 
 @mark.asset_list
 def test_asset_list_init_failing():
-    with pytest.raises(Exception, match=r"Symbols should be a list of string values."):
+    with pytest.raises(Exception, match=r"Symbols must be a list of string values."):
         ok.AssetList(symbols=("RUB.FX", "MCFTR.INDX"))
 
 
@@ -112,15 +112,14 @@ class TestAssetList:
     def test_drawdowns(self):
         assert self.asset_list.drawdowns.min().sum() == approx(-0.082932, rel=1e-2)
 
-    testdata = [
+    cagr_testdata1 = [
         (1, -0.0463, 0.3131, 0.0242),
         (None, -0.0888, 0.3651, 0.0318),
     ]
 
-    # input_data - period (tuple[0]), expected1 - expected value 1 (tuple[1]), expected2 - expected value 2(tuple[2])
     @mark.parametrize(
         "input_data,expected1,expected2,expected3",
-        testdata,
+        cagr_testdata1,
         ids=["1 year", "full period"],
     )
     def test_get_cagr(self, input_data, expected1, expected2, expected3):
@@ -134,24 +133,62 @@ class TestAssetList:
             expected3, rel=1e-2
         )
 
-    def test_get_rolling_cagr(self):
-        assert self.asset_list_lt.get_rolling_cagr(window=24)["RUB.FX"].iloc[
-            -1
-        ] == approx(0.05822, rel=1e-2)
-        assert self.asset_list_lt.get_rolling_cagr(window=24)["MCFTR.INDX"].iloc[
-            -1
-        ] == approx(0.2393, rel=1e-2)
+    cagr_testdata2 = [
+        (1, -0.0843, 0.2625),
+        (None, -0.1265, 0.3084),
+    ]
 
-    testdata = [
+    @mark.parametrize(
+        "input_data,expected1,expected2", cagr_testdata2, ids=["1 year", "full period"],
+    )
+    def test_get_cagr_real(self, input_data, expected1, expected2):
+        assert self.asset_list.get_cagr(period=input_data, real=True)[
+            "RUB.FX"
+        ] == approx(expected1, rel=1e-2)
+        assert self.asset_list.get_cagr(period=input_data, real=True)[
+            "MCFTR.INDX"
+        ] == approx(expected2, rel=1e-2)
+
+    def test_get_cagr_value_error(self):
+        with pytest.raises(ValueError):
+            self.asset_list.get_cagr(period=3, real=True)
+
+    def test_get_cagr_real_no_inflation_exception(self):
+        with pytest.raises(Exception):
+            self.asset_list_no_infl.get_cagr(period=1, real=True)
+
+    @pytest.mark.parametrize(
+        "real, expected1, expected2", [(False, 0.05822, 0.2393), (True, 0.0204, 0.1951)]
+    )
+    def test_get_rolling_cagr(self, real, expected1, expected2):
+        assert self.asset_list_lt.get_rolling_cagr(window=24, real=real)["RUB.FX"].iloc[
+            -1
+        ] == approx(expected1, rel=1e-2)
+        assert self.asset_list_lt.get_rolling_cagr(window=24, real=real)[
+            "MCFTR.INDX"
+        ].iloc[-1] == approx(expected2, rel=1e-2)
+
+    get_rolling_cagr_error_data = [
+        (0, False, ValueError),  # window should be at least 12 months for CAGR
+        (12.5, False, ValueError),  # not an integer
+        (10 * 12, False, ValueError),  # window size should be in the history period
+        (12, True, Exception),  # real CAGR is defined when AssetList(inflation=True) only
+    ]
+
+    @pytest.mark.parametrize("window, real, exception", get_rolling_cagr_error_data)
+    def test_get_rolling_cagr_error(self, window, real, exception):
+        with pytest.raises(exception):
+            self.asset_list_no_infl.get_rolling_cagr(window=window, real=real)
+
+    cumulative_testdata1 = [
         ("YTD", 0.0182, 0.0118, 0.0040),
         (1, -0.0463, 0.3131, 0.0242),
         (None, -0.0957, 0.4009, 0.0345),
     ]
 
-    # input_data - period (tuple[0]), expected1 - expected value 1 (tuple[1]), expected2 - expected value 2(tuple[2])
     @mark.parametrize(
         "input_data,expected1,expected2,expected3",
-        testdata,
+        cumulative_testdata1,
         ids=["YTD", "1 year", "full period"],
     )
     def test_get_cumulative_return(self, input_data, expected1, expected2, expected3):
@@ -164,6 +201,33 @@ class TestAssetList:
         assert self.asset_list.get_cumulative_return(period=input_data)[
             "RUB.INFL"
         ] == approx(expected3, rel=1e-2)
+
+    cumulative_testdata2 = [
+        ("YTD", -0.0490, -0.0550),
+        (1, -0.1269, 0.2020),
+        (None, -0.1805, 0.2696),
+    ]
+
+    @mark.parametrize(
+        "input_data,expected1,expected2",
+        cumulative_testdata2,
+        ids=["YTD", "1 year", "full period"],
+    )
+    def test_get_cumulative_return_real(self, input_data, expected1, expected2):
+        assert self.asset_list.get_cumulative_return(period=input_data, real=True)[
+            "RUB.FX"
+        ] == approx(expected1, rel=1e-2)
+        assert self.asset_list.get_cumulative_return(period=input_data, real=True)[
+            "MCFTR.INDX"
+        ] == approx(expected2, rel=1e-2)
+
+    def test_get_cumulative_return_value_error(self):
+        with pytest.raises(ValueError):
+            self.asset_list.get_cumulative_return(period=3, real=True)
+
+    def test_get_cumulative_return_real_no_inflation_exception(self):
+        with pytest.raises(Exception):
+            self.asset_list_no_infl.get_cumulative_return(period=1, real=True)
 
     def test_get_rolling_cumulative_return(self):
         assert self.asset_list_lt.get_rolling_cumulative_return(window=12)[
@@ -223,7 +287,8 @@ class TestAssetList:
 
     def test_get_dividend_mean_growth_rate_value_err(self):
         with pytest.raises(
-            ValueError, match="'period' must be <= history period \\(2.0\\)"
+            ValueError,
+            match="'period' \\(3\\) is beyond historical data range \\(2.0\\)",
         ):
             self.spy.get_dividend_mean_growth_rate(period=3)
 

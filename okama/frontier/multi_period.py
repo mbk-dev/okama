@@ -20,8 +20,8 @@ class EfficientFrontierReb(AssetList):
     Asset labels are set with 'tickers':
     True - for tickers
     False - for full asset names
-    TODO: Add bounds
     """
+    # TODO: Add bounds
     def __init__(self,
                  symbols: Optional[List[str]] = None, *,
                  first_date: Optional[str] = None,

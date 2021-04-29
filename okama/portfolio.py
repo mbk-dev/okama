@@ -16,8 +16,9 @@ class Portfolio:
     Implementation of investment portfolio.
     Arguments are similar to AssetList (weights are added), but different behavior.
     Works with monthly end of day historical rate of return data.
-    TODO: rebalance_period should be an attribute
     """
+    # TODO: rebalance_period should be an attribute
+    # TODO: add withdrawals as an attribute: frequency (monthly/annual), amount (nominal, percentage), inflation_adjusted
 
     def __init__(
         self,
@@ -50,8 +51,8 @@ class Portfolio:
         self.last_date = self._list.last_date
         self.period_length = self._list.period_length
         self.pl = PeriodLength(
-            self.returns_ts.shape[0] // _MONTHS_PER_YEAR,
-            self.returns_ts.shape[0] % _MONTHS_PER_YEAR,
+            self.get_returns_ts().shape[0] // _MONTHS_PER_YEAR,
+            self.get_returns_ts().shape[0] % _MONTHS_PER_YEAR,
         )
         self._pl_txt = f"{self.pl.years} years, {self.pl.months} months"
         if inflation:
@@ -72,8 +73,40 @@ class Portfolio:
     def __len__(self):
         return len(self.symbols)
 
+    def _add_inflation(self):
+        if hasattr(self, "inflation"):
+            return pd.concat(
+                [self.get_returns_ts(), self.inflation_ts], axis=1, join="inner", copy="false"
+            )
+        else:
+            return self.get_returns_ts()
+
+    def _validate_period(self, period):
+        validate_integer("period", period, min_value=0, inclusive=False)
+        if period > self.pl.years:
+            raise ValueError(
+                f"'period' ({period}) is beyond historical data range ({self.period_length})."
+            )
+
     @property
-    def weights(self):
+    def weights(self) -> Union[list, tuple]:
+        """
+        Get or set assets weights in portfolio.
+
+        If not defined equal weights are used for each asset.
+
+        Weights must be a list (or tuple) of float values.
+
+        Returns
+        -------
+            Values for the weights of assets in portfolio.
+
+        Examples
+        --------
+        >>> x = ok.Portfolio(['SPY.US', 'BND.US'])
+        >>> x.weights
+        [0.5, 0.5]
+        """
         return self._weights
 
     @weights.setter
@@ -92,50 +125,118 @@ class Portfolio:
                 )
         self._weights = weights
 
-    @property
-    def returns_ts(self) -> pd.Series:
+    def get_returns_ts(self, rebalancing_period: str = "month") -> pd.Series:
         """
-        Rate of return time series for portfolio (monthly rebalanced).
-        Returns:
-            pd.Series
+        Calculate rate of return time series for portfolio given a rebalancing period.
+
+        The rebalancing is the action of bringing the portfolio that has deviated away
+        from original target asset allocation back into line. After rebalancing the portfolio assets
+        have weights set with Portfolio(weights=[...]).
+        Different rebalancing periods are allowed for portfolio: 'month' (default), 'year' or 'none'.
+
+        Parameters
+        ----------
+        rebalancing_period : {"month", "year", "none"}, default "month"
+            Portfolio rebalancing periods. 'none' is for not rebalanced portfolio.
+
+        Returns
+        -------
+            Monthly rate of return time series for portfolio.
         """
-        s = Frame.get_portfolio_return_ts(self.weights, self._ror)
-        s.rename("portfolio", inplace=True)
+        if rebalancing_period == 'month':
+            s = Frame.get_portfolio_return_ts(self.weights, self._ror)
+            s.rename("portfolio", inplace=True)
+        elif rebalancing_period in ['year', 'none']:
+            s = Rebalance.rebalanced_portfolio_return_ts(
+                self.weights, self._ror, period=rebalancing_period
+            )
+        else:
+            raise ValueError('rebalancing_period must be "year", "month" or None')
         return s
 
     @property
     def wealth_index(self) -> pd.DataFrame:
-        if hasattr(self, "inflation"):
-            df = pd.concat(
-                [self.returns_ts, self.inflation_ts], axis=1, join="inner", copy="false"
-            )
-        else:
-            df = self.returns_ts
+        """
+        Calculate wealth index time series for the portfolio and accumulated inflation.
+
+        Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
+        historical time period. Accumulated inflation time series is added if `inflation=True` in the Portfolio.
+
+        Wealth index is obtained from the accumulated return multiplicated by the initial investments.
+        That is: 1000 * (Acc_Return + 1)
+        Initial investments are taken as 1000 units of the Portfolio base currency.
+
+        Returns
+        -------
+            Time series of wealth index values for portfolio and accumulated inflation.
+
+        Examples
+        --------
+        >>> x = ok.Portfolio(['SPY.US', 'BND.US'])
+        >>> x.wealth_index
+                    portfolio     USD.INFL
+        2007-05  1000.000000  1000.000000
+        2007-06  1004.034950  1008.011590
+        2007-07   992.940364  1007.709187
+        2007-08  1006.642941  1005.895310
+                      ...          ...
+        2020-12  2561.882476  1260.242835
+        2021-01  2537.800781  1265.661880
+        2021-02  2553.408256  1272.623020
+        2021-03  2595.156481  1281.658643
+        [167 rows x 2 columns]
+        """
+        df = self._add_inflation()
         df = Frame.get_wealth_indexes(df)
-        if isinstance(df, pd.Series):  # return should always be DataFrame
+        if isinstance(df, pd.Series):  # should always return a DataFrame
             df = df.to_frame()
             df.rename({1: "portfolio"}, axis="columns", inplace=True)
         return df
 
     @property
-    def wealth_index_with_assets(self) -> pd.Series:
+    def wealth_index_with_assets(self) -> pd.DataFrame:
+        """
+        Calculate wealth index time series for the portfolio, all assets and accumulated inflation.
+
+        Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
+        historical time period. Accumulated inflation time series is added if `inflation=True` in the Portfolio.
+
+        Wealth index is obtained from the accumulated return multiplicated by the initial investments.
+        That is: 1000 * (Acc_Return + 1)
+        Initial investments are taken as 1000 units of the Portfolio base currency.
+
+        Returns
+        -------
+        DataFrame
+            Time series of wealth index values for portfolio, each asset and accumulated inflation.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
+        >>> pf.wealth_index_with_assets
+                   portfolio       VOO.US       GLD.US     USD.INFL
+        2010-10  1000.000000  1000.000000  1000.000000  1000.000000
+        2010-11  1041.065584  1036.658420  1058.676480  1001.600480
+        2010-12  1103.779375  1108.395183  1084.508186  1003.303201
+        2011-01  1109.298272  1133.001556  1015.316564  1008.119056
+                      ...          ...          ...          ...
+        2020-12  3381.729677  4043.276231  1394.513920  1192.576493
+        2021-01  3332.356424  4002.034813  1349.610572  1197.704572
+        2021-02  3364.480340  4112.891178  1265.124950  1204.291947
+        2021-03  3480.083884  4301.261594  1250.702526  1212.842420
+        """
         if hasattr(self, "inflation"):
             df = pd.concat(
-                [self.returns_ts, self._ror, self.inflation_ts],
+                [self.get_returns_ts(), self._ror, self.inflation_ts],
                 axis=1,
                 join="inner",
                 copy="false",
             )
         else:
             df = pd.concat(
-                [self.returns_ts, self._ror], axis=1, join="inner", copy="false"
+                [self.get_returns_ts(), self._ror], axis=1, join="inner", copy="false"
             )
         return Frame.get_wealth_indexes(df)
-
-    def get_rebalanced_portfolio_return_ts(self, period="year") -> pd.Series:
-        return Rebalance.rebalanced_portfolio_return_ts(
-            self.weights, self._ror, period=period
-        )
 
     @property
     def mean_return_monthly(self) -> float:
@@ -145,38 +246,31 @@ class Portfolio:
     def mean_return_annual(self) -> float:
         return Float.annualize_return(self.mean_return_monthly)
 
-    def get_cagr(self, period: Optional[int] = None) -> pd.Series:
+    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
         """
-        Calculates Compound Annual Growth Rate (CAGR) for a given period.
+        Calculate Compound Annual Growth Rate (CAGR) for a given period.
         """
-        # TODO: add "real" attribute
-        if hasattr(self, "inflation"):
-            df = pd.concat(
-                [self.returns_ts, self.inflation_ts], axis=1, join="inner", copy="false"
-            )
-        else:
-            df = self.returns_ts
+        df = self._add_inflation()
         dt0 = self.last_date
-
         if period is None:
-            cagr = Frame.get_cagr(df)
+            dt = self.first_date
         else:
-            validate_integer("period", period, min_value=0, inclusive=False)
-            if period > self.pl.years:
-                raise ValueError(
-                    f"'period' must be <= history period ({self.period_length})"
-                )
+            self._validate_period(period)
             dt = Date.subtract_years(dt0, period)
-            if dt >= self.first_date:
-                cagr = Frame.get_cagr(df[dt:])
-            else:
-                row = {x: None for x in df.columns}
-                cagr = pd.Series(row)
+        cagr = Frame.get_cagr(df[dt:])
+        if real:
+            if not hasattr(self, "inflation"):
+                raise Exception(
+                    "Real CAGR is not defined. Set inflation=True in Portfolio to calculate it."
+                )
+            mean_inflation = Frame.get_cagr(self.inflation_ts[dt:])
+            cagr = (1. + cagr) / (1. + mean_inflation) - 1.
+            cagr.drop(self.inflation, inplace=True)
         return cagr
 
-    def get_cumulative_return(self, period: Union[str, int, None] = None) -> pd.Series:
+    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
         """
-        Calculate cumulative return of return for the portfolio.
+        Calculate cumulative return of return for MONTHLY rebalanced portfolio.
 
         Parameters
         ----------
@@ -184,6 +278,9 @@ class Portfolio:
             Trailing period in years.
             None - full time cumulative return.
             'YTD' - (Year To Date) period of time beginning the first day of the calendar year up to the last month.
+        real: bool, default False
+            Cumulative return is adjusted for inflation (real cumulative return) if True.
+            Portfolio should be initiated with `Inflation=True` for real cumulative return.
 
         Returns
         -------
@@ -191,28 +288,39 @@ class Portfolio:
 
         Examples
         --------
-        >>> x = ok.Portfolio()  # using default ticker 'SPY.US'
+        >>> x = ok.Portfolio(['BTC-USD.CC', 'LTC-USD.CC'], weights=[.8, .2], last_date='2021-03')
         >>> x.get_cumulative_return(period=2)
-        0.4230970729863084
+        portfolio    8.589341
+        USD.INFL     0.040569
+        dtype: float64
+
+        To get inflation adjusted return (real annualized return) add `real=True` option:
+        >>> x.get_cumulative_return(period=2, real=True)
+        portfolio    8.215476
+        dtype: float64
         """
-        df = self.returns_ts
+        df = self._add_inflation()
         dt0 = self.last_date
 
-        if not period:
-            cr = Frame.get_cumulative_return(df)
+        if period is None:
+            dt = self.first_date
         elif str(period).lower() == "ytd":
             year = dt0.year
-            cr = (df[str(year) :] + 1.0).prod() - 1.0
-        elif isinstance(period, int) and period > 0:
-            dt = Date.subtract_years(dt0, period)
-            if dt >= self.first_date:
-                cr = Frame.get_cumulative_return(df[dt:])
-            else:
-                raise ValueError(
-                    f"period {period} years is beyond historical data range."
-                )
+            dt = str(year)
         else:
-            raise ValueError(f"{period} is not a valid value for period")
+            self._validate_period(period)
+            dt = Date.subtract_years(dt0, period)
+
+        cr = Frame.get_cumulative_return(df[dt:])
+        if real:
+            if not hasattr(self, "inflation"):
+                raise Exception(
+                    "Real cumulative return is not defined (no inflation information is available)."
+                    "Set inflation=True in Portfolio to calculate it."
+                )
+            cumulative_inflation = Frame.get_cumulative_return(self.inflation_ts[dt:])
+            cr = (1. + cr) / (1. + cumulative_inflation) - 1.
+            cr.drop(self.inflation, inplace=True)
         return cr
 
     def get_rolling_cumulative_return(self, window: int = 12) -> pd.DataFrame:
@@ -230,7 +338,7 @@ class Portfolio:
             Time series of rolling cumulative return.
         """
         return Frame.get_rolling_fn(
-            self.returns_ts,
+            self.get_returns_ts(),
             window=window,
             fn=Frame.get_cumulative_return,
             window_below_year=True,
@@ -238,7 +346,7 @@ class Portfolio:
 
     @property
     def annual_return_ts(self) -> pd.DataFrame:
-        return Frame.get_annual_return_ts_from_monthly(self.returns_ts)
+        return Frame.get_annual_return_ts_from_monthly(self.get_returns_ts())
 
     @property
     def dividend_yield(self) -> pd.DataFrame:
@@ -278,18 +386,8 @@ class Portfolio:
                 "Real Return is not defined. Set inflation=True to calculate."
             )
         infl_mean = Float.annualize_return(self.inflation_ts.mean())
-        ror_mean = Float.annualize_return(self.returns_ts.mean())
+        ror_mean = Float.annualize_return(self.get_returns_ts().mean())
         return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
-
-    @property
-    def real_cagr(self) -> float:
-        if not hasattr(self, "inflation"):
-            raise Exception(
-                "Real Return is not defined. Set inflation=True to calculate."
-            )
-        infl_cagr = Frame.get_cagr(self.inflation_ts)
-        ror_cagr = Frame.get_cagr(self.returns_ts)
-        return (1.0 + ror_cagr) / (1.0 + infl_cagr) - 1.0
 
     @property
     def risk_monthly(self) -> float:
@@ -301,11 +399,11 @@ class Portfolio:
 
     @property
     def semideviation_monthly(self) -> float:
-        return Frame.get_semideviation(self.returns_ts)
+        return Frame.get_semideviation(self.get_returns_ts())
 
     @property
     def semideviation_annual(self) -> float:
-        return Frame.get_semideviation(self.returns_ts) * 12 ** 0.5
+        return Frame.get_semideviation(self.get_returns_ts()) * 12 ** 0.5
 
     def get_var_historic(self, time_frame: int = 12, level=5) -> float:
         """
@@ -366,7 +464,7 @@ class Portfolio:
 
         The drawdown is the percent decline from a previous peak in wealth index.
         """
-        return Frame.get_drawdowns(self.returns_ts)
+        return Frame.get_drawdowns(self.get_returns_ts())
 
     def describe(self, years: Tuple[int] = (1, 5, 10)) -> pd.DataFrame:
         """
@@ -402,20 +500,15 @@ class Portfolio:
         """
         description = pd.DataFrame()
         dt0 = self.last_date
-        if hasattr(self, "inflation"):
-            df = pd.concat(
-                [self.returns_ts, self.inflation_ts], axis=1, join="inner", copy="false"
-            )
-        else:
-            df = self.returns_ts
+        df = self._add_inflation()
         # YTD return
         year = dt0.year
         ts = Rebalance.rebalanced_portfolio_return_ts(
-            self.weights, self._ror[str(year) :], period="none"
+            self.weights, self._ror[str(year):], period="none"
         )
         value = Frame.get_cumulative_return(ts)
         if hasattr(self, "inflation"):
-            ts = df[str(year) :].loc[:, self.inflation]
+            ts = df[str(year):].loc[:, self.inflation]
             inflation = Frame.get_cumulative_return(ts)
             row = {"portfolio": value, self.inflation: inflation}
         else:
@@ -446,9 +539,7 @@ class Portfolio:
                 row.update(period=f"{i} years", rebalancing="1 year", property="CAGR")
                 description = description.append(row, ignore_index=True)
             # CAGR for full period (rebalanced 1 year)
-            ts = Rebalance.rebalanced_portfolio_return_ts(
-                self.weights, self._ror, period="year"
-            )
+            ts = self.get_returns_ts(rebalancing_period="year")
             value = Frame.get_cagr(ts)
             if hasattr(self, "inflation"):
                 ts = df.loc[:, self.inflation]
@@ -481,7 +572,7 @@ class Portfolio:
             description = description.append(row, ignore_index=True)
             # CAGR not rebalanced
             value = Frame.get_cagr(
-                self.get_rebalanced_portfolio_return_ts(period="none")
+                self.get_returns_ts(rebalancing_period="none")
             )
             if hasattr(self, "inflation"):
                 row = {"portfolio": value, self.inflation: full_inflation}
@@ -564,7 +655,7 @@ class Portfolio:
             raise ValueError(
                 "Portfolio history data period length should be at least 12 months."
             )
-        rolling_return = (self.returns_ts + 1.0).rolling(
+        rolling_return = (self.get_returns_ts() + 1.0).rolling(
             _MONTHS_PER_YEAR * years
         ).apply(np.prod, raw=True) ** (1 / years) - 1.0
         rolling_return.dropna(inplace=True)
@@ -693,7 +784,7 @@ class Portfolio:
                 self.mean_return_monthly, self.risk_monthly, (period_months, n)
             )
         elif distr == "lognorm":
-            std, loc, scale = scipy.stats.lognorm.fit(self.returns_ts)
+            std, loc, scale = scipy.stats.lognorm.fit(self.get_returns_ts())
             random_returns = scipy.stats.lognorm(std, loc=loc, scale=scale).rvs(
                 size=[period_months, n]
             )
@@ -868,7 +959,7 @@ class Portfolio:
         For normally distributed data, the skewness should be about zero.
         A skewness value greater than zero means that there is more weight in the right tail of the distribution.
         """
-        return Frame.skewness(self.returns_ts)
+        return Frame.skewness(self.get_returns_ts())
 
     def skewness_rolling(self, window: int = 60):
         """
@@ -879,7 +970,7 @@ class Portfolio:
         window - the rolling window size in months (default is 5 years).
         The window size should be at least 12 months.
         """
-        return Frame.skewness_rolling(self.returns_ts, window=window)
+        return Frame.skewness_rolling(self.get_returns_ts(), window=window)
 
     @property
     def kurtosis(self):
@@ -888,7 +979,7 @@ class Portfolio:
         Kurtosis is the fourth central moment divided by the square of the variance.
         Kurtosis should be close to zero for normal distribution.
         """
-        return Frame.kurtosis(self.returns_ts)
+        return Frame.kurtosis(self.get_returns_ts())
 
     def kurtosis_rolling(self, window: int = 60):
         """
@@ -899,7 +990,7 @@ class Portfolio:
         window - the rolling window size in months (default is 5 years).
         The window size should be at least 12 months.
         """
-        return Frame.kurtosis_rolling(self.returns_ts, window=window)
+        return Frame.kurtosis_rolling(self.get_returns_ts(), window=window)
 
     @property
     def jarque_bera(self):
@@ -911,7 +1002,7 @@ class Portfolio:
             (The test statistic, The p-value for the hypothesis test)
             Low statistic numbers correspond to normal distribution.
         """
-        return Frame.jarque_bera_series(self.returns_ts)
+        return Frame.jarque_bera_series(self.get_returns_ts())
 
     def kstest(self, distr: str = "norm") -> dict:
         """
@@ -921,7 +1012,7 @@ class Portfolio:
         Returns:
             (The test statistic, The p-value for the hypothesis test)
         """
-        return Frame.kstest_series(self.returns_ts, distr=distr)
+        return Frame.kstest_series(self.get_returns_ts(), distr=distr)
 
     def plot_percentiles_fit(
         self, distr: str = "norm", figsize: Optional[tuple] = None
@@ -933,11 +1024,11 @@ class Portfolio:
         """
         plt.figure(figsize=figsize)
         if distr == "norm":
-            scipy.stats.probplot(self.returns_ts, dist=distr, plot=plt)
+            scipy.stats.probplot(self.get_returns_ts(), dist=distr, plot=plt)
         elif distr == "lognorm":
             scipy.stats.probplot(
-                self.returns_ts,
-                sparams=(scipy.stats.lognorm.fit(self.returns_ts)),
+                self.get_returns_ts(),
+                sparams=(scipy.stats.lognorm.fit(self.get_returns_ts())),
                 dist=distr,
                 plot=plt,
             )
@@ -953,7 +1044,7 @@ class Portfolio:
         normal distribution - 'norm'
         lognormal distribution - 'lognorm'
         """
-        data = self.returns_ts
+        data = self.get_returns_ts()
         # Plot the histogram
         plt.hist(data, bins=bins, density=True, alpha=0.6, color="g")
         # Plot the PDF.Probability Density Function
