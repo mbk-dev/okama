@@ -33,7 +33,7 @@ class TestAsset:
 
 @mark.asset_list
 def test_asset_list_init_failing():
-    with pytest.raises(Exception, match=r"Symbols should be a list of string values."):
+    with pytest.raises(Exception, match=r"Symbols must be a list of string values."):
         ok.AssetList(symbols=("RUB.FX", "MCFTR.INDX"))
 
 
@@ -134,7 +134,7 @@ class TestAssetList:
         )
 
     cagr_testdata2 = [
-        (1, -0.0829, 0.2625),
+        (1, -0.0843, 0.2625),
         (None, -0.1265, 0.3084),
     ]
 
@@ -203,9 +203,9 @@ class TestAssetList:
         ] == approx(expected3, rel=1e-2)
 
     cumulative_testdata2 = [
-        ("YTD", -0.0427, -0.0488),
-        (1, -0.1211, 0.2099),
-        (None, -0.1751, 0.2780),
+        ("YTD", -0.0490, -0.0550),
+        (1, -0.1269, 0.2020),
+        (None, -0.1805, 0.2696),
     ]
 
     @mark.parametrize(

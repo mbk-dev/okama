@@ -324,8 +324,8 @@ class Frame:
         """
         Calculate expanding skewness.
         The shape of time series should be at least 12. In the opposite case empty time series is returned.
-        TODO: implement skewtest (from scipy)
         """
+        # TODO: implement skewtest (from scipy)
         sk = ror.expanding(min_periods=1).skew()
         return sk.iloc[_MONTHS_PER_YEAR:]
 
@@ -457,7 +457,7 @@ class Rebalance:
         weights: Union[list, np.ndarray], ror: pd.DataFrame, *, period: str = "year"
     ) -> pd.Series:
         """
-        Returns mean return time series of rebalanced portfolio given returns time series of the assets.
+        Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
         For not rebalanced portfolio set Period to 'none'
         """

@@ -228,7 +228,7 @@ class AssetList:
         df = pd.DataFrame()
         for i, x in enumerate(ls):
             asset = Asset(x)
-            if i == 0:
+            if i == 0:  # required to use pd.concat below (df should not be empty).
                 if asset.currency == self.currency.name:
                     df = asset.ror
                 else:
@@ -257,7 +257,7 @@ class AssetList:
         self.last_date: pd.Timestamp = last_dates_sorted[0][1]
         self.newest_asset: str = first_dates_sorted[-1][0]
         self.eldest_asset: str = first_dates_sorted[0][0]
-        self.names: Dict[str, str] = names
+        self.names = names
         currencies.update({"asset list": self.currency.currency})
         self.currencies: Dict[str, str] = currencies
         self.assets_first_dates: Dict[str, pd.Timestamp] = dict(first_dates_sorted)
@@ -266,11 +266,11 @@ class AssetList:
             df, pd.Series
         ):  # required to convert Series to DataFrame for single asset list
             df = df.to_frame()
-        self.ror: pd.DataFrame = df
+        self.ror = df
 
     def _set_currency(self, returns: pd.Series, asset_currency: str) -> pd.Series:
         """
-        Set return to a certain currency. Input is a pd.Series of mean returns and a currency symbol.
+        Set return to a certain currency.
         """
         currency = Asset(symbol=f"{asset_currency}{self.currency.name}.FX")
         asset_mult = returns + 1.0
@@ -322,7 +322,7 @@ class AssetList:
         """
         symbols = [default_ticker] if not self.__symbols else self.__symbols
         if not isinstance(symbols, list):
-            raise ValueError("Symbols should be a list of string values.")
+            raise ValueError("Symbols must be a list of string values.")
         return symbols
 
     @property
@@ -361,12 +361,17 @@ class AssetList:
         """
         Calculate wealth index time series for the assets and accumulated inflation.
 
-        Wealth index is obtained from the accumulated return multiplicated by the initial investments (1000).
+        Wealth index (Cumulative Wealth Index) is a time series that presents the value of each asset over
+        historical time period. Accumulated inflation time series is added if `inflation=True` in the AssetList.
+
+        Wealth index is obtained from the accumulated return multiplicated by the initial investments.
+        That is: 1000 * (Acc_Return + 1)
+        Initial investments are taken as 1000 units of the AssetList base currency.
 
         Returns
         -------
         DataFrame
-            Time series of Wealth index values in form of DataFrame.
+            Time series of wealth index values for each asset and accumulated inflation.
         """
         df = self._add_inflation()
         return Frame.get_wealth_indexes(df)
@@ -382,7 +387,7 @@ class AssetList:
         Returns
         -------
         Series
-            Values for monthly risk (standard deviation) for each asset in form of Series.
+            Monthly risk (standard deviation) values for each asset in form of Series.
 
         See Also
         --------
@@ -397,7 +402,7 @@ class AssetList:
         --------
         >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
         >>> al.risk_monthly
-                GC.COMM    0.050864
+        GC.COMM    0.050864
         SHV.US     0.001419
         dtype: float64
         """
@@ -411,6 +416,7 @@ class AssetList:
         Returns
         -------
         Series
+            Annualized risk (standard deviation) values for each asset in form of Series.
         """
         risk = self.ror.std()
         mean_return = self.ror.mean()
@@ -424,6 +430,7 @@ class AssetList:
         Returns
         -------
         Series
+            Monthly semideviation values for each asset in form of Series.
         """
         return Frame.get_semideviation(self.ror)
 
@@ -435,6 +442,7 @@ class AssetList:
         Returns
         -------
         Series
+            Annualized semideviation values for each asset in form of Series.
         """
         return Frame.get_semideviation(self.ror) * 12 ** 0.5
 
@@ -455,6 +463,7 @@ class AssetList:
         Returns
         -------
         Series
+            VaR values for each asset in form of Series.
 
         Examples
         --------
@@ -485,6 +494,7 @@ class AssetList:
         Returns
         -------
         Series
+            CVaR values for each asset in form of Series.
 
         Examples
         --------
@@ -534,6 +544,7 @@ class AssetList:
         Returns
         -------
         Series
+            CAGR values for each asset and annualized inflation (optional).
 
         Examples
         --------
@@ -664,6 +675,7 @@ class AssetList:
         Returns
         -------
         Series
+            Cumulative return values for each asset and cumulative inflation (optional).
 
         Examples
         --------
@@ -1153,6 +1165,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Tracking diffirence time series for each asset.
 
         Examples
         --------
@@ -1194,6 +1207,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Annualized tracking diffirence time series for each asset.
         
         Examples
         --------
@@ -1205,9 +1219,7 @@ class AssetList:
         2012-01 -0.000615 -0.002245
         2012-02 -0.000413 -0.002539
         2012-03 -0.001021 -0.002359
-        2012-04 -0.001296 -0.002283
                    ...       ...
-        2020-09 -0.003752 -0.002327
         2020-10 -0.003079 -0.001889
         2020-11 -0.003599 -0.002076
         2020-12 -0.004177 -0.002482
@@ -1228,6 +1240,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Tracking error time series for each asset.
         
         Examples
         --------
@@ -1239,9 +1252,7 @@ class AssetList:
         2010-11  0.000346  0.003030
         2010-12  0.000283  0.005400
         2011-01  0.000735  0.005350
-        2011-02  0.000903  0.004825
                    ...       ...
-        2020-09  0.003099  0.003366
         2020-10  0.003132  0.003370
         2020-11  0.003127  0.003356
         2020-12  0.003144  0.003357
@@ -1260,6 +1271,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Expanding correlation with the index (or benchmark) time series for each asset.
 
         Examples
         --------
@@ -1275,9 +1287,7 @@ class AssetList:
         2005-11 -0.171918  0.213368  0.683557
         2005-12 -0.191054  0.183656  0.687335
         2006-01 -0.204574  0.250068  0.699323
-        2006-02 -0.207514  0.261097  0.698137
                    ...       ...       ...
-        2020-10 -0.014417  0.082438  0.718580
         2020-11 -0.004154  0.065746  0.721346
         2020-12 -0.006035  0.069420  0.721324
         2021-01 -0.002942  0.070801  0.721216
@@ -1300,6 +1310,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Rolling correlation with the index (or benchmark) time series for each asset.
 
         Examples
         --------
@@ -1315,9 +1326,7 @@ class AssetList:
         2006-10 -0.053556  0.196464  0.657984
         2006-11  0.048231  0.173406  0.666584
         2006-12 -0.001431  0.227669  0.634478
-        2007-01  0.028426  0.160199  0.547341
                    ...       ...       ...
-        2020-10 -0.068989  0.276683  0.813970
         2020-11 -0.038417  0.122855  0.837298
         2020-12  0.033282  0.204574  0.820935
         2021-01  0.046599  0.205193  0.816003
@@ -1341,6 +1350,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Beta coefficient time series for each asset.
 
         See Also
         --------
@@ -1385,6 +1395,7 @@ class AssetList:
         Returns
         -------
         Dataframe
+            Expanding skewness time series for each asset.
 
         See Also
         --------
@@ -1406,9 +1417,7 @@ class AssetList:
         1981-03 -0.642592  0.128630
         1981-04 -0.489567  0.231292
         1981-05 -0.471067  0.219311
-        1981-06 -0.392495  0.334431
                    ...       ...
-        2020-09 -0.634501  0.106471
         2020-10 -0.629908  0.107989
         2020-11 -0.610480  0.111627
         2020-12 -0.613742  0.107515
@@ -1436,6 +1445,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Rolling skewness time series for each asset.
 
         See Also
         --------
@@ -1478,6 +1488,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Expanding kurtosis time series for each asset.
 
         See Also
         --------
@@ -1526,6 +1537,7 @@ class AssetList:
         Returns
         -------
         DataFrame
+            Rolling kurtosis time series for each asset.
 
         See Also
         --------
@@ -1613,7 +1625,7 @@ class AssetList:
         -------
         DataFrame
             Returns test statistic and the p-value for the hypothesis test.
-            large test statistics and tiny p-value indicate that null hypothesis (H0) is rejected.
+            Large test statistics and tiny p-value indicate that null hypothesis (H0) is rejected.
 
         Examples
         --------

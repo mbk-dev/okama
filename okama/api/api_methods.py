@@ -6,8 +6,8 @@ from ..settings import default_ticker, default_namespace
 class API:
     """
     Set of methods to data from API.
-    TODO: introduce 'from' & 'to' for dates.
     """
+    # TODO: introduce 'from' & 'to' for dates.
 
     api_url = "http://185.63.191.70:5000"
 

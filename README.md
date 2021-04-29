@@ -4,7 +4,7 @@
         <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
             alt="python"></a> &nbsp;
     <a href="https://pypi.org/project/okama/">
-        <img src="https://img.shields.io/badge/pypi-v0.98-brightgreen.svg"
+        <img src="https://img.shields.io/badge/pypi-v0.99-brightgreen.svg"
             alt="pypi"></a> &nbsp;
     <a href='https://coveralls.io/github/mbk-dev/okama?branch=master'>
         <img src='https://coveralls.io/repos/github/mbk-dev/okama/badge.svg?branch=master' 
@@ -24,10 +24,24 @@ The package is supplied with **free** «end of day» historical stock markets da
 >...entities should not be multiplied without necessity
 >
 > -- <cite>William of Ockham (c. 1287–1347)</cite>
+
+## Table of contents
+
+- [Okama main features](#okama-main-features)
+- [Financial data and macroeconomic indicators](#financial-data-and-macroeconomic-indicators)
+  - [End of day historical data](#end-of-day-historical-data)
+  - [Macroeconomic indicators](#macroeconomic-indicators)
+  - [Other historical data](#other-historical-data)
+- [Installation](#installation)
+- [Getting started](#getting-started)
+- [RoadMap](#roadmap)
+- [Contributing to okama](#contributing-to-okama)
+- [Communication](#communication)
+
 ## Okama main features
 
 - Investment portfolio constrained Markowitz Mean-Variance Analysis (MVA) and optimization
-- Rebalanced portfolio optimization
+- Rebalanced portfolio optimization with constraints (multi-period Efficient Frontier)
 - Monte Carlo Simulations for financial assets and investment portfolios
 - Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
 - Forecasting models according to normal and lognormal distribution
@@ -50,7 +64,7 @@ The package is supplied with **free** «end of day» historical stock markets da
 
 ### Macroeconomic indicators
 
-- Inflation
+- Inflation for many countries (USA, United Kingdom, European Union, Russia etc.)
 - Central bank rates
 
 ### Other historical data
@@ -62,9 +76,10 @@ The package is supplied with **free** «end of day» historical stock markets da
 
 `pip install okama`
 
-or:
+The latest development version can be installed directly from GitHub:
 
-`pip install git+https://github.com/mbk-dev/okama`
+`pip install git+https://github.com/mbk-dev/okama@dev`
+
 
 ## Getting started
 
@@ -139,17 +154,29 @@ map = ok.Plots(ls, ccy='USD').plot_transition_map(cagr=False)
 
 More examples are available in [Jupyter Notebooks](https://github.com/mbk-dev/okama/tree/master/notebooks).
 
+## RoadMap
+
+The plan for _okama_ is to add more functions that will be useful to investors and asset managers.
+
+- Make documentation for the package. Finish docstrings for modules, classes, methods and functions.
+- Add Sharpe, Sortino and Diversification ratios to EfficientFrontier, EfficientFrontierReb and Portfolio classes.
+- Make rebalancing period an attribute of Portfolio class.
+- Add withdrawals as an attribute of Portfolio class.
+- Make AssetList class accept Portfolio instances in a list of assets
+- Add Black-Litterman asset allocation 
+- Accelerate optimization for multi-period Efficient Frontier: minimize_risk and maximize_risk methods of EfficientFrontierReb class.
+- Make a single EfficientFrontier class for all optimizations: single-period or multu-period with rebalancing period as a parameter.
+- Add different utility functions for optimizers: semi-deviation, VaR, CVaR, drawdowns etc.
+- Add more functions based on suggestion of users.
+
+## Contributing to okama
+
+Contributions are *most welcome*. Have a look at the [Contribution Guide](https://github.com/mbk-dev/okama/blob/dev/CONTRIBUTING.md) for more.
+
 ## Communication
 
 For basic usage questions (e.g., "_Is XXX currency supported by okama?_") and for sharing ideas please use [GitHub Discussions](https://github.com/mbk-dev/okama/discussions/3).
 Russian language community is available at [okama.io forums](https://community.okama.io/c/python-okama).
-## Issues
-
-We encourage you to report issues using the [Github tracker](https://github.com/mbk-dev/okama/issues). We welcome all kinds of issues, especially those related to correctness, documentation, performance, and feature requests.
-
-## Contributing to okama
-
-All contributions, bug reports, bug fixes, documentation improvements, enhancements, frontend implementation and ideas are welcome.
 
 ## License
 

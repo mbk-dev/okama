@@ -27,10 +27,16 @@ class TestPortfolio:
 
     def test_ror(self):
         portfolio_sample = pd.read_pickle(data_folder / 'portfolio.pkl')
-        assert_series_equal(self.portfolio.returns_ts, portfolio_sample)
+        assert_series_equal(self.portfolio.get_returns_ts(), portfolio_sample)
 
     def test_weights(self):
         assert self.portfolio.weights == [0.5, 0.5]
+
+    @pytest.mark.parametrize(
+        "period, expected", [('none', 0.0122), ('month', 0.0108), ('year', 0.0112)]
+    )
+    def test_get_returns_ts(self, period, expected):
+        assert self.portfolio.get_returns_ts(rebalancing_period=period).mean() == approx(expected, rel=1e-2)
 
     def test_mean_return(self):
         assert self.portfolio.mean_return_monthly == approx(0.010854, rel=1e-2)
@@ -57,11 +63,6 @@ class TestPortfolio:
         assert self.portfolio.get_cvar_historic(time_frame=1, level=5) == approx(0.05016, rel=1e-2)
         assert self.portfolio.get_cvar_historic(time_frame=5, level=1) == approx(0.10762, rel=1e-2)
 
-    def test_rebalanced_portfolio_return(self):
-        assert self.portfolio.get_rebalanced_portfolio_return_ts().mean() == approx(0.011220, rel=1e-2)
-        assert self.portfolio.get_rebalanced_portfolio_return_ts(period='none').mean() == \
-               approx(0.01221789515271935, rel=1e-2)
-
     def test_get_cagr(self):
         values = pd.Series({'portfolio': 0.1303543, 'RUB.INFL': 0.05548082428015655})
         assert_series_equal(self.portfolio.get_cagr(), values, rtol=1e-4)
@@ -69,7 +70,7 @@ class TestPortfolio:
             self.portfolio.get_cagr(period='one year')
 
     cagr_testdata1 = [
-        (1, 0.0794),
+        (1, 0.0778),
         (None, 0.0710),
     ]
 
@@ -85,7 +86,7 @@ class TestPortfolio:
         with pytest.raises(Exception):
             self.portfolio_no_inflation.get_cagr(period=1, real=True)
 
-    @mark.parametrize("period, real, expected", [('YTD', False, 0.01505), (1, False, 0.12269), (2, True, 0.1608)])
+    @mark.parametrize("period, real, expected", [('YTD', False, 0.01505), (1, False, 0.12269), (2, True, 0.1532)])
     def test_cumulative_return(self, period, real, expected):
         assert self.portfolio.get_cumulative_return(period=period, real=real)['portfolio'] == approx(expected, rel=1e-2)
 

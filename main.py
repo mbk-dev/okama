@@ -1,3 +1,3 @@
 import okama as ok
 
-x = ok.AssetList(inflation=True)
+lse = ok.AssetList(['INRG.LSE'], ccy='GBP')
