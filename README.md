@@ -171,7 +171,7 @@ The plan for _okama_ is to add more functions that will be useful to investors a
 
 ## Contributing to okama
 
-Contributions are *most welcome*. Have a look at the [Contribution Guide](https://github.com/mbk-dev/okama/blob/dev/CONTRIBUTING.md) for more.
+Contributions are *most welcome*. Have a look at the [Contribution Guide](https://github.com/mbk-dev/okama/blob/master/CONTRIBUTING.md) for more.
 
 ## Communication
 

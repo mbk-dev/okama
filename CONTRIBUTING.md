@@ -4,7 +4,7 @@ Thank you for your interest in _okama_ and wanting to contribute. Your help is m
 
 Here are some guidelines for contributing.
 
-Please refer to the [RoadMap](https://github.com/mbk-dev/okama/blob/dev/README.md#roadmap) for a list of areas where _okama_ could benefit
+Please refer to the [RoadMap](https://github.com/mbk-dev/okama/blob/master/README.md#roadmap) for a list of areas where _okama_ could benefit
 from. In addition, the following is always welcome:
 
 - Report bugs using [Issues](https://github.com/mbk-dev/okama/issues)
