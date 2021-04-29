@@ -531,7 +531,11 @@ class Portfolio:
                     else:
                         row = {"portfolio": value}
                 else:
-                    row = {x: None for x in df.columns} if hasattr(self, "inflation") else {'portfolio': None}
+                    row = (
+                        {x: None for x in df.columns}
+                        if hasattr(self, "inflation")
+                        else {"portfolio": None}
+                    )
                 row.update(period=f"{i} years", rebalancing="1 year", property="CAGR")
                 description = description.append(row, ignore_index=True)
             # CAGR for full period (rebalanced 1 year)

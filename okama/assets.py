@@ -561,6 +561,7 @@ class AssetList:
         CNYUSD.FX   -0.017922
         dtype: float64
         """
+        # TODO: add "real" attribute
         df = self._add_inflation()
         dt0 = self.last_date
         if period is None:
