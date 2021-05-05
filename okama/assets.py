@@ -530,13 +530,14 @@ class AssetList:
         its initial to its final value, assuming all incomes were reinvested.
 
         Inflation adjusted annualized returns (real CAGR) are shown with `real=True` option.
+
         Annual inflation value is calculated for the same period if inflation=True in the AssetList.
         CAGR is not defined for periods less than 1 year.
 
         Parameters
         ----------
         period: int, optional
-            CAGR trailing period in years. None for full time CAGR.
+            CAGR trailing period in years. None for the full time CAGR.
         real: bool, default False
             CAGR is adjusted for inflation (real CAGR) if True.
             AssetList should be initiated with Inflation=True for real CAGR.
@@ -561,7 +562,6 @@ class AssetList:
         CNYUSD.FX   -0.017922
         dtype: float64
         """
-        # TODO: add "real" attribute
         df = self._add_inflation()
         dt0 = self.last_date
         if period is None:
@@ -676,7 +676,7 @@ class AssetList:
         Returns
         -------
         Series
-            Cumulative return values for each asset and cumulative inflation (optional).
+            Cumulative return values for each asset and cumulative inflation (if inflation=True in AssetList).
 
         Examples
         --------
@@ -878,7 +878,7 @@ class AssetList:
     @property
     def mean_return(self) -> pd.Series:
         """
-        Calculate annualized mean return (arithmetic mean) for the assets.
+        Calculate annualized mean return (arithmetic mean) for the rate of return time series (each asset).
 
         Mean return calculated for the full history period. Arithmetic mean for the inflation is also shown
         if there is an `inflation=True` option in AssetList.
@@ -904,7 +904,7 @@ class AssetList:
     @property
     def real_mean_return(self) -> pd.Series:
         """
-        Calculate annualized real mean return (arithmetic mean) for the assets.
+        Calculate annualized real mean return (arithmetic mean) for the rate of return time series (each assets).
 
         Real rate of return is adjusted for inflation. Real return is defined if
         there is an `inflation=True` option in AssetList.

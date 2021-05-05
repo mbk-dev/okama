@@ -19,6 +19,7 @@ class Portfolio:
     """
     # TODO: rebalance_period should be an attribute
     # TODO: add withdrawals as an attribute: frequency (monthly/annual), amount (nominal, percentage), inflation_adjusted
+    # TODO: add asset weights time series
 
     def __init__(
         self,
@@ -240,15 +241,81 @@ class Portfolio:
 
     @property
     def mean_return_monthly(self) -> float:
+        """
+        Calculate monthly mean return (arithmetic mean) for the portfolio rate of return time series.
+
+        Mean return calculated for the full history period.
+
+        Returns
+        -------
+        Float
+            Mean return value.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['ISF.LSE', 'XGLE.LSE'], weights=[0.6, 0.4], ccy='GBP')
+        >>> pf
+        0.0001803312727272665
+        """
         return Frame.get_portfolio_mean_return(self.weights, self._ror)
 
     @property
     def mean_return_annual(self) -> float:
+        """
+        Calculate annualized mean return (arithmetic mean) for the portfolio rate of return time series.
+
+        Mean return calculated for the full history period.
+
+        Returns
+        -------
+        Float
+           Mean return value.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['XCS6.XETR', 'PHAU.LSE'], weights=[0.85, 0.15], ccy='USD')
+        >>> pf.names
+        {'XCS6.XETR': 'Xtrackers MSCI China UCITS ETF 1C', 'PHAU.LSE': 'WisdomTree Physical Gold'}
+        >>> pf.mean_return_annual
+        0.09005826844072184
+        """
         return Float.annualize_return(self.mean_return_monthly)
 
-    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
+    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> Union[pd.Series, float]:
         """
-        Calculate Compound Annual Growth Rate (CAGR) for a given period.
+        Calculate portfolio Compound Annual Growth Rate (CAGR) for a given trailing period.
+
+        Compound annual growth rate (CAGR) is the rate of return that would be required for an investment to grow from
+        its initial to its final value, assuming all incomes were reinvested.
+
+        Inflation adjusted annualized returns (real CAGR) are shown with `real=True` option.
+
+        Annual inflation value is calculated for the same period if inflation=True in the AssetList.
+        CAGR is not defined for periods less than 1 year.
+
+        Parameters
+        ----------
+        period: int, optional
+            CAGR trailing period in years. None for the full time CAGR.
+        real: bool, default False
+            CAGR is adjusted for inflation (real CAGR) if True.
+            Portfolio should be initiated with Inflation=True for real CAGR.
+
+        Returns
+        -------
+        Series, Float
+            Portfolio CAGR value and annualized inflation (optional).
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['XCS6.XETR', 'PHAU.LSE'], weights=[0.85, 0.15], ccy='USD')
+        >>> pf.names
+        {'XCS6.XETR': 'Xtrackers MSCI China UCITS ETF 1C', 'PHAU.LSE': 'WisdomTree Physical Gold'}
+
+        To get inflation adjusted return (real annualized return) add `real=True` option:
+        >>> pf.get_cagr(period=5, real=True)
+        portfolio    0.11896
+        dtype: float64
         """
         df = self._add_inflation()
         dt0 = self.last_date
@@ -272,6 +339,11 @@ class Portfolio:
         """
         Calculate cumulative return of return for MONTHLY rebalanced portfolio.
 
+        The cumulative return is the total change in the portfolio price during the investment period.
+
+        Inflation adjusted cumulative returns (real cumulative returns) are shown with `real=True` option.
+        Annual inflation data is calculated for the same period if `inflation=True` in the AssetList.
+
         Parameters
         ----------
         period: str, int or None, default None
@@ -285,6 +357,7 @@ class Portfolio:
         Returns
         -------
         Series
+            Cumulative rate of return values for portfolio and cumulative inflation (if inflation=True in Portfolio).
 
         Examples
         --------
@@ -299,6 +372,7 @@ class Portfolio:
         portfolio    8.215476
         dtype: float64
         """
+        # TODO: remove rebalancing period from docstring
         df = self._add_inflation()
         dt0 = self.last_date
 
@@ -327,14 +401,19 @@ class Portfolio:
         """
         Calculate rolling cumulative return.
 
+        The cumulative return is the total change in the portfolio price.
+
         Parameters
         ----------
         window : int, default 12
-            Window size in months.
+            Size of the moving window in months.
+        real: bool, default False
+            Cumulative return is adjusted for inflation (real cumulative return) if True.
+            Portfolio should be initiated with `Inflation=True` for real cumulative return.
 
         Returns
         -------
-            DataFrame
+        DataFrame
             Time series of rolling cumulative return.
         """
         return Frame.get_rolling_fn(
@@ -346,6 +425,35 @@ class Portfolio:
 
     @property
     def annual_return_ts(self) -> pd.DataFrame:
+        """
+         Calculate annual rate of return time series for each asset.
+
+        Rate of return is calculated for each calendar year.
+
+        Returns
+        -------
+        DataFrame
+            Calendar annual rate of return time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['VOO.US', 'AGG.US'], weights=[0.4, 0.6])
+        >>> pf.annual_return_ts
+                Date
+        2010    0.034360
+        2011    0.056662
+        2012    0.086612
+        2013    0.107179
+        2014    0.090420
+        2015    0.010381
+        2016    0.063620
+        2017    0.105383
+        2018   -0.013262
+        2019    0.174182
+        2020    0.124737
+        2021    0.004768
+        Freq: A-DEC, dtype: float64
+        """
         return Frame.get_annual_return_ts_from_monthly(self.get_returns_ts())
 
     @property
@@ -354,8 +462,9 @@ class Portfolio:
         Calculates dividend yield time series in all base currencies of portfolio assets.
         For every currency dividend yield is a weighted sum of the assets dividend yields.
         Portfolio asset allocation (weights) is a constant (monthly rebalanced portfolios).
-        TODO: calculate for not rebalance portfolios (and arbitrary reb period).
+        # TODO: finish the docstring
         """
+        # TODO: Update for any rebalancing period.
         div_yield_assets = self._list.dividend_yield
         currencies_dict = self._list.currencies
         if "asset list" in currencies_dict:
@@ -373,8 +482,8 @@ class Portfolio:
                 for k in self.assets_weights
                 if k in assets_with_the_same_currency
             ]
-            weighted_weights = np.asarray(weights) / np.asarray(weights).sum()
-            div_yield_series = Frame.get_portfolio_return_ts(weighted_weights, df)
+            normalized_weights = np.asarray(weights) / np.asarray(weights).sum()
+            div_yield_series = Frame.get_portfolio_return_ts(normalized_weights, df)
             div_yield_series.rename(currency, inplace=True)
             div_yield_df = pd.concat([div_yield_df, div_yield_series], axis=1)
         return div_yield_df
