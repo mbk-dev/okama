@@ -1,3 +1,5 @@
 import okama as ok
 
-lse = ok.AssetList(['INRG.LSE'], ccy='GBP')
+ls = ['MNG.LSE', 'GNS.LSE']
+pf = ok.AssetList(ls)
+print(pf.dividend_yield)

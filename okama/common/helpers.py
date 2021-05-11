@@ -425,11 +425,11 @@ class Rebalance:
     """
 
     @staticmethod
-    def rebalanced_portfolio_wealth_ts(
+    def wealth_ts(
         weights: list, ror: pd.DataFrame, *, period: str = "year"
     ) -> pd.Series:
         """
-        Returns wealth index time series of rebalanced portfolio given returns time series of the assets.
+        Calculate wealth index time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
         For not rebalanced portfolio set Period to 'none'
         """
@@ -453,7 +453,60 @@ class Rebalance:
         return wealth_index
 
     @staticmethod
-    def rebalanced_portfolio_return_ts(
+    def assets_wealth_ts(
+            weights: list, ror: pd.DataFrame, *, period: str = "year"
+    ) -> pd.DataFrame:
+        """
+        Calculate ASSETS wealth indexes time series of rebalanced portfolio given returns time series of the assets.
+        Default rebalancing period is a Year (end of year)
+        For not rebalanced portfolio set Period to 'none'
+        """
+        # Frame.weights_sum_is_one(weights)
+        initial_inv = 1000
+        assets_wealth_indexes = pd.DataFrame(dtype="float64")
+        wealth_index = pd.Series(dtype="float64")
+        if period == "none":  # Not rebalanced portfolio
+            inv_period_spread = np.asarray(weights) * initial_inv
+            assets_wealth_indexes = inv_period_spread * (1 + ror).cumprod()
+        else:
+            for x in ror.resample("Y"):
+                df = x[1]  # select ror part of the grouped data
+                inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
+                assets_wealth_indexes_local = inv_period_spread * (1 + df).cumprod()
+                assets_wealth_indexes = pd.concat(
+                    [assets_wealth_indexes, assets_wealth_indexes_local],
+                    verify_integrity=True, sort=True
+                )
+                wealth_index_local = assets_wealth_indexes_local.sum(axis=1)
+                wealth_index = pd.concat(
+                    [wealth_index, wealth_index_local], verify_integrity=True, sort=True
+                )
+                initial_inv = wealth_index.iloc[-1]
+        return assets_wealth_indexes
+
+    @staticmethod
+    def assets_weights_ts(
+            weights: list, ror: pd.DataFrame, *, period: str = "year"
+    ) -> pd.DataFrame:
+        """
+        Calculate assets weights time series for rebalanced portfolio.
+
+        Parameters
+        ----------
+        weights
+        ror
+        period
+
+        Returns
+        -------
+
+        """
+        assets_wealth_indexes = Rebalance.assets_wealth_ts(weights=weights, ror=ror, period=period)
+        portfolio_wealth_index = Rebalance.wealth_ts(weights=weights, ror=ror, period=period)
+        return assets_wealth_indexes.divide(portfolio_wealth_index, axis=0)
+
+    @staticmethod
+    def return_ts(
         weights: Union[list, np.ndarray], ror: pd.DataFrame, *, period: str = "year"
     ) -> pd.Series:
         """
@@ -465,7 +518,7 @@ class Rebalance:
         first_date = ror.index[0]
         return_first_period = ror.iloc[0] @ weights
 
-        wealth_index = Rebalance.rebalanced_portfolio_wealth_ts(
+        wealth_index = Rebalance.wealth_ts(
             weights, ror, period=period
         )
         ror = wealth_index.pct_change()
@@ -473,27 +526,6 @@ class Rebalance:
             first_date
         ] = return_first_period  # replaces NaN with the first period return
         return ror
-
-    @staticmethod
-    def create_fn_list_ror_ts(ror: pd.DataFrame, *, period: str = "year") -> list:
-        """
-        Returns a list of functions of weights.
-        """
-        # Frame.weights_sum_is_one(weights)
-        initial_inv = 1000
-        fn_list = []
-        for x in ror.resample(period):
-
-            def ror_list_fn(weights, y=x):
-                df = y[1]  # select ror part of the grouped data
-                inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
-                assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
-                wealth_index_local = assets_wealth_indexes.sum(axis=1)
-                ror_local = wealth_index_local.pct_change()
-                return ror_local
-
-            fn_list.append(ror_list_fn)
-        return fn_list
 
 
 class Date:

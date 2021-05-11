@@ -119,7 +119,7 @@ class EfficientFrontierReb(AssetList):
 
         # Set the objective function
         def objective_function(w):
-            risk = Rebalance.rebalanced_portfolio_return_ts(w, ror, period=period).std()
+            risk = Rebalance.return_ts(w, ror, period=period).std()
             return risk
 
         # construct the constraints
@@ -147,7 +147,7 @@ class EfficientFrontierReb(AssetList):
 
         # Set the objective function
         def objective_function(w):
-            ts = Rebalance.rebalanced_portfolio_return_ts(w, ror, period=period)
+            ts = Rebalance.return_ts(w, ror, period=period)
             mean_return = ts.mean()
             risk = ts.std()
             return Float.annualize_risk(risk=risk, mean_return=mean_return)
@@ -169,10 +169,10 @@ class EfficientFrontierReb(AssetList):
         Returns the risk and return (mean, monthly) of the Global Minimum Volatility portfolio
         """
         return (
-            Rebalance.rebalanced_portfolio_return_ts(
+            Rebalance.return_ts(
                 self.gmv_monthly_weights, self.ror, period=self.reb_period
             ).std(),
-            Rebalance.rebalanced_portfolio_return_ts(
+            Rebalance.return_ts(
                 self.gmv_monthly_weights, self.ror, period=self.reb_period
             ).mean(),
         )
@@ -182,7 +182,7 @@ class EfficientFrontierReb(AssetList):
         """
         Returns the annual risk (std) and CAGR of the Global Minimum Volatility portfolio.
         """
-        returns = Rebalance.rebalanced_portfolio_return_ts(self.gmv_annual_weights, self.ror, period=self.reb_period)
+        returns = Rebalance.return_ts(self.gmv_annual_weights, self.ror, period=self.reb_period)
         return (
             Float.annualize_risk(returns.std(), returns.mean()),
             (returns + 1.0).prod() ** (_MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
@@ -202,7 +202,7 @@ class EfficientFrontierReb(AssetList):
         # Set the objective function
         def objective_function(w):
             # Accumulated return for rebalanced portfolio time series
-            objective_function.returns = Rebalance.rebalanced_portfolio_return_ts(w, ror, period=period)
+            objective_function.returns = Rebalance.return_ts(w, ror, period=period)
             accumulated_return = (objective_function.returns + 1.).prod() - 1.
             return - accumulated_return
 
@@ -228,7 +228,7 @@ class EfficientFrontierReb(AssetList):
         return point
 
     def _get_cagr(self, weights):
-        ts = Rebalance.rebalanced_portfolio_return_ts(weights, self.ror, period=self.reb_period)
+        ts = Rebalance.return_ts(weights, self.ror, period=self.reb_period)
         acc_return = (ts + 1.).prod() - 1.
         return (1. + acc_return) ** (_MONTHS_PER_YEAR / ts.shape[0]) - 1.
 
@@ -242,7 +242,7 @@ class EfficientFrontierReb(AssetList):
 
         def objective_function(w):
             # annual risk
-            ts = Rebalance.rebalanced_portfolio_return_ts(w, self.ror, period=self.reb_period)
+            ts = Rebalance.return_ts(w, self.ror, period=self.reb_period)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             return Float.annualize_risk(risk_monthly, mean_return)
@@ -287,7 +287,7 @@ class EfficientFrontierReb(AssetList):
 
         def objective_function(w):
             # annual risk
-            ts = Rebalance.rebalanced_portfolio_return_ts(w, self.ror, period=self.reb_period)
+            ts = Rebalance.return_ts(w, self.ror, period=self.reb_period)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             result = - Float.annualize_risk(risk_monthly, mean_return)
@@ -460,7 +460,7 @@ class EfficientFrontierReb(AssetList):
         weights_df = Float.get_random_weights(n, self.ror.shape[1])
 
         # Portfolio risk and cagr for each set of weights
-        portfolios_ror = weights_df.aggregate(Rebalance.rebalanced_portfolio_return_ts, ror=self.ror, period=self.reb_period)
+        portfolios_ror = weights_df.aggregate(Rebalance.return_ts, ror=self.ror, period=self.reb_period)
         random_portfolios = pd.DataFrame()
         for _, data in portfolios_ror.iterrows():
             risk_monthly = data.std()

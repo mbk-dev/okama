@@ -27,16 +27,20 @@ class TestPortfolio:
 
     def test_ror(self):
         portfolio_sample = pd.read_pickle(data_folder / 'portfolio.pkl')
-        assert_series_equal(self.portfolio.get_returns_ts(), portfolio_sample)
+        assert_series_equal(self.portfolio.returns_ts, portfolio_sample)
 
     def test_weights(self):
         assert self.portfolio.weights == [0.5, 0.5]
 
-    @pytest.mark.parametrize(
-        "period, expected", [('none', 0.0122), ('month', 0.0108), ('year', 0.0112)]
-    )
-    def test_get_returns_ts(self, period, expected):
-        assert self.portfolio.get_returns_ts(rebalancing_period=period).mean() == approx(expected, rel=1e-2)
+    def test_weights_ts(self):
+        assert self.portfolio.weights_ts['RUB.FX'].iloc[-1] == approx(0.5, rel=1e-2)
+        assert self.portfolio_rebalanced_year.weights_ts['RUB.FX'].iloc[-2] == approx(0.3907, rel=1e-2)
+        assert self.portfolio_not_rebalanced.weights_ts['RUB.FX'].iloc[-1] == approx(0.2770, rel=1e-2)
+
+    def test_get_returns_ts(self):
+        assert self.portfolio.returns_ts[-1] == approx(0.01505, rel=1e-2)
+        assert self.portfolio_rebalanced_year.returns_ts[-2] == approx(0.01361, rel=1e-2)
+        assert self.portfolio_not_rebalanced.returns_ts[-1] == approx(0.01359, rel=1e-2)
 
     def test_mean_return(self):
         assert self.portfolio.mean_return_monthly == approx(0.010854, rel=1e-2)
@@ -49,7 +53,9 @@ class TestPortfolio:
         assert self.portfolio.get_rolling_cumulative_return(window=12).iloc[-1] == approx(0.1226, rel=1e-2)
 
     def test_dividend_yield(self):
-        assert self.portfolio.dividend_yield.iloc[-1, :].sum() == 0
+        assert self.portfolio_dividends.dividend_yield['USD'].iloc[-1] == approx(0.0544, rel=1e-2)
+        assert self.portfolio_dividends.dividend_yield['GBX'].iloc[-1] == approx(8.9935e-05, rel=1e-2)
+        assert self.portfolio_dividends.dividend_yield['RUB'].iloc[-1] == approx(0.06344, rel=1e-2)
 
     def test_risk(self):
         assert self.portfolio.risk_monthly == approx(0.035718, rel=1e-2)
@@ -92,7 +98,7 @@ class TestPortfolio:
 
     cumulative_return_fail = [(1.5, False, TypeError), (-1, False, ValueError), (1, True, Exception)]
 
-    @pytest.mark.parametrize("period, real, exception", cumulative_return_fail)
+    @mark.parametrize("period, real, exception", cumulative_return_fail)
     def test_cumulative_return_error(self, period, real, exception):
         with pytest.raises(exception):
             self.portfolio_no_inflation.get_cumulative_return(period=period, real=real)

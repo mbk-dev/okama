@@ -34,11 +34,18 @@ def _init_portfolio_values():
         first_date='2015-01',
         last_date='2020-01',
         inflation=True,
+        rebalancing_period='year'
     )
 
 
 @pytest.fixture(scope='class')
 def _init_portfolio(request, _init_portfolio_values):
+    request.cls.portfolio_rebalanced_year = ok.Portfolio(**_init_portfolio_values)
+
+    _init_portfolio_values['rebalancing_period'] = 'none'
+    request.cls.portfolio_not_rebalanced = ok.Portfolio(**_init_portfolio_values)
+
+    _init_portfolio_values['rebalancing_period'] = 'month'
     request.cls.portfolio = ok.Portfolio(**_init_portfolio_values)
 
     _init_portfolio_values['inflation'] = False
@@ -46,6 +53,11 @@ def _init_portfolio(request, _init_portfolio_values):
 
     _init_portfolio_values['first_date'] = '2019-02'
     request.cls.portfolio_short_history = ok.Portfolio(**_init_portfolio_values)
+
+    _init_portfolio_values['symbols'] = ['SBER.MOEX', 'T.US', 'GNS.LSE']
+    request.cls.portfolio_dividends = ok.Portfolio(**_init_portfolio_values)
+
+
 
 
 @pytest.fixture(scope='class')

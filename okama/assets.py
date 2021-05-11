@@ -446,7 +446,7 @@ class AssetList:
         """
         return Frame.get_semideviation(self.ror) * 12 ** 0.5
 
-    def get_var_historic(self, time_frame: int = 12, level: int = 5) -> pd.Series:
+    def get_var_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
         """
         Calculate historic Value at Risk (VaR) for the assets.
 
@@ -458,8 +458,8 @@ class AssetList:
         ----------
         time_frame : int, default 12
             Time period size in months
-        level : int, default 5
-            Confidence level in percents to calculate the VaR. Default value is 5%.
+        level : int, default 1
+            Confidence level in percents. Default value is 1%.
         Returns
         -------
         Series
@@ -476,7 +476,7 @@ class AssetList:
         df = self._remove_inflation(time_frame)
         return Frame.get_var_historic(df, level)
 
-    def get_cvar_historic(self, time_frame: int = 12, level: int = 5) -> pd.Series:
+    def get_cvar_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
         """
         Calculate historic Conditional Value at Risk (CVAR, expected shortfall) for the assets.
 
@@ -488,7 +488,7 @@ class AssetList:
         ----------
         time_frame : int, default 12
             Time period size in months
-        level : int, default 5
+        level : int, default 1
             Confidence level in percents to calculate the VaR. Default value is 5%.
 
         Returns
@@ -1007,11 +1007,11 @@ class AssetList:
                 if div.sum() != 0:
                     div_monthly = div.resample("M").sum()
                     price = QueryData.get_close(tick, period="M").loc[
-                        self.first_date : self.last_date
+                        self.first_date: self.last_date
                     ]
                 else:
                     # skipping prices if no dividends
-                    div_yield = div.asfreq(freq="M")
+                    div_yield = div.resample("M").last()
                     frame.update({tick: div_yield})
                     continue
                 if price.index[-1] == pd.Period(pd.Timestamp.today(), freq="M"):
