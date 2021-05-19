@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 from matplotlib import pyplot as plt
 
-from .assets import AssetList
+from .asset_list import AssetList
 from .common.helpers import Float
 from .frontier.single_period import EfficientFrontier
 from .settings import default_ticker
@@ -16,14 +16,14 @@ class Plots(AssetList):
 
     def __init__(
         self,
-        symbols: List[str] = [default_ticker],
+        assets: List[str] = [default_ticker],
         first_date: Optional[str] = None,
         last_date: Optional[str] = None,
         ccy: str = "USD",
         inflation: bool = True,
     ):
         super().__init__(
-            symbols,
+            assets,
             first_date=first_date,
             last_date=last_date,
             ccy=ccy,
@@ -58,7 +58,7 @@ class Plots(AssetList):
         """
         if kind == "mean":
             risks = self.risk_annual
-            returns = Float.annualize_return(self.ror.mean())
+            returns = Float.annualize_return(self.assets_ror.mean())
         elif kind == "cagr":
             risks = self.risk_annual
             returns = self.get_cagr().loc[self.symbols]
@@ -105,7 +105,7 @@ class Plots(AssetList):
         cagr - sets X axe to CAGR (if true) or to risk (if false).
         """
         ef = EfficientFrontier(
-            symbols=self.symbols,
+            assets=self.symbols,
             first_date=self.first_date,
             last_date=self.last_date,
             ccy=self.currency.name,
@@ -157,8 +157,8 @@ class Plots(AssetList):
             else:
                 bounds_pair = None
             ef = EfficientFrontier(
-                symbols=sym_pair,
-                ccy=self.currency.currency,
+                assets=sym_pair,
+                ccy=self.currency,
                 first_date=self.first_date,
                 last_date=self.last_date,
                 inflation=self._bool_inflation,

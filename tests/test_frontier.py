@@ -11,7 +11,7 @@ import okama as ok
 @mark.frontier
 def test_init_efficient_frontier():
     with pytest.raises(Exception, match=r'The number of symbols cannot be less than two'):
-        ok.EfficientFrontier(symbols=['MCFTR.INDX'])
+        ok.EfficientFrontier(assets=['MCFTR.INDX'])
 
 
 @mark.frontier
@@ -66,9 +66,3 @@ def test_mean_return_range_bounds(init_efficient_frontier_bounds):
 @mark.frontier
 def test_ef_points(init_efficient_frontier):
     assert init_efficient_frontier.ef_points['Mean return'].iloc[-1] == approx(0.20007879286573038, rel=1e-2)
-
-
-
-
-
-

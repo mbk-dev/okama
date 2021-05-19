@@ -86,8 +86,10 @@ The latest development version can be installed directly from GitHub:
 ### 1. Compare several assets from different stock markets. Get USD-adjusted performance
 
 ```python
+import okama.asset_list
 import okama as ok
-x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], ccy='USD')
+
+x = okama.asset_list.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], ccy='USD')
 print(x)
 
 ```

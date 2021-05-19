@@ -5,11 +5,11 @@ import numpy as np
 
 from scipy.optimize import minimize
 
-from ..assets import AssetList
-from okama.common.helpers import Float, Frame
+from ..common.helpers import Float, Frame
+from ..common.make_asset_list import ListMaker
 
 
-class EfficientFrontier(AssetList):
+class EfficientFrontier(ListMaker):
     """
     Efficient Frontier (EF) with classic MVA implementation.
     n - is a number of points in the EF.
@@ -19,7 +19,7 @@ class EfficientFrontier(AssetList):
 
     def __init__(
         self,
-        symbols: Optional[List[str]] = None,
+        assets: Optional[List[str]] = None,
         *,
         first_date: Optional[str] = None,
         last_date: Optional[str] = None,
@@ -30,10 +30,10 @@ class EfficientFrontier(AssetList):
         n_points: int = 20,
         tickers: bool = True,
     ):
-        if len(symbols) < 2:
+        if len(assets) < 2:
             raise ValueError("The number of symbols cannot be less than two")
         super().__init__(
-            symbols,
+            assets,
             first_date=first_date,
             last_date=last_date,
             ccy=ccy,
@@ -45,17 +45,6 @@ class EfficientFrontier(AssetList):
         self.full_frontier = full_frontier
         self.n_points = n_points
         self.labels_are_tickers = tickers
-
-    def __repr__(self):
-        dic = {
-            "symbols": self.symbols,
-            "currency": self.currency.ticker,
-            "first date": self.first_date.strftime("%Y-%m"),
-            "last_date": self.last_date.strftime("%Y-%m"),
-            "period length": self._pl_txt,
-            "inflation": self.inflation if hasattr(self, "inflation") else "None",
-        }
-        return repr(pd.Series(dic))
 
     @property
     def bounds(self):
@@ -78,14 +67,14 @@ class EfficientFrontier(AssetList):
         """
         Returns the weights of the Global Minimum Volatility portfolio
         """
-        n = self.ror.shape[1]
+        n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
         # construct the constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         weights = minimize(
             Frame.get_portfolio_risk,
             init_guess,
-            args=(self.ror,),
+            args=(self.assets_ror,),
             method="SLSQP",
             options={"disp": False},
             constraints=(weights_sum_to_1,),
@@ -102,8 +91,8 @@ class EfficientFrontier(AssetList):
         Returns the monthly risk and return of the Global Minimum Volatility portfolio
         """
         return (
-            Frame.get_portfolio_risk(self.gmv_weights, self.ror),
-            Frame.get_portfolio_mean_return(self.gmv_weights, self.ror),
+            Frame.get_portfolio_risk(self.gmv_weights, self.assets_ror),
+            Frame.get_portfolio_mean_return(self.gmv_weights, self.assets_ror),
         )
 
     @property
@@ -123,7 +112,7 @@ class EfficientFrontier(AssetList):
         'max' - search for global maximum
         'min' - search for global minimum
         """
-        n = self.ror.shape[1]  # Number of assets
+        n = self.assets_ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
         # Set the objective function
         if option == "max":
@@ -145,7 +134,7 @@ class EfficientFrontier(AssetList):
         weights = minimize(
             objective_function,
             init_guess,
-            args=(self.ror,),
+            args=(self.assets_ror,),
             method="SLSQP",
             constraints=(weights_sum_to_1,),
             bounds=self.bounds,
@@ -155,7 +144,7 @@ class EfficientFrontier(AssetList):
             },  # 1e-06 is not enough to optimize monthly returns
         )
         if weights.success:
-            portfolio_risk = Frame.get_portfolio_risk(weights.x, self.ror)
+            portfolio_risk = Frame.get_portfolio_risk(weights.x, self.assets_ror)
             if option.lower() == "max":
                 optimized_return = -weights.fun
             else:
@@ -188,7 +177,7 @@ class EfficientFrontier(AssetList):
         """
         if not monthly_return:
             target_return = Float.get_monthly_return_from_annual(target_return)
-        ror = self.ror
+        ror = self.assets_ror
         n = ror.shape[1]  # number of assets
         init_guess = np.repeat(1 / n, n)  # initial weights
 
@@ -244,7 +233,7 @@ class EfficientFrontier(AssetList):
                 min_return = self.optimize_return(option="min")["Mean_return_monthly"]
                 max_return = self.optimize_return(option="max")["Mean_return_monthly"]
             else:
-                er = self.ror.mean()
+                er = self.assets_ror.mean()
                 min_return = er.min()
                 max_return = er.max()
         else:
@@ -252,7 +241,7 @@ class EfficientFrontier(AssetList):
             if self.bounds:
                 max_return = self.optimize_return(option="max")["Mean_return_monthly"]
             else:
-                er = self.ror.mean()
+                er = self.assets_ror.mean()
                 max_return = er.max()
         return np.linspace(min_return, max_return, self.n_points)
 
@@ -280,13 +269,13 @@ class EfficientFrontier(AssetList):
         Generate N random risk / cagr point for portfolios.
         Risk and cagr are calculated for a set of random weights.
         """
-        weights_series = Float.get_random_weights(n, self.ror.shape[1])
+        weights_series = Float.get_random_weights(n, self.assets_ror.shape[1])
 
         # Portfolio risk and return for each set of weights
         random_portfolios = pd.DataFrame(dtype=float)
         for weights in weights_series:
-            risk_monthly = Frame.get_portfolio_risk(weights, self.ror)
-            mean_return_monthly = Frame.get_portfolio_mean_return(weights, self.ror)
+            risk_monthly = Frame.get_portfolio_risk(weights, self.assets_ror)
+            mean_return_monthly = Frame.get_portfolio_mean_return(weights, self.assets_ror)
             risk = Float.annualize_risk(risk_monthly, mean_return_monthly)
             mean_return = Float.annualize_return(mean_return_monthly)
             if kind.lower() == "cagr":

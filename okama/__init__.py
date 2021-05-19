@@ -20,7 +20,8 @@ Main features:
 
 """
 
-from okama.assets import Asset, AssetList
+from okama.asset import Asset
+from okama.asset_list import AssetList
 from okama.portfolio import Portfolio
 from okama.macro import Inflation, Rate
 from okama.frontier.multi_period import EfficientFrontierReb
@@ -38,4 +39,4 @@ from okama.api.namespaces import (
 from okama.common.helpers import Float, Frame, Rebalance, Date
 import okama.settings
 
-__version__ = "0.99"
+__version__ = "1.0.0-a1"

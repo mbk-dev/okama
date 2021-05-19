@@ -12,7 +12,7 @@ import okama as ok
 @mark.frontier
 def test_init_efficient_frontier_reb():
     with pytest.raises(Exception, match=r'The number of symbols cannot be less than two'):
-        ok.EfficientFrontierReb(symbols=['MCFTR.INDX'])
+        ok.EfficientFrontierReb(assets=['MCFTR.INDX'])
 
 
 @mark.rebalance

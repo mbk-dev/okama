@@ -1,360 +1,23 @@
-from typing import Union, Optional, List, Dict, Tuple, Any
+from typing import Optional, List, Dict, Any, Union, Tuple
 
 import pandas as pd
-import numpy as np
 
-from .common.validators import validate_integer
-from .macro import Inflation
-from .common.helpers import Float, Frame, Date, Index
-from .settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
+from .portfolio import Portfolio
+from .asset import Asset
+from .common.helpers import Frame, Float, Date, Index
 from .api.data_queries import QueryData
-from .api.namespaces import get_assets_namespaces
+from .common.make_asset_list import ListMaker
 
 
-class Asset:
-    """
-    A financial asset, that could be used in a list of assets or in portfolio.
-
-    Parameters
-    ----------
-    symbol: str, default "SPY.US"
-        Symbol is an asset ticker with namespace after dot. The default value is "SPY.US" (SPDR S&P 500 ETF Trust).
-
-    Examples
-    --------
-    >>> asset = ok.Asset()
-    >>> asset
-    symbol                           SPY.US
-    name             SPDR S&P 500 ETF Trust
-    country                             USA
-    exchange                      NYSE ARCA
-    currency                            USD
-    type                                ETF
-    first date                      1993-02
-    last date                       2021-03
-    period length                      28.1
-    dtype: object
-
-    An Asset object could be easy created whithout specifying a symbol Asset() using the default symbol.
-    """
-
-    def __init__(self, symbol: str = default_ticker):
-        if symbol is None or len(str(symbol).strip()) == 0:
-            raise ValueError("Symbol can not be empty")
-        self._symbol = str(symbol).strip()
-        self._check_namespace()
-        self._get_symbol_data(symbol)
-        self.ror: pd.Series = QueryData.get_ror(symbol)
-        self.first_date: pd.Timestamp = self.ror.index[0].to_timestamp()
-        self.last_date: pd.Timestamp = self.ror.index[-1].to_timestamp()
-        self.period_length: float = round(
-            (self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1
-        )
-
-    def __repr__(self):
-        dic = {
-            "symbol": self.symbol,
-            "name": self.name,
-            "country": self.country,
-            "exchange": self.exchange,
-            "currency": self.currency,
-            "type": self.type,
-            "first date": self.first_date.strftime("%Y-%m"),
-            "last date": self.last_date.strftime("%Y-%m"),
-            "period length": "{:.2f}".format(self.period_length),
-        }
-        return repr(pd.Series(dic))
-
-    def _check_namespace(self):
-        namespace = self._symbol.split(".", 1)[-1]
-        allowed_namespaces = get_assets_namespaces()
-        if namespace not in allowed_namespaces:
-            raise ValueError(
-                f"{namespace} is not in allowed assets namespaces: {allowed_namespaces}"
-            )
-
-    @property
-    def symbol(self) -> str:
-        """
-        Return a symbol of the asset.
-
-        Returns
-        -------
-        str
-        """
-        return self._symbol
-
-    def _get_symbol_data(self, symbol) -> None:
-        x = QueryData.get_symbol_info(symbol)
-        self.ticker: str = x["code"]
-        self.name: str = x["name"]
-        self.country: str = x["country"]
-        self.exchange: str = x["exchange"]
-        self.currency: str = x["currency"]
-        self.type: str = x["type"]
-        self.inflation: str = f"{self.currency}.INFL"
-
-    @property
-    def price(self) -> Optional[float]:
-        """
-        Return live price of an asset.
-
-        Live price is delayed (15-20 minutes).
-        For certain namespaces (FX, INDX, PIF etc.) live price is not supported.
-
-        Returns
-        -------
-        float, None
-            Live price of the asset. Returns None if not defined.
-        """
-        return QueryData.get_live_price(self.symbol)
-
-    @property
-    def dividends(self) -> pd.Series:
-        """
-        Return dividends time series historical daily data.
-
-        Returns
-        -------
-        Series
-            Time series of dividends historical data (daily).
-
-        Examples
-        --------
-        >>> x = ok.Asset('VNQ.US')
-        >>> x.dividends
-                Date
-        2004-12-22    1.2700
-        2005-03-24    0.6140
-        2005-06-27    0.6440
-        2005-09-26    0.6760
-                       ...
-        2020-06-25    0.7590
-        2020-09-25    0.5900
-        2020-12-24    1.3380
-        2021-03-25    0.5264
-        Freq: D, Name: VNQ.US, Length: 66, dtype: float64
-        """
-        div = QueryData.get_dividends(self.symbol)
-        if div.empty:
-            # Zero time series for assets where dividend yield is not defined.
-            index = pd.date_range(
-                start=self.first_date, end=self.last_date, freq="MS", closed=None
-            )
-            period = index.to_period("D")
-            div = pd.Series(data=0, index=period)
-            div.rename(self.symbol, inplace=True)
-        return div
-
-    @property
-    def nav_ts(self) -> Optional[pd.Series]:
-        """
-        Return NAV time series (monthly) for mutual funds.
-        """
-        if self.exchange == "PIF":
-            return QueryData.get_nav(self.symbol)
-        return np.nan
-
-
-class AssetList:
+class AssetList(ListMaker):
     """
     The list of financial assets implementation.
     """
 
-    def __init__(
-        self,
-        symbols: Optional[List[str]] = None,
-        *,
-        first_date: Optional[str] = None,
-        last_date: Optional[str] = None,
-        ccy: str = "USD",
-        inflation: bool = True,
-    ):
-        self.__symbols = symbols
-        self.__tickers: List[str] = [x.split(".", 1)[0] for x in self.symbols]
-        self.__currency: Asset = Asset(symbol=f"{ccy}.FX")
-        self.__make_asset_list(self.symbols)
-        if inflation:
-            self.inflation: str = f"{ccy}.INFL"
-            self._inflation_instance: Inflation = Inflation(
-                self.inflation, self.first_date, self.last_date
-            )
-            self.inflation_ts: pd.Series = self._inflation_instance.values_ts
-            self.inflation_first_date: pd.Timestamp = self._inflation_instance.first_date
-            self.inflation_last_date: pd.Timestamp = self._inflation_instance.last_date
-            self.first_date = max(self.first_date, self.inflation_first_date)
-            self.last_date: pd.Timestamp = min(self.last_date, self.inflation_last_date)
-            # Add inflation to the date range dict
-            self.assets_first_dates.update({self.inflation: self.inflation_first_date})
-            self.assets_last_dates.update({self.inflation: self.inflation_last_date})
-        if first_date:
-            self.first_date = max(self.first_date, pd.to_datetime(first_date))
-        self.ror = self.ror[self.first_date :]
-        if last_date:
-            self.last_date = min(self.last_date, pd.to_datetime(last_date))
-        self.ror: pd.DataFrame = self.ror[self.first_date: self.last_date]
-        self.period_length: float = round(
-            (self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1
-        )
-        self.pl = PeriodLength(
-            self.ror.shape[0] // _MONTHS_PER_YEAR, self.ror.shape[0] % _MONTHS_PER_YEAR
-        )
-        self._pl_txt = f"{self.pl.years} years, {self.pl.months} months"
-        self._dividend_yield: pd.DataFrame = pd.DataFrame(dtype=float)
-        self._dividends_ts: pd.DataFrame = pd.DataFrame(dtype=float)
-
-    def __repr__(self):
-        dic = {
-            "symbols": self.symbols,
-            "currency": self.currency.ticker,
-            "first date": self.first_date.strftime("%Y-%m"),
-            "last_date": self.last_date.strftime("%Y-%m"),
-            "period length": self._pl_txt,
-            "inflation": self.inflation if hasattr(self, "inflation") else "None",
-        }
-        return repr(pd.Series(dic))
-
-    def __len__(self):
-        return len(self.symbols)
-
-    def __make_asset_list(self, ls: list) -> None:
-        """
-        Make an asset list from a list of symbols.
-        """
-        first_dates: Dict[str, pd.Timestamp] = {}
-        last_dates: Dict[str, pd.Timestamp] = {}
-        names: Dict[str, str] = {}
-        currencies: Dict[str, str] = {}
-        df = pd.DataFrame()
-        for i, x in enumerate(ls):
-            asset = Asset(x)
-            if i == 0:  # required to use pd.concat below (df should not be empty).
-                if asset.currency == self.currency.name:
-                    df = asset.ror
-                else:
-                    df = self._set_currency(
-                        returns=asset.ror, asset_currency=asset.currency
-                    )
-            else:
-                if asset.currency == self.currency.name:
-                    new = asset.ror
-                else:
-                    new = self._set_currency(
-                        returns=asset.ror, asset_currency=asset.currency
-                    )
-                df = pd.concat([df, new], axis=1, join="inner", copy="false")
-            currencies.update({asset.symbol: asset.currency})
-            names.update({asset.symbol: asset.name})
-            first_dates.update({asset.symbol: asset.first_date})
-            last_dates.update({asset.symbol: asset.last_date})
-        # Add currency to the date range dict
-        first_dates.update({self.currency.name: self.currency.first_date})
-        last_dates.update({self.currency.name: self.currency.last_date})
-
-        first_dates_sorted = sorted(first_dates.items(), key=lambda y: y[1])
-        last_dates_sorted = sorted(last_dates.items(), key=lambda y: y[1])
-        self.first_date: pd.Timestamp = first_dates_sorted[-1][1]
-        self.last_date: pd.Timestamp = last_dates_sorted[0][1]
-        self.newest_asset: str = first_dates_sorted[-1][0]
-        self.eldest_asset: str = first_dates_sorted[0][0]
-        self.names = names
-        currencies.update({"asset list": self.currency.currency})
-        self.currencies: Dict[str, str] = currencies
-        self.assets_first_dates: Dict[str, pd.Timestamp] = dict(first_dates_sorted)
-        self.assets_last_dates: Dict[str, pd.Timestamp] = dict(last_dates_sorted)
-        if isinstance(
-            df, pd.Series
-        ):  # required to convert Series to DataFrame for single asset list
-            df = df.to_frame()
-        self.ror = df
-
-    def _set_currency(self, returns: pd.Series, asset_currency: str) -> pd.Series:
-        """
-        Set return to a certain currency.
-        """
-        currency = Asset(symbol=f"{asset_currency}{self.currency.name}.FX")
-        asset_mult = returns + 1.0
-        currency_mult = currency.ror + 1.0
-        # join dataframes to have the same Time Series Index
-        df = pd.concat([asset_mult, currency_mult], axis=1, join="inner", copy="false")
-        currency_mult = df.iloc[:, -1]
-        asset_mult = df.iloc[:, 0]
-        x = asset_mult * currency_mult - 1.0
-        x.rename(returns.name, inplace=True)
-        return x
-
-    def _add_inflation(self) -> pd.DataFrame:
-        """
-        Add inflation column to returns DataFrame.
-        """
-        if hasattr(self, "inflation"):
-            return pd.concat(
-                [self.ror, self.inflation_ts], axis=1, join="inner", copy="false"
-            )
-        else:
-            return self.ror
-
-    def _remove_inflation(self, time_frame: int) -> pd.DataFrame:
-        """
-        Remove inflation column from rolling returns if exists.
-        """
-        if hasattr(self, "inflation"):
-            return self.get_rolling_cumulative_return(window=time_frame).drop(
-                columns=[self.inflation]
-            )
-        else:
-            return self.get_rolling_cumulative_return(window=time_frame)
-
-    @property
-    def symbols(self) -> List[str]:
-        """
-        Return a list of financial symbols used to set the AssetList.
-        
-        Symbols are similar to tickers but have a namespace information:
-
-        * SPY.US is a symbol
-        * SPY is a ticker
-
-        Returns
-        -------
-        list of str
-            List of symbols included in the Asset List.
-        """
-        symbols = [default_ticker] if not self.__symbols else self.__symbols
-        if not isinstance(symbols, list):
-            raise ValueError("Symbols must be a list of string values.")
-        return symbols
-
-    @property
-    def tickers(self) -> List[str]:
-        """
-        Return a list of tickers (symbols without a namespace) used to set the AssetList.
-
-        tickers are similar to symbols but do not have namespace information:
-
-        * SPY is a ticker
-        * SPY.US is a symbol
-
-        Returns
-        -------
-        list of str
-            List of tickers included in the Asset List.
-        """
-        return self.__tickers
-
-    @property
-    def currency(self) -> Asset:
-        """
-        Return the base currency of the Asset List.
-
-        Such properties as rate of return and risk are adjusted to the base currency.
-
-        Returns
-        -------
-        okama.Asset
-            Base currency of the Asset List in form of okama.Asset class.
-        """
-        return self.__currency
+    def __new__(cls, *args, **kwarg):
+        instance = object.__new__(cls)
+        instance.additional_class = Portfolio
+        return instance
 
     @property
     def wealth_indexes(self) -> pd.DataFrame:
@@ -406,7 +69,7 @@ class AssetList:
         SHV.US     0.001419
         dtype: float64
         """
-        return self.ror.std()
+        return self.assets_ror.std()
 
     @property
     def risk_annual(self) -> pd.Series:
@@ -418,8 +81,8 @@ class AssetList:
         Series
             Annualized risk (standard deviation) values for each asset in form of Series.
         """
-        risk = self.ror.std()
-        mean_return = self.ror.mean()
+        risk = self.assets_ror.std()
+        mean_return = self.assets_ror.mean()
         return Float.annualize_risk(risk, mean_return)
 
     @property
@@ -432,7 +95,7 @@ class AssetList:
         Series
             Monthly semideviation values for each asset in form of Series.
         """
-        return Frame.get_semideviation(self.ror)
+        return Frame.get_semideviation(self.assets_ror)
 
     @property
     def semideviation_annual(self) -> pd.Series:
@@ -444,7 +107,7 @@ class AssetList:
         Series
             Annualized semideviation values for each asset in form of Series.
         """
-        return Frame.get_semideviation(self.ror) * 12 ** 0.5
+        return Frame.get_semideviation(self.assets_ror) * 12 ** 0.5
 
     def get_var_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
         """
@@ -520,7 +183,7 @@ class AssetList:
         DataFrame
             Time series of drawdowns.
         """
-        return Frame.get_drawdowns(self.ror)
+        return Frame.get_drawdowns(self.assets_ror)
 
     def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
         """
@@ -576,31 +239,9 @@ class AssetList:
                     "Real CAGR is not defined. Set inflation=True in AssetList to calculate it."
                 )
             mean_inflation = Frame.get_cagr(self.inflation_ts[dt:])
-            cagr = (1. + cagr) / (1. + mean_inflation) - 1.
+            cagr = (1.0 + cagr) / (1.0 + mean_inflation) - 1.0
             cagr.drop(self.inflation, inplace=True)
         return cagr
-
-    def _validate_period(self, period: Any) -> None:
-        """
-        Check if conditions are met:
-        * period should be an integer
-        * period should be positive
-        * period should not exceed history period length
-
-        Parameters
-        ----------
-        period : Any
-
-        Returns
-        -------
-        None
-            No exceptions raised if validation passes.
-        """
-        validate_integer("period", period, min_value=0, inclusive=False)
-        if period > self.pl.years:
-            raise ValueError(
-                f"'period' ({period}) is beyond historical data range ({self.period_length})."
-            )
 
     def _make_real_return_time_series(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -612,7 +253,7 @@ class AssetList:
             raise Exception(
                 "Real return is not defined. Set inflation=True in AssetList to calculate it."
             )
-        df = (1. + df).divide(1. + self.inflation_ts, axis=0) - 1.
+        df = (1.0 + df).divide(1.0 + self.inflation_ts, axis=0) - 1.0
         df.drop(columns=[self.inflation], inplace=True)
         return df
 
@@ -654,7 +295,9 @@ class AssetList:
             df = self._make_real_return_time_series(df)
         return Frame.get_rolling_fn(df, window=window, fn=Frame.get_cagr)
 
-    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
+    def get_cumulative_return(
+        self, period: Union[str, int, None] = None, real: bool = False
+    ) -> pd.Series:
         """
         Calculate cumulative return over a given trailing period for each asset.
 
@@ -706,11 +349,13 @@ class AssetList:
                     "Set inflation=True in AssetList to calculate it."
                 )
             cumulative_inflation = Frame.get_cumulative_return(self.inflation_ts[dt:])
-            cr = (1. + cr) / (1. + cumulative_inflation) - 1.
+            cr = (1.0 + cr) / (1.0 + cumulative_inflation) - 1.0
             cr.drop(self.inflation, inplace=True)
         return cr
 
-    def get_rolling_cumulative_return(self, window: int = 12, real: bool = False) -> pd.DataFrame:
+    def get_rolling_cumulative_return(
+        self, window: int = 12, real: bool = False
+    ) -> pd.DataFrame:
         """
         Calculate rolling cumulative return for each asset.
 
@@ -748,7 +393,7 @@ class AssetList:
         DataFrame
             Calendar annual rate of return time series.
         """
-        return Frame.get_annual_return_ts_from_monthly(self.ror)
+        return Frame.get_annual_return_ts_from_monthly(self.assets_ror)
 
     def describe(
         self, years: Tuple[int, ...] = (1, 5, 10), tickers: bool = True
@@ -927,13 +572,15 @@ class AssetList:
                 "Real Return is not defined. Set inflation=True to calculate."
             )
         df = pd.concat(
-            [self.ror, self.inflation_ts], axis=1, join="inner", copy="false"
+            [self.assets_ror, self.inflation_ts], axis=1, join="inner", copy="false"
         )
         infl_mean = Float.annualize_return(self.inflation_ts.values.mean())
         ror_mean = Float.annualize_return(df.loc[:, self.symbols].mean())
-        return (1. + ror_mean) / (1. + infl_mean) - 1.
+        return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
 
-    def _get_asset_dividends(self, tick: str, remove_forecast: bool = True) -> pd.Series:
+    def _get_asset_dividends(
+        self, tick: str, remove_forecast: bool = True
+    ) -> pd.Series:
         """
         Get dividend time series for a single symbol.
         """
@@ -1007,7 +654,7 @@ class AssetList:
                 if div.sum() != 0:
                     div_monthly = div.resample("M").sum()
                     price = QueryData.get_close(tick, period="M").loc[
-                        self.first_date: self.last_date
+                        self.first_date : self.last_date
                     ]
                 else:
                     # skipping prices if no dividends
@@ -1160,7 +807,7 @@ class AssetList:
 
         Tracking difference is calculated by measuring the accumulated difference between the returns of a benchmark
         and those of the ETF replicating it (could be mutual funds, or other types of assets).
-        
+
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 
         Returns
@@ -1187,7 +834,7 @@ class AssetList:
         2021-01 -0.042493 -0.025209
         """
         accumulated_return = Frame.get_wealth_indexes(
-            self.ror
+            self.assets_ror
         )  # we don't need inflation here
         return Index.tracking_difference(accumulated_return)
 
@@ -1209,7 +856,7 @@ class AssetList:
         -------
         DataFrame
             Annualized tracking diffirence time series for each asset.
-        
+
         Examples
         --------
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
@@ -1242,7 +889,7 @@ class AssetList:
         -------
         DataFrame
             Tracking error time series for each asset.
-        
+
         Examples
         --------
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
@@ -1259,7 +906,7 @@ class AssetList:
         2020-12  0.003144  0.003357
         2021-01  0.003132  0.003343
         """
-        return Index.tracking_error(self.ror)
+        return Index.tracking_error(self.assets_ror)
 
     @property
     def index_corr(self) -> pd.DataFrame:
@@ -1294,12 +941,12 @@ class AssetList:
         2021-01 -0.002942  0.070801  0.721216
         2021-02 -0.007533  0.067011  0.721464
         """
-        return Index.cov_cor(self.ror, fn="corr")
+        return Index.cov_cor(self.assets_ror, fn="corr")
 
     def index_rolling_corr(self, window: int = 60) -> pd.DataFrame:
         """
         Compute rolling correlation with the index (or benchmark) time series for the assets.
-        
+
         Index (benchmark) should be in the first position of the symbols list in AssetList parameters.
         There should be at least 12 months of historical data.
 
@@ -1307,7 +954,7 @@ class AssetList:
         ----------
         window : int, default 60
             Rolling window size in months. This is the number of observations used for calculating the statistic.
-            
+
         Returns
         -------
         DataFrame
@@ -1333,7 +980,7 @@ class AssetList:
         2021-01  0.046599  0.205193  0.816003
         2021-02  0.033039  0.181227  0.816178
         """
-        return Index.rolling_cov_cor(self.ror, window=window, fn="corr")
+        return Index.rolling_cov_cor(self.assets_ror, window=window, fn="corr")
 
     @property
     def index_beta(self) -> pd.DataFrame:
@@ -1378,7 +1025,7 @@ class AssetList:
         2020-10 -0.063057  0.069050  0.465525
         2020-11 -0.018408  0.055676  0.472042
         """
-        return Index.beta(self.ror)
+        return Index.beta(self.assets_ror)
 
     # distributions
     @property
@@ -1387,7 +1034,7 @@ class AssetList:
         Compute expanding skewness of the return time series for each asset returns.
 
         Skewness is a measure of the asymmetry of the probability distribution
-        of a real-valued random variable about its mean. The skewness value can be positive, zero, negative, 
+        of a real-valued random variable about its mean. The skewness value can be positive, zero, negative,
         or undefined.
 
         For normally distributed returns, the skewness should be about zero.
@@ -1424,7 +1071,7 @@ class AssetList:
         2020-12 -0.613742  0.107515
         2021-01 -0.611421  0.110552
         """
-        return Frame.skewness(self.ror)
+        return Frame.skewness(self.assets_ror)
 
     def skewness_rolling(self, window: int = 60) -> pd.DataFrame:
         """
@@ -1474,7 +1121,7 @@ class AssetList:
         2020-12 -0.597739  0.065503
         2021-01 -0.480090  0.205303
         """
-        return Frame.skewness_rolling(self.ror, window=window)
+        return Frame.skewness_rolling(self.assets_ror, window=window)
 
     @property
     def kurtosis(self) -> pd.DataFrame:
@@ -1518,7 +1165,7 @@ class AssetList:
         2020-12  0.663579   7.439888
         2021-01  0.664566   7.475272
         """
-        return Frame.kurtosis(self.ror)
+        return Frame.kurtosis(self.assets_ror)
 
     def kurtosis_rolling(self, window: int = 60):
         """
@@ -1567,7 +1214,7 @@ class AssetList:
         2020-12 -0.695676   2.865679
         2021-01 -0.754352   2.801018
         """
-        return Frame.kurtosis_rolling(self.ror, window=window)
+        return Frame.kurtosis_rolling(self.assets_ror, window=window)
 
     @property
     def jarque_bera(self) -> pd.DataFrame:
@@ -1584,7 +1231,7 @@ class AssetList:
             large Jarque-Bera statistics and tiny p-value indicate that null hypothesis (H0) is rejected and
             the time series are not normally distributed.
             Low statistic numbers correspond to normal distribution.
-            
+
         See Also
         --------
         skewness : Compute skewness.
@@ -1608,7 +1255,7 @@ class AssetList:
         Null hypothesis (H0) is rejected for FTSE NAREIT Index (FNER.INDX) as Jarque-Bera test shows very small p-value
         and large statistic.
         """
-        return Frame.jarque_bera_dataframe(self.ror)
+        return Frame.jarque_bera_dataframe(self.assets_ror)
 
     def kstest(self, distr: str = "norm") -> pd.DataFrame:
         """
@@ -1638,4 +1285,4 @@ class AssetList:
 
         H0 is not rejected for EDV ETF and it seems to have lognormal distribution.
         """
-        return Frame.kstest_dataframe(self.ror, distr=distr)
+        return Frame.kstest_dataframe(self.assets_ror, distr=distr)

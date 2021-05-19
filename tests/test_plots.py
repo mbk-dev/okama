@@ -4,6 +4,7 @@ from numpy.testing import assert_allclose
 
 from .conftest import data_folder
 
+
 @mark.xfail
 @mark.plots
 def test_transition_map(init_plots):

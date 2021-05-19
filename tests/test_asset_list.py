@@ -9,48 +9,40 @@ import okama as ok
 from .conftest import data_folder
 
 
-@mark.asset
-@mark.usefixtures("_init_asset")
-class TestAsset:
-    @mark.smoke
-    def test_get_symbol_data(self):
-        assert self.spy.name == "SPDR S&P 500 ETF Trust"
-        assert self.spy.country == "USA"
-        assert self.spy.currency == "USD"
-        assert self.spy.type == "ETF"
-        assert self.spy.inflation == "USD.INFL"
-        assert self.spy.first_date == pd.to_datetime("1993-02")
-
-    def test_price(self):
-        assert type(self.spy.price) == float
-
-    def test_dividends(self):
-        assert self.spy.dividends["2019"].iloc[-1] == 1.57
-
-    def test_nav_ts(self):
-        assert self.otkr.nav_ts[0] == 101820352.18
-
-
 @mark.asset_list
 def test_asset_list_init_failing():
-    with pytest.raises(Exception, match=r"Symbols must be a list of string values."):
-        ok.AssetList(symbols=("RUB.FX", "MCFTR.INDX"))
+    with pytest.raises(Exception, match=r"Assets must be a list."):
+        ok.AssetList(assets=("RUB.FX", "MCFTR.INDX"))
 
 
 @mark.asset_list
 @mark.usefixtures("_init_asset_list")
 class TestAssetList:
+    def test_repr(self):
+        value = pd.Series(dict(
+            symbols="[pf1.PF, RUB.FX, MCFTR.INDX]",
+            currency="USD",
+            first_date="2019-02",
+            last_date="2020-01",
+            period_length="1 years, 0 months",
+            inflation="USD.INFL"
+        ))
+        assert repr(self.asset_list_with_portfolio) == repr(value)
+
+    def test_tickers(self):
+        assert self.asset_list_with_portfolio.tickers == ['pf1', 'RUB', 'MCFTR']
+
     def test_ror(self):
         asset_list_sample = pd.read_pickle(data_folder / "asset_list.pkl")
         asset_list_lt_sample = pd.read_pickle(data_folder / "asset_list_lt.pkl")
         currencies_sample = pd.read_pickle(data_folder / "currencies.pkl")
         real_estate_sample = pd.read_pickle(data_folder / "real_estate.pkl")
         spy_sample = pd.read_pickle(data_folder / "spy.pkl")
-        assert_frame_equal(self.asset_list.ror, asset_list_sample)
-        assert_frame_equal(self.asset_list_lt.ror, asset_list_lt_sample)
-        assert_frame_equal(self.currencies.ror, currencies_sample)
-        assert_frame_equal(self.real_estate.ror, real_estate_sample)
-        assert_frame_equal(self.spy.ror, spy_sample)
+        assert_frame_equal(self.asset_list.assets_ror, asset_list_sample)
+        assert_frame_equal(self.asset_list_lt.assets_ror, asset_list_lt_sample)
+        assert_frame_equal(self.currencies.assets_ror, currencies_sample)
+        assert_frame_equal(self.real_estate.assets_ror, real_estate_sample)
+        assert_frame_equal(self.spy.assets_ror, spy_sample)
 
     def test_currencies(self):
         assert self.currencies.pl.years == 1
@@ -71,7 +63,7 @@ class TestAssetList:
     @mark.smoke
     def test_make_asset_list(self):
         assert self.asset_list.last_date == pd.to_datetime("2020-01")
-        assert list(self.asset_list.ror) == ["RUB.FX", "MCFTR.INDX"]
+        assert list(self.asset_list.assets_ror) == ["RUB.FX", "MCFTR.INDX"]
 
     def test_calculate_wealth_indexes(self):
         assert self.asset_list.wealth_indexes.sum(axis=1)[-1] == approx(
