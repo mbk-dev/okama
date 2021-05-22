@@ -86,10 +86,9 @@ The latest development version can be installed directly from GitHub:
 ### 1. Compare several assets from different stock markets. Get USD-adjusted performance
 
 ```python
-import okama.asset_list
 import okama as ok
 
-x = okama.asset_list.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], ccy='USD')
+x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], ccy='USD')
 print(x)
 
 ```
@@ -110,11 +109,9 @@ x.wealth_indexes.plot()
 ### 2. Create a dividend stocks portfolio with base currency EUR
 
 ```python
-import okama.portfolio
-
 weights = [0.3, 0.2, 0.2, 0.2, 0.1]
 assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
-pf = okama.portfolio.Portfolio(assets, weights=weights, ccy='EUR')
+pf = ok.Portfolio(assets, weights=weights, ccy='EUR')
 print(pf)
 ```
 ![](../images/images/readmi04.jpg?raw=true) 
@@ -125,7 +122,7 @@ pf.dividend_yield.plot()
 ```
 ![](../images/images/readmi05.jpg?raw=true) 
 
-### 3. Draw an Efficient Frontier for 2 poular ETF: SPY and GLD
+### 3. Draw an Efficient Frontier for 2 popular ETF: SPY and GLD
 ```python
 ls = ['SPY.US', 'GLD.US']
 curr = 'USD'
@@ -136,6 +133,8 @@ frontier.names
 
 Get the Efficient Frontier points for rebalanced portfolios and plot the chart with the assets risk/CAGR points:
 ```python
+import matplotlib.pyplot as plt
+
 points = frontier.ef_points
 
 fig = plt.figure(figsize=(12,6))

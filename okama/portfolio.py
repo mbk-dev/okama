@@ -692,16 +692,16 @@ class Portfolio(ListMaker):
                 property="CAGR",
             )
             description = description.append(row, ignore_index=True)
-            # Dividend Yield
-            dy = self.dividend_yield
-            for i, ccy in enumerate(dy):
-                value = self.dividend_yield.iloc[-1, i]
-                row = {"portfolio": value}
-                row.update(
-                    period="LTM",
-                    property=f"Dividend yield ({ccy})",
-                )
-                description = description.append(row, ignore_index=True)
+            # # Dividend Yield
+            # dy = self.dividend_yield
+            # for i, ccy in enumerate(dy):
+            #     value = self.dividend_yield.iloc[-1, i]
+            #     row = {"portfolio": value}
+            #     row.update(
+            #         period="LTM",
+            #         property=f"Dividend yield ({ccy})",
+            #     )
+            #     description = description.append(row, ignore_index=True)
         # risk (standard deviation)
         row = {"portfolio": self.risk_annual}
         row.update(

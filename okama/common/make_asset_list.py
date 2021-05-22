@@ -10,8 +10,6 @@ from ..settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
 
 
 class ListMaker:
-    additional_class = None
-
     def __init__(
         self,
         assets: Optional[List[Union[str, Type]]] = None,
@@ -33,10 +31,7 @@ class ListMaker:
             self.assets_first_dates,
             self.assets_last_dates,
             self.assets_ror,
-        ) = self.make_list(
-            ls=self.assets,
-            class_to_include=self.additional_class,
-        ).values()
+        ) = self.make_list(ls=self.assets).values()
         if inflation:
             self.inflation: str = f"{ccy}.INFL"
             self._inflation_instance: Inflation = Inflation(
@@ -186,9 +181,7 @@ class ListMaker:
         """
         return self._currency.currency
 
-    def make_list(
-        self, ls: list, class_to_include: Optional[Type] = None
-    ) -> dict:
+    def make_list(self, ls: list) -> dict:
         """
         Make an asset list from a list of symbols.
         """
@@ -202,10 +195,7 @@ class ListMaker:
         currencies: Dict[str, str] = {}
         df = pd.DataFrame()
         for i, x in enumerate(ls):
-            if class_to_include:
-                asset = x if isinstance(x, class_to_include) else Asset(x)
-            else:
-                asset = Asset(x)
+            asset = x if hasattr(x, 'symbol') and hasattr(x, 'ror') else Asset(x)
             if i == 0:  # required to use pd.concat below (df should not be empty).
                 df = self.make_ror(asset, currency_name)
             else:

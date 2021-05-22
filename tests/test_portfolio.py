@@ -152,8 +152,8 @@ def test_describe_inflation(portfolio_rebalanced_month):
     assert_frame_equal(description, description_sample)
 
 
-@mark.xfail
 def test_describe_no_inflation(portfolio_no_inflation):
+    # TODO: make an assertion
     portfolio_no_inflation.describe([5, 10])  # one limit should exceed the history
 
 

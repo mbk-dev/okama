@@ -14,11 +14,6 @@ class AssetList(ListMaker):
     The list of financial assets implementation.
     """
 
-    def __new__(cls, *args, **kwarg):
-        instance = object.__new__(cls)
-        instance.additional_class = Portfolio
-        return instance
-
     @property
     def wealth_indexes(self) -> pd.DataFrame:
         """
