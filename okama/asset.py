@@ -70,6 +70,16 @@ class Asset:
                 f"{namespace} is not in allowed assets namespaces: {allowed_namespaces}"
             )
 
+    def _get_symbol_data(self, symbol) -> None:
+        x = QueryData.get_symbol_info(symbol)
+        self.ticker: str = x["code"]
+        self.name: str = x["name"]
+        self.country: str = x["country"]
+        self.exchange: str = x["exchange"]
+        self.currency: str = x["currency"]
+        self.type: str = x["type"]
+        self.inflation: str = f"{self.currency}.INFL"
+
     @property
     def symbol(self) -> str:
         """
@@ -80,16 +90,6 @@ class Asset:
         str
         """
         return self._symbol
-
-    def _get_symbol_data(self, symbol) -> None:
-        x = QueryData.get_symbol_info(symbol)
-        self.ticker: str = x["code"]
-        self.name: str = x["name"]
-        self.country: str = x["country"]
-        self.exchange: str = x["exchange"]
-        self.currency: str = x["currency"]
-        self.type: str = x["type"]
-        self.inflation: str = f"{self.currency}.INFL"
 
     @property
     def price(self) -> Optional[float]:
@@ -105,6 +105,34 @@ class Asset:
             Live price of the asset. Returns None if not defined.
         """
         return QueryData.get_live_price(self.symbol)
+
+    @property
+    def close(self):
+        """
+        Return close price time series historical daily data.
+
+        Returns
+        -------
+        Series
+            Time series of close price historical data (daily).
+        """
+        return QueryData.get_close(self.symbol, period='D')
+
+    @property
+    def adj_close(self):
+        """
+        Return adjusted close price time series historical daily data.
+
+        The adjusted closing price amends a stock's closing price after accounting
+        for corporate actions: dividends and splits. All values are adjusted by reducing the price
+        prior to the dividend payment (or split).
+
+        Returns
+        -------
+        Series
+            Time series of adjusted close price historical data (daily).
+        """
+        return QueryData.get_adj_close(self.symbol, period='D')
 
     @property
     def dividends(self) -> pd.Series:

@@ -1,4 +1,5 @@
 from typing import Dict, Optional, List, Any, Type, Union
+from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
@@ -9,7 +10,7 @@ from ..asset import Asset
 from ..settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
 
 
-class ListMaker:
+class ListMaker(ABC):
     def __init__(
         self,
         assets: Optional[List[Union[str, Type]]] = None,
@@ -31,7 +32,7 @@ class ListMaker:
             self.assets_first_dates,
             self.assets_last_dates,
             self.assets_ror,
-        ) = self.make_list(ls=self.assets).values()
+        ) = self._make_list(ls=self.assets).values()
         if inflation:
             self.inflation: str = f"{ccy}.INFL"
             self._inflation_instance: Inflation = Inflation(
@@ -64,22 +65,91 @@ class ListMaker:
         self._dividend_yield: pd.DataFrame = pd.DataFrame(dtype=float)
         self._dividends_ts: pd.DataFrame = pd.DataFrame(dtype=float)
 
+    @abstractmethod
     def __repr__(self):
-        dic = {
-            "symbols": self.symbols,
-            "currency": self._currency.ticker,
-            "first_date": self.first_date.strftime("%Y-%m"),
-            "last_date": self.last_date.strftime("%Y-%m"),
-            "period_length": self._pl_txt,
-            "inflation": self.inflation if hasattr(self, "inflation") else "None",
-        }
-        return repr(pd.Series(dic))
+        pass
 
     def __len__(self):
         return len(self.symbols)
 
+    def _make_list(self, ls: list) -> dict:
+        """
+        Make an asset list from a list of symbols.
+        """
+        currency_name: str = self._currency.name
+        currency_first_date: pd.Timestamp = self._currency.first_date
+        currency_last_date: pd.Timestamp = self._currency.last_date
+
+        first_dates: Dict[str, pd.Timestamp] = {}
+        last_dates: Dict[str, pd.Timestamp] = {}
+        names: Dict[str, str] = {}
+        currencies: Dict[str, str] = {}
+        df = pd.DataFrame()
+        for i, x in enumerate(ls):
+            asset = x if hasattr(x, 'symbol') and hasattr(x, 'ror') else Asset(x)
+            if i == 0:  # required to use pd.concat below (df should not be empty).
+                df = self._make_ror(asset, currency_name)
+            else:
+                new = self._make_ror(asset, currency_name)
+                df = pd.concat([df, new], axis=1, join="inner", copy="false")
+            currencies.update({asset.symbol: asset.currency})
+            names.update({asset.symbol: asset.name})
+            first_dates.update({asset.symbol: asset.first_date})
+            last_dates.update({asset.symbol: asset.last_date})
+        # Add currency to the date range dict
+        first_dates.update({currency_name: currency_first_date})
+        last_dates.update({currency_name: currency_last_date})
+        currencies.update({"asset list": currency_name})
+
+        first_dates_sorted: list = sorted(first_dates.items(), key=lambda y: y[1])
+        last_dates_sorted: list = sorted(last_dates.items(), key=lambda y: y[1])
+        if isinstance(df, pd.Series):
+            df = (
+                df.to_frame()
+            )  # required to convert Series to DataFrame for single asset list
+        return dict(
+            first_date=first_dates_sorted[-1][1],
+            last_date=last_dates_sorted[0][1],
+            newest_asset=first_dates_sorted[-1][0],
+            eldest_asset=first_dates_sorted[0][0],
+            names_dict=names,
+            currencies_dict=currencies,
+            assets_first_dates=dict(first_dates_sorted),
+            assets_last_dates=dict(last_dates_sorted),
+            ror=df,
+        )
+
+    def _make_ror(self, asset, currency_name):
+        return (
+            asset.ror
+            if asset.currency == currency_name
+            else self._set_currency(
+                returns=asset.ror,
+                asset_currency=asset.currency,
+                list_currency=currency_name,
+            )
+        )
+
+    @classmethod
+    def _set_currency(
+        cls, returns: pd.Series, asset_currency: str, list_currency: str
+    ) -> pd.Series:
+        """
+        Adjust returns time series to a certain currency.
+        """
+        currency = Asset(symbol=f"{asset_currency}{list_currency}.FX")
+        asset_mult = returns + 1.0
+        currency_mult = currency.ror + 1.0
+        # join dataframes to have the same Time Series Index
+        df = pd.concat([asset_mult, currency_mult], axis=1, join="inner", copy="false")
+        currency_mult = df.iloc[:, -1]
+        asset_mult = df.iloc[:, 0]
+        x = asset_mult * currency_mult - 1.0
+        x.rename(returns.name, inplace=True)
+        return x
+
     @staticmethod
-    def define_symbol_list(assets):
+    def _define_symbol_list(assets):
         return [asset.symbol if hasattr(asset, 'symbol') else asset for asset in assets]
 
     def _add_inflation(self) -> pd.DataFrame:
@@ -92,17 +162,6 @@ class ListMaker:
             )
         else:
             return self.assets_ror
-
-    def _remove_inflation(self, time_frame: int) -> pd.DataFrame:
-        """
-        Remove inflation column from rolling returns if exists.
-        """
-        if hasattr(self, "inflation"):
-            return self.get_rolling_cumulative_return(window=time_frame).drop(
-                columns=[self.inflation]
-            )
-        else:
-            return self.get_rolling_cumulative_return(window=time_frame)
 
     def _validate_period(self, period: Any) -> None:
         """
@@ -148,7 +207,7 @@ class ListMaker:
         list of str
             List of symbols included in the Asset List.
         """
-        return self.define_symbol_list(self.assets)
+        return self._define_symbol_list(self.assets)
 
     @property
     def tickers(self) -> List[str]:
@@ -180,79 +239,3 @@ class ListMaker:
             Base currency of the Asset List in form of okama.Asset class.
         """
         return self._currency.currency
-
-    def make_list(self, ls: list) -> dict:
-        """
-        Make an asset list from a list of symbols.
-        """
-        currency_name: str = self._currency.name
-        currency_first_date: pd.Timestamp = self._currency.first_date
-        currency_last_date: pd.Timestamp = self._currency.last_date
-
-        first_dates: Dict[str, pd.Timestamp] = {}
-        last_dates: Dict[str, pd.Timestamp] = {}
-        names: Dict[str, str] = {}
-        currencies: Dict[str, str] = {}
-        df = pd.DataFrame()
-        for i, x in enumerate(ls):
-            asset = x if hasattr(x, 'symbol') and hasattr(x, 'ror') else Asset(x)
-            if i == 0:  # required to use pd.concat below (df should not be empty).
-                df = self.make_ror(asset, currency_name)
-            else:
-                new = self.make_ror(asset, currency_name)
-                df = pd.concat([df, new], axis=1, join="inner", copy="false")
-            currencies.update({asset.symbol: asset.currency})
-            names.update({asset.symbol: asset.name})
-            first_dates.update({asset.symbol: asset.first_date})
-            last_dates.update({asset.symbol: asset.last_date})
-        # Add currency to the date range dict
-        first_dates.update({currency_name: currency_first_date})
-        last_dates.update({currency_name: currency_last_date})
-        currencies.update({"asset list": currency_name})
-
-        first_dates_sorted: list = sorted(first_dates.items(), key=lambda y: y[1])
-        last_dates_sorted: list = sorted(last_dates.items(), key=lambda y: y[1])
-        if isinstance(df, pd.Series):
-            df = (
-                df.to_frame()
-            )  # required to convert Series to DataFrame for single asset list
-        return dict(
-            first_date=first_dates_sorted[-1][1],
-            last_date=last_dates_sorted[0][1],
-            newest_asset=first_dates_sorted[-1][0],
-            eldest_asset=first_dates_sorted[0][0],
-            names_dict=names,
-            currencies_dict=currencies,
-            assets_first_dates=dict(first_dates_sorted),
-            assets_last_dates=dict(last_dates_sorted),
-            ror=df,
-        )
-
-    def make_ror(self, asset, currency_name):
-        return (
-            asset.ror
-            if asset.currency == currency_name
-            else self.set_currency(
-                returns=asset.ror,
-                asset_currency=asset.currency,
-                list_currency=currency_name,
-            )
-        )
-
-    @classmethod
-    def set_currency(
-        cls, returns: pd.Series, asset_currency: str, list_currency: str
-    ) -> pd.Series:
-        """
-        Set return to a certain currency.
-        """
-        currency = Asset(symbol=f"{asset_currency}{list_currency}.FX")
-        asset_mult = returns + 1.0
-        currency_mult = currency.ror + 1.0
-        # join dataframes to have the same Time Series Index
-        df = pd.concat([asset_mult, currency_mult], axis=1, join="inner", copy="false")
-        currency_mult = df.iloc[:, -1]
-        asset_mult = df.iloc[:, 0]
-        x = asset_mult * currency_mult - 1.0
-        x.rename(returns.name, inplace=True)
-        return x

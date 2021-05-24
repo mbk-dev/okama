@@ -29,6 +29,9 @@ class TestAssetList:
         ))
         assert repr(self.asset_list_with_portfolio) == repr(value)
 
+    def test_len(self):
+        assert self.asset_list.__len__() == 2
+
     def test_tickers(self):
         assert self.asset_list_with_portfolio.tickers == ['pf1', 'RUB', 'MCFTR']
 
@@ -85,12 +88,10 @@ class TestAssetList:
         assert self.asset_list.semideviation_annual[1] == approx(0, abs=1e-2)
 
     def test_get_var_historic(self):
-        assert self.asset_list.get_var_historic(time_frame=1, level=5)[
-            "RUB.FX"
-        ] == approx(0.0411, rel=1e-2)
-        assert self.asset_list.get_var_historic(time_frame=5, level=1)[
-            "MCFTR.INDX"
-        ] == approx(-0.1048, rel=1e-2)
+        assert self.asset_list.get_var_historic(time_frame=1, level=5)["RUB.FX"] == approx(0.0411, rel=1e-2)
+        assert self.asset_list.get_var_historic(time_frame=5, level=1)["MCFTR.INDX"] == approx(-0.1048, rel=1e-2)
+        assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)["RUB.FX"] == approx(0.04975, rel=1e-2)
+        assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)["MCFTR.INDX"] == approx(0.01229, rel=1e-2)
 
     @mark.test
     def test_get_cvar_historic(self):
@@ -126,20 +127,14 @@ class TestAssetList:
         )
 
     cagr_testdata2 = [
-        (1, -0.0843, 0.2625),
-        (None, -0.1265, 0.3084),
+        (1, -0.0853, 0.2592),
+        (None, -0.1285, 0.3084),
     ]
 
-    @mark.parametrize(
-        "input_data,expected1,expected2", cagr_testdata2, ids=["1 year", "full period"],
-    )
+    @mark.parametrize("input_data,expected1,expected2", cagr_testdata2, ids=["1 year", "full period"],)
     def test_get_cagr_real(self, input_data, expected1, expected2):
-        assert self.asset_list.get_cagr(period=input_data, real=True)[
-            "RUB.FX"
-        ] == approx(expected1, rel=1e-2)
-        assert self.asset_list.get_cagr(period=input_data, real=True)[
-            "MCFTR.INDX"
-        ] == approx(expected2, rel=1e-2)
+        assert self.asset_list.get_cagr(period=input_data, real=True)["RUB.FX"] == approx(expected1, rel=1e-2)
+        assert self.asset_list.get_cagr(period=input_data, real=True)["MCFTR.INDX"] == approx(expected2, rel=1e-2)
 
     def test_get_cagr_value_error(self):
         with pytest.raises(ValueError):
@@ -195,9 +190,9 @@ class TestAssetList:
         ] == approx(expected3, rel=1e-2)
 
     cumulative_testdata2 = [
-        ("YTD", -0.0490, -0.0550),
-        (1, -0.1269, 0.2020),
-        (None, -0.1805, 0.2696),
+        ("YTD", -0.0544, -0.0605),
+        (1, -0.1319, 0.1951),
+        (None, -0.1852, 0.2623),
     ]
 
     @mark.parametrize(
@@ -206,12 +201,8 @@ class TestAssetList:
         ids=["YTD", "1 year", "full period"],
     )
     def test_get_cumulative_return_real(self, input_data, expected1, expected2):
-        assert self.asset_list.get_cumulative_return(period=input_data, real=True)[
-            "RUB.FX"
-        ] == approx(expected1, rel=1e-2)
-        assert self.asset_list.get_cumulative_return(period=input_data, real=True)[
-            "MCFTR.INDX"
-        ] == approx(expected2, rel=1e-2)
+        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["RUB.FX"] == approx(expected1, rel=1e-2)
+        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["MCFTR.INDX"] == approx(expected2, rel=1e-2)
 
     def test_get_cumulative_return_value_error(self):
         with pytest.raises(ValueError):

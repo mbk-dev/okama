@@ -13,6 +13,14 @@ def test_get_symbol_data(init_asset_spy):
     assert init_asset_spy.first_date == pd.to_datetime("1993-02")
 
 
+def test_close(init_asset_spy):
+    assert init_asset_spy.close.loc['2000-01-20'] == 144.75
+
+
+def test_adj_close(init_asset_spy):
+    assert init_asset_spy.adj_close.loc['2000-01-20'] == 97.3802
+
+
 def test_price(init_asset_spy):
     assert type(init_asset_spy.price) == float
 

@@ -1,8 +1,7 @@
-from typing import Optional, List, Dict, Any, Union, Tuple
+from typing import Optional, Union, Tuple
 
 import pandas as pd
 
-from .portfolio import Portfolio
 from .asset import Asset
 from .common.helpers import Frame, Float, Date, Index
 from .api.data_queries import QueryData
@@ -13,6 +12,17 @@ class AssetList(ListMaker):
     """
     The list of financial assets implementation.
     """
+
+    def __repr__(self):
+        dic = {
+            "symbols": self.symbols,
+            "currency": self._currency.ticker,
+            "first_date": self.first_date.strftime("%Y-%m"),
+            "last_date": self.last_date.strftime("%Y-%m"),
+            "period_length": self._pl_txt,
+            "inflation": self.inflation if hasattr(self, "inflation") else "None",
+        }
+        return repr(pd.Series(dic))
 
     @property
     def wealth_indexes(self) -> pd.DataFrame:
@@ -104,6 +114,17 @@ class AssetList(ListMaker):
         """
         return Frame.get_semideviation(self.assets_ror) * 12 ** 0.5
 
+    def _remove_inflation_from_rolling_returns(self, time_frame: int) -> pd.DataFrame:
+        """
+        Remove inflation column from rolling returns if exists.
+        """
+        if hasattr(self, "inflation"):
+            return self.get_rolling_cumulative_return(window=time_frame).drop(
+                columns=[self.inflation]
+            )
+        else:
+            return self.get_rolling_cumulative_return(window=time_frame)
+
     def get_var_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
         """
         Calculate historic Value at Risk (VaR) for the assets.
@@ -131,7 +152,7 @@ class AssetList(ListMaker):
         AGG.US    -0.0867
         Name: VaR, dtype: float64
         """
-        df = self._remove_inflation(time_frame)
+        df = self._remove_inflation_from_rolling_returns(time_frame)
         return Frame.get_var_historic(df, level)
 
     def get_cvar_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
@@ -163,7 +184,7 @@ class AssetList(ListMaker):
         dtype: float64
         Name: VaR, dtype: float64
         """
-        df = self._remove_inflation(time_frame)
+        df = self._remove_inflation_from_rolling_returns(time_frame)
         return Frame.get_cvar_historic(df, level)
 
     @property
