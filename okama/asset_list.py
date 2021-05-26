@@ -594,47 +594,12 @@ class AssetList(ListMaker):
         ror_mean = Float.annualize_return(df.loc[:, self.symbols].mean())
         return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
 
-    def _get_asset_dividends(
-        self, tick: str, remove_forecast: bool = True
-    ) -> pd.Series:
-        """
-        Get dividend time series for a single symbol.
-        """
-        first_period = pd.Period(self.first_date, freq="M")
-        first_day = first_period.to_timestamp(how="Start")
-        last_period = pd.Period(self.last_date, freq="M")
-        last_day = last_period.to_timestamp(how="End")
-        s = Asset(tick).dividends[
-            first_day:last_day
-        ]  # limit divs by first_day and last_day
-        if remove_forecast:
-            s = s[: pd.Period.now(freq="D")]
-        # Create time series with zeros to pad the empty spaces in dividends time series
-        index = pd.date_range(start=first_day, end=last_day, freq="D")
-        period = index.to_period("D")
-        pad_s = pd.Series(data=0, index=period)
-        return s.add(pad_s, fill_value=0)
-
-    def _get_dividends(self, remove_forecast=True) -> pd.DataFrame:
-        """
-        Get dividend time series for all assets.
-
-        If `remove_forecast=True` all forecasted (future) data is removed from the time series.
-        """
-        if self._dividends_ts.empty:
-            dic = {}
-            for tick in self.symbols:
-                s = self._get_asset_dividends(tick, remove_forecast=remove_forecast)
-                dic.update({tick: s})
-            self._dividends_ts = pd.DataFrame(dic)
-        return self._dividends_ts
-
     @property
     def dividend_yield(self) -> pd.DataFrame:
         """
         Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
 
-        All yields are calculated in the original asset currency (not adjusting to AssetList base currency).
+        All yields are calculated in the asset list base currency after adjusting the dividends time series.
         Forecasted (future) dividends are removed.
         Zero value time series are created for assets without dividends.
 

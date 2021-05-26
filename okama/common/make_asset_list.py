@@ -23,6 +23,7 @@ class ListMaker(ABC):
         self._assets = assets
         self._currency = Asset(symbol=f"{ccy}.FX")
         (
+            self.asset_obj_list,
             self.first_date,
             self.last_date,
             self.newest_asset,
@@ -80,6 +81,7 @@ class ListMaker(ABC):
         currency_first_date: pd.Timestamp = self._currency.first_date
         currency_last_date: pd.Timestamp = self._currency.last_date
 
+        asset_obj_list = {}  # dict of Asset/Portfolio type objects
         first_dates: Dict[str, pd.Timestamp] = {}
         last_dates: Dict[str, pd.Timestamp] = {}
         names: Dict[str, str] = {}
@@ -87,6 +89,7 @@ class ListMaker(ABC):
         df = pd.DataFrame()
         for i, x in enumerate(ls):
             asset = x if hasattr(x, 'symbol') and hasattr(x, 'ror') else Asset(x)
+            asset_obj_list.update({asset.symbol: asset})
             if i == 0:  # required to use pd.concat below (df should not be empty).
                 df = self._make_ror(asset, currency_name)
             else:
@@ -108,6 +111,7 @@ class ListMaker(ABC):
                 df.to_frame()
             )  # required to convert Series to DataFrame for single asset list
         return dict(
+            asset_obj_list=asset_obj_list,
             first_date=first_dates_sorted[-1][1],
             last_date=last_dates_sorted[0][1],
             newest_asset=first_dates_sorted[-1][0],
@@ -123,7 +127,7 @@ class ListMaker(ABC):
         return (
             asset.ror
             if asset.currency == currency_name
-            else self._set_currency(
+            else self._adjust_ror_to_currency(
                 returns=asset.ror,
                 asset_currency=asset.currency,
                 list_currency=currency_name,
@@ -131,9 +135,7 @@ class ListMaker(ABC):
         )
 
     @classmethod
-    def _set_currency(
-        cls, returns: pd.Series, asset_currency: str, list_currency: str
-    ) -> pd.Series:
+    def _adjust_ror_to_currency(cls, returns: pd.Series, asset_currency: str, list_currency: str) -> pd.Series:
         """
         Adjust returns time series to a certain currency.
         """
@@ -147,6 +149,21 @@ class ListMaker(ABC):
         x = asset_mult * currency_mult - 1.0
         x.rename(returns.name, inplace=True)
         return x
+
+    def _adjust_dividends_to_currency(self, dividends: pd.Series, tick: str) -> pd.Series:
+        """
+        Adjust dividends time series to a certain currency.
+        """
+        curr = self._currency.close.to_frame()
+        # fill missing dates and data in the currency time series
+        idx = pd.period_range(curr.index[0], curr.index[-1], freq="D")
+        curr = curr.reindex(idx, method="pad")
+        merged = dividends.to_frame().join(curr, how="left")
+        if merged.isnull().values.any():
+            # can happen if the first value is missing
+            merged.fillna(method='backfill', inplace=True)
+        dividends = merged[tick].multiply(merged[self._currency.symbol], axis=0)
+        return dividends
 
     @staticmethod
     def _define_symbol_list(assets):
@@ -184,6 +201,42 @@ class ListMaker(ABC):
             raise ValueError(
                 f"'period' ({period}) is beyond historical data range ({self.period_length})."
             )
+
+    def _get_asset_dividends(
+        self, tick: str, remove_forecast: bool = True
+    ) -> pd.Series:
+        """
+        Get dividend time series for a single symbol.
+        """
+        first_period = pd.Period(self.first_date, freq="M")
+        first_day = first_period.to_timestamp(how="Start")
+        last_period = pd.Period(self.last_date, freq="M")
+        last_day = last_period.to_timestamp(how="End")
+        asset = self.asset_obj_list[tick]
+        s = asset.dividends[first_day:last_day]
+        if asset.currency != self.currency:
+            s = self._adjust_dividends_to_currency(s, tick)
+        if remove_forecast:
+            s = s[: pd.Period.now(freq="D")]
+        # Create time series with zeros to pad the empty spaces in dividends time series
+        index = pd.date_range(start=first_day, end=last_day, freq="D")
+        period = index.to_period("D")
+        pad_s = pd.Series(data=0, index=period)
+        return s.add(pad_s, fill_value=0)
+
+    def _get_dividends(self, remove_forecast=True) -> pd.DataFrame:
+        """
+        Get dividend time series for all assets.
+
+        If `remove_forecast=True` all forecasted (future) data is removed from the time series.
+        """
+        if self._dividends_ts.empty:
+            dic = {}
+            for tick in self.symbols:
+                s = self._get_asset_dividends(tick, remove_forecast=remove_forecast)
+                dic.update({tick: s})
+            self._dividends_ts = pd.DataFrame(dic)
+        return self._dividends_ts
 
     @property
     def assets(self):

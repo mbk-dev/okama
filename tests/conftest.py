@@ -38,6 +38,7 @@ def _init_asset_list(request, portfolio_short_history, assets_from_db) -> None:
     request.cls.currencies = ok.AssetList(['RUBUSD.FX', 'EURUSD.FX', 'CNYUSD.FX'], ccy='USD',
                                           first_date='2019-01', last_date='2020-01', inflation=True)
     request.cls.spy = ok.AssetList(first_date='2000-01', last_date='2002-01', inflation=True)
+    request.cls.spy_rub = ok.AssetList(first_date='2000-01', last_date='2002-01', inflation=True, ccy='RUB')
     request.cls.real_estate = ok.AssetList(assets=['RUS_SEC.RE', 'MOW_PR.RE'], ccy='RUB',
                                            first_date='2010-01', last_date='2015-01', inflation=True)
 
