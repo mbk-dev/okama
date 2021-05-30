@@ -248,9 +248,9 @@ class TestAssetList:
         assert_frame_equal(description, description_sample)
 
     def test_dividend_yield(self):
-        assert self.spy.dividend_yield.iloc[-1, 0] == approx(0.0125, rel=1e-2)
-        assert self.spy_rub.dividend_yield.iloc[-1, 0] == approx(0.3687, rel=1e-2)
-        assert self.asset_list.dividend_yield.iloc[:, 0].sum() == 0
+        assert self.spy.assets_dividend_yield.iloc[-1, 0] == approx(0.0125, rel=1e-2)
+        assert self.spy_rub.assets_dividend_yield.iloc[-1, 0] == approx(0.01197, rel=1e-2)
+        assert self.asset_list.assets_dividend_yield.iloc[:, 0].sum() == 0
 
     def test_dividends_annual(self):
         assert self.spy.dividends_annual.iloc[-2, 0] == approx(

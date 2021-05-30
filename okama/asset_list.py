@@ -477,7 +477,7 @@ class AssetList(ListMaker):
             row.update(period=self._pl_txt, property="CAGR")
             description = description.append(row, ignore_index=True)
             # Dividend Yield
-            row = self.dividend_yield.iloc[-1].to_dict()
+            row = self.assets_dividend_yield.iloc[-1].to_dict()
             row.update(period="LTM", property="Dividend yield")
             description = description.append(row, ignore_index=True)
         # risk for full period
@@ -593,74 +593,6 @@ class AssetList(ListMaker):
         infl_mean = Float.annualize_return(self.inflation_ts.values.mean())
         ror_mean = Float.annualize_return(df.loc[:, self.symbols].mean())
         return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
-
-    @property
-    def dividend_yield(self) -> pd.DataFrame:
-        """
-        Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
-
-        All yields are calculated in the asset list base currency after adjusting the dividends time series.
-        Forecasted (future) dividends are removed.
-        Zero value time series are created for assets without dividends.
-
-        Returns
-        -------
-        DataFrame
-            Time series of LTM dividend yield for each asset.
-
-        Examples
-        --------
-        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
-        >>> x.dividend_yield
-                   T.US    XOM.US
-        1984-01  0.000000  0.000000
-        1984-02  0.000000  0.002597
-        1984-03  0.002038  0.002589
-        1984-04  0.001961  0.002346
-                   ...       ...
-        1994-09  0.018165  0.012522
-        1994-10  0.018651  0.011451
-        1994-11  0.018876  0.012050
-        1994-12  0.019344  0.011975
-        [132 rows x 2 columns]
-        """
-        if self._dividend_yield.empty:
-            frame = {}
-            df = self._get_dividends(remove_forecast=True)
-            for tick in self.symbols:
-                # Get dividends time series
-                div = df[tick]
-                # Get close (not adjusted) values time series.
-                # If the last_date month is current month live price of assets is used.
-                if div.sum() != 0:
-                    div_monthly = div.resample("M").sum()
-                    price = QueryData.get_close(tick, period="M").loc[
-                        self.first_date : self.last_date
-                    ]
-                else:
-                    # skipping prices if no dividends
-                    div_yield = div.resample("M").last()
-                    frame.update({tick: div_yield})
-                    continue
-                if price.index[-1] == pd.Period(pd.Timestamp.today(), freq="M"):
-                    price.loc[
-                        f"{pd.Timestamp.today().year}-{pd.Timestamp.today().month}"
-                    ] = Asset(tick).price
-                # Get dividend yield time series
-                div_yield = pd.Series(dtype=float)
-                div_monthly.index = div_monthly.index.to_timestamp()
-                for date in price.index.to_timestamp(how="End"):
-                    ltm_div = div_monthly[:date].last("12M").sum()
-                    last_price = price.loc[:date].iloc[-1]
-                    value = ltm_div / last_price
-                    div_yield.at[date] = value
-                div_yield.index = div_yield.index.to_period("M")
-                # Currency adjusted yield
-                # if self.currencies[tick] != self.currency.name:
-                #     div_yield = self._set_currency(returns=div_yield, asset_currency=self.currencies[tick])
-                frame.update({tick: div_yield})
-            self._dividend_yield = pd.DataFrame(frame)
-        return self._dividend_yield
 
     @property
     def dividends_annual(self) -> pd.DataFrame:

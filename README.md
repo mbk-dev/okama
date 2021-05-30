@@ -117,8 +117,9 @@ print(pf)
 ![](../images/images/readmi04.jpg?raw=true) 
 
 Plot the dividend yield for each group of assets (based on stock currency).
+
 ```python
-pf.dividend_yield.plot()
+pf.assets_dividend_yield.plot()
 ```
 ![](../images/images/readmi05.jpg?raw=true) 
 

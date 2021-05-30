@@ -370,7 +370,7 @@ class Portfolio(ListMaker):
 
     def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
         """
-        Calculate cumulative return of return for MONTHLY rebalanced portfolio.
+        Calculate cumulative return of return for the portfolio.
 
         The cumulative return is the total change in the portfolio price during the investment period.
 
@@ -405,7 +405,6 @@ class Portfolio(ListMaker):
         portfolio    8.215476
         dtype: float64
         """
-        # TODO: remove rebalancing period from docstring
         df = self._add_inflation()
         dt0 = self.last_date
 
@@ -490,19 +489,14 @@ class Portfolio(ListMaker):
         return Frame.get_annual_return_ts_from_monthly(self.ror)
 
     @property
-    def dividend_yield(self) -> pd.DataFrame:
+    def dividend_yield(self) -> pd.Series:
         """
         Calculates dividend yield time series in all base currencies of portfolio assets.
         For every currency dividend yield is a weighted sum of the assets dividend yields.
-        Portfolio asset allocation (weights) is a constant (monthly rebalanced portfolios).
         # TODO: finish the docstring
         """
-        div_yield_assets = self._list.dividend_yield
-        currencies_dict = self._list.currencies
-        if "asset list" in currencies_dict:
-            del currencies_dict["asset list"]
-        currencies_list = list(set(currencies_dict.values()))
-        div_yield_df = pd.DataFrame(dtype=float)
+        div_yield_assets = self.assets_dividend_yield
+
         for currency in currencies_list:
             assets_with_the_same_currency = [
                 x for x in currencies_dict if currencies_dict[x] == currency

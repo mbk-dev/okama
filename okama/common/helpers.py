@@ -102,6 +102,13 @@ class Frame:
         if any(x < 0 for x in weights):
             raise ValueError("Negative weights are not allowed.")
 
+    @staticmethod
+    def change_period_to_month(ts: pd.Series) -> pd.Series:
+        """
+        Change time series period from day to month.
+        """
+        return ts.resample('M').last()
+
     @classmethod
     def get_portfolio_return_ts(cls, weights: list, ror: pd.DataFrame) -> pd.Series:
         """
