@@ -59,16 +59,9 @@ def test_get_rolling_cumulative_return(portfolio_rebalanced_month):
     ] == approx(0.1226, rel=1e-2)
 
 
-@mark.xfail
 def test_dividend_yield(portfolio_dividends):
-    assert portfolio_dividends.assets_dividend_yield["USD"].iloc[-1] == approx(
-        0.0544, rel=1e-2
-    )
-    assert portfolio_dividends.assets_dividend_yield["GBX"].iloc[-1] == approx(
-        8.9935e-05, rel=1e-2
-    )
-    assert portfolio_dividends.assets_dividend_yield["RUB"].iloc[-1] == approx(
-        0.06344, rel=1e-2
+    assert portfolio_dividends.dividend_yield.iloc[-1] == approx(
+        0.03949, rel=1e-2
     )
 
 

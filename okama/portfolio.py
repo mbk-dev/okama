@@ -59,7 +59,7 @@ class Portfolio(ListMaker):
         self.assets_weights = dict(zip(self.symbols, self.weights))
         self._rebalancing_period = None
         self.rebalancing_period = rebalancing_period
-        self._symbol = symbol if symbol else f'portfolio_{randint(1000, 9999)}.PF'
+        self._symbol = symbol or f'portfolio_{randint(1000, 9999)}.PF'
 
     def __repr__(self):
         dic = {
@@ -128,7 +128,10 @@ class Portfolio(ListMaker):
         -------
         DataFrame
         """
-        return Rebalance.assets_weights_ts(ror=self.assets_ror, period=self.rebalancing_period, weights=self.weights)
+        if self.rebalancing_period != 'month':
+            return Rebalance.assets_weights_ts(ror=self.assets_ror, period=self.rebalancing_period, weights=self.weights)
+        values = np.tile(self.weights, (self.ror.shape[0], 1))
+        return pd.DataFrame(values, index=self.ror.index, columns=self.symbols)
 
     @property
     def rebalancing_period(self) -> str:
@@ -491,23 +494,36 @@ class Portfolio(ListMaker):
     @property
     def dividend_yield(self) -> pd.Series:
         """
-        Calculates dividend yield time series in all base currencies of portfolio assets.
-        For every currency dividend yield is a weighted sum of the assets dividend yields.
-        # TODO: finish the docstring
-        """
-        div_yield_assets = self.assets_dividend_yield
+        Calculate last twelve months (LTM) dividend yield time series (monthly) for the portfolio.
 
-        for currency in currencies_list:
-            assets_with_the_same_currency = [
-                x for x in currencies_dict if currencies_dict[x] == currency
-            ]
-            weights = self.weights_ts[assets_with_the_same_currency]
-            normalized_weights = weights.divide(weights.sum(axis=1), axis=0)
-            df = div_yield_assets[assets_with_the_same_currency] @ normalized_weights.T
-            div_yield_series = pd.Series(np.diag(df), index=df.index)
-            div_yield_series.rename(currency, inplace=True)
-            div_yield_df = pd.concat([div_yield_df, div_yield_series], axis=1)
-        return div_yield_df
+        Portfolio dividend yield is a weighted sum of the assets dividend yields (adjusted to
+        the portfolio base currency).
+
+        For an asset LTM dividend yield is the sum trailing twelve months of common dividends per share divided by
+        the current price per share.
+
+        Returns
+        -------
+        Series
+            Portfolio LTM dividend yield monthly time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['T.US', 'XOM.US'], weights=[0.8, 0.2], first_date='2010-01', last_date='2021-01', ccy='USD')
+        >>> pf.dividend_yield
+        2010-01    0.013249
+        2010-02    0.014835
+        2010-03    0.014257
+                     ...
+        2020-11    0.076132
+        2020-12    0.074743
+        2021-01    0.073643
+        Freq: M, Name: LTM dividend yild, Length: 133, dtype: float64
+        """
+        df = self.assets_dividend_yield @ self.weights_ts.T
+        div_yield_series = pd.Series(np.diag(df), index=df.index)
+        div_yield_series.rename('LTM dividend yield', inplace=True)
+        return div_yield_series
 
     @property
     def real_mean_return(self) -> float:

@@ -244,7 +244,10 @@ class ListMaker(ABC):
         """
         Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
 
-        All yields are calculated in the asset list base currency after adjusting the dividends time series.
+        LTM dividend yield is the sum trailing twelve months of common dividends per share divided by
+        the current price per share.
+
+        All yields are calculated in the asset list base currency after adjusting the dividends and price time series.
         Forecasted (future) dividends are removed.
         Zero value time series are created for assets without dividends.
 

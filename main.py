@@ -1,3 +1,3 @@
 import okama as ok
-x = ok.Portfolio(['SBERP.MOEX'], ccy='RUB', inflation=True)
-print(x.assets_dividend_yield)
+y = ok.AssetList(['T.US', 'CLDN.LSE'], ccy='GBP')
+print(y.assets_ror)
