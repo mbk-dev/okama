@@ -239,9 +239,7 @@ class TestAssetList:
         assert self.asset_list.annual_return_ts.iloc[-1, 1] == approx(0.01180, rel=1e-2)
 
     def test_describe(self):
-        description = self.asset_list.describe(tickers=False).iloc[
-            :-2, :
-        ]  # last 2 rows are fresh lastdate
+        description = self.asset_list.describe(tickers=False).iloc[:-2, :]  # last 2 rows are fresh lastdate
         description_sample = pd.read_pickle(
             data_folder / "asset_list_describe.pkl"
         ).iloc[:-2, :]

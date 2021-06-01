@@ -127,6 +127,24 @@ class Portfolio(ListMaker):
         Returns
         -------
         DataFrame
+            Weights of assets time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.5, 0.5], rebalancing_period='none')
+        >>> pf.weights
+        [0.5, 0.5]
+        >>> pf.weights_ts
+                   SPY.US    AGG.US
+        Date
+        2003-10  0.515361  0.484639
+        2003-11  0.517245  0.482755
+        2003-12  0.527056  0.472944
+                   ...       ...
+        2021-02  0.731292  0.268708
+        2021-03  0.742147  0.257853
+        2021-04  0.750528  0.249472
+        [211 rows x 2 columns]
         """
         if self.rebalancing_period != 'month':
             return Rebalance.assets_weights_ts(ror=self.assets_ror, period=self.rebalancing_period, weights=self.weights)
@@ -371,6 +389,22 @@ class Portfolio(ListMaker):
             cagr.drop(self.inflation, inplace=True)
         return cagr
 
+    def get_rolling_cagr(self, years: int = 1) -> pd.Series:
+        """
+        Calculate rolling CAGR (Compound Annual Growth Rate) for the portfolio.
+
+        TODO: add 'real' attribute
+        """
+        if self.pl.years < 1:
+            raise ValueError(
+                "Portfolio history data period length should be at least 12 months."
+            )
+        rolling_return = (self.ror + 1.0).rolling(
+            _MONTHS_PER_YEAR * years
+        ).apply(np.prod, raw=True) ** (1 / years) - 1.0
+        rolling_return.dropna(inplace=True)
+        return rolling_return
+
     def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
         """
         Calculate cumulative return of return for the portfolio.
@@ -437,6 +471,8 @@ class Portfolio(ListMaker):
         Calculate rolling cumulative return.
 
         The cumulative return is the total change in the portfolio price.
+
+        TODO: add 'real' attribute
 
         Parameters
         ----------
@@ -527,6 +563,23 @@ class Portfolio(ListMaker):
 
     @property
     def real_mean_return(self) -> float:
+        """
+        Calculate annualized real mean return (arithmetic mean) for the rate of return time series.
+
+        Real rate of return is adjusted for inflation. Real return is defined if
+        there is an `inflation=True` option in Portfolio.
+
+        Returns
+        -------
+        float
+            Annualized value of the mean for the real rate of return time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf.real_mean_return
+        0.3088967455111862
+        """
         if not hasattr(self, "inflation"):
             raise Exception(
                 "Real Return is not defined. Set inflation=True to calculate."
@@ -537,18 +590,90 @@ class Portfolio(ListMaker):
 
     @property
     def risk_monthly(self) -> float:
+        """
+        Calculate monthly risk (standard deviation of return) for Portfolio.
+
+        Monthly risk of portfolio is a standard deviation of the rate of return time series.
+        Standard deviation (sigma σ) is normalized by N-1.
+
+        Returns
+        -------
+        float
+            Standard deviation value of the monthly return time series.
+
+        See Also
+        --------
+        risk_annual : Calculate annualized risks.
+        semideviation_monthly : Calculate semideviation monthly values.
+        semideviation_annual : Calculate semideviation annualized values.
+        get_var_historic : Calculate historic Value at Risk (VaR).
+        get_cvar_historic : Calculate historic Conditional Value at Risk (CVaR).
+        drawdowns : Calculate drawdowns.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf.risk_monthly
+        0.09415483565833212
+        """
         return Frame.get_portfolio_risk(self.weights, self.assets_ror)
 
     @property
     def risk_annual(self) -> float:
+        """
+        Calculate annualized risk (return standard deviation) for portfolio.
+
+        Returns
+        -------
+        float
+            Annualized standard deviation value of the monthly return time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf.risk_annual
+        0.4374591902169046
+        """
         return Float.annualize_risk(self.risk_monthly, self.mean_return_monthly)
 
     @property
     def semideviation_monthly(self) -> float:
+        """
+        Calculate semi-deviation monthly value for portfolio rate of return time series.
+
+        Semi-deviation (Downside risk) is the risk of the return being below the expected return.
+
+        Returns
+        -------
+        float
+            Semi-deviation monthly value for portfolio rate of return time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf.semideviation_monthly
+        0.05601433676604449
+        """
         return Frame.get_semideviation(self.ror)
 
     @property
     def semideviation_annual(self) -> float:
+        """
+        Return semideviation annualized value for portfolio rate of return time series.
+
+        Semi-deviation (Downside risk) is the risk of the return being below the expected return.
+
+        Returns
+        -------
+        float
+            Annualized semi-deviation monthly value for portfolio rate of return time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf.semideviation_annual
+        0.1940393544621248
+        """
         return Frame.get_semideviation(self.ror) * 12 ** 0.5
 
     def get_var_historic(self, time_frame: int = 12, level=1) -> float:
@@ -557,7 +682,7 @@ class Portfolio(ListMaker):
 
         The VaR calculates the potential loss of an investment with a given time frame and confidence level.
         Loss is a positive number (expressed in cumulative return).
-        If VaR is negative there are gains at this confidence level.
+        If VaR is negative there are expected gains at this confidence level.
 
         Parameters
         ----------
@@ -569,6 +694,7 @@ class Portfolio(ListMaker):
         Returns
         -------
         Float
+            Historic Value at Risk (VaR) value for the portfolio.
 
         Examples
         --------
@@ -585,7 +711,7 @@ class Portfolio(ListMaker):
 
         CVaR is the average loss over a specified time period of unlikely scenarios beyond the confidence level.
         Loss is a positive number (expressed in cumulative return).
-        If CVaR is negative there are gains at this confidence level.
+        If CVaR is negative there are expected gains at this confidence level.
 
         Parameters
         ----------
@@ -595,6 +721,7 @@ class Portfolio(ListMaker):
         Returns
         -------
         Float
+            Historic Conditional Value at Risk (CVAR, expected shortfall) value for the portfolio.
 
         Examples
         --------
@@ -611,6 +738,11 @@ class Portfolio(ListMaker):
         Calculate drawdowns time series for the portfolio.
 
         The drawdown is the percent decline from a previous peak in wealth index.
+
+        Returns
+        -------
+        Series
+            Drawdowns time series for the portfolio
         """
         return Frame.get_drawdowns(self.ror)
 
@@ -621,7 +753,7 @@ class Portfolio(ListMaker):
         Statistics includes:
         - YTD (Year To date) compound return
         - CAGR for a given list of periods
-        - Dividend yield - yield for last 12 months (LTM)
+        - LTM Dividend yield - last twelve months dividend yield
 
         Risk metrics (full available period):
         - risk (standard deviation)
@@ -635,7 +767,8 @@ class Portfolio(ListMaker):
 
         Returns
         -------
-            DataFrame
+        DataFrame
+            Table of descriptive statistics for the portfolio.
 
         See Also
         --------
@@ -702,16 +835,14 @@ class Portfolio(ListMaker):
                 property="CAGR",
             )
             description = description.append(row, ignore_index=True)
-            # # Dividend Yield
-            # dy = self.dividend_yield
-            # for i, ccy in enumerate(dy):
-            #     value = self.dividend_yield.iloc[-1, i]
-            #     row = {"portfolio": value}
-            #     row.update(
-            #         period="LTM",
-            #         property=f"Dividend yield ({ccy})",
-            #     )
-            #     description = description.append(row, ignore_index=True)
+            # Dividend Yield
+            value = self.dividend_yield.iloc[-1]
+            row = {"portfolio": value}
+            row.update(
+                period="LTM",
+                property=f"Dividend yield",
+            )
+            description = description.append(row, ignore_index=True)
         # risk (standard deviation)
         row = {"portfolio": self.risk_annual}
         row.update(
@@ -750,7 +881,20 @@ class Portfolio(ListMaker):
     @property
     def table(self) -> pd.DataFrame:
         """
-        Returns security name - ticker - weight DataFrame table.
+        Return security name - ticker - weight table.
+
+        Returns
+        -------
+        DataFrame
+            Security name - ticker - weight table.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf.table
+                        asset name   ticker  weights
+        0  Microsoft Corporation  MSFT.US      0.5
+        1              Apple Inc  AAPL.US      0.5
         """
         x = pd.DataFrame(
             data={
@@ -760,20 +904,6 @@ class Portfolio(ListMaker):
         )
         x["weights"] = self.weights
         return x
-
-    def get_rolling_cagr(self, years: int = 1) -> pd.Series:
-        """
-        Rolling portfolio CAGR (annualized rate of return) time series.
-        """
-        if self.pl.years < 1:
-            raise ValueError(
-                "Portfolio history data period length should be at least 12 months."
-            )
-        rolling_return = (self.ror + 1.0).rolling(
-            _MONTHS_PER_YEAR * years
-        ).apply(np.prod, raw=True) ** (1 / years) - 1.0
-        rolling_return.dropna(inplace=True)
-        return rolling_return
 
     # Forecasting
 

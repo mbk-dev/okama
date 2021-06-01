@@ -47,7 +47,7 @@ class AssetList(ListMaker):
     @property
     def risk_monthly(self) -> pd.Series:
         """
-        Calculate monthly risks (standard deviation) for each asset.
+        Calculate monthly risks (standard deviation of return) for each asset.
 
         Monthly risk of the asset is a standard deviation of the rate of return time series.
         Standard deviation (sigma σ) is normalized by N-1.
@@ -93,7 +93,9 @@ class AssetList(ListMaker):
     @property
     def semideviation_monthly(self) -> pd.Series:
         """
-        Calculate semideviation monthly values for each asset.
+        Calculate semi-deviation monthly values for each asset.
+
+        Semi-deviation (Downside risk) is the risk of the return being below the expected return.
 
         Returns
         -------
@@ -131,7 +133,7 @@ class AssetList(ListMaker):
 
         The VaR calculates the potential loss of an investment with a given time frame and confidence level.
         Loss is a positive number (expressed in cumulative return).
-        If VaR is negative there are gains at this confidence level.
+        If VaR is negative there are expected gains at this confidence level.
 
         Parameters
         ----------
@@ -161,7 +163,7 @@ class AssetList(ListMaker):
 
         CVaR is the average loss over a specified time period of unlikely scenarios beyond the confidence level.
         Loss is a positive number (expressed in cumulative return).
-        If CVaR is negative there are gains at this confidence level.
+        If CVaR is negative there are expected gains at this confidence level.
 
         Parameters
         ----------
@@ -420,7 +422,7 @@ class AssetList(ListMaker):
         Statistics includes:
         - YTD (Year To date) compound return
         - CAGR for a given list of periods
-        - Dividend yield - yield for last 12 months (LTM)
+        - LTM Dividend yield - last twelve months dividend yield
 
         Risk metrics (full period):
         - risk (standard deviation)

@@ -44,7 +44,7 @@ def _init_asset_list(request, portfolio_short_history, assets_from_db) -> None:
 
 
 # Portfolio
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def init_portfolio_values():
     return dict(
         assets=['RUB.FX', 'MCFTR.INDX'],
@@ -57,37 +57,37 @@ def init_portfolio_values():
     )
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def portfolio_rebalanced_year(init_portfolio_values):
     return ok.Portfolio(**init_portfolio_values)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def portfolio_not_rebalanced(init_portfolio_values):
     init_portfolio_values['rebalancing_period'] = 'none'
     return ok.Portfolio(**init_portfolio_values)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def portfolio_rebalanced_month(init_portfolio_values):
     init_portfolio_values['rebalancing_period'] = 'month'
     return ok.Portfolio(**init_portfolio_values)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def portfolio_no_inflation(init_portfolio_values):
     init_portfolio_values['inflation'] = False
     init_portfolio_values['rebalancing_period'] = 'month'
     return ok.Portfolio(**init_portfolio_values)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def portfolio_short_history(init_portfolio_values):
     init_portfolio_values['first_date'] = '2019-02'
     return ok.Portfolio(**init_portfolio_values)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def portfolio_dividends(init_portfolio_values):
     init_portfolio_values['assets'] = ['SBER.MOEX', 'T.US', 'GNS.LSE']
     return ok.Portfolio(**init_portfolio_values)

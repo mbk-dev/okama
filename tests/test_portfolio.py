@@ -30,18 +30,16 @@ def test_weights(portfolio_rebalanced_month):
     assert portfolio_rebalanced_month.weights == [0.5, 0.5]
 
 
-def test_weights_ts(
-    portfolio_rebalanced_month, portfolio_rebalanced_year, portfolio_not_rebalanced
-):
-    assert portfolio_rebalanced_month.weights_ts["RUB.FX"].iloc[-1] == approx(
-        0.5, rel=1e-2
-    )
-    assert portfolio_rebalanced_year.weights_ts["RUB.FX"].iloc[-2] == approx(
-        0.3907, rel=1e-2
-    )
-    assert portfolio_not_rebalanced.weights_ts["RUB.FX"].iloc[-1] == approx(
-        0.2770, rel=1e-2
-    )
+def test_weights_ts_rebalanced_month(portfolio_rebalanced_month):
+    assert portfolio_rebalanced_month.weights_ts["RUB.FX"].iloc[-1] == approx(0.5, rel=1e-2)
+
+
+def test_weights_ts_rebalanced_year(portfolio_rebalanced_year, portfolio_not_rebalanced):
+    assert portfolio_rebalanced_year.weights_ts["RUB.FX"].iloc[-2] == approx(0.3907, rel=1e-2)
+
+
+def test_weights_ts_not_rebalanced(portfolio_not_rebalanced):
+    assert portfolio_not_rebalanced.weights_ts["RUB.FX"].iloc[-1] == approx(0.2770, rel=1e-2)
 
 
 def test_mean_return(portfolio_rebalanced_month):
@@ -136,7 +134,6 @@ def test_cumulative_return_error(portfolio_no_inflation, period, real, exception
         portfolio_no_inflation.get_cumulative_return(period=period, real=real)
 
 
-@mark.xfail
 def test_describe_inflation(portfolio_rebalanced_month):
     description = portfolio_rebalanced_month.describe()
     description_sample = pd.read_pickle(data_folder / "portfolio_description.pkl")
@@ -144,8 +141,9 @@ def test_describe_inflation(portfolio_rebalanced_month):
 
 
 def test_describe_no_inflation(portfolio_no_inflation):
-    # TODO: make an assertion
-    portfolio_no_inflation.describe([5, 10])  # one limit should exceed the history
+    description = portfolio_no_inflation.describe()
+    description_sample = pd.read_pickle(data_folder / "portfolio_description_no_inflation.pkl")
+    assert_frame_equal(description, description_sample)
 
 
 def test_percentile_from_history(portfolio_rebalanced_month, portfolio_short_history):
