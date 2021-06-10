@@ -108,7 +108,7 @@ class Plots(AssetList):
             assets=self.symbols,
             first_date=self.first_date,
             last_date=self.last_date,
-            ccy=self.currency.name,
+            ccy=self.currency,
             inflation=self._bool_inflation,
             bounds=bounds,
             full_frontier=full_frontier,

@@ -1,5 +1,7 @@
 import pandas as pd
 from pandas.testing import assert_frame_equal
+import numpy as np
+
 import pytest
 from pytest import approx
 from pytest import mark
@@ -107,6 +109,12 @@ class TestAssetList:
 
     def test_drawdowns(self):
         assert self.asset_list.drawdowns.min().sum() == approx(-0.082932, rel=1e-2)
+
+    def test_recovery_periods(self):
+        assert self.asset_list.recovery_periods['MCFTR.INDX'] == approx(0, rel=1e-2)
+        assert np.isnan(self.asset_list.recovery_periods['RUB.FX'])
+        assert self.asset_list_lt.recovery_periods['MCFTR.INDX'] == 45
+        assert self.asset_list_lt.recovery_periods['RUB.FX'] == 69
 
     cagr_testdata1 = [
         (1, -0.0463, 0.3131, 0.0242),
@@ -239,10 +247,8 @@ class TestAssetList:
         assert self.asset_list.annual_return_ts.iloc[-1, 1] == approx(0.01180, rel=1e-2)
 
     def test_describe(self):
-        description = self.asset_list.describe(tickers=False).iloc[:-2, :]  # last 2 rows are fresh lastdate
-        description_sample = pd.read_pickle(
-            data_folder / "asset_list_describe.pkl"
-        ).iloc[:-2, :]
+        description = self.asset_list.describe(tickers=False).iloc[:-2, :]  # last 2 rows have fresh lastdate
+        description_sample = pd.read_pickle(data_folder / "asset_list_describe.pkl").iloc[:-2, :]
         assert_frame_equal(description, description_sample)
 
     def test_dividend_yield(self):

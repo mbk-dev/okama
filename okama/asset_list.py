@@ -1,10 +1,9 @@
 from typing import Optional, Union, Tuple
 
+import numpy as np
 import pandas as pd
 
-from .asset import Asset
 from .common.helpers import Frame, Float, Date, Index
-from .api.data_queries import QueryData
 from .common.make_asset_list import ListMaker
 
 
@@ -202,6 +201,52 @@ class AssetList(ListMaker):
             Time series of drawdowns.
         """
         return Frame.get_drawdowns(self.assets_ror)
+
+    @property
+    def recovery_periods(self) -> pd.Series:
+        """
+        Calculate longest recovery periods for the assets.
+
+        The recovery period is the number of months to reach the value of the last maximum.
+
+        Returns
+        -------
+        Series
+            Max recovery period for each asset (in months).
+
+        Notes
+        -----
+        If the maximum value is not recovered NaN is returned.
+        The largest recovery period does not necessary correspond to the max drawdown.
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['SPY.US', 'AGG.US'])
+        >>> x.recovery_periods
+        SPY.US    52
+        AGG.US    15
+        dtype: int32
+
+        See Also
+        --------
+        drawdowns : Calculate drawdowns time series.
+        """
+        cummax = self.wealth_indexes.cummax()
+        growth = cummax.pct_change()[1:]
+        max_recovery_periods = pd.Series(dtype=int)
+        for name in self.symbols:
+            namespace = name.split(".", 1)[-1]
+            if namespace == 'INFL':
+                continue
+            s = growth[name]
+            s1 = s.where(s == 0).notnull().astype(int)
+            s1_1 = s.where(s == 0).isnull().astype(int).cumsum()
+            s2 = s1.groupby(s1_1).cumsum()
+            # Max recovery period date should not be in the border (means it's not recovered)
+            max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
+            ser = pd.Series(max_period, index=[name])
+            max_recovery_periods = max_recovery_periods.append(ser)
+        return max_recovery_periods
 
     def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
         """

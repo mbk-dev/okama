@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import pytest
 import okama as ok
 from pathlib import Path
@@ -17,7 +19,7 @@ def init_asset_pif():
 
 
 # Asset List
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='class')
 def assets_from_db():
     return ['RUB.FX', 'MCFTR.INDX']
 
@@ -44,7 +46,7 @@ def _init_asset_list(request, portfolio_short_history, assets_from_db) -> None:
 
 
 # Portfolio
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def init_portfolio_values():
     return dict(
         assets=['RUB.FX', 'MCFTR.INDX'],
@@ -57,40 +59,45 @@ def init_portfolio_values():
     )
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def portfolio_rebalanced_year(init_portfolio_values):
     return ok.Portfolio(**init_portfolio_values)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def portfolio_not_rebalanced(init_portfolio_values):
-    init_portfolio_values['rebalancing_period'] = 'none'
-    return ok.Portfolio(**init_portfolio_values)
+    _portfolio_not_rebalanced = deepcopy(init_portfolio_values)
+    _portfolio_not_rebalanced['rebalancing_period'] = 'none'
+    return ok.Portfolio(**_portfolio_not_rebalanced)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def portfolio_rebalanced_month(init_portfolio_values):
-    init_portfolio_values['rebalancing_period'] = 'month'
-    return ok.Portfolio(**init_portfolio_values)
+    _portfolio_rebalanced_month = deepcopy(init_portfolio_values)
+    _portfolio_rebalanced_month['rebalancing_period'] = 'month'
+    return ok.Portfolio(**_portfolio_rebalanced_month)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def portfolio_no_inflation(init_portfolio_values):
-    init_portfolio_values['inflation'] = False
-    init_portfolio_values['rebalancing_period'] = 'month'
-    return ok.Portfolio(**init_portfolio_values)
+    _portfolio_no_inflation = deepcopy(init_portfolio_values)
+    _portfolio_no_inflation['inflation'] = False
+    _portfolio_no_inflation['rebalancing_period'] = 'month'
+    return ok.Portfolio(**_portfolio_no_inflation)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def portfolio_short_history(init_portfolio_values):
-    init_portfolio_values['first_date'] = '2019-02'
-    return ok.Portfolio(**init_portfolio_values)
+    _portfolio_short_history = deepcopy(init_portfolio_values)
+    _portfolio_short_history['first_date'] = '2019-02'
+    return ok.Portfolio(**_portfolio_short_history)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def portfolio_dividends(init_portfolio_values):
-    init_portfolio_values['assets'] = ['SBER.MOEX', 'T.US', 'GNS.LSE']
-    return ok.Portfolio(**init_portfolio_values)
+    _portfolio_dividends = deepcopy(init_portfolio_values)
+    _portfolio_dividends['assets'] = ['SBER.MOEX', 'T.US', 'GNS.LSE']
+    return ok.Portfolio(**_portfolio_dividends)
 
 
 # Macro

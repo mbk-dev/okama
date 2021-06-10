@@ -5,7 +5,6 @@ from numpy.testing import assert_allclose
 from .conftest import data_folder
 
 
-@mark.xfail
 @mark.plots
 def test_transition_map(init_plots):
     axes_data = init_plots.plot_transition_map(cagr=False, full_frontier=False).lines[0].get_data()
