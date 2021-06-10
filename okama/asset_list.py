@@ -205,9 +205,9 @@ class AssetList(ListMaker):
     @property
     def recovery_periods(self) -> pd.Series:
         """
-        Calculate longest recovery periods for the assets.
+        Calculate the longest recovery periods for the assets.
 
-        The recovery period is the number of months to reach the value of the last maximum.
+        The recovery period (drawdown duration) is the number of months to reach the value of the last maximum.
 
         Returns
         -------
@@ -216,7 +216,7 @@ class AssetList(ListMaker):
 
         Notes
         -----
-        If the maximum value is not recovered NaN is returned.
+        If the last asset maximum value is not recovered NaN is returned.
         The largest recovery period does not necessary correspond to the max drawdown.
 
         Examples

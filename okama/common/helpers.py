@@ -247,15 +247,15 @@ class Frame:
     # Risk metrics
 
     @classmethod
-    def get_portfolio_risk(cls, weights: list, ror: pd.DataFrame) -> float:
+    def get_portfolio_risk(cls, weights: list, assets_ror: pd.DataFrame) -> float:
         """
-        Computes the std of portfolio returns.
+        Compute the standard deviation of return for monthly rebalanced portfolio.
         """
         # cls.weights_sum_is_one(weights)
-        if isinstance(ror, pd.Series):  # required for a single asset portfolio
-            return ror.std()
+        if isinstance(assets_ror, pd.Series):  # required for a single asset portfolio
+            return assets_ror.std()
         weights = np.array(weights)
-        covmat = ror.cov()
+        covmat = assets_ror.cov()
         return math.sqrt(weights.T @ covmat @ weights)
 
     @staticmethod

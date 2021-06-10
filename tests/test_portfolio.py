@@ -86,6 +86,15 @@ def test_get_cvar_historic(portfolio_rebalanced_month):
     ) == approx(0.10762, rel=1e-2)
 
 
+def test_drawdowns(portfolio_not_rebalanced):
+    assert portfolio_not_rebalanced.drawdowns.min() == approx(-0.1265, rel=1e-2)
+
+
+def test_recovery_period(portfolio_not_rebalanced):
+    assert portfolio_not_rebalanced.recovery_period == 12
+
+
+
 def test_get_cagr(portfolio_rebalanced_month):
     values = pd.Series({"portfolio": 0.1303543, "RUB.INFL": 0.05548082428015655})
     actual = portfolio_rebalanced_month.get_cagr()

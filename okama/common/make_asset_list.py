@@ -108,9 +108,8 @@ class ListMaker(ABC):
         first_dates_sorted: list = sorted(first_dates.items(), key=lambda y: y[1])
         last_dates_sorted: list = sorted(last_dates.items(), key=lambda y: y[1])
         if isinstance(df, pd.Series):
-            df = (
-                df.to_frame()
-            )  # required to convert Series to DataFrame for single asset list
+            # required to convert Series to DataFrame for single asset list
+            df = df.to_frame()
         return dict(
             asset_obj_list=asset_obj_dict,
             first_date=first_dates_sorted[-1][1],

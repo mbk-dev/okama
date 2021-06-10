@@ -32,8 +32,6 @@ class Portfolio(ListMaker):
 
     # TODO: Finish description.
     """
-    # TODO: add withdrawals as an attribute:
-    # frequency (monthly/annual), amount (nominal, percentage), inflation_adjusted
 
     def __init__(
         self,
@@ -616,7 +614,7 @@ class Portfolio(ListMaker):
         >>> pf.risk_monthly
         0.09415483565833212
         """
-        return Frame.get_portfolio_risk(self.weights, self.assets_ror)
+        return self.ror.std()
 
     @property
     def risk_annual(self) -> float:
@@ -746,6 +744,50 @@ class Portfolio(ListMaker):
         """
         return Frame.get_drawdowns(self.ror)
 
+    @property
+    def recovery_period(self) -> int:
+        """
+        Calculate the longest recovery period for the portfolio assets value.
+
+        The recovery period (drawdown duration) is the number of months to reach the value of the last maximum.
+
+        Returns
+        -------
+        Integer
+            Max recovery period for the protfolio assets value in months.
+
+        Notes
+        -----
+        If the last maximum value is not recovered NaN is returned.
+        The largest recovery period does not necessary correspond to the max drawdown.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.5, 0.5])
+        >>> pf.recovery_period
+        35
+
+        See Also
+        --------
+        drawdowns : Calculate drawdowns time series.
+        """
+        if hasattr(self, "inflation"):
+            w_index = self.wealth_index.drop(columns=[self.inflation])
+        else:
+            w_index = self.wealth_index
+        if isinstance(w_index, pd.DataFrame):
+            # time series should be a Series to use groupby
+            w_index = w_index.squeeze()
+        cummax = w_index.cummax()
+        s = cummax.pct_change()[1:]
+        s1 = s.where(s == 0).notnull().astype(int)
+        s1_1 = s.where(s == 0).isnull().astype(int).cumsum()
+        s2 = s1.groupby(s1_1).cumsum()
+        # Max recovery period date should not be in the border (means it's not recovered)
+        max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
+        return max_period
+
+
     def describe(self, years: Tuple[int] = (1, 5, 10)) -> pd.DataFrame:
         """
         Generate descriptive statistics for the portfolio.
@@ -779,6 +821,7 @@ class Portfolio(ListMaker):
             get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
             drawdowns : Calculate drawdowns.
         """
+        # TODO: Remove rebalancing. All metrics should work with self.ror
         description = pd.DataFrame()
         dt0 = self.last_date
         df = self._add_inflation()
