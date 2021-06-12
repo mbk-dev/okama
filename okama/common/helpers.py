@@ -14,7 +14,7 @@ def check_rolling_window(
     if not window_below_year and window < _MONTHS_PER_YEAR:
         raise ValueError("window size should be at least 1 year")
     if window > ror.shape[0]:
-        raise ValueError("window size is less than data history depth")
+        raise ValueError("window size is more than data history depth")
 
 
 class Float:

@@ -238,6 +238,20 @@ class ListMaker(ABC):
             self._dividends_ts = pd.DataFrame(dic)
         return self._dividends_ts
 
+    def _make_real_return_time_series(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate real monthly return time series.
+
+        Rate of return monthly data is adjusted for inflation.
+        """
+        if not hasattr(self, "inflation"):
+            raise Exception(
+                "Real return is not defined. Set inflation=True when initiating the class."
+            )
+        df = (1.0 + df).divide(1.0 + self.inflation_ts, axis=0) - 1.0
+        df.drop(columns=[self.inflation], inplace=True)
+        return df
+
     @property
     def assets_dividend_yield(self) -> pd.DataFrame:
         """

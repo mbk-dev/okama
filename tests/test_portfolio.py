@@ -51,10 +51,12 @@ def test_real_mean_return(portfolio_rebalanced_month):
     assert portfolio_rebalanced_month.real_mean_return == approx(0.05286, rel=1e-2)
 
 
-def test_get_rolling_cumulative_return(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.get_rolling_cumulative_return(window=12).iloc[
-        -1
-    ] == approx(0.1226, rel=1e-2)
+@mark.parametrize(
+    "window, real, expected",
+    [(1, True, 0.01100), (12, False, 0.12269), (12, True, 0.0961)],
+)
+def test_get_rolling_cumulative_return(portfolio_rebalanced_month, window, real, expected):
+    assert portfolio_rebalanced_month.get_rolling_cumulative_return(window=window, real=real).iloc[-1, 0] == approx(expected, rel=1e-2)
 
 
 def test_dividend_yield(portfolio_dividends):
@@ -94,7 +96,6 @@ def test_recovery_period(portfolio_not_rebalanced):
     assert portfolio_not_rebalanced.recovery_period == 12
 
 
-
 def test_get_cagr(portfolio_rebalanced_month):
     values = pd.Series({"portfolio": 0.1303543, "RUB.INFL": 0.05548082428015655})
     actual = portfolio_rebalanced_month.get_cagr()
@@ -110,7 +111,7 @@ cagr_testdata1 = [
 ]
 
 
-@mark.parametrize("input_data,expected", cagr_testdata1, ids=["1 year", "full period"],)
+@mark.parametrize("input_data, expected", cagr_testdata1, ids=["1 year", "full period"],)
 def test_get_cagr_real(portfolio_rebalanced_month, input_data, expected):
     assert portfolio_rebalanced_month.get_cagr(period=input_data, real=True).values[0] == approx(expected, rel=1e-2)
 
@@ -156,7 +157,7 @@ def test_describe_no_inflation(portfolio_no_inflation):
 
 
 def test_percentile_from_history(portfolio_rebalanced_month, portfolio_short_history):
-    assert portfolio_rebalanced_month.percentile_from_history(years=1).iloc[-1, :].sum() == approx(0.29723, rel=1e-2)
+    assert portfolio_rebalanced_month.percentile_from_history(years=1).iloc[0, 1] == approx(0.12456, rel=1e-2)
     with pytest.raises(
         Exception,
         match="Time series does not have enough history to forecast. "
@@ -172,10 +173,37 @@ def test_table(portfolio_rebalanced_month):
     )
 
 
-def test_get_rolling_return(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.get_rolling_cagr(years=1).iloc[-1] == approx(
-        0.122696, rel=1e-2
-    )
+@mark.parametrize(
+    "window, real, expected",
+    [(12, False, 0.1290), (24, True, 0.08505)],
+)
+def test_get_rolling_cagr(portfolio_rebalanced_month, window, real, expected):
+    assert portfolio_rebalanced_month.get_rolling_cagr(
+        window=window, real=real).iloc[0, -1] == approx(expected, rel=1e-2)
+
+
+def test_get_rolling_cagr_failing_short_window(portfolio_not_rebalanced):
+    with pytest.raises(
+        Exception,
+        match="window size should be at least 1 year"
+    ):
+        portfolio_not_rebalanced.get_rolling_cagr(window=1)
+
+
+def test_get_rolling_cagr_failing_long_window(portfolio_not_rebalanced):
+    with pytest.raises(
+        Exception,
+        match="window size is more than data history depth"
+    ):
+        portfolio_not_rebalanced.get_rolling_cagr(window=100)
+
+
+def test_get_rolling_cagr_failing_no_inflation(portfolio_no_inflation):
+    with pytest.raises(
+        Exception,
+        match="Real return is not defined. Set inflation=True when initiating the class."
+    ):
+        portfolio_no_inflation.get_rolling_cagr(real=True)
 
 
 def test_forecast_monte_carlo_norm_wealth_indexes(portfolio_rebalanced_month):

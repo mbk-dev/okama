@@ -115,17 +115,6 @@ class AssetList(ListMaker):
         """
         return Frame.get_semideviation(self.assets_ror) * 12 ** 0.5
 
-    def _remove_inflation_from_rolling_returns(self, time_frame: int) -> pd.DataFrame:
-        """
-        Remove inflation column from rolling returns if exists.
-        """
-        if hasattr(self, "inflation"):
-            return self.get_rolling_cumulative_return(window=time_frame).drop(
-                columns=[self.inflation]
-            )
-        else:
-            return self.get_rolling_cumulative_return(window=time_frame)
-
     def get_var_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
         """
         Calculate historic Value at Risk (VaR) for the assets.
@@ -153,7 +142,7 @@ class AssetList(ListMaker):
         AGG.US    -0.0867
         Name: VaR, dtype: float64
         """
-        df = self._remove_inflation_from_rolling_returns(time_frame)
+        df = self.get_rolling_cumulative_return(window=time_frame).loc[:, self.symbols]
         return Frame.get_var_historic(df, level)
 
     def get_cvar_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
@@ -185,7 +174,7 @@ class AssetList(ListMaker):
         dtype: float64
         Name: VaR, dtype: float64
         """
-        df = self._remove_inflation_from_rolling_returns(time_frame)
+        df = self.get_rolling_cumulative_return(window=time_frame).loc[:, self.symbols]
         return Frame.get_cvar_historic(df, level)
 
     @property
@@ -258,7 +247,6 @@ class AssetList(ListMaker):
         Inflation adjusted annualized returns (real CAGR) are shown with `real=True` option.
 
         Annual inflation value is calculated for the same period if inflation=True in the AssetList.
-        CAGR is not defined for periods less than 1 year.
 
         Parameters
         ----------
@@ -272,6 +260,10 @@ class AssetList(ListMaker):
         -------
         Series
             CAGR values for each asset and annualized inflation (optional).
+
+        Notes
+        -----
+        CAGR is not defined for periods less than 1 year (NaN values are returned).
 
         Examples
         --------
@@ -306,20 +298,6 @@ class AssetList(ListMaker):
             cagr.drop(self.inflation, inplace=True)
         return cagr
 
-    def _make_real_return_time_series(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Calculate real monthly return time series.
-
-        Rate of return monthly data is adjusted for inflation.
-        """
-        if not hasattr(self, "inflation"):
-            raise Exception(
-                "Real return is not defined. Set inflation=True in AssetList to calculate it."
-            )
-        df = (1.0 + df).divide(1.0 + self.inflation_ts, axis=0) - 1.0
-        df.drop(columns=[self.inflation], inplace=True)
-        return df
-
     def get_rolling_cagr(self, window: int = 12, real: bool = False) -> pd.DataFrame:
         """
         Calculate rolling CAGR (Compound Annual Growth Rate) for each asset.
@@ -335,11 +313,15 @@ class AssetList(ListMaker):
         Returns
         -------
         DataFrame
-            Time series of rolling CAGR.
+            Time series of rolling CAGR and mean inflation (optionaly).
+
+        Notes
+        -----
+        CAGR is not defined for periods less than 1 year (NaN values are returned).
 
         Examples
         --------
-        Get inflation adjusted rolling return (real annualized return) win 5 years window:
+        Get inflation adjusted rolling CAGR (real annualized return) win 5 years window:
         >>> x = ok.AssetList(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True)
         >>> x.get_rolling_cagr(window=5*12, real=True)
                          DXET.XETR  DBXN.XETR

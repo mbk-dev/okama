@@ -66,6 +66,7 @@ class Portfolio(ListMaker):
             "weights": self.weights,
             "rebalancing period": self.rebalancing_period,
             "currency": self.currency,
+            "inflation": self.inflation if hasattr(self, "inflation") else "None",
             "first date": self.first_date.strftime("%Y-%m"),
             "last_date": self.last_date.strftime("%Y-%m"),
             "period length": self._pl_txt,
@@ -151,14 +152,7 @@ class Portfolio(ListMaker):
 
     @property
     def rebalancing_period(self) -> str:
-        """
-        Returns
-        -------
-            Values for the weights of assets in portfolio.
-
-        Examples
-        --------
-        """
+        # TODO: make description
         return self._rebalancing_period
 
     @rebalancing_period.setter
@@ -241,10 +235,14 @@ class Portfolio(ListMaker):
         """
         df = self._add_inflation()
         df = Frame.get_wealth_indexes(df)
-        if isinstance(df, pd.Series):  # should always return a DataFrame
-            df = df.to_frame()
-            df.rename({1: "portfolio"}, axis="columns", inplace=True)
+        df = self._make_df_if_series(df)
         return df
+
+    def _make_df_if_series(self, ts):
+        if isinstance(ts, pd.Series):  # should always return a DataFrame
+            ts = ts.to_frame()
+            ts.rename({1: self.symbol}, axis="columns", inplace=True)
+        return ts
 
     @property
     def wealth_index_with_assets(self) -> pd.DataFrame:
@@ -343,7 +341,6 @@ class Portfolio(ListMaker):
         Inflation adjusted annualized returns (real CAGR) are shown with `real=True` option.
 
         Annual inflation value is calculated for the same period if inflation=True in the AssetList.
-        CAGR is not defined for periods less than 1 year.
 
         Parameters
         ----------
@@ -357,6 +354,10 @@ class Portfolio(ListMaker):
         -------
         Series, Float
             Portfolio CAGR value and annualized inflation (optional).
+
+        Notes
+        -----
+        CAGR is not defined for periods less than 1 year (NaN values are returned).
 
         Examples
         --------
@@ -387,21 +388,49 @@ class Portfolio(ListMaker):
             cagr.drop(self.inflation, inplace=True)
         return cagr
 
-    def get_rolling_cagr(self, years: int = 1) -> pd.Series:
+    def get_rolling_cagr(self, window: int = 12, real: bool = False) -> pd.DataFrame:
         """
         Calculate rolling CAGR (Compound Annual Growth Rate) for the portfolio.
 
-        TODO: add 'real' attribute
+        Parameters
+        ----------
+        window : int, default 12
+            Size of the moving window in months. Window size should be at least 12 months for CAGR.
+        real: bool, default False
+            CAGR is adjusted for inflation (real CAGR) if True.
+            Portfolio should be initiated with Inflation=True for real CAGR.
+
+        Returns
+        -------
+        DataFrame
+            Time series of rolling CAGR and mean inflation (optionaly).
+
+        Notes
+        -----
+        CAGR is not defined for periods less than 1 year (NaN values are returned).
+
+        Examples
+        --------
+        Get inflation adjusted rolling CAGR (real annualized return) win 5 years window:
+        >>> x = ok.Portfolio(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True)
+        >>> x.get_rolling_cagr(window=5*12, real=True)
+                 portfolio_7645.PF
+        2013-09           0.029914
+        2013-10           0.052435
+        2013-11           0.055651
+        2013-12           0.045180
+        2014-01           0.063153
+                            ...
+        2021-01           0.032734
+        2021-02           0.037779
+        2021-03           0.043811
+        2021-04           0.043729
+        2021-05           0.042704
         """
-        if self.pl.years < 1:
-            raise ValueError(
-                "Portfolio history data period length should be at least 12 months."
-            )
-        rolling_return = (self.ror + 1.0).rolling(
-            _MONTHS_PER_YEAR * years
-        ).apply(np.prod, raw=True) ** (1 / years) - 1.0
-        rolling_return.dropna(inplace=True)
-        return rolling_return
+        df = self._add_inflation()
+        if real:
+            df = self._make_real_return_time_series(df)
+        return Frame.get_rolling_fn(df, window=window, fn=Frame.get_cagr)
 
     def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
         """
@@ -464,13 +493,11 @@ class Portfolio(ListMaker):
             cr.drop(self.inflation, inplace=True)
         return cr
 
-    def get_rolling_cumulative_return(self, window: int = 12) -> pd.DataFrame:
+    def get_rolling_cumulative_return(self, window: int = 12, real: bool = False) -> pd.DataFrame:
         """
         Calculate rolling cumulative return.
 
         The cumulative return is the total change in the portfolio price.
-
-        TODO: add 'real' attribute
 
         Parameters
         ----------
@@ -483,10 +510,14 @@ class Portfolio(ListMaker):
         Returns
         -------
         DataFrame
-            Time series of rolling cumulative return.
+            Time series of rolling cumulative return and inflation (optional).
         """
+        ts = self._add_inflation()
+        if real:
+            ts = self._make_real_return_time_series(ts)
+        df = self._make_df_if_series(ts)
         return Frame.get_rolling_fn(
-            self.ror,
+            df,
             window=window,
             fn=Frame.get_cumulative_return,
             window_below_year=True,
@@ -700,8 +731,9 @@ class Portfolio(ListMaker):
         >>> x.get_var_historic(time_frame=12, level=1)
         0.24030006476701732
         """
-        rolling = self.get_rolling_cumulative_return(window=time_frame)
-        return Frame.get_var_historic(rolling, level)
+        # remove inflation column from rolling return
+        df = self.get_rolling_cumulative_return(window=time_frame).loc[:, [self.symbol]]
+        return Frame.get_var_historic(df, level).iloc[0]
 
     def get_cvar_historic(self, time_frame: int = 12, level=1) -> float:
         """
@@ -727,8 +759,9 @@ class Portfolio(ListMaker):
         >>> x.get_cvar_historic(time_frame=2, level=1)
         0.3566909250442616
         """
-        rolling = self.get_rolling_cumulative_return(window=time_frame)
-        return Frame.get_cvar_historic(rolling, level)
+        # remove inflation column form rolling return
+        df = self.get_rolling_cumulative_return(window=time_frame).loc[:, [self.symbol]]
+        return Frame.get_cvar_historic(df, level).iloc[0]
 
     @property
     def drawdowns(self) -> pd.Series:
@@ -1015,7 +1048,7 @@ class Portfolio(ListMaker):
         returns_dict = {}
         for percentile in percentiles:
             percentile_returns_list = [
-                self.get_rolling_cagr(years).quantile(percentile / 100)
+                self.get_rolling_cagr(years * 12).loc[:, self.symbol].quantile(percentile / 100)
                 for years in period_range
             ]
             returns_dict.update({percentile: percentile_returns_list})

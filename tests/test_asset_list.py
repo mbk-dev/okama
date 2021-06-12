@@ -314,7 +314,7 @@ class TestAssetList:
 
     def test_rolling_skewness_failing(self):
         with pytest.raises(
-            Exception, match=r"window size is less than data history depth"
+            Exception, match=r"window size is more than data history depth"
         ):
             self.asset_list.skewness_rolling(window=24)
 
