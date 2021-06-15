@@ -157,14 +157,15 @@ class Portfolio(ListMaker):
 
     @rebalancing_period.setter
     def rebalancing_period(self, rebalancing_period: str):
-        if rebalancing_period not in ['none', 'month', 'year']:
+        if rebalancing_period in {'none', 'month', 'year'}:
+            self._rebalancing_period = rebalancing_period
+        else:
             raise ValueError('rebalancing_period must be "year", "month" or "none"')
-        self._rebalancing_period = rebalancing_period
 
     @property
     def symbol(self) -> str:
         """
-        Return a text symbol naming the portfolio.
+        Return a text symbol of portfolio.
 
         Symbols are similar to tickers but have a namespace information:
 
@@ -182,6 +183,16 @@ class Portfolio(ListMaker):
 
     @property
     def name(self) -> str:
+        """
+        Return text name of portfolio.
+
+        For portfolio name is equal to symbol.
+
+        Returns
+        -------
+        str
+            Text name of the portfolio.
+        """
         return self.symbol
 
     @property
@@ -191,6 +202,7 @@ class Portfolio(ListMaker):
 
         Returns
         -------
+        Series
             Rate of return time series for portfolio.
         """
         if self.rebalancing_period == 'month':
@@ -331,7 +343,7 @@ class Portfolio(ListMaker):
         """
         return Float.annualize_return(self.mean_return_monthly)
 
-    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> Union[pd.Series, float]:
+    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
         """
         Calculate portfolio Compound Annual Growth Rate (CAGR) for a given trailing period.
 
@@ -352,7 +364,7 @@ class Portfolio(ListMaker):
 
         Returns
         -------
-        Series, Float
+        Series
             Portfolio CAGR value and annualized inflation (optional).
 
         Notes
@@ -367,10 +379,11 @@ class Portfolio(ListMaker):
 
         To get inflation adjusted return (real annualized return) add `real=True` option:
         >>> pf.get_cagr(period=5, real=True)
-        portfolio    0.11896
+        portfolio_5625.PF    0.121265
         dtype: float64
         """
-        df = self._add_inflation()
+        ts = self._add_inflation()
+        df = self._make_df_if_series(ts)
         dt0 = self.last_date
         if period is None:
             dt = self.first_date
@@ -458,18 +471,19 @@ class Portfolio(ListMaker):
 
         Examples
         --------
-        >>> x = ok.Portfolio(['BTC-USD.CC', 'LTC-USD.CC'], weights=[.8, .2], last_date='2021-03')
-        >>> x.get_cumulative_return(period=2)
-        portfolio    8.589341
-        USD.INFL     0.040569
+        >>> pf = ok.Portfolio(['BTC-USD.CC', 'LTC-USD.CC'], weights=[.8, .2], last_date='2021-03')
+        >>> pf.get_cumulative_return(period=2)
+        portfolio_6232.PF    9.920432
+        USD.INFL             0.042121
         dtype: float64
 
         To get inflation adjusted return (real annualized return) add `real=True` option:
-        >>> x.get_cumulative_return(period=2, real=True)
-        portfolio    8.215476
+        >>> pf.get_cumulative_return(period=2, real=True)
+        portfolio_6232.PF    9.39381
         dtype: float64
         """
-        df = self._add_inflation()
+        ts = self._add_inflation()
+        df = self._make_df_if_series(ts)
         dt0 = self.last_date
 
         if period is None:
@@ -524,9 +538,9 @@ class Portfolio(ListMaker):
         )
 
     @property
-    def annual_return_ts(self) -> pd.DataFrame:
+    def annual_return_ts(self) -> pd.Series:
         """
-         Calculate annual rate of return time series for each asset.
+        Calculate annual rate of return time series for portfolio.
 
         Rate of return is calculated for each calendar year.
 
@@ -539,20 +553,20 @@ class Portfolio(ListMaker):
         --------
         >>> pf = ok.Portfolio(['VOO.US', 'AGG.US'], weights=[0.4, 0.6])
         >>> pf.annual_return_ts
-                Date
-        2010    0.034360
-        2011    0.056662
-        2012    0.086612
-        2013    0.107179
+        Date
+        2010    0.034299
+        2011    0.056599
+        2012    0.086613
+        2013    0.107111
         2014    0.090420
         2015    0.010381
         2016    0.063620
-        2017    0.105383
+        2017    0.105450
         2018   -0.013262
         2019    0.174182
-        2020    0.124737
-        2021    0.004768
-        Freq: A-DEC, dtype: float64
+        2020    0.124668
+        2021    0.030430
+        Freq: A-DEC, Name: portfolio_5364.PF, dtype: float64
         """
         return Frame.get_annual_return_ts_from_monthly(self.ror)
 
@@ -583,11 +597,11 @@ class Portfolio(ListMaker):
         2020-11    0.076132
         2020-12    0.074743
         2021-01    0.073643
-        Freq: M, Name: LTM dividend yild, Length: 133, dtype: float64
+        Freq: M, Name: portfolio_8836.PF, Length: 133, dtype: float64
         """
         df = self.assets_dividend_yield @ self.weights_ts.T
         div_yield_series = pd.Series(np.diag(df), index=df.index)
-        div_yield_series.rename('LTM dividend yield', inplace=True)
+        div_yield_series.rename(self.symbol, inplace=True)
         return div_yield_series
 
     @property
@@ -820,7 +834,6 @@ class Portfolio(ListMaker):
         max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
         return max_period
 
-
     def describe(self, years: Tuple[int] = (1, 5, 10)) -> pd.DataFrame:
         """
         Generate descriptive statistics for the portfolio.
@@ -854,22 +867,12 @@ class Portfolio(ListMaker):
             get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
             drawdowns : Calculate drawdowns.
         """
-        # TODO: Remove rebalancing. All metrics should work with self.ror
         description = pd.DataFrame()
         dt0 = self.last_date
         df = self._add_inflation()
         # YTD return
-        year = dt0.year
-        ts = Rebalance.return_ts(
-            self.weights, self.assets_ror[str(year):], period="none"
-        )
-        value = Frame.get_cumulative_return(ts)
-        if hasattr(self, "inflation"):
-            ts = df[str(year):].loc[:, self.inflation]
-            inflation = Frame.get_cumulative_return(ts)
-            row = {"portfolio": value, self.inflation: inflation}
-        else:
-            row = {"portfolio": value}
+        ytd_return = self.get_cumulative_return(period="YTD")
+        row = ytd_return.to_dict()
         row.update(period="YTD", property="compound return")
         description = description.append(row, ignore_index=True)
         # CAGR for a list of periods
@@ -877,80 +880,56 @@ class Portfolio(ListMaker):
             for i in years:
                 dt = Date.subtract_years(dt0, i)
                 if dt >= self.first_date:
-                    ts = Rebalance.return_ts(
-                        self.weights, self.assets_ror[dt:], period="year"
-                    )
-                    value = Frame.get_cagr(ts)
-                    if hasattr(self, "inflation"):
-                        ts = df[dt:].loc[:, self.inflation]
-                        inflation = Frame.get_cagr(ts)
-                        row = {"portfolio": value, self.inflation: inflation}
-                    else:
-                        row = {"portfolio": value}
+                    row = self.get_cagr(period=i).to_dict()
                 else:
                     row = (
                         {x: None for x in df.columns}
                         if hasattr(self, "inflation")
-                        else {"portfolio": None}
+                        else {self.symbol: None}
                     )
                 row.update(period=f"{i} years", property="CAGR")
                 description = description.append(row, ignore_index=True)
             # CAGR for full period
-            ts = self.ror
-            value = Frame.get_cagr(ts)
-            if hasattr(self, "inflation"):
-                ts = df.loc[:, self.inflation]
-                full_inflation = Frame.get_cagr(
-                    ts
-                )  # full period inflation is required for following calc
-                row = {"portfolio": value, self.inflation: full_inflation}
-            else:
-                row = {"portfolio": value}
-            row.update(
-                period=f"{self.period_length} years",
-                property="CAGR",
-            )
+            row = self.get_cagr(period=None).to_dict()
+            row.update(period=self._pl_txt, property="CAGR",)
             description = description.append(row, ignore_index=True)
             # Dividend Yield
             value = self.dividend_yield.iloc[-1]
-            row = {"portfolio": value}
-            row.update(
-                period="LTM",
-                property=f"Dividend yield",
-            )
+            row = {self.symbol: value}
+            row.update(period="LTM", property=f"Dividend yield",)
             description = description.append(row, ignore_index=True)
         # risk (standard deviation)
-        row = {"portfolio": self.risk_annual}
+        row = {self.symbol: self.risk_annual}
         row.update(
-            period=f"{self.period_length} years", property="Risk"
+            period=self._pl_txt, property="Risk"
         )
         description = description.append(row, ignore_index=True)
         # CVAR
         if self.pl.years >= 1:
-            row = {"portfolio": self.get_cvar_historic()}
+            row = {self.symbol: self.get_cvar_historic()}
             row.update(
-                period=f"{self.period_length} years",
+                period=self._pl_txt,
                 property="CVAR",
             )
             description = description.append(row, ignore_index=True)
         # max drawdowns
-        row = {"portfolio": self.drawdowns.min()}
+        row = {self.symbol: self.drawdowns.min()}
         row.update(
-            period=f"{self.period_length} years",
+            period=self._pl_txt,
             property="Max drawdown",
         )
         description = description.append(row, ignore_index=True)
         # max drawdowns dates
-        row = {"portfolio": self.drawdowns.idxmin()}
+        row = {self.symbol: self.drawdowns.idxmin()}
         row.update(
-            period=f"{self.period_length} years",
+            period=self._pl_txt,
             property="Max drawdown date",
         )
         description = description.append(row, ignore_index=True)
         if hasattr(self, "inflation"):
             description.rename(columns={self.inflation: "inflation"}, inplace=True)
         description = Frame.change_columns_order(
-            description, ["property", "period", "portfolio"]
+            description, ["property", "period", self.symbol]
         )
         return description
 
@@ -1073,7 +1052,7 @@ class Portfolio(ListMaker):
         Returns:
             Dataframe of percentiles for period range from 1 to 'years'
         """
-        first_value = self.wealth_index["portfolio"].values[-1]
+        first_value = self.wealth_index[self.symbol].values[-1]
         percentile_returns = self.percentile_from_history(
             years=years, percentiles=percentiles
         )
@@ -1147,7 +1126,7 @@ class Portfolio(ListMaker):
         years: int = 1,
         percentiles: List[int] = [10, 50, 90],
         n: int = 10000,
-    ) -> pd.Series:
+    ) -> dict:
         """
         Calculate percentiles for forecasted CAGR distribution.
         CAGR is calculated for each of N future random returns time series.
@@ -1196,7 +1175,7 @@ class Portfolio(ListMaker):
         else:
             raise ValueError('distr should be "norm", "lognorm" or "hist".')
         if today_value:
-            modifier = today_value / self.wealth_index["portfolio"].values[-1]
+            modifier = today_value / self.wealth_index[self.symbol].values[-1]
             results.update((x, y * modifier) for x, y in results.items())
         return results
 
@@ -1222,7 +1201,7 @@ class Portfolio(ListMaker):
         wealth = self.wealth_index
         x1 = self.last_date
         x2 = x1.replace(year=x1.year + years)
-        y_start_value = wealth["portfolio"].iloc[-1]
+        y_start_value = wealth[self.symbol].iloc[-1]
         y_end_values = self.forecast_wealth(
             distr=distr, years=years, percentiles=percentiles, n=n
         )
@@ -1234,7 +1213,7 @@ class Portfolio(ListMaker):
         fig, ax = plt.subplots(figsize=figsize)
         ax.plot(
             wealth.index.to_timestamp(),
-            wealth["portfolio"],
+            wealth[self.symbol],
             linewidth=1,
             label="Historical data",
         )
@@ -1267,7 +1246,7 @@ class Portfolio(ListMaker):
         """
         s1 = self.wealth_index
         s2 = self.forecast_monte_carlo_wealth_indexes(distr=distr, years=years, n=n)
-        s1["portfolio"].plot(legend=None, figsize=figsize)
+        s1[self.symbol].plot(legend=None, figsize=figsize)
         for n in s2:
             s2[n].plot(legend=None)
 

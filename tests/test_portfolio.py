@@ -96,11 +96,15 @@ def test_recovery_period(portfolio_not_rebalanced):
     assert portfolio_not_rebalanced.recovery_period == 12
 
 
-def test_get_cagr(portfolio_rebalanced_month):
-    values = pd.Series({"portfolio": 0.1303543, "RUB.INFL": 0.05548082428015655})
+def test_get_cagr(portfolio_rebalanced_month, portfolio_no_inflation):
+    values = pd.Series({"pf1.PF": 0.1303543, "RUB.INFL": 0.05548082428015655})
     actual = portfolio_rebalanced_month.get_cagr()
-    actual.index = ["portfolio", "RUB.INFL"]
     assert_series_equal(actual, values, rtol=1e-4)
+    # no inflation
+    values = pd.Series({"pf1.PF": 0.1303543})
+    actual = portfolio_no_inflation.get_cagr()
+    assert_series_equal(actual, values, rtol=1e-4)
+    # failing if wrong period
     with pytest.raises(TypeError):
         portfolio_rebalanced_month.get_cagr(period="one year")
 
@@ -215,6 +219,13 @@ def test_forecast_monte_carlo_norm_wealth_indexes(portfolio_rebalanced_month):
 def test_forecast_monte_carlo_percentile_wealth_indexes(portfolio_rebalanced_month):
     dic = portfolio_rebalanced_month.forecast_wealth(years=1, n=100, percentiles=[50])
     assert dic[50] == approx(2121, rel=1e-1)
+
+
+def test_forecast_monte_carlo_cagr(portfolio_rebalanced_month):
+    dic = portfolio_rebalanced_month.forecast_monte_carlo_cagr(years=2, distr='lognorm', n=100, percentiles=[50])
+    assert dic[50] == approx(0.12, rel=1e-1)
+    with pytest.raises(ValueError):
+        portfolio_rebalanced_month.forecast_monte_carlo_cagr(years=10, distr='lognorm', n=100, percentiles=[50])
 
 
 def test_skewness(portfolio_rebalanced_month):

@@ -170,7 +170,10 @@ class Frame:
         """
         Annual Rate of Returns time series from monthly data.
         """
-        return ror_monthly.resample("A").apply(lambda x: np.prod(x + 1.0) - 1)
+        ts = ror_monthly.resample("A").apply(lambda x: np.prod(x + 1.0) - 1)
+        if isinstance(ts, pd.Series):
+            ts.rename(ror_monthly.name, inplace=True)
+        return ts
 
     @staticmethod
     def get_wealth_indexes(
