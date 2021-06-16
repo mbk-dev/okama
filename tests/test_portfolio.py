@@ -223,7 +223,7 @@ def test_forecast_monte_carlo_percentile_wealth_indexes(portfolio_rebalanced_mon
 
 def test_forecast_monte_carlo_cagr(portfolio_rebalanced_month):
     dic = portfolio_rebalanced_month.forecast_monte_carlo_cagr(years=2, distr='lognorm', n=100, percentiles=[50])
-    assert dic[50] == approx(0.12, rel=1e-1)
+    assert dic[50] == approx(0.12, abs=5e-2)
     with pytest.raises(ValueError):
         portfolio_rebalanced_month.forecast_monte_carlo_cagr(years=10, distr='lognorm', n=100, percentiles=[50])
 
