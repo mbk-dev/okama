@@ -34,7 +34,7 @@ class ListMaker(ABC):
             self.assets_first_dates,
             self.assets_last_dates,
             self.assets_ror,
-        ) = self._make_list(ls=self.assets).values()
+        ) = self._make_list(ls=self._list_of_asset_like_objects).values()
         if inflation:
             self.inflation: str = f"{ccy}.INFL"
             self._inflation_instance: Inflation = Inflation(
@@ -323,7 +323,14 @@ class ListMaker(ABC):
         return self._dividend_yield
 
     @property
-    def assets(self):
+    def _list_of_asset_like_objects(self) -> List[Union[str, Type]]:
+        """
+        Return list which may include tickers or asset like objects (Portfolio, Asset).
+
+        Returns
+        -------
+        list
+        """
         assets = [default_ticker] if not self._assets else self._assets
         if not isinstance(assets, list):
             raise ValueError("Assets must be a list.")
@@ -344,7 +351,7 @@ class ListMaker(ABC):
         list of str
             List of symbols included in the Asset List.
         """
-        return self._define_symbol_list(self.assets)
+        return self._define_symbol_list(self._list_of_asset_like_objects)
 
     @property
     def tickers(self) -> List[str]:

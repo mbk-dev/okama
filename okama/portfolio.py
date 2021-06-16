@@ -152,7 +152,20 @@ class Portfolio(ListMaker):
 
     @property
     def rebalancing_period(self) -> str:
-        # TODO: make description
+        """
+        Return rebalancing period of the portfolio.
+
+        Rebalancing is the process by which an investor restores their portfolio to its target allocation
+        buy selling and buying assets. After rebalancing all the assets have original weights.
+
+        Rebalancing period (rebalancing frequency) is predetermined time intervals when
+        the investor rebalances the portfolio.
+
+        Returns
+        -------
+        str
+            Portfolio rebalancing period.
+        """
         return self._rebalancing_period
 
     @rebalancing_period.setter

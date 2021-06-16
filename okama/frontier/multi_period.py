@@ -6,12 +6,12 @@ import pandas as pd
 
 from scipy.optimize import minimize
 
+from .. import AssetList
 from ..common.helpers import Float, Frame, Rebalance
-from ..common.make_asset_list import ListMaker
 from ..settings import _MONTHS_PER_YEAR
 
 
-class EfficientFrontierReb(ListMaker):
+class EfficientFrontierReb(AssetList):
     """
     Efficient Frontier (EF) for rebalanced portfolios.
     Rebalancing periods could be:

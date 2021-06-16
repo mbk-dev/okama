@@ -5,11 +5,11 @@ import numpy as np
 
 from scipy.optimize import minimize
 
+from .. import AssetList
 from ..common.helpers import Float, Frame
-from ..common.make_asset_list import ListMaker
 
 
-class EfficientFrontier(ListMaker):
+class EfficientFrontier(AssetList):
     """
     Efficient Frontier (EF) with classic MVA implementation.
     n - is a number of points in the EF.
