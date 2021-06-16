@@ -121,7 +121,7 @@ Plot the dividend yield of the portfolio (adjusted to the base currency).
 ```python
 pf.dividend_yield.plot()
 ```
-![](../images/images/readmi05.jpg?raw=true) 
+![](../images/images/readmi05.png?raw=true) 
 
 ### 3. Draw an Efficient Frontier for 2 popular ETF: SPY and GLD
 ```python
