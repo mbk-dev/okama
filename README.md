@@ -89,7 +89,7 @@ The latest development version can be installed directly from GitHub:
 import okama as ok
 
 x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], ccy='USD')
-print(x)
+x  # all examples are for Jupyter Notebook/iPython. For raw Python interpreter use 'print(x)' instead.
 
 ```
 ![](../images/images/readmi01.jpg?raw=true) 
@@ -112,7 +112,7 @@ x.wealth_indexes.plot()
 weights = [0.3, 0.2, 0.2, 0.2, 0.1]
 assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
 pf = ok.Portfolio(assets, weights=weights, ccy='EUR')
-print(pf.table)
+pf.table
 ```
 ![](../images/images/readmi04.jpg?raw=true) 
 
