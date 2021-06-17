@@ -20,5 +20,5 @@ Examples for "backtesting" the distribution of portfolio returns on the historic
    Portfolio performance can be tested according to Jarque-Bera, Kolmogorov-Smirnov 
    tests for normal, lognormal and other types of probability distributions.
    
-6. [forecasting](https://github.com/mbk-dev/okama/blob/master/notebooks/06%20forecasting.ipynb)
+6. [forecasting](https://github.com/mbk-dev/okama/blob/master/examples/06%20forecasting.ipynb)
 Examples of forecasting investment portfolio performance according to normal, lognormal or historical distribution.
