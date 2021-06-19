@@ -1,4 +1,6 @@
 import okama as ok
 
-x = ok.Portfolio()
-print(x)
+ls2 = ['SPY.US', 'BND.US']
+curr = 'USD'
+two_assets = ok.EfficientFrontier(assets=ls2, ccy=curr, n_points=100)
+print(two_assets)

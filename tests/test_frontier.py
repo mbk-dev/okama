@@ -4,12 +4,13 @@ from pytest import mark
 
 import numpy as np
 from numpy.testing import assert_allclose
+import pandas as pd
 
 import okama as ok
 
 
 @mark.frontier
-def test_init_efficient_frontier():
+def test_init_efficient_frontier_failing():
     with pytest.raises(Exception, match=r'The number of symbols cannot be less than two'):
         ok.EfficientFrontier(assets=['MCFTR.INDX'])
 
@@ -18,6 +19,20 @@ def test_init_efficient_frontier():
 def test_bounds_setter_failing(init_efficient_frontier):
     with pytest.raises(Exception, match=r'The number of symbols \(2\) and the length of bounds \(3\) should be equal.'):
         init_efficient_frontier.bounds = ((0, 1.), (0.5, 1.), (0, 0.5))
+
+
+def test_repr(init_efficient_frontier):
+    value = pd.Series(dict(
+        symbols="[SPY.US, SBMX.MOEX]",
+        currency="RUB",
+        first_date="2018-11",
+        last_date="2020-02",
+        period_length="1 years, 4 months",
+        bounds="((0.0, 1.0), (0.0, 1.0))",
+        inflation="RUB.INFL",
+        n_points="2",
+    ))
+    assert repr(init_efficient_frontier) == repr(value)
 
 
 @mark.frontier

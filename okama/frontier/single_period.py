@@ -49,12 +49,13 @@ class EfficientFrontier(AssetList):
     def __repr__(self):
         dic = {
             'symbols': self.symbols,
-            'currency': self.currency.ticker,
-            'first date': self.first_date.strftime("%Y-%m"),
+            'currency': self._currency.ticker,
+            'first_date': self.first_date.strftime("%Y-%m"),
             'last_date': self.last_date.strftime("%Y-%m"),
-            'period length': self._pl_txt,
+            'period_length': self._pl_txt,
             'bounds': self.bounds,
             'inflation': self.inflation if hasattr(self, 'inflation') else 'None',
+            'n_points': self.n_points,
         }
         return repr(pd.Series(dic))
 
