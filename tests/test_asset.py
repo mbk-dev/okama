@@ -1,4 +1,5 @@
 from pytest import mark
+from pytest import approx
 import pandas as pd
 
 
@@ -18,7 +19,7 @@ def test_close(init_asset_spy):
 
 
 def test_adj_close(init_asset_spy):
-    assert init_asset_spy.adj_close.loc['2000-01-20'] == 97.3802
+    assert init_asset_spy.adj_close.loc['2000-01-20'] == approx(97.0629, rel=1e-2)
 
 
 def test_price(init_asset_spy):

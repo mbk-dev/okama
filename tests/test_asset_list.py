@@ -47,7 +47,8 @@ class TestAssetList:
         assert_frame_equal(self.asset_list_lt.assets_ror, asset_list_lt_sample)
         assert_frame_equal(self.currencies.assets_ror, currencies_sample)
         assert_frame_equal(self.real_estate.assets_ror, real_estate_sample)
-        assert_frame_equal(self.spy.assets_ror, spy_sample)
+        # SPY adj_close and ror is changing over time
+        assert_frame_equal(self.spy.assets_ror, spy_sample, rtol=1e-2)
 
     def test_currencies(self):
         assert self.currencies.pl.years == 1
