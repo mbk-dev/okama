@@ -11,6 +11,15 @@ import okama as ok
 from .conftest import data_folder
 
 
+def test_symbol_failing(portfolio_rebalanced_year):
+    with pytest.raises(ValueError, match='portfolio symbol must be a string ending with ".PF" namespace.'):
+        portfolio_rebalanced_year.symbol = 1
+    with pytest.raises(ValueError, match='portfolio symbol must end with ".PF"'):
+        portfolio_rebalanced_year.symbol = 'Not_a_good_symbol_for_portfolio.US'
+    with pytest.raises(ValueError, match='portfolio text symbol should not have whitespace characters.'):
+        portfolio_rebalanced_year.symbol = 'Not a good symbol for portfolio.PF'
+
+
 def test_ror_rebalance(
     portfolio_rebalanced_year, portfolio_not_rebalanced
 ):

@@ -1,6 +1,5 @@
 import okama as ok
 
-ls2 = ['SPY.US', 'BND.US']
-curr = 'USD'
-two_assets = ok.EfficientFrontier(assets=ls2, ccy=curr, n_points=100)
-print(two_assets)
+rf3 = ok.Portfolio(['BND.US', 'VTI.US', 'VXUS.US'], weights=[0.40, 0.40, 0.20], rebalancing_period='year')
+rf3.symbol = '1 1.PF'
+print(rf3)

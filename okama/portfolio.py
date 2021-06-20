@@ -156,7 +156,7 @@ class Portfolio(ListMaker):
         Return rebalancing period of the portfolio.
 
         Rebalancing is the process by which an investor restores their portfolio to its target allocation
-        buy selling and buying assets. After rebalancing all the assets have original weights.
+        by selling and buying assets. After rebalancing all the assets have original weights.
 
         Rebalancing period (rebalancing frequency) is predetermined time intervals when
         the investor rebalances the portfolio.
@@ -193,6 +193,19 @@ class Portfolio(ListMaker):
             Text symbol of the portfolio.
         """
         return self._symbol
+
+    @symbol.setter
+    def symbol(self, text_symbol: str):
+        if isinstance(text_symbol, str) and '.' in text_symbol:
+            if " " in text_symbol:
+                raise ValueError('portfolio text symbol should not have whitespace characters.')
+            namespace = text_symbol.split(".", 1)[-1]
+            if namespace == 'PF':
+                self._symbol = text_symbol
+            else:
+                raise ValueError('portfolio symbol must end with ".PF"')
+        else:
+            raise ValueError('portfolio symbol must be a string ending with ".PF" namespace.')
 
     @property
     def name(self) -> str:
