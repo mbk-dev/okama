@@ -231,7 +231,7 @@ class AssetList(ListMaker):
             s1 = s.where(s == 0).notnull().astype(int)
             s1_1 = s.where(s == 0).isnull().astype(int).cumsum()
             s2 = s1.groupby(s1_1).cumsum()
-            # Max recovery period date should not be in the border (means it's not recovered)
+            # Max recovery period date should not be in the border (it's not recovered)
             max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
             ser = pd.Series(max_period, index=[name])
             max_recovery_periods = max_recovery_periods.append(ser)
@@ -633,7 +633,7 @@ class AssetList(ListMaker):
         DataFrame
             Annual dividends time series for each asset.
         """
-        return self._get_dividends().resample("Y").sum()
+        return self._get_assets_dividends().resample("Y").sum()
 
     @property
     def dividend_growing_years(self) -> pd.DataFrame:

@@ -20,6 +20,11 @@ def test_symbol_failing(portfolio_rebalanced_year):
         portfolio_rebalanced_year.symbol = 'Not a good symbol for portfolio.PF'
 
 
+def test_symbol_setter(portfolio_rebalanced_year):
+    portfolio_rebalanced_year.symbol = 'portfolio_1.PF'
+    assert portfolio_rebalanced_year.symbol == 'portfolio_1.PF'
+
+
 def test_ror_rebalance(
     portfolio_rebalanced_year, portfolio_not_rebalanced
 ):
@@ -66,6 +71,24 @@ def test_real_mean_return(portfolio_rebalanced_month):
 )
 def test_get_rolling_cumulative_return(portfolio_rebalanced_month, window, real, expected):
     assert portfolio_rebalanced_month.get_rolling_cumulative_return(window=window, real=real).iloc[-1, 0] == approx(expected, rel=1e-2)
+
+
+def test_assets_close_monthly(portfolio_not_rebalanced):
+    assert portfolio_not_rebalanced.assets_close_monthly.iloc[-1, 0] == 63.0359  # RUB.FX
+    assert portfolio_not_rebalanced.assets_close_monthly.iloc[-1, 1] == 5245.6  # MCFTR.INDX
+
+
+def test_close_monthly(portfolio_not_rebalanced):
+    assert portfolio_not_rebalanced.close_monthly.iloc[-1] == approx(2022, rel=1e-2)
+
+
+def test_number_of_securities(portfolio_not_rebalanced):
+    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 0] == approx(8.88, rel=1e-2)  # RUB.FX
+    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 1] == approx(0.2787, abs=1e-2)  # MCFTR.INDX
+
+
+def test_dividends(portfolio_dividends):
+    assert portfolio_dividends.dividends.iloc[-1] == approx(13.90, rel=1e-2)
 
 
 def test_dividend_yield(portfolio_dividends):
@@ -126,7 +149,7 @@ cagr_testdata1 = [
 
 @mark.parametrize("input_data, expected", cagr_testdata1, ids=["1 year", "full period"],)
 def test_get_cagr_real(portfolio_rebalanced_month, input_data, expected):
-    assert portfolio_rebalanced_month.get_cagr(period=input_data, real=True).values[0] == approx(expected, rel=1e-2)
+    assert portfolio_rebalanced_month.get_cagr(period=input_data, real=True).values[0] == approx(expected, abs=1e-2)
 
 
 def test_get_cagr_real_no_inflation_exception(portfolio_no_inflation):
@@ -136,7 +159,7 @@ def test_get_cagr_real_no_inflation_exception(portfolio_no_inflation):
 
 @mark.parametrize(
     "period, real, expected",
-    [("YTD", False, 0.01505), (1, False, 0.12269), (2, True, 0.1465)],
+    [("YTD", False, 0.01505), (1, False, 0.12269), (2, True, 0.1381)],
 )
 def test_cumulative_return(portfolio_rebalanced_month, period, real, expected):
     assert portfolio_rebalanced_month.get_cumulative_return(

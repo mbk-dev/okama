@@ -499,7 +499,7 @@ class Rebalance:
             weights: list, ror: pd.DataFrame, *, period: str = "year"
     ) -> pd.DataFrame:
         """
-        Calculate assets weights time series for rebalanced portfolio.
+        Calculate assets weights monthly time series for rebalanced portfolio.
 
         Parameters
         ----------

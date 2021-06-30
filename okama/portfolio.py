@@ -597,6 +597,79 @@ class Portfolio(ListMaker):
         return Frame.get_annual_return_ts_from_monthly(self.ror)
 
     @property
+    def assets_close_monthly(self) -> pd.DataFrame:
+        """
+        Show assets monthly close time series adjusted to the base currency.
+
+        Returns
+        -------
+        DataFrame
+            Assets monthly close time series adjusted to the base currency.
+        """
+        assets_close_monthly = pd.DataFrame(dtype=float)
+        for i, x in enumerate(self.asset_obj_dict.values()):
+            if i == 0:  # required to use pd.concat below (df should not be empty).
+                assets_close_monthly = x.close_monthly if x.currency == self.currency else self._adjust_price_to_currency_monthly(x.close_monthly, x.currency)
+                assets_close_monthly.rename(x.symbol, inplace=True)
+            else:
+                new = x.close_monthly if x.currency == self.currency else self._adjust_price_to_currency_monthly(x.close_monthly, x.currency)
+                new.rename(x.symbol, inplace=True)
+                assets_close_monthly = pd.concat([assets_close_monthly, new], axis=1, join="inner", copy="false")
+        if isinstance(assets_close_monthly, pd.Series):
+            assets_close_monthly = assets_close_monthly.to_frame()
+        assets_close_monthly = assets_close_monthly[self.first_date: self.last_date]
+        return assets_close_monthly
+
+    @property
+    def close_monthly(self) -> pd.Series:
+        """
+        Portfolio size monthly time series.
+
+        Portfolio size is shown in base currency units. It is similar to the close value of an asset.
+        Initial portfolio value is equal to 1000 units of base currency.
+
+        Returns
+        -------
+        pd.Series
+            Monthly portfolio size time series.
+        """
+        return self.wealth_index.iloc[:, 0]
+
+    @property
+    def number_of_securities(self) -> pd.DataFrame:
+        """
+        Calculate the number of securities monthly time series for the portfolio assets.
+
+        Number of securities is changing over time as the dividends are reinvested.
+        Portfolio rebalancing also affects the number of securities.
+
+        Initial number of securities depends on the portfolio size in base currency (1000 units).
+
+        Returns
+        -------
+        DataFrame
+            Number of securities monthly time series for the portfolio assets.
+        """
+        return self.weights_ts.mul(self.wealth_index.iloc[:, 0], axis=0).div(self.assets_close_monthly, axis=0)
+
+    @property
+    def dividends(self) -> pd.Series:
+        """
+        Calculate portfolio dividends monthly time series.
+
+        Portfolio dividends are obtained by summing asset dividends adjusted to the base currency.
+        Dividends size depends on the portfolio value and number of securities.
+
+        Returns
+        -------
+        Series
+            Portfolio dividends monthly time series.
+        """
+        s = (self._get_assets_dividends() * self.number_of_securities).sum(axis=1)
+        s.rename(self.symbol, inplace=True)
+        return s
+
+    @property
     def dividend_yield(self) -> pd.Series:
         """
         Calculate last twelve months (LTM) dividend yield time series (monthly) for the portfolio.

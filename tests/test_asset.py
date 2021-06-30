@@ -14,8 +14,12 @@ def test_get_symbol_data(init_asset_spy):
     assert init_asset_spy.first_date == pd.to_datetime("1993-02")
 
 
-def test_close(init_asset_spy):
-    assert init_asset_spy.close.loc['2000-01-20'] == 144.75
+def test_close_daily(init_asset_spy):
+    assert init_asset_spy.close_daily.loc['2000-01-20'] == 144.75
+
+
+def test_close_monthly(init_asset_spy):
+    assert init_asset_spy.close_monthly.loc['2000-01'] == 139.5625
 
 
 def test_adj_close(init_asset_spy):

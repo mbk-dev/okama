@@ -65,7 +65,7 @@ class ListMaker(ABC):
         )
         self._pl_txt = f"{self.pl.years} years, {self.pl.months} months"
         self._dividend_yield: pd.DataFrame = pd.DataFrame(dtype=float)
-        self._dividends_ts: pd.DataFrame = pd.DataFrame(dtype=float)
+        self._assets_dividends_ts: pd.DataFrame = pd.DataFrame(dtype=float)
 
     @abstractmethod
     def __repr__(self):
@@ -150,15 +150,12 @@ class ListMaker(ABC):
         x.rename(returns.name, inplace=True)
         return x
 
-    def _adjust_price_to_currency(self, price: pd.Series, asset_currency: str) -> pd.Series:
+    def _adjust_price_to_currency_monthly(self, price: pd.Series, asset_currency: str) -> pd.Series:
         """
-        Adjust daily time series of dividends or close values to a base currency.
+        Adjust monthly time series of dividends or close values to a base currency.
         """
         ccy_symbol = f"{asset_currency}{self.currency}.FX"
-        currency_rate = Asset(ccy_symbol).close.to_frame()
-        # fill missing dates and data in the currency time series
-        idx = pd.period_range(currency_rate.index[0], currency_rate.index[-1], freq="D")
-        currency_rate = currency_rate.reindex(idx, method="pad")
+        currency_rate = Asset(ccy_symbol).close_monthly.to_frame()
         merged = price.to_frame().join(currency_rate, how="left")
         if merged.isnull().values.any():
             # can happen if the first value is missing
@@ -202,41 +199,41 @@ class ListMaker(ABC):
                 f"'period' ({period}) is beyond historical data range ({self.period_length})."
             )
 
-    def _get_asset_dividends(
+    def _get_single_asset_dividends(
         self, tick: str, remove_forecast: bool = True
     ) -> pd.Series:
         """
-        Get dividend time series for a single symbol.
+        Get monthly dividend time series for a single symbol and adjust to the currency.
         """
-        first_period = pd.Period(self.first_date, freq="M")
-        first_day = first_period.to_timestamp(how="Start")
-        last_period = pd.Period(self.last_date, freq="M")
-        last_day = last_period.to_timestamp(how="End")
+        # first_period = pd.Period(self.first_date, freq="M")
+        # first_day = first_period.to_timestamp(how="Start")
+        # last_period = pd.Period(self.last_date, freq="M")
+        # last_day = last_period.to_timestamp(how="End")
         asset = self.asset_obj_dict[tick]
-        s = asset.dividends[first_day:last_day]
+        s = asset.dividends[self.first_date: self.last_date]
         if asset.currency != self.currency:
-            s = self._adjust_price_to_currency(s, asset.currency)
+            s = self._adjust_price_to_currency_monthly(s, asset.currency)
         if remove_forecast:
-            s = s[: pd.Period.now(freq="D")]
+            s = s[: pd.Period.now(freq="M")]
         # Create time series with zeros to pad the empty spaces in dividends time series
-        index = pd.date_range(start=first_day, end=last_day, freq="D")
-        period = index.to_period("D")
+        index = pd.date_range(start=self.first_date, end=self.last_date, freq="M")
+        period = index.to_period("M")
         pad_s = pd.Series(data=0, index=period)
         return s.add(pad_s, fill_value=0)
 
-    def _get_dividends(self, remove_forecast=True) -> pd.DataFrame:
+    def _get_assets_dividends(self, remove_forecast=True) -> pd.DataFrame:
         """
-        Get dividend time series for all assets.
+        Get monthly dividend time series for all assets.
 
         If `remove_forecast=True` all forecasted (future) data is removed from the time series.
         """
-        if self._dividends_ts.empty:
+        if self._assets_dividends_ts.empty:
             dic = {}
             for tick in self.symbols:
-                s = self._get_asset_dividends(tick, remove_forecast=remove_forecast)
+                s = self._get_single_asset_dividends(tick, remove_forecast=remove_forecast)
                 dic.update({tick: s})
-            self._dividends_ts = pd.DataFrame(dic)
-        return self._dividends_ts
+            self._assets_dividends_ts = pd.DataFrame(dic)
+        return self._assets_dividends_ts
 
     def _make_real_return_time_series(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -287,26 +284,17 @@ class ListMaker(ABC):
         """
         if self._dividend_yield.empty:
             frame = {}
-            df = self._get_dividends(remove_forecast=True)
+            df = self._get_assets_dividends(remove_forecast=True)
             for tick in self.symbols:
-                # Get dividends time series
-                div = df[tick]
-                # Get close (not adjusted) values time series.
-                # If the last_date month is current month live price of assets is used.
-                if div.sum() != 0:
-                    div_monthly = div.resample("M").sum()
+                div_monthly = df[tick]
+                if div_monthly.sum() != 0:
                     asset = self.asset_obj_dict[tick]
-                    first_period = pd.Period(self.first_date, freq="M")
-                    first_day = first_period.to_timestamp(how="Start")
-                    last_period = pd.Period(self.last_date, freq="M")
-                    last_day = last_period.to_timestamp(how="End")
-                    price_daily_ts = asset.close.loc[first_day: last_day]
+                    price_monthly_ts = asset.close_monthly.loc[self.first_date: self.last_date]
                     if asset.currency != self.currency:
-                        price_daily_ts = self._adjust_price_to_currency(price_daily_ts, asset.currency)
-                    price_monthly_ts = Frame.change_period_to_month(price_daily_ts)
+                        price_monthly_ts = self._adjust_price_to_currency_monthly(price_monthly_ts, asset.currency)
                 else:
                     # skipping prices if no dividends
-                    div_yield = div.resample("M").last()
+                    div_yield = div_monthly
                     frame.update({tick: div_yield})
                     continue
                 # Get dividend yield time series

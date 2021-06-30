@@ -25,9 +25,14 @@ def assets_from_db():
 
 
 @pytest.fixture(scope='class')
-def _init_asset_list(request, portfolio_short_history, assets_from_db) -> None:
+def _init_asset_list(request, portfolio_short_history, portfolio_dividends, assets_from_db) -> None:
     request.cls.asset_list_with_portfolio = ok.AssetList(
         assets=[portfolio_short_history] + assets_from_db,
+        ccy='USD',
+    )
+
+    request.cls.asset_list_with_portfolio_dividends = ok.AssetList(
+        assets=[portfolio_dividends] + assets_from_db,
         ccy='USD',
     )
 
@@ -46,7 +51,7 @@ def _init_asset_list(request, portfolio_short_history, assets_from_db) -> None:
 
 
 # Portfolio
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='package')
 def init_portfolio_values():
     return dict(
         assets=['RUB.FX', 'MCFTR.INDX'],
@@ -59,26 +64,26 @@ def init_portfolio_values():
     )
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='package')
 def portfolio_rebalanced_year(init_portfolio_values):
     return ok.Portfolio(**init_portfolio_values)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='package')
 def portfolio_not_rebalanced(init_portfolio_values):
     _portfolio_not_rebalanced = deepcopy(init_portfolio_values)
     _portfolio_not_rebalanced['rebalancing_period'] = 'none'
     return ok.Portfolio(**_portfolio_not_rebalanced)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='package')
 def portfolio_rebalanced_month(init_portfolio_values):
     _portfolio_rebalanced_month = deepcopy(init_portfolio_values)
     _portfolio_rebalanced_month['rebalancing_period'] = 'month'
     return ok.Portfolio(**_portfolio_rebalanced_month)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='package')
 def portfolio_no_inflation(init_portfolio_values):
     _portfolio_no_inflation = deepcopy(init_portfolio_values)
     _portfolio_no_inflation['inflation'] = False
@@ -86,14 +91,14 @@ def portfolio_no_inflation(init_portfolio_values):
     return ok.Portfolio(**_portfolio_no_inflation)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='package')
 def portfolio_short_history(init_portfolio_values):
     _portfolio_short_history = deepcopy(init_portfolio_values)
     _portfolio_short_history['first_date'] = '2019-02'
     return ok.Portfolio(**_portfolio_short_history)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='package')
 def portfolio_dividends(init_portfolio_values):
     _portfolio_dividends = deepcopy(init_portfolio_values)
     _portfolio_dividends['assets'] = ['SBER.MOEX', 'T.US', 'GNS.LSE']

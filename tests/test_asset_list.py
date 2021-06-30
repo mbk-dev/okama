@@ -139,14 +139,14 @@ class TestAssetList:
         )
 
     cagr_testdata2 = [
-        (1, -0.0853, 0.2592),
+        (1, -0.0868, 0.2592),
         (None, -0.1285, 0.3084),
     ]
 
     @mark.parametrize("input_data,expected1,expected2", cagr_testdata2, ids=["1 year", "full period"],)
     def test_get_cagr_real(self, input_data, expected1, expected2):
-        assert self.asset_list.get_cagr(period=input_data, real=True)["RUB.FX"] == approx(expected1, rel=1e-2)
-        assert self.asset_list.get_cagr(period=input_data, real=True)["MCFTR.INDX"] == approx(expected2, rel=1e-2)
+        assert self.asset_list.get_cagr(period=input_data, real=True)["RUB.FX"] == approx(expected1, abs=1e-2)
+        assert self.asset_list.get_cagr(period=input_data, real=True)["MCFTR.INDX"] == approx(expected2, abs=1e-2)
 
     def test_get_cagr_value_error(self):
         with pytest.raises(ValueError):
@@ -202,9 +202,9 @@ class TestAssetList:
         ] == approx(expected3, rel=1e-2)
 
     cumulative_testdata2 = [
-        ("YTD", -0.0544, -0.0605),
-        (1, -0.1319, 0.1951),
-        (None, -0.1852, 0.2623),
+        ("YTD", -0.0614, -0.0674),
+        (1, -0.1383, 0.1863),
+        (None, -0.1912, 0.2530),
     ]
 
     @mark.parametrize(
@@ -213,8 +213,8 @@ class TestAssetList:
         ids=["YTD", "1 year", "full period"],
     )
     def test_get_cumulative_return_real(self, input_data, expected1, expected2):
-        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["RUB.FX"] == approx(expected1, rel=1e-2)
-        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["MCFTR.INDX"] == approx(expected2, rel=1e-2)
+        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["RUB.FX"] == approx(expected1, abs=1e-3)
+        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["MCFTR.INDX"] == approx(expected2, abs=1e-3)
 
     def test_get_cumulative_return_value_error(self):
         with pytest.raises(ValueError):
@@ -253,9 +253,10 @@ class TestAssetList:
         assert_frame_equal(description, description_sample)
 
     def test_dividend_yield(self):
-        assert self.spy.assets_dividend_yield.iloc[-1, 0] == approx(0.0125, rel=1e-2)
-        assert self.spy_rub.assets_dividend_yield.iloc[-1, 0] == approx(0.01197, rel=1e-2)
+        assert self.spy.assets_dividend_yield.iloc[-1, 0] == approx(0.0125, abs=1e-3)
+        assert self.spy_rub.assets_dividend_yield.iloc[-1, 0] == approx(0.01197, abs=1e-3)
         assert self.asset_list.assets_dividend_yield.iloc[:, 0].sum() == 0
+        assert self.asset_list_with_portfolio_dividends.assets_dividend_yield.iloc[-1, 0] == approx(0.0394, abs=1e-3)
 
     def test_dividends_annual(self):
         assert self.spy.dividends_annual.iloc[-2, 0] == approx(

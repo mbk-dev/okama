@@ -3,6 +3,7 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 
+from .common.helpers import Frame
 from .settings import default_ticker
 from .api.data_queries import QueryData
 from .api.namespaces import get_assets_namespaces
@@ -107,7 +108,7 @@ class Asset:
         return QueryData.get_live_price(self.symbol)
 
     @property
-    def close(self):
+    def close_daily(self):
         """
         Return close price time series historical daily data.
 
@@ -117,6 +118,18 @@ class Asset:
             Time series of close price historical data (daily).
         """
         return QueryData.get_close(self.symbol, period='D')
+
+    @property
+    def close_monthly(self):
+        """
+        Return close price time series historical monthly data.
+
+        Returns
+        -------
+        Series
+            Time series of close price historical data (monthly).
+        """
+        return Frame.change_period_to_month(self.close_daily)
 
     @property
     def adj_close(self):
@@ -137,12 +150,12 @@ class Asset:
     @property
     def dividends(self) -> pd.Series:
         """
-        Return dividends time series historical daily data.
+        Return dividends time series historical monthly data.
 
         Returns
         -------
         Series
-            Time series of dividends historical data (daily).
+            Time series of dividends historical data (monthly).
 
         Examples
         --------
@@ -169,7 +182,7 @@ class Asset:
             period = index.to_period("D")
             div = pd.Series(data=0, index=period)
             div.rename(self.symbol, inplace=True)
-        return div
+        return div.resample("M").sum()
 
     @property
     def nav_ts(self) -> Optional[pd.Series]:
