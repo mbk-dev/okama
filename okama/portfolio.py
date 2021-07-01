@@ -369,6 +369,39 @@ class Portfolio(ListMaker):
         """
         return Float.annualize_return(self.mean_return_monthly)
 
+    @property
+    def annual_return_ts(self) -> pd.Series:
+        """
+        Calculate annual rate of return time series for portfolio.
+
+        Rate of return is calculated for each calendar year.
+
+        Returns
+        -------
+        DataFrame
+            Calendar annual rate of return time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['VOO.US', 'AGG.US'], weights=[0.4, 0.6])
+        >>> pf.annual_return_ts
+        Date
+        2010    0.034299
+        2011    0.056599
+        2012    0.086613
+        2013    0.107111
+        2014    0.090420
+        2015    0.010381
+        2016    0.063620
+        2017    0.105450
+        2018   -0.013262
+        2019    0.174182
+        2020    0.124668
+        2021    0.030430
+        Freq: A-DEC, Name: portfolio_5364.PF, dtype: float64
+        """
+        return Frame.get_annual_return_ts_from_monthly(self.ror)
+
     def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
         """
         Calculate portfolio Compound Annual Growth Rate (CAGR) for a given trailing period.
@@ -473,7 +506,7 @@ class Portfolio(ListMaker):
 
     def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
         """
-        Calculate cumulative return of return for the portfolio.
+        Calculate cumulative return over a given trailing period for the portfolio.
 
         The cumulative return is the total change in the portfolio price during the investment period.
 
@@ -564,39 +597,6 @@ class Portfolio(ListMaker):
         )
 
     @property
-    def annual_return_ts(self) -> pd.Series:
-        """
-        Calculate annual rate of return time series for portfolio.
-
-        Rate of return is calculated for each calendar year.
-
-        Returns
-        -------
-        DataFrame
-            Calendar annual rate of return time series.
-
-        Examples
-        --------
-        >>> pf = ok.Portfolio(['VOO.US', 'AGG.US'], weights=[0.4, 0.6])
-        >>> pf.annual_return_ts
-        Date
-        2010    0.034299
-        2011    0.056599
-        2012    0.086613
-        2013    0.107111
-        2014    0.090420
-        2015    0.010381
-        2016    0.063620
-        2017    0.105450
-        2018   -0.013262
-        2019    0.174182
-        2020    0.124668
-        2021    0.030430
-        Freq: A-DEC, Name: portfolio_5364.PF, dtype: float64
-        """
-        return Frame.get_annual_return_ts_from_monthly(self.ror)
-
-    @property
     def assets_close_monthly(self) -> pd.DataFrame:
         """
         Show assets monthly close time series adjusted to the base currency.
@@ -672,7 +672,7 @@ class Portfolio(ListMaker):
     @property
     def dividend_yield(self) -> pd.Series:
         """
-        Calculate last twelve months (LTM) dividend yield time series (monthly) for the portfolio.
+        Calculate last twelve months (LTM) dividend yield time series for the portfolio. Time series has monthly values.
 
         Portfolio dividend yield is a weighted sum of the assets dividend yields (adjusted to
         the portfolio base currency).
