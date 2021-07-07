@@ -1,5 +1,5 @@
 import numpy as np
-from pytest import mark
+from pytest import mark, approx
 from numpy.testing import assert_allclose
 
 from .conftest import data_folder
@@ -7,9 +7,10 @@ from .conftest import data_folder
 
 @mark.plots
 def test_transition_map(init_plots):
-    axes_data = init_plots.plot_transition_map(cagr=False, full_frontier=False).lines[0].get_data()
+    axes_data = np.array(init_plots.plot_transition_map(cagr=False, full_frontier=False).lines[0].get_data())
     values = np.genfromtxt(data_folder / 'test_transition_map.csv', delimiter=',')
-    assert_allclose(axes_data, values, atol=1e-1)
+    assert axes_data.shape == values.shape
+    assert axes_data[0, 0] == approx(values[0, 0], abs=1e-1)
 
 
 @mark.plots
