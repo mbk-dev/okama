@@ -250,6 +250,8 @@ class TestAssetList:
     def test_describe(self):
         description = self.asset_list.describe(tickers=False).iloc[:-2, :]  # last 2 rows have fresh lastdate
         description_sample = pd.read_pickle(data_folder / "asset_list_describe.pkl").iloc[:-2, :]
+        cols = list(description_sample.columns.values)
+        description = description[cols]  # columns order should not be an issue
         assert_frame_equal(description, description_sample)
 
     def test_dividend_yield(self):
