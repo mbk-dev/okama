@@ -12,7 +12,7 @@ from ..common.helpers import Float, Frame
 class EfficientFrontier(AssetList):
     """
     Efficient Frontier (EF) with classic MVA implementation.
-    n - is a number of points in the EF.
+    n_points - is a number of points in the EF (default is 20).
     full_frontier = False - shows only the points with the return above GMV
     tickers = True - labels of data in DataFrame are tickers (asset long names if False)
     """

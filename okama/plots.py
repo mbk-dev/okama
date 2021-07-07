@@ -139,11 +139,13 @@ class Plots(AssetList):
 
     def plot_pair_ef(self, tickers="tickers", bounds=None) -> plt.axes:
         """
-        Plots efficient frontier of every pair of assets in a set.
+        Plots Efficient Frontier of every pair of assets in a set.
         tickers:
         - 'tickers' - shows tickers values (default)
         - 'names' - shows assets names from database
         - list of string labels
+
+        Mean return is used for optimized portfolios.
         """
         if len(self.symbols) < 3:
             raise ValueError("The number of symbols cannot be less than 3")
