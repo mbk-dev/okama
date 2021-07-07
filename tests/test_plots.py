@@ -9,7 +9,7 @@ from .conftest import data_folder
 def test_transition_map(init_plots):
     axes_data = init_plots.plot_transition_map(cagr=False, full_frontier=False).lines[0].get_data()
     values = np.genfromtxt(data_folder / 'test_transition_map.csv', delimiter=',')
-    assert_allclose(axes_data, values, rtol=1e-1, atol=1e-1)
+    assert_allclose(axes_data, values, atol=1e-1)
 
 
 @mark.plots
