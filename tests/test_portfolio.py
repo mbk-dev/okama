@@ -164,7 +164,7 @@ def test_get_cagr_real_no_inflation_exception(portfolio_no_inflation):
 def test_cumulative_return(portfolio_rebalanced_month, period, real, expected):
     assert portfolio_rebalanced_month.get_cumulative_return(
         period=period, real=real
-    ).iloc[0] == approx(expected, rel=1e-2)
+    ).iloc[0] == approx(expected, abs=1e-2)
 
 
 cumulative_return_fail = [

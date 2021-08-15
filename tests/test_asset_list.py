@@ -213,8 +213,8 @@ class TestAssetList:
         ids=["YTD", "1 year", "full period"],
     )
     def test_get_cumulative_return_real(self, input_data, expected1, expected2):
-        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["RUB.FX"] == approx(expected1, abs=1e-3)
-        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["MCFTR.INDX"] == approx(expected2, abs=1e-3)
+        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["RUB.FX"] == approx(expected1, abs=1e-2)
+        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["MCFTR.INDX"] == approx(expected2, abs=1e-2)
 
     def test_get_cumulative_return_value_error(self):
         with pytest.raises(ValueError):
