@@ -1,4 +1,6 @@
 import requests
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 
 from ..settings import default_ticker, default_namespace
 
@@ -10,6 +12,7 @@ class API:
     # TODO: introduce 'from' & 'to' for dates.
 
     api_url = "http://185.63.191.70:5000"
+    default_timeout = 5  # seconds
 
     endpoint_ror = "/api/ts/ror/"
     endpoint_symbol = "/api/symbol/"
@@ -36,9 +39,15 @@ class API:
         period: str = "d",
     ) -> str:
         session = requests.session()
+        retry_strategy = Retry(total=3,
+                               backoff_factor=0.1,
+                               status_forcelist=[429, 500, 502, 503, 504])
+        adapter = HTTPAdapter(max_retries=retry_strategy)
         request_url = cls.api_url + endpoint + symbol
         params = {"first_date": first_date, "last_date": last_date, "period": period}
-        r = session.get(request_url, params=params, verify=False)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        r = session.get(request_url, params=params, verify=False, timeout=cls.default_timeout)
         if r.status_code != requests.codes.ok:
             raise Exception(
                 f"Error fetching data for {symbol}:",

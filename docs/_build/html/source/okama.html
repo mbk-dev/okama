@@ -1,0 +1,2006 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>okama package &mdash; okama 0.98 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> okama
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.98
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../stubs/okama.Asset.html">okama.Asset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../stubs/okama.AssetList.html">okama.AssetList</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../stubs/okama.Portfolio.html">okama.Portfolio</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Test File</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">okama</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>okama package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/source/okama.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="okama-package">
+<h1>okama package<a class="headerlink" href="#okama-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="okama.api.html">okama.api package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="okama.api.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="okama.api.html#module-okama.api.api_methods">okama.api.api_methods module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="okama.api.html#module-okama.api.data_queries">okama.api.data_queries module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="okama.api.html#module-okama.api.namespaces">okama.api.namespaces module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="okama.api.html#module-okama.api.search">okama.api.search module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="okama.api.html#module-okama.api">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="okama.common.html">okama.common package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="okama.common.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="okama.common.html#module-okama.common.helpers">okama.common.helpers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="okama.common.html#module-okama.common">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="okama.frontier.html">okama.frontier package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="okama.frontier.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="okama.frontier.html#module-okama.frontier.multi_period">okama.frontier.multi_period module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="okama.frontier.html#module-okama.frontier.single_period">okama.frontier.single_period module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="okama.frontier.html#module-okama.frontier">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-okama.assets">
+<span id="okama-assets-module"></span><h2>okama.assets module<a class="headerlink" href="#module-okama.assets" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="okama.assets.Asset">
+<em class="property">class </em><code class="sig-prename descclassname">okama.assets.</code><code class="sig-name descname">Asset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">symbol</span><span class="o">=</span><span class="default_value">'SPY.US'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.Asset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A financial asset, that could be used in a list of assets or in portfolio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>symbol: str, default “SPY.US”</strong></dt><dd><p>Symbol is an asset ticker with namespace after dot. The default value is “SPY.US” (SPDR S&amp;P 500 ETF Trust).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">asset</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">Asset</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">asset</span>
+<span class="go">symbol                           SPY.US</span>
+<span class="go">name             SPDR S&amp;P 500 ETF Trust</span>
+<span class="go">country                             USA</span>
+<span class="go">exchange                      NYSE ARCA</span>
+<span class="go">currency                            USD</span>
+<span class="go">type                                ETF</span>
+<span class="go">first date                      1993-02</span>
+<span class="go">last date                       2021-03</span>
+<span class="go">period length                      28.1</span>
+<span class="go">dtype: object</span>
+</pre></div>
+</div>
+<p>An Asset object could be easy created whithout specifying a symbol Asset() using the default symbol.</p>
+<dl class="py method">
+<dt id="okama.assets.Asset.dividends">
+<em class="property">property </em><code class="sig-name descname">dividends</code><a class="headerlink" href="#okama.assets.Asset.dividends" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dividends time series daily data.
+Not defined for namespaces: ‘PIF’, ‘INFL’, ‘INDX’, ‘FX’, ‘COMM’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.Asset.nav_ts">
+<em class="property">property </em><code class="sig-name descname">nav_ts</code><a class="headerlink" href="#okama.assets.Asset.nav_ts" title="Permalink to this definition">¶</a></dt>
+<dd><p>NAV time series (monthly) for mutual funds when available in data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.Asset.price">
+<em class="property">property </em><code class="sig-name descname">price</code><a class="headerlink" href="#okama.assets.Asset.price" title="Permalink to this definition">¶</a></dt>
+<dd><p>Live price of an asset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.Asset.symbol">
+<em class="property">property </em><code class="sig-name descname">symbol</code><a class="headerlink" href="#okama.assets.Asset.symbol" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="okama.assets.AssetList">
+<em class="property">class </em><code class="sig-prename descclassname">okama.assets.</code><code class="sig-name descname">AssetList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">symbols</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">first_date</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">last_date</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ccy</span><span class="o">=</span><span class="default_value">'USD'</span></em>, <em class="sig-param"><span class="n">inflation</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The list of financial assets implementation.</p>
+<dl class="py method">
+<dt id="okama.assets.AssetList.annual_return_ts">
+<em class="property">property </em><code class="sig-name descname">annual_return_ts</code><a class="headerlink" href="#okama.assets.AssetList.annual_return_ts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate annual rate of return time series for each asset.</p>
+<p>Rate of return is calculated for each calendar year.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.currency">
+<em class="property">property </em><code class="sig-name descname">currency</code><a class="headerlink" href="#okama.assets.AssetList.currency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the base currency of the Asset List.</p>
+<p>Such properties as rate of return and risk are adjusted to the base currency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>okama.Asset</dt><dd><p>Base currency of the Asset List in form of okama.Asset class.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.describe">
+<code class="sig-name descname">describe</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">(1, 5, 10)</span></em>, <em class="sig-param"><span class="n">tickers</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.describe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate descriptive statistics for a list of assets.</p>
+<p>Statistics includes:
+- YTD (Year To date) compound return
+- CAGR for a given list of periods
+- Dividend yield - yield for last 12 months (LTM)</p>
+<p>Risk metrics (full available period):
+- risk (standard deviation)
+- CVAR
+- max drawdowns (and dates)</p>
+<p>Statistics also shows for each asset:
+- inception date - first date available for each asset
+- last asset date - available for each asset date
+- Common last data date - common for the asset list data (may be set by last_date manually)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>years</strong><span class="classifier">tuple of (int,), default (1, 5, 10)</span></dt><dd><p>List of periods for CAGR.</p>
+</dd>
+<dt><strong>tickers</strong><span class="classifier">bool, default True</span></dt><dd><p>Defines whether show tickers (True) or assets names in the header.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#okama.assets.AssetList.get_cumulative_return" title="okama.assets.AssetList.get_cumulative_return"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cumulative_return</span></code></a></dt><dd><p>Calculate cumulative return.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.get_cagr" title="okama.assets.AssetList.get_cagr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cagr</span></code></a></dt><dd><p>Calculate assets Compound Annual Growth Rate (CAGR).</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.dividend_yield" title="okama.assets.AssetList.dividend_yield"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dividend_yield</span></code></a></dt><dd><p>Calculate dividend yield (LTM).</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.risk_annual" title="okama.assets.AssetList.risk_annual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">risk_annual</span></code></a></dt><dd><p>Return annualized risks (standard deviation).</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cvar</span></code></dt><dd><p>Calculate historic Conditional Value at Risk (CVAR, expected shortfall).</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.drawdowns" title="okama.assets.AssetList.drawdowns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">drawdowns</span></code></a></dt><dd><p>Calculate drawdowns.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.dividend_growing_years">
+<em class="property">property </em><code class="sig-name descname">dividend_growing_years</code><a class="headerlink" href="#okama.assets.AssetList.dividend_growing_years" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of years when the annual dividend was growing for each asset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;T.US&#39;</span><span class="p">,</span> <span class="s1">&#39;XOM.US&#39;</span><span class="p">],</span> <span class="n">first_date</span><span class="o">=</span><span class="s1">&#39;1984-01&#39;</span><span class="p">,</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;1994-12&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">dividend_growing_years</span>
+<span class="go">        T.US  XOM.US</span>
+<span class="go">1985     1       1</span>
+<span class="go">1986     2       2</span>
+<span class="go">1987     3       3</span>
+<span class="go">1988     0       4</span>
+<span class="go">1989     1       5</span>
+<span class="go">1990     2       6</span>
+<span class="go">1991     3       7</span>
+<span class="go">1992     4       8</span>
+<span class="go">1993     5       9</span>
+<span class="go">1994     6      10</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.dividend_paying_years">
+<em class="property">property </em><code class="sig-name descname">dividend_paying_years</code><a class="headerlink" href="#okama.assets.AssetList.dividend_paying_years" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of years of consecutive dividend payments for each asset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;T.US&#39;</span><span class="p">,</span> <span class="s1">&#39;XOM.US&#39;</span><span class="p">],</span> <span class="n">first_date</span><span class="o">=</span><span class="s1">&#39;1984-01&#39;</span><span class="p">,</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;1994-12&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">dividend_paying_years</span>
+<span class="go">      T.US  XOM.US</span>
+<span class="go">1984     1       1</span>
+<span class="go">1985     2       2</span>
+<span class="go">1986     3       3</span>
+<span class="go">1987     4       4</span>
+<span class="go">1988     5       5</span>
+<span class="go">1989     6       6</span>
+<span class="go">1990     7       7</span>
+<span class="go">1991     8       8</span>
+<span class="go">1992     9       9</span>
+<span class="go">1993    10      10</span>
+<span class="go">1994    11      11</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.dividend_yield">
+<em class="property">property </em><code class="sig-name descname">dividend_yield</code><a class="headerlink" href="#okama.assets.AssetList.dividend_yield" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.</p>
+<p>All yields are calculated in the original asset currency (not adjusting to AssetList currency).
+Forecast dividends are removed.
+Zero value time series are created for assets without dividends.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;T.US&#39;</span><span class="p">,</span> <span class="s1">&#39;XOM.US&#39;</span><span class="p">],</span> <span class="n">first_date</span><span class="o">=</span><span class="s1">&#39;1984-01&#39;</span><span class="p">,</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;1994-12&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.dividends_annual">
+<em class="property">property </em><code class="sig-name descname">dividends_annual</code><a class="headerlink" href="#okama.assets.AssetList.dividends_annual" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return calendar year dividends sum time series for each asset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.drawdowns">
+<em class="property">property </em><code class="sig-name descname">drawdowns</code><a class="headerlink" href="#okama.assets.AssetList.drawdowns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate drawdowns time series for the assets.</p>
+<p>The drawdown is the percent decline from a previous peak in wealth index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd><p>Time series of drawdowns.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.get_cagr">
+<code class="sig-name descname">get_cagr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">period</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.get_cagr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate assets Compound Annual Growth Rate (CAGR) for a given trailing period.</p>
+<p>Annual inflation data is shown for the same period if inflation=True (default) in the AssetList.
+CAGR is not defined for periods less than 1 year.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>period: int, optional</strong></dt><dd><p>CAGR trailing period in years. None for full time CAGR.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Series</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">get_cagr</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="go">SPY.US    0.1510</span>
+<span class="go">USD.INFL   0.0195</span>
+<span class="go">dtype: float64</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.get_cumulative_return">
+<code class="sig-name descname">get_cumulative_return</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">period</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.get_cumulative_return" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate cumulative return over a given period for each asset.</p>
+<p>The cumulative return is the total change in the asset price.</p>
+<p>Annual inflation data is shown for the same period if inflation=True (default) in the AssetList.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>period: str, int or None, default None</strong></dt><dd><p>Trailing period in years.
+None - full time cumulative return.
+‘YTD’ - (Year To Date) period of time beginning the first day of the calendar year up to the last month.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Series</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;MCFTR.INDX&#39;</span><span class="p">],</span> <span class="n">ccy</span><span class="o">=</span><span class="s1">&#39;RUB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">get_cumulative_return</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="s1">&#39;YTD&#39;</span><span class="p">)</span>
+<span class="go">MCFTR.INDX   0.1483</span>
+<span class="go">RUB.INFL     0.0485</span>
+<span class="go">dtype: float64</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.get_cvar_historic">
+<code class="sig-name descname">get_cvar_historic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_frame</span><span class="o">=</span><span class="default_value">12</span></em>, <em class="sig-param"><span class="n">level</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.get_cvar_historic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate historic Conditional Value at Risk (CVAR, expected shortfall) for the assets.</p>
+<p>CVaR is the average loss over a specified time period of unlikely scenarios beyond the confidence level.
+Loss is a positive number (expressed in cumulative return).
+If CVaR is negative there are gains at this confidence level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>time_frame</strong><span class="classifier">int, default 12</span></dt><dd><p>Time period size in months</p>
+</dd>
+<dt><strong>level</strong><span class="classifier">int, default 5</span></dt><dd><p>Confidence level in percents to calculate the VaR. Default value is 5%.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Series</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;SPY.US&#39;</span><span class="p">,</span> <span class="s1">&#39;AGG.US&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">get_cvar_historic</span><span class="p">(</span><span class="n">time_frame</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">SPY.US    0.2574</span>
+<span class="go">AGG.US   -0.0766</span>
+<span class="go">dtype: float64</span>
+<span class="go">Name: VaR, dtype: float64</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.get_dividend_mean_growth_rate">
+<code class="sig-name descname">get_dividend_mean_growth_rate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">period</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.get_dividend_mean_growth_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate geometric mean of dividends growth rate time series for a given trailing period.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>period</strong><span class="classifier">int, default 5</span></dt><dd><p>mean growth rate trailing period in years. Period should be a positive integer
+and not exceed the available data period_length.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Series</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;T.US&#39;</span><span class="p">,</span> <span class="s1">&#39;XOM.US&#39;</span><span class="p">],</span> <span class="n">first_date</span><span class="o">=</span><span class="s1">&#39;1984-01&#39;</span><span class="p">,</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;1994-12&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">get_dividend_mean_growth_rate</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="go">T.US      0.020067</span>
+<span class="go">XOM.US    0.024281</span>
+<span class="go">dtype: float64</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.get_rolling_cagr">
+<code class="sig-name descname">get_rolling_cagr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">12</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.get_rolling_cagr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate rolling CAGR (Compound Annual Growth Rate) for each asset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>window</strong><span class="classifier">int, default 12</span></dt><dd><p>Window size in months. Window size should be at least 12 months for CAGR.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>DataFrame</dt><dd><p>Time series of rolling CAGR.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.get_rolling_cumulative_return">
+<code class="sig-name descname">get_rolling_cumulative_return</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">12</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.get_rolling_cumulative_return" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate rolling cumulative return for each asset.</p>
+<p>The cumulative return is the total change in the asset price.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>window</strong><span class="classifier">int, default 12</span></dt><dd><p>Window size in months.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>DataFrame</dt><dd><p>Time series of rolling cumulative return.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.get_var_historic">
+<code class="sig-name descname">get_var_historic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_frame</span><span class="o">=</span><span class="default_value">12</span></em>, <em class="sig-param"><span class="n">level</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.get_var_historic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate historic Value at Risk (VaR) for the assets.</p>
+<p>The VaR calculates the potential loss of an investment with a given time frame and confidence level.
+Loss is a positive number (expressed in cumulative return).
+If VaR is negative there are gains at this confidence level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>time_frame</strong><span class="classifier">int, default 12</span></dt><dd><p>Time period size in months</p>
+</dd>
+<dt><strong>level</strong><span class="classifier">int, default 5</span></dt><dd><p>Confidence level in percents to calculate the VaR. Default value is 5%.</p>
+</dd>
+<dt><strong>Returns</strong></dt><dd></dd>
+<dt><strong>——-</strong></dt><dd></dd>
+<dt><strong>Series</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;SPY.US&#39;</span><span class="p">,</span> <span class="s1">&#39;AGG.US&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">get_var_historic</span><span class="p">(</span><span class="n">time_frame</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">SPY.US    0.2101</span>
+<span class="go">AGG.US    -0.0867</span>
+<span class="go">Name: VaR, dtype: float64</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.index_beta">
+<em class="property">property </em><code class="sig-name descname">index_beta</code><a class="headerlink" href="#okama.assets.AssetList.index_beta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute beta coefficient time series for the assets.</p>
+<p>Beta coefficient is defined in Capital Asset Pricing Model (CAPM). It is a measure of how
+an individual asset moves (on average) when the benchmark increases or decreases. When beta is positive,
+the asset price tends to move in the same direction as the benchmark,
+and the magnitude of beta tells by how much.</p>
+<p>Index (benchmark) should be in the first position of the symbols list in AssetList parameters.
+There should be at least 12 months of historical data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#okama.assets.AssetList.index_corr" title="okama.assets.AssetList.index_corr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">index_corr</span></code></a></dt><dd><p>Compute correlation with the index (or benchmark).</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.index_rolling_corr" title="okama.assets.AssetList.index_rolling_corr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">index_rolling_corr</span></code></a></dt><dd><p>Compute rolling correlation with the index (or benchmark).</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.index_beta" title="okama.assets.AssetList.index_beta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">index_beta</span></code></a></dt><dd><p>Compute beta coefficient.</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;SP500TR.INDX&#39;</span><span class="p">,</span> <span class="s1">&#39;VBMFX.US&#39;</span><span class="p">,</span> <span class="s1">&#39;GC.COMM&#39;</span><span class="p">,</span> <span class="s1">&#39;VNQ.US&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span><span class="o">.</span><span class="n">names</span>
+<span class="go">{&#39;SP500TR.INDX&#39;: &#39;S&amp;P 500 (TR)&#39;,</span>
+<span class="go">&#39;VBMFX.US&#39;: &#39;VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES&#39;,</span>
+<span class="go">&#39;GC.COMM&#39;: &#39;Gold&#39;,</span>
+<span class="go">&#39;VNQ.US&#39;: &#39;Vanguard Real Estate Index Fund ETF Shares&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span><span class="o">.</span><span class="n">index_beta</span>
+<span class="go">         VBMFX.US   GC.COMM    VNQ.US</span>
+<span class="go">2005-10 -0.541931  0.064489  0.346571</span>
+<span class="go">2005-11 -0.450691  0.131065  0.364683</span>
+<span class="go">2005-12 -0.490117  0.110731  0.366512</span>
+<span class="go">2006-01 -0.531695  0.132016  0.359480</span>
+<span class="go">2006-02 -0.540665  0.135381  0.360091</span>
+<span class="go">           ...       ...       ...</span>
+<span class="go">2020-10 -0.063057  0.069050  0.465525</span>
+<span class="go">2020-11 -0.018408  0.055676  0.472042</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.index_corr">
+<em class="property">property </em><code class="sig-name descname">index_corr</code><a class="headerlink" href="#okama.assets.AssetList.index_corr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute expanding correlation with the index (or benchmark) time series for the assets.</p>
+<p>Benchmark should be in the first position of the symbols list in AssetList parameters.
+There should be at least 12 months of historical data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;SP500TR.INDX&#39;</span><span class="p">,</span> <span class="s1">&#39;VBMFX.US&#39;</span><span class="p">,</span> <span class="s1">&#39;GC.COMM&#39;</span><span class="p">,</span> <span class="s1">&#39;VNQ.US&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span><span class="o">.</span><span class="n">names</span>
+<span class="go">{&#39;SP500TR.INDX&#39;: &#39;S&amp;P 500 (TR)&#39;,</span>
+<span class="go">&#39;VBMFX.US&#39;: &#39;VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES&#39;,</span>
+<span class="go">&#39;GC.COMM&#39;: &#39;Gold&#39;,</span>
+<span class="go">&#39;VNQ.US&#39;: &#39;Vanguard Real Estate Index Fund ETF Shares&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span><span class="o">.</span><span class="n">index_corr</span>
+<span class="go">         VBMFX.US   GC.COMM    VNQ.US</span>
+<span class="go">2005-10 -0.217992  0.103308  0.681394</span>
+<span class="go">2005-11 -0.171918  0.213368  0.683557</span>
+<span class="go">2005-12 -0.191054  0.183656  0.687335</span>
+<span class="go">2006-01 -0.204574  0.250068  0.699323</span>
+<span class="go">2006-02 -0.207514  0.261097  0.698137</span>
+<span class="go">           ...       ...       ...</span>
+<span class="go">2020-10 -0.014417  0.082438  0.718580</span>
+<span class="go">2020-11 -0.004154  0.065746  0.721346</span>
+<span class="go">2020-12 -0.006035  0.069420  0.721324</span>
+<span class="go">2021-01 -0.002942  0.070801  0.721216</span>
+<span class="go">2021-02 -0.007533  0.067011  0.721464</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.index_rolling_corr">
+<code class="sig-name descname">index_rolling_corr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">60</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.index_rolling_corr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute rolling correlation with the index (or benchmark) time series for the assets.</p>
+<p>Index (benchmark) should be in the first position of the symbols list in AssetList parameters.
+There should be at least 12 months of historical data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>window</strong><span class="classifier">int, default 60</span></dt><dd><p>Rolling window size in months. This is the number of observations used for calculating the statistic.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;SP500TR.INDX&#39;</span><span class="p">,</span> <span class="s1">&#39;VBMFX.US&#39;</span><span class="p">,</span> <span class="s1">&#39;GC.COMM&#39;</span><span class="p">,</span> <span class="s1">&#39;VNQ.US&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span><span class="o">.</span><span class="n">names</span>
+<span class="go">{&#39;SP500TR.INDX&#39;: &#39;S&amp;P 500 (TR)&#39;,</span>
+<span class="go">&#39;VBMFX.US&#39;: &#39;VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES&#39;,</span>
+<span class="go">&#39;GC.COMM&#39;: &#39;Gold&#39;,</span>
+<span class="go">&#39;VNQ.US&#39;: &#39;Vanguard Real Estate Index Fund ETF Shares&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span><span class="o">.</span><span class="n">index_rolling_corr</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="go">         VBMFX.US   GC.COMM    VNQ.US</span>
+<span class="go">2006-09 -0.072073  0.209741  0.639184</span>
+<span class="go">2006-10 -0.053556  0.196464  0.657984</span>
+<span class="go">2006-11  0.048231  0.173406  0.666584</span>
+<span class="go">2006-12 -0.001431  0.227669  0.634478</span>
+<span class="go">2007-01  0.028426  0.160199  0.547341</span>
+<span class="go">           ...       ...       ...</span>
+<span class="go">2020-10 -0.068989  0.276683  0.813970</span>
+<span class="go">2020-11 -0.038417  0.122855  0.837298</span>
+<span class="go">2020-12  0.033282  0.204574  0.820935</span>
+<span class="go">2021-01  0.046599  0.205193  0.816003</span>
+<span class="go">2021-02  0.033039  0.181227  0.816178</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.jarque_bera">
+<em class="property">property </em><code class="sig-name descname">jarque_bera</code><a class="headerlink" href="#okama.assets.AssetList.jarque_bera" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform Jarque-Bera test for normality of assets returns historical data.</p>
+<p>Jarque-Bera test shows whether the returns have the skewness and kurtosis
+matching a normal distribution (null hypothesis or H0).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd><p>Returns test statistic and the p-value for the hypothesis test.
+large Jarque-Bera statistics and tiny p-value indicate that null hypothesis (H0) is rejected and
+the time series are not normally distributed.
+Low statistic numbers correspond to normal distribution.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#okama.assets.AssetList.skewness" title="okama.assets.AssetList.skewness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skewness</span></code></a></dt><dd><p>Compute skewness.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.skewness_rolling" title="okama.assets.AssetList.skewness_rolling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skewness_rolling</span></code></a></dt><dd><p>Compute rolling skewness.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kurtosis" title="okama.assets.AssetList.kurtosis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kurtosis</span></code></a></dt><dd><p>Calculate expanding Fisher (normalized) kurtosis.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kurtosis_rolling" title="okama.assets.AssetList.kurtosis_rolling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kurtosis_rolling</span></code></a></dt><dd><p>Calculate rolling Fisher (normalized) kurtosis.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kstest" title="okama.assets.AssetList.kstest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kstest</span></code></a></dt><dd><p>Perform Kolmogorov-Smirnov test for different types of distributions.</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">al</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;GC.COMM&#39;</span><span class="p">,</span> <span class="s1">&#39;FNER.INDX&#39;</span><span class="p">],</span> <span class="n">first_date</span><span class="o">=</span><span class="s1">&#39;2000-01&#39;</span><span class="p">,</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">names</span>
+<span class="go">{&#39;GC.COMM&#39;: &#39;Gold&#39;,</span>
+<span class="go">&#39;FNER.INDX&#39;: &#39;FTSE NAREIT All Equity REITs&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">jarque_bera</span>
+<span class="go">            GC.COMM   FNER.INDX</span>
+<span class="go">statistic  4.507287  593.633047</span>
+<span class="go">p-value    0.105016    0.000000</span>
+</pre></div>
+</div>
+<p>Gold return time series (GC.COMM) distribution have small p-values (H0 is not rejected).
+Null hypothesis (H0) is rejected for FTSE NAREIT Index (FNER.INDX) as Jarque-Bera test shows very small p-value
+and large statistic.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.kstest">
+<code class="sig-name descname">kstest</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.kstest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform Kolmogorov-Smirnov test for goodness of fit the asset returns to a given distribution.</p>
+<p>Kolmogorov-Smirnov is a test of the distribution of assets returns historical data against a
+given distribution. Under the null hypothesis (H0), the two distributions are identical.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>distr</strong><span class="classifier">{‘norm’, ‘lognorm’}, default ‘norm’</span></dt><dd><p>Type of distributions. Can be ‘norm’ - for normal distribution or ‘lognorm’ - for lognormal distribtion.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>DataFrame</dt><dd><p>Returns test statistic and the p-value for the hypothesis test.
+large test statistics and tiny p-value indicate that null hypothesis (H0) is rejected.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">al</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;EDV.US&#39;</span><span class="p">],</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">kstest</span><span class="p">(</span><span class="n">distr</span><span class="o">=</span><span class="s1">&#39;lognorm&#39;</span><span class="p">)</span>
+<span class="go">             EDV.US</span>
+<span class="go">p-value    0.402179</span>
+<span class="go">statistic  0.070246</span>
+</pre></div>
+</div>
+<p>H0 is not rejected for EDV ETF and it seems to have lognormal distribution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.kurtosis">
+<em class="property">property </em><code class="sig-name descname">kurtosis</code><a class="headerlink" href="#okama.assets.AssetList.kurtosis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate expanding Fisher (normalized) kurtosis of the return time series for each asset.</p>
+<p>Kurtosis is the fourth central moment divided by the square of the variance. It is a measure of the “tailedness”
+of the probability distribution of a real-valued random variable.</p>
+<p>Kurtosis should be close to zero for normal distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#okama.assets.AssetList.skewness" title="okama.assets.AssetList.skewness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skewness</span></code></a></dt><dd><p>Compute skewness.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.skewness_rolling" title="okama.assets.AssetList.skewness_rolling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skewness_rolling</span></code></a></dt><dd><p>Compute rolling skewness.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kurtosis_rolling" title="okama.assets.AssetList.kurtosis_rolling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kurtosis_rolling</span></code></a></dt><dd><p>Calculate rolling Fisher (normalized) kurtosis.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.jarque_bera" title="okama.assets.AssetList.jarque_bera"><code class="xref py py-obj docutils literal notranslate"><span class="pre">jarque_bera</span></code></a></dt><dd><p>Perform Jarque-Bera test for normality.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kstest" title="okama.assets.AssetList.kstest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kstest</span></code></a></dt><dd><p>Perform Kolmogorov-Smirnov test for different types of distributions.</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">al</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;GC.COMM&#39;</span><span class="p">,</span> <span class="s1">&#39;FNER.INDX&#39;</span><span class="p">],</span> <span class="n">first_date</span><span class="o">=</span><span class="s1">&#39;2000-01&#39;</span><span class="p">,</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">names</span>
+<span class="go">{&#39;GC.COMM&#39;: &#39;Gold&#39;,</span>
+<span class="go">&#39;FNER.INDX&#39;: &#39;FTSE NAREIT All Equity REITs&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">kurtosis</span>
+<span class="go">          GC.COMM  FNER.INDX</span>
+<span class="go">date</span>
+<span class="go">2001-01  0.141457  -0.424810</span>
+<span class="go">2001-02  0.255112  -0.486316</span>
+<span class="go">2001-03  0.264453  -0.275661</span>
+<span class="go">2001-04 -0.102208  -0.107295</span>
+<span class="go">           ...        ...</span>
+<span class="go">2020-10  0.705098   7.485606</span>
+<span class="go">2020-11  0.679793   7.400417</span>
+<span class="go">2020-12  0.663579   7.439888</span>
+<span class="go">2021-01  0.664566   7.475272</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.kurtosis_rolling">
+<code class="sig-name descname">kurtosis_rolling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">60</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.kurtosis_rolling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate rolling Fisher (normalized) kurtosis of the return time series for each asset.</p>
+<p>Kurtosis is the fourth central moment divided by the square of the variance. It is a measure of the “tailedness”
+of the probability distribution of a real-valued random variable.</p>
+<p>Kurtosis should be close to zero for normal distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>window</strong><span class="classifier">int, default 60</span></dt><dd><p>Rolling window size in months. This is the number of observations used for calculating the statistic.
+The window size should be at least 12 months.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#okama.assets.AssetList.skewness" title="okama.assets.AssetList.skewness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skewness</span></code></a></dt><dd><p>Compute skewness.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.skewness_rolling" title="okama.assets.AssetList.skewness_rolling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skewness_rolling</span></code></a></dt><dd><p>Compute rolling skewness.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kurtosis" title="okama.assets.AssetList.kurtosis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kurtosis</span></code></a></dt><dd><p>Calculate expanding Fisher (normalized) kurtosis.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.jarque_bera" title="okama.assets.AssetList.jarque_bera"><code class="xref py py-obj docutils literal notranslate"><span class="pre">jarque_bera</span></code></a></dt><dd><p>Perform Jarque-Bera test for normality.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kstest" title="okama.assets.AssetList.kstest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kstest</span></code></a></dt><dd><p>Perform Kolmogorov-Smirnov test for different types of distributions.</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">al</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;GC.COMM&#39;</span><span class="p">,</span> <span class="s1">&#39;FNER.INDX&#39;</span><span class="p">],</span> <span class="n">first_date</span><span class="o">=</span><span class="s1">&#39;2000-01&#39;</span><span class="p">,</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">names</span>
+<span class="go">{&#39;GC.COMM&#39;: &#39;Gold&#39;,</span>
+<span class="go">&#39;FNER.INDX&#39;: &#39;FTSE NAREIT All Equity REITs&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">kurtosis_rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="go">          GC.COMM  FNER.INDX</span>
+<span class="go">date</span>
+<span class="go">2000-12 -0.044261  -0.640834</span>
+<span class="go">2001-01 -0.034628  -0.571309</span>
+<span class="go">2001-02  1.089403  -0.639850</span>
+<span class="go">2001-03  1.560623  -0.601771</span>
+<span class="go">           ...        ...</span>
+<span class="go">2020-10 -0.153749   3.867389</span>
+<span class="go">2020-11 -0.262682   2.854431</span>
+<span class="go">2020-12 -0.695676   2.865679</span>
+<span class="go">2021-01 -0.754352   2.801018</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.mean_return">
+<em class="property">property </em><code class="sig-name descname">mean_return</code><a class="headerlink" href="#okama.assets.AssetList.mean_return" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate annualized mean return (arithmetic mean) for the assets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Series</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.real_mean_return">
+<em class="property">property </em><code class="sig-name descname">real_mean_return</code><a class="headerlink" href="#okama.assets.AssetList.real_mean_return" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates annualized real mean return (arithmetic mean) for the assets.</p>
+<p>Real rate of return is adjusted for inflation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Series</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.risk_annual">
+<em class="property">property </em><code class="sig-name descname">risk_annual</code><a class="headerlink" href="#okama.assets.AssetList.risk_annual" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate annualized risks (standard deviation) for each asset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Series</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.risk_monthly">
+<em class="property">property </em><code class="sig-name descname">risk_monthly</code><a class="headerlink" href="#okama.assets.AssetList.risk_monthly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate monthly risks (standard deviation) for each asset.</p>
+<p>Monthly risk of the asset is a standard deviation of the rate of return time series.
+Standard deviation (sigma σ) is normalized by N-1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Series</dt><dd><p>Values for monthly risk (standard deviation) for each asset in form of Series.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#okama.assets.AssetList.risk_annual" title="okama.assets.AssetList.risk_annual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">risk_annual</span></code></a></dt><dd><p>Calculate annualized risks.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.semideviation_monthly" title="okama.assets.AssetList.semideviation_monthly"><code class="xref py py-obj docutils literal notranslate"><span class="pre">semideviation_monthly</span></code></a></dt><dd><p>Calculate semideviation monthly values.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.semideviation_annual" title="okama.assets.AssetList.semideviation_annual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">semideviation_annual</span></code></a></dt><dd><p>Calculate semideviation annualized values.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.get_var_historic" title="okama.assets.AssetList.get_var_historic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_var_historic</span></code></a></dt><dd><p>Calculate historic Value at Risk (VaR).</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.get_cvar_historic" title="okama.assets.AssetList.get_cvar_historic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cvar_historic</span></code></a></dt><dd><p>Calculate historic Conditional Value at Risk (CVaR).</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.drawdowns" title="okama.assets.AssetList.drawdowns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">drawdowns</span></code></a></dt><dd><p>Calculate drawdowns.</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">al</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;GC.COMM&#39;</span><span class="p">,</span> <span class="s1">&#39;SHV.US&#39;</span><span class="p">],</span> <span class="n">ccy</span><span class="o">=</span><span class="s1">&#39;USD&#39;</span><span class="p">,</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">risk_monthly</span>
+<span class="go">        GC.COMM    0.050864</span>
+<span class="go">SHV.US     0.001419</span>
+<span class="go">dtype: float64</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.semideviation_annual">
+<em class="property">property </em><code class="sig-name descname">semideviation_annual</code><a class="headerlink" href="#okama.assets.AssetList.semideviation_annual" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return semideviation annualized values for each asset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Series</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.semideviation_monthly">
+<em class="property">property </em><code class="sig-name descname">semideviation_monthly</code><a class="headerlink" href="#okama.assets.AssetList.semideviation_monthly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate semideviation monthly values for each asset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Series</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.skewness">
+<em class="property">property </em><code class="sig-name descname">skewness</code><a class="headerlink" href="#okama.assets.AssetList.skewness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute expanding skewness of the return time series for each asset returns.</p>
+<p>Skewness is a measure of the asymmetry of the probability distribution
+of a real-valued random variable about its mean. The skewness value can be positive, zero, negative, 
+or undefined.</p>
+<p>For normally distributed returns, the skewness should be about zero.
+A skewness value greater than zero means that there is more weight in the right tail of the distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Dataframe</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#okama.assets.AssetList.skewness_rolling" title="okama.assets.AssetList.skewness_rolling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skewness_rolling</span></code></a></dt><dd><p>Compute rolling skewness.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kurtosis" title="okama.assets.AssetList.kurtosis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kurtosis</span></code></a></dt><dd><p>Calculate expanding Fisher (normalized) kurtosis.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kurtosis_rolling" title="okama.assets.AssetList.kurtosis_rolling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kurtosis_rolling</span></code></a></dt><dd><p>Calculate rolling Fisher (normalized) kurtosis.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.jarque_bera" title="okama.assets.AssetList.jarque_bera"><code class="xref py py-obj docutils literal notranslate"><span class="pre">jarque_bera</span></code></a></dt><dd><p>Perform Jarque-Bera test for normality.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kstest" title="okama.assets.AssetList.kstest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kstest</span></code></a></dt><dd><p>Perform Kolmogorov-Smirnov test for different types of distributions.</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">al</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;VFINX.US&#39;</span><span class="p">,</span> <span class="s1">&#39;GC.COMM&#39;</span><span class="p">],</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">names</span>
+<span class="go">{&#39;VFINX.US&#39;: &#39;VANGUARD 500 INDEX FUND INVESTOR SHARES&#39;,</span>
+<span class="go">&#39;GC.COMM&#39;: &#39;Gold&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">skewness</span>
+<span class="go">         VFINX.US   GC.COMM</span>
+<span class="go">1981-02 -0.537554  0.272718</span>
+<span class="go">1981-03 -0.642592  0.128630</span>
+<span class="go">1981-04 -0.489567  0.231292</span>
+<span class="go">1981-05 -0.471067  0.219311</span>
+<span class="go">1981-06 -0.392495  0.334431</span>
+<span class="go">           ...       ...</span>
+<span class="go">2020-09 -0.634501  0.106471</span>
+<span class="go">2020-10 -0.629908  0.107989</span>
+<span class="go">2020-11 -0.610480  0.111627</span>
+<span class="go">2020-12 -0.613742  0.107515</span>
+<span class="go">2021-01 -0.611421  0.110552</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.skewness_rolling">
+<code class="sig-name descname">skewness_rolling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">60</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.assets.AssetList.skewness_rolling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute rolling skewness of the return time series for each asset.</p>
+<p>Skewness is a measure of the asymmetry of the probability distribution
+of a real-valued random variable about its mean. The skewness value can be positive, zero, negative,
+or undefined.</p>
+<p>For normally distributed returns, the skewness should be about zero.
+A skewness value greater than zero means that there is more weight in the right tail of the distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>window</strong><span class="classifier">int, default 60</span></dt><dd><p>Rolling window size in months. This is the number of observations used for calculating the statistic.
+The window size should be at least 12 months.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#okama.assets.AssetList.skewness" title="okama.assets.AssetList.skewness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skewness</span></code></a></dt><dd><p>Compute skewness.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kurtosis" title="okama.assets.AssetList.kurtosis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kurtosis</span></code></a></dt><dd><p>Calculate expanding Fisher (normalized) kurtosis.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kurtosis_rolling" title="okama.assets.AssetList.kurtosis_rolling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kurtosis_rolling</span></code></a></dt><dd><p>Calculate rolling Fisher (normalized) kurtosis.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.jarque_bera" title="okama.assets.AssetList.jarque_bera"><code class="xref py py-obj docutils literal notranslate"><span class="pre">jarque_bera</span></code></a></dt><dd><p>Perform Jarque-Bera test for normality.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.assets.AssetList.kstest" title="okama.assets.AssetList.kstest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kstest</span></code></a></dt><dd><p>Perform Kolmogorov-Smirnov test for different types of distributions.</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">al</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;VFINX.US&#39;</span><span class="p">,</span> <span class="s1">&#39;GC.COMM&#39;</span><span class="p">],</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">names</span>
+<span class="go">{&#39;VFINX.US&#39;: &#39;VANGUARD 500 INDEX FUND INVESTOR SHARES&#39;,</span>
+<span class="go">&#39;GC.COMM&#39;: &#39;Gold&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">al</span><span class="o">.</span><span class="n">skewness_rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="go">         VFINX.US   GC.COMM</span>
+<span class="go">1982-01 -0.144778  0.303309</span>
+<span class="go">1982-02 -0.049833  0.353829</span>
+<span class="go">1982-03  0.173783  1.198266</span>
+<span class="go">1982-04  0.176163  1.123462</span>
+<span class="go">           ...       ...</span>
+<span class="go">2020-10 -0.547946  0.181045</span>
+<span class="go">2020-11 -0.473080  0.071605</span>
+<span class="go">2020-12 -0.597739  0.065503</span>
+<span class="go">2021-01 -0.480090  0.205303</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.symbols">
+<em class="property">property </em><code class="sig-name descname">symbols</code><a class="headerlink" href="#okama.assets.AssetList.symbols" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of financial symbols used to set the AssetList.</p>
+<p>Symbols are similar to tickers but have a namespace information:</p>
+<ul class="simple">
+<li><p>SPY.US is a symbol</p></li>
+<li><p>SPY is a ticker</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>list of str</dt><dd><p>List of symbols included in the Asset List.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.tickers">
+<em class="property">property </em><code class="sig-name descname">tickers</code><a class="headerlink" href="#okama.assets.AssetList.tickers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of tickers (symbols without a namespace) used to set the AssetList.</p>
+<p>tickers are similar to symbols but do not have namespace information:</p>
+<ul class="simple">
+<li><p>SPY is a ticker</p></li>
+<li><p>SPY.US is a symbol</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>list of str</dt><dd><p>List of tickers included in the Asset List.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.tracking_difference">
+<em class="property">property </em><code class="sig-name descname">tracking_difference</code><a class="headerlink" href="#okama.assets.AssetList.tracking_difference" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return tracking difference for the rate of return of assets.</p>
+<p>Tracking difference is calculated by measuring the accumulated difference between the returns of a benchmark
+and those of the ETF replicating it (could be mutual funds, or other types of assets).</p>
+<p>Benchmark should be in the first position of the symbols list in AssetList parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;SP500TR.INDX&#39;</span><span class="p">,</span> <span class="s1">&#39;SPY.US&#39;</span><span class="p">,</span> <span class="s1">&#39;VOO.US&#39;</span><span class="p">],</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">tracking_difference</span>
+<span class="go">           SPY.US    VOO.US</span>
+<span class="go">Date</span>
+<span class="go">2011-01  0.000000  0.000000</span>
+<span class="go">2011-02 -0.000004 -0.001143</span>
+<span class="go">2011-03 -0.000322 -0.001566</span>
+<span class="go">2011-04 -0.000967 -0.001824</span>
+<span class="go">2011-05 -0.000847 -0.002239</span>
+<span class="go">           ...       ...</span>
+<span class="go">2020-09 -0.037189 -0.022919</span>
+<span class="go">2020-10 -0.030695 -0.018732</span>
+<span class="go">2020-11 -0.036266 -0.020783</span>
+<span class="go">2020-12 -0.042560 -0.025097</span>
+<span class="go">2021-01 -0.042493 -0.025209</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.tracking_difference_annualized">
+<em class="property">property </em><code class="sig-name descname">tracking_difference_annualized</code><a class="headerlink" href="#okama.assets.AssetList.tracking_difference_annualized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate annualized tracking difference time series for the rate of return of assets.</p>
+<p>Tracking difference is calculated by measuring the accumulated difference between the returns of a benchmark
+and those of the ETF replicating it (could be mutual funds, or other types of assets).</p>
+<p>Benchmark should be in the first position of the symbols list in AssetList parameters.</p>
+<p>Annual values are available for history periods of more than 12 months.
+Returns for less than 12 months can’t be annualized According to the CFA
+Institute’s Global Investment Performance Standards (GIPS).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;SP500TR.INDX&#39;</span><span class="p">,</span> <span class="s1">&#39;SPY.US&#39;</span><span class="p">,</span> <span class="s1">&#39;VOO.US&#39;</span><span class="p">],</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">tracking_difference</span>
+<span class="go">           SPY.US    VOO.US</span>
+<span class="go">Date</span>
+<span class="go">2011-12 -0.002198 -0.002230</span>
+<span class="go">2012-01 -0.000615 -0.002245</span>
+<span class="go">2012-02 -0.000413 -0.002539</span>
+<span class="go">2012-03 -0.001021 -0.002359</span>
+<span class="go">2012-04 -0.001296 -0.002283</span>
+<span class="go">           ...       ...</span>
+<span class="go">2020-09 -0.003752 -0.002327</span>
+<span class="go">2020-10 -0.003079 -0.001889</span>
+<span class="go">2020-11 -0.003599 -0.002076</span>
+<span class="go">2020-12 -0.004177 -0.002482</span>
+<span class="go">2021-01 -0.004136 -0.002472</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.tracking_error">
+<em class="property">property </em><code class="sig-name descname">tracking_error</code><a class="headerlink" href="#okama.assets.AssetList.tracking_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate tracking error time series for the rate of return of assets.</p>
+<p>Tracking error is defined as the standard deviation of the difference between the returns of the asset
+and the returns of the benchmark.</p>
+<p>Benchmark should be in the first position of the symbols list in AssetList parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">AssetList</span><span class="p">([</span><span class="s1">&#39;SP500TR.INDX&#39;</span><span class="p">,</span> <span class="s1">&#39;SPY.US&#39;</span><span class="p">,</span> <span class="s1">&#39;VOO.US&#39;</span><span class="p">],</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">tracking_error</span>
+<span class="go">           SPY.US    VOO.US</span>
+<span class="go">Date</span>
+<span class="go">2010-10  0.000346  0.001039</span>
+<span class="go">2010-11  0.000346  0.003030</span>
+<span class="go">2010-12  0.000283  0.005400</span>
+<span class="go">2011-01  0.000735  0.005350</span>
+<span class="go">2011-02  0.000903  0.004825</span>
+<span class="go">           ...       ...</span>
+<span class="go">2020-09  0.003099  0.003366</span>
+<span class="go">2020-10  0.003132  0.003370</span>
+<span class="go">2020-11  0.003127  0.003356</span>
+<span class="go">2020-12  0.003144  0.003357</span>
+<span class="go">2021-01  0.003132  0.003343</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.assets.AssetList.wealth_indexes">
+<em class="property">property </em><code class="sig-name descname">wealth_indexes</code><a class="headerlink" href="#okama.assets.AssetList.wealth_indexes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate wealth index time series for the assets and accumulated inflation.</p>
+<p>Wealth index is obtained from the accumulated return multiplicated by the initial investments (1000).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>DataFrame</dt><dd><p>Time series of Wealth index values in form of DataFrame.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-okama.macro">
+<span id="okama-macro-module"></span><h2>okama.macro module<a class="headerlink" href="#module-okama.macro" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="okama.macro.Inflation">
+<em class="property">class </em><code class="sig-prename descclassname">okama.macro.</code><code class="sig-name descname">Inflation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">symbol</span><span class="o">=</span><span class="default_value">'RUB.INFL'</span></em>, <em class="sig-param"><span class="n">first_date</span><span class="o">=</span><span class="default_value">'1800-01'</span></em>, <em class="sig-param"><span class="n">last_date</span><span class="o">=</span><span class="default_value">'2030-01'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.macro.Inflation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#okama.macro.MacroABC" title="okama.macro.MacroABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">okama.macro.MacroABC</span></code></a></p>
+<p>Inflation related data and methods.</p>
+<dl class="py method">
+<dt id="okama.macro.Inflation.annual_inflation_ts">
+<em class="property">property </em><code class="sig-name descname">annual_inflation_ts</code><a class="headerlink" href="#okama.macro.Inflation.annual_inflation_ts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.macro.Inflation.cumulative_inflation">
+<em class="property">property </em><code class="sig-name descname">cumulative_inflation</code><a class="headerlink" href="#okama.macro.Inflation.cumulative_inflation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return cumulative inflation rate time series for a period from first_date to last_date.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.macro.Inflation.describe">
+<code class="sig-name descname">describe</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">[1, 5, 10]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.macro.Inflation.describe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate descriptive inflation statistics for a given list of tickers.
+Statistics includes:
+- YTD compound inflation
+- Annual inflation (geometric mean) for a given list of periods
+- max 12 months inflation for the periods
+- Annual inflation (geometric mean) for the whole history</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.macro.Inflation.purchasing_power_1000">
+<em class="property">property </em><code class="sig-name descname">purchasing_power_1000</code><a class="headerlink" href="#okama.macro.Inflation.purchasing_power_1000" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return purchasing power of 1000 (in a currency of inflation) after period from first_date to last_date.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.macro.Inflation.rolling_inflation">
+<em class="property">property </em><code class="sig-name descname">rolling_inflation</code><a class="headerlink" href="#okama.macro.Inflation.rolling_inflation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return 12 months rolling inflation time series.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="okama.macro.MacroABC">
+<em class="property">class </em><code class="sig-prename descclassname">okama.macro.</code><code class="sig-name descname">MacroABC</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">symbol</span><span class="o">=</span><span class="default_value">'RUB.INFL'</span></em>, <em class="sig-param"><span class="n">first_date</span><span class="o">=</span><span class="default_value">'1800-01'</span></em>, <em class="sig-param"><span class="n">last_date</span><span class="o">=</span><span class="default_value">'2030-01'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.macro.MacroABC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dl class="py method">
+<dt id="okama.macro.MacroABC.describe">
+<em class="property">abstract </em><code class="sig-name descname">describe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#okama.macro.MacroABC.describe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="okama.macro.Rate">
+<em class="property">class </em><code class="sig-prename descclassname">okama.macro.</code><code class="sig-name descname">Rate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">symbol</span><span class="o">=</span><span class="default_value">'RUB.INFL'</span></em>, <em class="sig-param"><span class="n">first_date</span><span class="o">=</span><span class="default_value">'1800-01'</span></em>, <em class="sig-param"><span class="n">last_date</span><span class="o">=</span><span class="default_value">'2030-01'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.macro.Rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#okama.macro.MacroABC" title="okama.macro.MacroABC"><code class="xref py py-class docutils literal notranslate"><span class="pre">okama.macro.MacroABC</span></code></a></p>
+<p>Rates of central banks and banks.</p>
+<dl class="py method">
+<dt id="okama.macro.Rate.describe">
+<code class="sig-name descname">describe</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">[1, 5, 10]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.macro.Rate.describe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.macro.Rate.okid">
+<em class="property">property </em><code class="sig-name descname">okid</code><a class="headerlink" href="#okama.macro.Rate.okid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-okama.plots">
+<span id="okama-plots-module"></span><h2>okama.plots module<a class="headerlink" href="#module-okama.plots" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="okama.plots.Plots">
+<em class="property">class </em><code class="sig-prename descclassname">okama.plots.</code><code class="sig-name descname">Plots</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">symbols</span><span class="o">=</span><span class="default_value">['SPY.US']</span></em>, <em class="sig-param"><span class="n">first_date</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">last_date</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ccy</span><span class="o">=</span><span class="default_value">'USD'</span></em>, <em class="sig-param"><span class="n">inflation</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.plots.Plots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../stubs/okama.assets.AssetList.html#okama.assets.AssetList" title="okama.assets.AssetList"><code class="xref py py-class docutils literal notranslate"><span class="pre">okama.assets.AssetList</span></code></a></p>
+<p>Several tools to plot Efficient Frontier, Assets and Transition map.</p>
+<dl class="py method">
+<dt id="okama.plots.Plots.plot_assets">
+<code class="sig-name descname">plot_assets</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">kind</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="n">tickers</span><span class="o">=</span><span class="default_value">'tickers'</span></em>, <em class="sig-param"><span class="n">pct_values</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.plots.Plots.plot_assets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots assets scatter (annual risks, annual returns) with the tickers annotations.
+kind:
+mean - mean return
+cagr - CAGR from monthly returns time series
+tickers:
+- ‘tickers’ - shows tickers values (default)
+- ‘names’ - shows assets names from database
+- list of string labels
+pct_values:
+False - for algebraic notation
+True - for percent notation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.plots.Plots.plot_pair_ef">
+<code class="sig-name descname">plot_pair_ef</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tickers</span><span class="o">=</span><span class="default_value">'tickers'</span></em>, <em class="sig-param"><span class="n">bounds</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.plots.Plots.plot_pair_ef" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots efficient frontier of every pair of assets in a set.
+tickers:
+- ‘tickers’ - shows tickers values (default)
+- ‘names’ - shows assets names from database
+- list of string labels</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.plots.Plots.plot_transition_map">
+<code class="sig-name descname">plot_transition_map</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">full_frontier</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">cagr</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.plots.Plots.plot_transition_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots EF weights transition map given a EF points DataFrame.
+cagr - sets X axe to CAGR (if true) or to risk (if false).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-okama.portfolio">
+<span id="okama-portfolio-module"></span><h2>okama.portfolio module<a class="headerlink" href="#module-okama.portfolio" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="okama.portfolio.Portfolio">
+<em class="property">class </em><code class="sig-prename descclassname">okama.portfolio.</code><code class="sig-name descname">Portfolio</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">symbols</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">first_date</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">last_date</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ccy</span><span class="o">=</span><span class="default_value">'USD'</span></em>, <em class="sig-param"><span class="n">inflation</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">weights</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Implementation of investment portfolio.
+Arguments are similar to AssetList (weights are added), but different behavior.
+Works with monthly end of day historical rate of return data.
+TODO: rebalance_period should be an attribute</p>
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.annual_return_ts">
+<em class="property">property </em><code class="sig-name descname">annual_return_ts</code><a class="headerlink" href="#okama.portfolio.Portfolio.annual_return_ts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.describe">
+<code class="sig-name descname">describe</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">(1, 5, 10)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.describe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate descriptive statistics for the portfolio.</p>
+<p>Statistics includes:
+- YTD (Year To date) compound return
+- CAGR for a given list of periods
+- Dividend yield - yield for last 12 months (LTM)</p>
+<p>Risk metrics (full available period):
+- risk (standard deviation)
+- CVAR
+- max drawdowns (and dates)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>years</strong><span class="classifier">tuple of (int,), default (1, 5, 10)</span></dt><dd><p>List of periods for CAGR.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>DataFrame</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#okama.portfolio.Portfolio.get_cumulative_return" title="okama.portfolio.Portfolio.get_cumulative_return"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cumulative_return</span></code></a></dt><dd><p>Calculate cumulative return.</p>
+</dd>
+<dt><a class="reference internal" href="#okama.portfolio.Portfolio.get_cagr" title="okama.portfolio.Portfolio.get_cagr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cagr</span></code></a></dt><dd><p>Calculate assets Compound Annual Growth Rate (CAGR).</p>
+</dd>
+<dt><a class="reference internal" href="#okama.portfolio.Portfolio.dividend_yield" title="okama.portfolio.Portfolio.dividend_yield"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dividend_yield</span></code></a></dt><dd><p>Calculate dividend yield (LTM).</p>
+</dd>
+<dt><a class="reference internal" href="#okama.portfolio.Portfolio.risk_annual" title="okama.portfolio.Portfolio.risk_annual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">risk_annual</span></code></a></dt><dd><p>Return annualized risks (standard deviation).</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cvar</span></code></dt><dd><p>Calculate historic Conditional Value at Risk (CVAR, expected shortfall).</p>
+</dd>
+<dt><a class="reference internal" href="#okama.portfolio.Portfolio.drawdowns" title="okama.portfolio.Portfolio.drawdowns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">drawdowns</span></code></a></dt><dd><p>Calculate drawdowns.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.dividend_yield">
+<em class="property">property </em><code class="sig-name descname">dividend_yield</code><a class="headerlink" href="#okama.portfolio.Portfolio.dividend_yield" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates dividend yield time series in all base currencies of portfolio assets.
+For every currency dividend yield is a weighted sum of the assets dividend yields.
+Portfolio asset allocation (weights) is a constant (monthly rebalanced portfolios).
+TODO: calculate for not rebalance portfolios (and arbitrary reb period).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.drawdowns">
+<em class="property">property </em><code class="sig-name descname">drawdowns</code><a class="headerlink" href="#okama.portfolio.Portfolio.drawdowns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate drawdowns time series for the portfolio.</p>
+<p>The drawdown is the percent decline from a previous peak in wealth index.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.forecast_monte_carlo_cagr">
+<code class="sig-name descname">forecast_monte_carlo_cagr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em>, <em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">[10, 50, 90]</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">10000</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.forecast_monte_carlo_cagr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate percentiles for forecasted CAGR distribution.
+CAGR is calculated for each of N future random returns time series.
+Random distribution could be normal or lognormal.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.forecast_monte_carlo_returns">
+<code class="sig-name descname">forecast_monte_carlo_returns</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em>, <em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">100</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.forecast_monte_carlo_returns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates N random monthly returns time series with normal or lognormal distributions.
+Forecast period should not exceed 1/2 of portfolio history period length.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.forecast_monte_carlo_wealth_indexes">
+<code class="sig-name descname">forecast_monte_carlo_wealth_indexes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em>, <em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">100</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.forecast_monte_carlo_wealth_indexes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates N future random wealth indexes.
+Random distribution could be normal or lognormal.</p>
+<p>First value for the forecasted wealth indexes is the last historical portfolio index value. It is useful
+for a chart with historical wealth index and forecasted values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.forecast_wealth">
+<code class="sig-name descname">forecast_wealth</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em>, <em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">[10, 50, 90]</span></em>, <em class="sig-param"><span class="n">today_value</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.forecast_wealth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate percentiles of forecasted random accumulated wealth distribution.
+Random distribution could be normal lognormal or from history.</p>
+<p>today_value - the value of portfolio today (before forecast period). If today_value is None
+the last value of the historical wealth indexes is taken.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.forecast_wealth_history">
+<code class="sig-name descname">forecast_wealth_history</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">[10, 50, 90]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.forecast_wealth_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute accumulated wealth for each CAGR derived by ‘percentile_from_history’ method.
+CAGRs are taken from the historical data.</p>
+<p>Initial portfolio wealth is adjusted to the last known historical value (from wealth_index). It is useful
+for a chart with historical wealth index and forecasted values.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>years:
+percentiles:</p>
+</dd>
+<dt>Returns:</dt><dd><p>Dataframe of percentiles for period range from 1 to ‘years’</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.get_cagr">
+<code class="sig-name descname">get_cagr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">period</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.get_cagr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates Compound Annual Growth Rate (CAGR) for a given period:
+None: full time
+‘YTD’: Year To Date compound rate of return (formally not a CAGR)
+Integer: several years</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.get_cumulative_return">
+<code class="sig-name descname">get_cumulative_return</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">period</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.get_cumulative_return" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate cumulative return of return for the portfolio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>period: str, int or None, default None</strong></dt><dd><p>Trailing period in years.
+None - full time cumulative return.
+‘YTD’ - (Year To Date) period of time beginning the first day of the calendar year up to the last month.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Series</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">Portfolio</span><span class="p">()</span>  <span class="c1"># using default ticker &#39;SPY.US&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">get_cumulative_return</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">0.4230970729863084</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.get_cvar_historic">
+<code class="sig-name descname">get_cvar_historic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_frame</span><span class="o">=</span><span class="default_value">12</span></em>, <em class="sig-param"><span class="n">level</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.get_cvar_historic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate historic Conditional Value at Risk (CVAR, expected shortfall) for the portfolio.</p>
+<p>CVaR is the average loss over a specified time period of unlikely scenarios beyond the confidence level.
+Loss is a positive number (expressed in cumulative return).
+If CVaR is negative there are gains at this confidence level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>time_frame</strong><span class="classifier">int, default 12 (12 months)</span></dt><dd></dd>
+<dt><strong>level</strong><span class="classifier">int, default 5 (5% quantile)</span></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Float</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">Portfolio</span><span class="p">([</span><span class="s1">&#39;USDEUR.FX&#39;</span><span class="p">,</span> <span class="s1">&#39;BTC-USD.CC&#39;</span><span class="p">],</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">get_cvar_historic</span><span class="p">(</span><span class="n">time_frame</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">0.3566909250442616</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.get_rebalanced_portfolio_return_ts">
+<code class="sig-name descname">get_rebalanced_portfolio_return_ts</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">period</span><span class="o">=</span><span class="default_value">'year'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.get_rebalanced_portfolio_return_ts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.get_rolling_cagr">
+<code class="sig-name descname">get_rolling_cagr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.get_rolling_cagr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rolling portfolio CAGR (annualized rate of return) time series.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.get_rolling_cumulative_return">
+<code class="sig-name descname">get_rolling_cumulative_return</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">12</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.get_rolling_cumulative_return" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate rolling cumulative return.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>window</strong><span class="classifier">int, default 12</span></dt><dd><p>Window size in months.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>DataFrame</dt><dd><p>Time series of rolling cumulative return.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.get_var_historic">
+<code class="sig-name descname">get_var_historic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_frame</span><span class="o">=</span><span class="default_value">12</span></em>, <em class="sig-param"><span class="n">level</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.get_var_historic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate historic Value at Risk (VaR) for the portfolio.</p>
+<p>The VaR calculates the potential loss of an investment with a given time frame and confidence level.
+Loss is a positive number (expressed in cumulative return).
+If VaR is negative there are gains at this confidence level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>time_frame</strong><span class="classifier">int, default 12 (12 months)</span></dt><dd></dd>
+<dt><strong>level</strong><span class="classifier">int, default 5 (5% quantile)</span></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Float</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ok</span><span class="o">.</span><span class="n">Portfolio</span><span class="p">([</span><span class="s1">&#39;SP500TR.INDX&#39;</span><span class="p">,</span> <span class="s1">&#39;SP500BDT.INDX&#39;</span><span class="p">],</span> <span class="n">last_date</span><span class="o">=</span><span class="s1">&#39;2021-01&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">get_var_historic</span><span class="p">(</span><span class="n">time_frame</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">0.24030006476701732</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.jarque_bera">
+<em class="property">property </em><code class="sig-name descname">jarque_bera</code><a class="headerlink" href="#okama.portfolio.Portfolio.jarque_bera" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs Jarque-Bera test for normality.
+It shows whether the returns have the skewness and kurtosis matching a normal distribution.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>(The test statistic, The p-value for the hypothesis test)
+Low statistic numbers correspond to normal distribution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.kstest">
+<code class="sig-name descname">kstest</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.kstest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs Kolmogorov-Smirnov test on portfolio returns and evaluate goodness of fit.
+Test works with normal and lognormal distributions.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>(The test statistic, The p-value for the hypothesis test)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.kurtosis">
+<em class="property">property </em><code class="sig-name descname">kurtosis</code><a class="headerlink" href="#okama.portfolio.Portfolio.kurtosis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate expanding Fisher (normalized) kurtosis time series for portfolio returns.
+Kurtosis is the fourth central moment divided by the square of the variance.
+Kurtosis should be close to zero for normal distribution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.kurtosis_rolling">
+<code class="sig-name descname">kurtosis_rolling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">60</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.kurtosis_rolling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate rolling Fisher (normalized) kurtosis time series for portfolio returns.
+Kurtosis is the fourth central moment divided by the square of the variance.
+Kurtosis should be close to zero for normal distribution.</p>
+<p>window - the rolling window size in months (default is 5 years).
+The window size should be at least 12 months.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.mean_return_annual">
+<em class="property">property </em><code class="sig-name descname">mean_return_annual</code><a class="headerlink" href="#okama.portfolio.Portfolio.mean_return_annual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.mean_return_monthly">
+<em class="property">property </em><code class="sig-name descname">mean_return_monthly</code><a class="headerlink" href="#okama.portfolio.Portfolio.mean_return_monthly" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.percentile_from_history">
+<code class="sig-name descname">percentile_from_history</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">years</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">[10, 50, 90]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.percentile_from_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate given percentiles for portfolio CAGR (annualized rolling returns) distribution from the historical data.
+Each percentile is calculated for a period range from 1 year to ‘years’.</p>
+<p>years - max window size for rolling CAGR (limited with half history of period length).
+percentiles - list of percentiles to be calculated</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.percentile_inverse">
+<code class="sig-name descname">percentile_inverse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em>, <em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">score</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.percentile_inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the percentile rank of a score (CAGR value) in a given time frame.</p>
+<p>If percentile_inverse of, for example, 0% (CAGR value) is equal to 8% for 1 year time frame
+it means that 8% of the CAGR values in the distribution are negative in 1 year periods. Or in other words
+the probability of getting negative result after 1 year of investments is 8%.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>distr: norm, lognorm, hist - distribution type (normal or lognormal) or hist for CAGR array from history
+years: period length when CAGR is calculated
+score: score that is compared to the elements in CAGR array.
+n: number of random time series (for ‘norm’ or ‘lognorm’ only)</p>
+</dd>
+<dt>Returns:</dt><dd><p>Percentile-position of score (0-100) relative to distr.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.plot_forecast">
+<code class="sig-name descname">plot_forecast</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em>, <em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">[10, 50, 90]</span></em>, <em class="sig-param"><span class="n">today_value</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">figsize</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.plot_forecast" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots forecasted ranges of wealth indexes (lines) for a given set of percentiles.</p>
+<dl class="simple">
+<dt>distr - the distribution model type:</dt><dd><p>norm - normal distribution
+lognorm - lognormal distribution
+hist - percentiles are taken from historical data</p>
+</dd>
+</dl>
+<p>today_value - the value of portfolio today (before forecast period)
+n - number of random wealth time series used to calculate percentiles (not needed if distr=’hist’)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.plot_forecast_monte_carlo">
+<code class="sig-name descname">plot_forecast_monte_carlo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em>, <em class="sig-param"><span class="n">years</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">figsize</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.plot_forecast_monte_carlo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots N random wealth indexes and historical wealth index.
+Forecasted indexes are generated accorded to a given distribution (Monte Carlo simulation).
+Normal and lognormal distributions could be used for Monte Carlo simulation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.plot_hist_fit">
+<code class="sig-name descname">plot_hist_fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em>, <em class="sig-param"><span class="n">bins</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.plot_hist_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots historical distribution histogram and theoretical PDF (Probability Distribution Function).
+Lognormal and normal distributions could be used.</p>
+<p>normal distribution - ‘norm’
+lognormal distribution - ‘lognorm’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.plot_percentiles_fit">
+<code class="sig-name descname">plot_percentiles_fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em>, <em class="sig-param"><span class="n">figsize</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.plot_percentiles_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a probability plot of portfolio returns against percentiles of a specified
+theoretical distribution (the normal distribution by default).
+Works with normal and lognormal distributions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.real_cagr">
+<em class="property">property </em><code class="sig-name descname">real_cagr</code><a class="headerlink" href="#okama.portfolio.Portfolio.real_cagr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.real_mean_return">
+<em class="property">property </em><code class="sig-name descname">real_mean_return</code><a class="headerlink" href="#okama.portfolio.Portfolio.real_mean_return" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.returns_ts">
+<em class="property">property </em><code class="sig-name descname">returns_ts</code><a class="headerlink" href="#okama.portfolio.Portfolio.returns_ts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rate of return time series for portfolio (monthly rebalanced).
+Returns:</p>
+<blockquote>
+<div><p>pd.Series</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.risk_annual">
+<em class="property">property </em><code class="sig-name descname">risk_annual</code><a class="headerlink" href="#okama.portfolio.Portfolio.risk_annual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.risk_monthly">
+<em class="property">property </em><code class="sig-name descname">risk_monthly</code><a class="headerlink" href="#okama.portfolio.Portfolio.risk_monthly" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.semideviation_annual">
+<em class="property">property </em><code class="sig-name descname">semideviation_annual</code><a class="headerlink" href="#okama.portfolio.Portfolio.semideviation_annual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.semideviation_monthly">
+<em class="property">property </em><code class="sig-name descname">semideviation_monthly</code><a class="headerlink" href="#okama.portfolio.Portfolio.semideviation_monthly" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.skewness">
+<em class="property">property </em><code class="sig-name descname">skewness</code><a class="headerlink" href="#okama.portfolio.Portfolio.skewness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute expanding skewness of the return time series.
+For normally distributed data, the skewness should be about zero.
+A skewness value greater than zero means that there is more weight in the right tail of the distribution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.skewness_rolling">
+<code class="sig-name descname">skewness_rolling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">60</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.portfolio.Portfolio.skewness_rolling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute rolling skewness of the return time series.
+For normally distributed data, the skewness should be about zero.
+A skewness value greater than zero means that there is more weight in the right tail of the distribution.</p>
+<p>window - the rolling window size in months (default is 5 years).
+The window size should be at least 12 months.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.table">
+<em class="property">property </em><code class="sig-name descname">table</code><a class="headerlink" href="#okama.portfolio.Portfolio.table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns security name - ticker - weight DataFrame table.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.wealth_index">
+<em class="property">property </em><code class="sig-name descname">wealth_index</code><a class="headerlink" href="#okama.portfolio.Portfolio.wealth_index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.wealth_index_with_assets">
+<em class="property">property </em><code class="sig-name descname">wealth_index_with_assets</code><a class="headerlink" href="#okama.portfolio.Portfolio.wealth_index_with_assets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.portfolio.Portfolio.weights">
+<em class="property">property </em><code class="sig-name descname">weights</code><a class="headerlink" href="#okama.portfolio.Portfolio.weights" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-okama.settings">
+<span id="okama-settings-module"></span><h2>okama.settings module<a class="headerlink" href="#module-okama.settings" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="okama.settings.PeriodLength">
+<em class="property">class </em><code class="sig-prename descclassname">okama.settings.</code><code class="sig-name descname">PeriodLength</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">years</span></em>, <em class="sig-param"><span class="n">months</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.settings.PeriodLength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<dl class="py attribute">
+<dt id="okama.settings.PeriodLength.months">
+<code class="sig-name descname">months</code><a class="headerlink" href="#okama.settings.PeriodLength.months" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="okama.settings.PeriodLength.years">
+<code class="sig-name descname">years</code><a class="headerlink" href="#okama.settings.PeriodLength.years" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-okama">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-okama" title="Permalink to this headline">¶</a></h2>
+<p><em>okama</em> is a Python package developed for asset allocation and investments portfolio optimization tasks
+according to Modern Portfolio Theory (MPT).
+=====================================================================
+The package is supplied with <strong>free</strong> «end of day» historical stock markets data and macroeconomic indicators through API.</p>
+<p>Main features:</p>
+<ul class="simple">
+<li><p>Investment portfolio constrained Markowitz Mean-Variance Analysis (MVA) and optimization</p></li>
+<li><p>Rebalanced portfolio optimization</p></li>
+<li><p>Monte Carlo Simulations for financial assets and investment portfolios</p></li>
+<li><p>Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns</p></li>
+<li><p>Forecasting models according to normal and lognormal distribution</p></li>
+<li><p>Testing distribution on historical data</p></li>
+<li><p>Dividend yield and other dividend indicators for stocks</p></li>
+<li><p>Backtesting and comparing historical performance of broad range of assets and indexes in multiple currencies</p></li>
+<li><p>Methods to track the performance of index funds (ETF) and compare them with benchmarks</p></li>
+<li><p>Main macroeconomic indicators: inflation, central banks rates</p></li>
+<li><p>Matplotlib visualization scripts for the Efficient Frontier, Transition map and assets risk / return performance</p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, MBK Development LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

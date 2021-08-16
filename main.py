@@ -1,3 +1,5 @@
 import okama as ok
 
-lse = ok.AssetList(['INRG.LSE'], ccy='GBP')
+x = ok.Portfolio(['LKOH.MOEX', 'T.US'], ccy='USD', rebalancing_period='none')
+y = ok.AssetList(['SPY.US', x])
+print(y.assets_dividend_yield)

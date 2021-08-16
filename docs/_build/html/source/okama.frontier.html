@@ -1,0 +1,489 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>okama.frontier package &mdash; okama 0.98 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> okama
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.98
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../stubs/okama.Asset.html">okama.Asset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../stubs/okama.AssetList.html">okama.AssetList</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../stubs/okama.Portfolio.html">okama.Portfolio</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Test File</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">okama</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>okama.frontier package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/source/okama.frontier.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="okama-frontier-package">
+<h1>okama.frontier package<a class="headerlink" href="#okama-frontier-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-okama.frontier.multi_period">
+<span id="okama-frontier-multi-period-module"></span><h2>okama.frontier.multi_period module<a class="headerlink" href="#module-okama.frontier.multi_period" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb">
+<em class="property">class </em><code class="sig-prename descclassname">okama.frontier.multi_period.</code><code class="sig-name descname">EfficientFrontierReb</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">symbols</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">first_date</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">last_date</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ccy</span><span class="o">=</span><span class="default_value">'USD'</span></em>, <em class="sig-param"><span class="n">inflation</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">reb_period</span><span class="o">=</span><span class="default_value">'year'</span></em>, <em class="sig-param"><span class="n">n_points</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">tickers</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../stubs/okama.assets.AssetList.html#okama.assets.AssetList" title="okama.assets.AssetList"><code class="xref py py-class docutils literal notranslate"><span class="pre">okama.assets.AssetList</span></code></a></p>
+<p>Efficient Frontier (EF) for rebalanced portfolios.
+Rebalancing periods could be:
+‘year’ - one Year (default)
+‘none’ - not rebalanced portfolios
+Asset labels are set with ‘tickers’:
+True - for tickers
+False - for full asset names
+TODO: Add bounds</p>
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.ef_points">
+<em class="property">property </em><code class="sig-name descname">ef_points</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.ef_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a DataFrame of points for Efficient Frontier when the Objective Function is the risk (std)
+for rebalanced portfolio.</p>
+<p>Each point has:
+- Weights (float)
+- CAGR (float)
+- Risk (float)
+… and the weights for each asset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.get_ef_points">
+<code class="sig-name descname">get_ef_points</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.get_ef_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the points for the Efficient Frontier running optimizer.</p>
+<p>If verbose=True calculates elapsed time for each point and the total elapsed time.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.get_monte_carlo">
+<code class="sig-name descname">get_monte_carlo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">100</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.get_monte_carlo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate N random risk / cagr point for rebalanced portfolios.
+Risk and cagr are calculated for a set of random weights.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.global_max_return_portfolio">
+<em class="property">property </em><code class="sig-name descname">global_max_return_portfolio</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.global_max_return_portfolio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the weights and risk / CAGR of the maximum return portfolio point.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.gmv_annual_values">
+<em class="property">property </em><code class="sig-name descname">gmv_annual_values</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.gmv_annual_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the annual risk (std) and CAGR of the Global Minimum Volatility portfolio.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.gmv_annual_weights">
+<em class="property">property </em><code class="sig-name descname">gmv_annual_weights</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.gmv_annual_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the weights of the Global Minimum Volatility portfolio with annualized values of risk / return</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.gmv_monthly_weights">
+<em class="property">property </em><code class="sig-name descname">gmv_monthly_weights</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.gmv_monthly_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the weights of the Global Minimum Volatility portfolio with monthly values of risk / return</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.max_annual_risk_asset">
+<em class="property">property </em><code class="sig-name descname">max_annual_risk_asset</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.max_annual_risk_asset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find an asset with max annual risk.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.max_cagr_asset">
+<em class="property">property </em><code class="sig-name descname">max_cagr_asset</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.max_cagr_asset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find an asset with max CAGR.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.max_cagr_asset_right_to_max_cagr">
+<em class="property">property </em><code class="sig-name descname">max_cagr_asset_right_to_max_cagr</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.max_cagr_asset_right_to_max_cagr" title="Permalink to this definition">¶</a></dt>
+<dd><p>The asset with max CAGR lieing to the right of the global
+max CAGR point (risk should be more than self.max_return[‘Risk’]).
+Global max return point should not be an asset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.maximize_risk">
+<code class="sig-name descname">maximize_risk</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_return</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.maximize_risk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the optimal weights and risk / cagr values for a max risk at the target cagr.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.minimize_risk">
+<code class="sig-name descname">minimize_risk</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_return</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.minimize_risk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the optimal weights and risk / cagr values for a min risk at the target cagr.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.n_points">
+<em class="property">property </em><code class="sig-name descname">n_points</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.n_points" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.reb_period">
+<em class="property">property </em><code class="sig-name descname">reb_period</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.reb_period" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rebalancing period for multi-period Efficient Frontier.</p>
+<p>Rebalancing periods could be:
+‘year’ - one Year (default)
+‘none’ - not rebalanced portfolios</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>str</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.target_cagr_range_left">
+<em class="property">property </em><code class="sig-name descname">target_cagr_range_left</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.target_cagr_range_left" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full range of cagr values (from min to max).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.target_cagr_range_right">
+<em class="property">property </em><code class="sig-name descname">target_cagr_range_right</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.target_cagr_range_right" title="Permalink to this definition">¶</a></dt>
+<dd><p>Range of cagr values from the Global CAGR max to the max asset cagr
+to the right of the max CAGR point (if exists).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.target_risk_range">
+<em class="property">property </em><code class="sig-name descname">target_risk_range</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.target_risk_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Range of annual risk values (from min risk to max risk).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.tickers">
+<em class="property">property </em><code class="sig-name descname">tickers</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.tickers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of tickers (symbols without a namespace) used to set the AssetList.</p>
+<p>tickers are similar to symbols but do not have namespace information:</p>
+<ul class="simple">
+<li><p>SPY is a ticker</p></li>
+<li><p>SPY.US is a symbol</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>list of str</dt><dd><p>List of tickers included in the Asset List.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.multi_period.EfficientFrontierReb.verbose">
+<em class="property">property </em><code class="sig-name descname">verbose</code><a class="headerlink" href="#okama.frontier.multi_period.EfficientFrontierReb.verbose" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-okama.frontier.single_period">
+<span id="okama-frontier-single-period-module"></span><h2>okama.frontier.single_period module<a class="headerlink" href="#module-okama.frontier.single_period" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="okama.frontier.single_period.EfficientFrontier">
+<em class="property">class </em><code class="sig-prename descclassname">okama.frontier.single_period.</code><code class="sig-name descname">EfficientFrontier</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">symbols</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">first_date</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">last_date</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ccy</span><span class="o">=</span><span class="default_value">'USD'</span></em>, <em class="sig-param"><span class="n">bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">inflation</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">full_frontier</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">n_points</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">tickers</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.frontier.single_period.EfficientFrontier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../stubs/okama.assets.AssetList.html#okama.assets.AssetList" title="okama.assets.AssetList"><code class="xref py py-class docutils literal notranslate"><span class="pre">okama.assets.AssetList</span></code></a></p>
+<p>Efficient Frontier (EF) with classic MVA implementation.
+n - is a number of points in the EF.
+full_frontier = False - shows only the points with the return above GMV
+tickers = True - labels of data in DataFrame are tickers (asset long names if False)</p>
+<dl class="py method">
+<dt id="okama.frontier.single_period.EfficientFrontier.bounds">
+<em class="property">property </em><code class="sig-name descname">bounds</code><a class="headerlink" href="#okama.frontier.single_period.EfficientFrontier.bounds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.single_period.EfficientFrontier.ef_points">
+<em class="property">property </em><code class="sig-name descname">ef_points</code><a class="headerlink" href="#okama.frontier.single_period.EfficientFrontier.ef_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>DataFrame of weights and risk/return values for the Efficient Frontier.
+The columns of the DataFrame:
+- weights
+- mean return
+- CAGR
+- risk (std)
+All the values are annualized.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.single_period.EfficientFrontier.get_monte_carlo">
+<code class="sig-name descname">get_monte_carlo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">kind</span><span class="o">=</span><span class="default_value">'mean'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.frontier.single_period.EfficientFrontier.get_monte_carlo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate N random risk / cagr point for portfolios.
+Risk and cagr are calculated for a set of random weights.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.single_period.EfficientFrontier.gmv_annualized">
+<em class="property">property </em><code class="sig-name descname">gmv_annualized</code><a class="headerlink" href="#okama.frontier.single_period.EfficientFrontier.gmv_annualized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the annualized risk and return of the Global Minimum Volatility portfolio</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.single_period.EfficientFrontier.gmv_monthly">
+<em class="property">property </em><code class="sig-name descname">gmv_monthly</code><a class="headerlink" href="#okama.frontier.single_period.EfficientFrontier.gmv_monthly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the monthly risk and return of the Global Minimum Volatility portfolio</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.single_period.EfficientFrontier.gmv_weights">
+<em class="property">property </em><code class="sig-name descname">gmv_weights</code><a class="headerlink" href="#okama.frontier.single_period.EfficientFrontier.gmv_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the weights of the Global Minimum Volatility portfolio</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.single_period.EfficientFrontier.mean_return_range">
+<em class="property">property </em><code class="sig-name descname">mean_return_range</code><a class="headerlink" href="#okama.frontier.single_period.EfficientFrontier.mean_return_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the range of mean monthly returns (from the min to max).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.single_period.EfficientFrontier.minimize_risk">
+<code class="sig-name descname">minimize_risk</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_return</span></em>, <em class="sig-param"><span class="n">monthly_return</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">tolerance</span><span class="o">=</span><span class="default_value">1e-08</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.frontier.single_period.EfficientFrontier.minimize_risk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds minimal risk given the target return.
+Returns a “point” with monthly values:
+- weights
+- mean return
+- CAGR
+- risk (std)
+Target return is a monthly or annual value:
+monthly_return = False / True
+tolerance - sets the accuracy for the solver</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.frontier.single_period.EfficientFrontier.optimize_return">
+<code class="sig-name descname">optimize_return</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option</span><span class="o">=</span><span class="default_value">'max'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.frontier.single_period.EfficientFrontier.optimize_return" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds global max or min for the rate of return.
+Returns monthly values for the risk, mean return and the weights.
+‘max’ - search for global maximum
+‘min’ - search for global minimum</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-okama.frontier">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-okama.frontier" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, MBK Development LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

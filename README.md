@@ -4,7 +4,7 @@
         <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
             alt="python"></a> &nbsp;
     <a href="https://pypi.org/project/okama/">
-        <img src="https://img.shields.io/badge/pypi-v0.99-brightgreen.svg"
+        <img src="https://img.shields.io/badge/pypi-v1.0.0-brightgreen.svg"
             alt="pypi"></a> &nbsp;
     <a href='https://coveralls.io/github/mbk-dev/okama?branch=master'>
         <img src='https://coveralls.io/repos/github/mbk-dev/okama/badge.svg?branch=master' 
@@ -87,15 +87,16 @@ The latest development version can be installed directly from GitHub:
 
 ```python
 import okama as ok
+
 x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], ccy='USD')
-print(x)
+x  # all examples are for Jupyter Notebook/iPython. For raw Python interpreter use 'print(x)' instead.
 
 ```
 ![](../images/images/readmi01.jpg?raw=true) 
 
 Get the main parameters for the set:
 ```python
-x.describe(tickers=False)
+x.describe()
 ```
 ![](../images/images/readmi02.jpg?raw=true) 
 
@@ -108,37 +109,39 @@ x.wealth_indexes.plot()
 ### 2. Create a dividend stocks portfolio with base currency EUR
 
 ```python
-import okama.portfolio
-
 weights = [0.3, 0.2, 0.2, 0.2, 0.1]
 assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
-pf = okama.portfolio.Portfolio(assets, weights=weights, ccy='EUR')
-print(pf)
+pf = ok.Portfolio(assets, weights=weights, ccy='EUR')
+pf.table
 ```
 ![](../images/images/readmi04.jpg?raw=true) 
 
-Plot the dividend yield for each group of assets (based on stock currency).
+Plot the dividend yield of the portfolio (adjusted to the base currency).
+
 ```python
 pf.dividend_yield.plot()
 ```
-![](../images/images/readmi05.jpg?raw=true) 
+![](../images/images/readmi05.png?raw=true) 
 
-### 3. Draw an Efficient Frontier for 2 poular ETF: SPY and GLD
+### 3. Draw an Efficient Frontier for 2 popular ETF: SPY and GLD
 ```python
 ls = ['SPY.US', 'GLD.US']
 curr = 'USD'
-frontier = ok.EfficientFrontierReb(ls, last_date='2020-10', ccy=curr, reb_period='year')  # Rebalancing periods is one year (dafault value)
+last_date='2020-10'
+frontier = ok.EfficientFrontierReb(ls, last_date=last_date', ccy=curr, reb_period='year')  # Rebalancing periods is one year (dafault value)
 frontier.names
 ```
 ![](../images/images/readmi06.jpg?raw=true) 
 
 Get the Efficient Frontier points for rebalanced portfolios and plot the chart with the assets risk/CAGR points:
 ```python
+import matplotlib.pyplot as plt
+
 points = frontier.ef_points
 
 fig = plt.figure(figsize=(12,6))
 fig.subplots_adjust(bottom=0.2, top=1.5)
-ok.Plots(ls, ccy=curr).plot_assets(kind='cagr')  # plots the assets points on the chart
+ok.Plots(ls, ccy=curr, last_date=last_date).plot_assets(kind='cagr')  # plots the assets points on the chart
 ax = plt.gca()
 ax.plot(points.Risk, points.CAGR) 
 ```
@@ -152,7 +155,7 @@ map = ok.Plots(ls, ccy='USD').plot_transition_map(cagr=False)
 ```
 ![](../images/images/readmi08.jpg?v23-11-2020,raw=true "Transition map")  
 
-More examples are available in [Jupyter Notebooks](https://github.com/mbk-dev/okama/tree/master/notebooks).
+More examples are available in form of [Jupyter Notebooks](https://github.com/mbk-dev/okama/tree/master/examples).
 
 ## RoadMap
 
