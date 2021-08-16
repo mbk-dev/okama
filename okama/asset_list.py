@@ -14,7 +14,7 @@ class AssetList(ListMaker):
 
     def __repr__(self):
         dic = {
-            "symbols": self.symbols,
+            "assets": self.symbols,
             "currency": self._currency.ticker,
             "first_date": self.first_date.strftime("%Y-%m"),
             "last_date": self.last_date.strftime("%Y-%m"),

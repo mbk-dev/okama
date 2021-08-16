@@ -22,7 +22,7 @@ def test_asset_list_init_failing():
 class TestAssetList:
     def test_repr(self):
         value = pd.Series(dict(
-            symbols="[pf1.PF, RUB.FX, MCFTR.INDX]",
+            assets="[pf1.PF, RUB.FX, MCFTR.INDX]",
             currency="USD",
             first_date="2019-02",
             last_date="2020-01",

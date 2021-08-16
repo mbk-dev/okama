@@ -124,7 +124,7 @@ def init_plots():
     return ok.Plots(assets=['RUB.FX', 'EUR.FX', 'MCFTR.INDX'], ccy='RUB', first_date='2010-01', last_date='2020-01')
 
 
-# Efficient Frontier
+# Efficient Frontier Single Period
 @pytest.fixture(scope='module')
 def init_efficient_frontier_values():
     return dict(
@@ -148,7 +148,8 @@ def init_efficient_frontier_bounds(init_efficient_frontier_values):
     return ok.EfficientFrontier(**init_efficient_frontier_values, bounds=bounds)
 
 
+# Efficient Frontier Multi-Period
 @pytest.fixture(scope='module')
 def init_efficient_frontier_reb():
     ls = ['SPY.US', 'GLD.US']
-    return ok.EfficientFrontierReb(assets=ls, ccy='RUB', first_date='2019-01', last_date='2020-02', n_points=3)
+    return ok.EfficientFrontierReb(assets=ls, ccy='RUB', first_date='2019-01', last_date='2020-02', n_points=3, verbose=False)

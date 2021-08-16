@@ -62,14 +62,14 @@ class Portfolio(ListMaker):
     def __repr__(self):
         dic = {
             "symbol": self.symbol,
-            "symbols": self.symbols,
+            "assets": self.symbols,
             "weights": self.weights,
-            "rebalancing period": self.rebalancing_period,
+            "rebalancing_period": self.rebalancing_period,
             "currency": self.currency,
             "inflation": self.inflation if hasattr(self, "inflation") else "None",
-            "first date": self.first_date.strftime("%Y-%m"),
+            "first_date": self.first_date.strftime("%Y-%m"),
             "last_date": self.last_date.strftime("%Y-%m"),
-            "period length": self._pl_txt,
+            "period_length": self._pl_txt,
         }
         return repr(pd.Series(dic))
 

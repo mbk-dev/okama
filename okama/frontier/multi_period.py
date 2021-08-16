@@ -45,11 +45,11 @@ class EfficientFrontierReb(AssetList):
     def __repr__(self):
         dic = {
             'symbols': self.symbols,
-            'currency': self.currency.ticker,
-            'first date': self.first_date.strftime("%Y-%m"),
+            'currency': self._currency.ticker,
+            'first_date': self.first_date.strftime("%Y-%m"),
             'last_date': self.last_date.strftime("%Y-%m"),
-            'period length': self._pl_txt,
-            'rebalancing period': self.reb_period,
+            'period_length': self._pl_txt,
+            'rebalancing_period': self.reb_period,
             'inflation': self.inflation if hasattr(self, 'inflation') else 'None',
         }
         return repr(pd.Series(dic))

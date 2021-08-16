@@ -11,6 +11,21 @@ import okama as ok
 from .conftest import data_folder
 
 
+def test_repr(portfolio_rebalanced_year):
+    value = pd.Series(dict(
+        symbol="pf1.PF",
+        assets="[RUB.FX, MCFTR.INDX]",
+        weights="[0.5, 0.5]",
+        rebalancing_period="year",
+        currency="RUB",
+        inflation="RUB.INFL",
+        first_date="2015-01",
+        last_date="2020-01",
+        period_length="5 years, 1 months",
+    ))
+    assert repr(portfolio_rebalanced_year) == repr(value)
+
+
 def test_symbol_failing(portfolio_rebalanced_year):
     with pytest.raises(ValueError, match='portfolio symbol must be a string ending with ".PF" namespace.'):
         portfolio_rebalanced_year.symbol = 1
