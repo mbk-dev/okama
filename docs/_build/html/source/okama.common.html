@@ -1,0 +1,562 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>okama.common package &mdash; okama 0.98 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> okama
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.98
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../stubs/okama.Asset.html">okama.Asset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../stubs/okama.AssetList.html">okama.AssetList</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../stubs/okama.Portfolio.html">okama.Portfolio</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Content</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Test File</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">okama</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>okama.common package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/source/okama.common.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="okama-common-package">
+<h1>okama.common package<a class="headerlink" href="#okama-common-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-okama.common.helpers">
+<span id="okama-common-helpers-module"></span><h2>okama.common.helpers module<a class="headerlink" href="#module-okama.common.helpers" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="okama.common.helpers.Date">
+<em class="property">class </em><code class="sig-prename descclassname">okama.common.helpers.</code><code class="sig-name descname">Date</code><a class="headerlink" href="#okama.common.helpers.Date" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="okama.common.helpers.Date.subtract_years">
+<em class="property">static </em><code class="sig-name descname">subtract_years</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">years</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Date.subtract_years" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subtract N years (integer) from a date. Used for time series.
+First month is +1 (if today is August the series should start at September to give 12 months).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="okama.common.helpers.Float">
+<em class="property">class </em><code class="sig-prename descclassname">okama.common.helpers.</code><code class="sig-name descname">Float</code><a class="headerlink" href="#okama.common.helpers.Float" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Group of methods using float values inputs.
+Some of them can take DataFrame also.</p>
+<dl class="py method">
+<dt id="okama.common.helpers.Float.annualize_return">
+<em class="property">static </em><code class="sig-name descname">annualize_return</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rate_of_return</span></em>, <em class="sig-param"><span class="n">periods_per_year</span><span class="o">=</span><span class="default_value">12</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Float.annualize_return" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annualizes a return.
+Default annualization is from month to year.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Float.annualize_risk">
+<em class="property">static </em><code class="sig-name descname">annualize_risk</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">risk</span></em>, <em class="sig-param"><span class="n">mean_return</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Float.annualize_risk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annualizes Risk.
+Annualization from month to year (from standard deviation) is by default. Monthly mean return is also required.
+Works with DataFrame inputs (in math.sqrt is not used).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Float.approx_return_risk_adjusted">
+<em class="property">static </em><code class="sig-name descname">approx_return_risk_adjusted</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mean_return</span></em>, <em class="sig-param"><span class="n">std</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Float.approx_return_risk_adjusted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Approximates geometric mean return given mean return and std.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Float.get_monthly_return_from_annual">
+<em class="property">static </em><code class="sig-name descname">get_monthly_return_from_annual</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">annual_return</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Float.get_monthly_return_from_annual" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets value of monthly return for a given annual return.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Float.get_purchasing_power">
+<em class="property">static </em><code class="sig-name descname">get_purchasing_power</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inflation</span></em>, <em class="sig-param"><span class="n">value</span><span class="o">=</span><span class="default_value">1000.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Float.get_purchasing_power" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Float.get_random_weights">
+<em class="property">static </em><code class="sig-name descname">get_random_weights</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">w_shape</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Float.get_random_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produce N random normalized weights of a given shape.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="okama.common.helpers.Frame">
+<em class="property">class </em><code class="sig-prename descclassname">okama.common.helpers.</code><code class="sig-name descname">Frame</code><a class="headerlink" href="#okama.common.helpers.Frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Group of methods using DataFrame (or Series) input.</p>
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.change_columns_order">
+<em class="property">static </em><code class="sig-name descname">change_columns_order</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em>, <em class="sig-param"><span class="n">selected_columns</span></em>, <em class="sig-param"><span class="n">position</span><span class="o">=</span><span class="default_value">'first'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.change_columns_order" title="Permalink to this definition">¶</a></dt>
+<dd><p>Places selected_columns on the first position (position=’first’) or last position (position=’last’).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_annual_return_ts_from_monthly">
+<em class="property">static </em><code class="sig-name descname">get_annual_return_ts_from_monthly</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror_monthly</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_annual_return_ts_from_monthly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annual Rate of Returns time series from monthly data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_cagr">
+<em class="property">static </em><code class="sig-name descname">get_cagr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_cagr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Compound Annual Rate of Return (CAGR) for each asset given returns time series DataFrame.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_cumulative_return">
+<em class="property">static </em><code class="sig-name descname">get_cumulative_return</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_cumulative_return" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Compound Return for time series of return (one or several).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_cvar_historic">
+<em class="property">static </em><code class="sig-name descname">get_cvar_historic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">level</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_cvar_historic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the Conditional VaR (CVaR) at a specified level.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_drawdowns">
+<em class="property">static </em><code class="sig-name descname">get_drawdowns</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_drawdowns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get drawdowns from return time series.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_okid_index">
+<em class="property">static </em><code class="sig-name descname">get_okid_index</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rates</span></em>, <em class="sig-param"><span class="n">symbol</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_okid_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes OKID index from bank rates time series.
+The index is a basket of 12 one year bank deposits (1 month shift).
+symbol is required for rates time series adjustments (for ‘RUS_RUB_TOP10.RATE’ it’s a different adjustment)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_portfolio_mean_return">
+<em class="property">classmethod </em><code class="sig-name descname">get_portfolio_mean_return</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em>, <em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_portfolio_mean_return" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes mean return of a portfolio (monthly).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_portfolio_return_ts">
+<em class="property">classmethod </em><code class="sig-name descname">get_portfolio_return_ts</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em>, <em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_portfolio_return_ts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the mean return time series given portfolio weights and the DataFrame of assets mean returns.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_portfolio_risk">
+<em class="property">classmethod </em><code class="sig-name descname">get_portfolio_risk</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em>, <em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_portfolio_risk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the std of portfolio returns.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_rolling_fn">
+<em class="property">static </em><code class="sig-name descname">get_rolling_fn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">window</span></em>, <em class="sig-param"><span class="n">fn</span></em>, <em class="sig-param"><span class="n">window_below_year</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_rolling_fn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_semideviation">
+<em class="property">static </em><code class="sig-name descname">get_semideviation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_semideviation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns semideviation for each asset given returns time series.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_var_historic">
+<em class="property">static </em><code class="sig-name descname">get_var_historic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">level</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_var_historic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute monthly historic Value at Risk (VaR) at a specified level.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.get_wealth_indexes">
+<em class="property">static </em><code class="sig-name descname">get_wealth_indexes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">first_value</span><span class="o">=</span><span class="default_value">1000.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.get_wealth_indexes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns wealth indexes for a list of assets (or for portfolio).
+Works also with pd.Series inputs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.jarque_bera_dataframe">
+<em class="property">static </em><code class="sig-name descname">jarque_bera_dataframe</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.jarque_bera_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Jarque-Bera goodness of fit test on time series in form of Pandas DataFrame.
+The Jarque-Bera test shows whether the returns have the skewness and kurtosis matching a normal distribution.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>(The test statistic, The p-value for the hypothesis test)
+Low statistic numbers correspond to normal distribution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.jarque_bera_series">
+<em class="property">static </em><code class="sig-name descname">jarque_bera_series</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.jarque_bera_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Jarque-Bera goodness of fit test on a single time series (Pandas Series).
+The Jarque-Bera test shows whether the returns have the skewness and kurtosis matching a normal distribution.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>(The test statistic, The p-value for the hypothesis test)
+Low statistic numbers correspond to normal distribution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.kstest_dataframe">
+<em class="property">static </em><code class="sig-name descname">kstest_dataframe</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.kstest_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kolmogorov-Smirnov test for goodness of fit test on time series in form of Pandas DataFrame.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>(The test statistic, The p-value for the hypothesis test)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.kstest_series">
+<em class="property">static </em><code class="sig-name descname">kstest_series</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">distr</span><span class="o">=</span><span class="default_value">'norm'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.kstest_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kolmogorov-Smirnov test goodness of fit test on a single time series (Pandas Series).</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>{‘statistics’: The test statistic, ‘p-value’: The p-value for the hypothesis test}</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.kurtosis">
+<em class="property">static </em><code class="sig-name descname">kurtosis</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.kurtosis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate expanding Fisher (normalized) kurtosis time series.
+Kurtosis should be close to zero for normal distribution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.kurtosis_rolling">
+<em class="property">static </em><code class="sig-name descname">kurtosis_rolling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">60</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.kurtosis_rolling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate rolling Fisher (normalized) kurtosis time series.
+Kurtosis should be close to zero for normal distribution.
+Window should be at least 12 months.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.skewness">
+<em class="property">static </em><code class="sig-name descname">skewness</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.skewness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate expanding skewness.
+The shape of time series should be at least 12. In the opposite case empty time series is returned.
+TODO: implement skewtest (from scipy)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.skewness_rolling">
+<em class="property">static </em><code class="sig-name descname">skewness_rolling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">60</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.skewness_rolling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate rolling skewness.
+Window size should be at least 12 months.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Frame.weights_sum_is_one">
+<em class="property">static </em><code class="sig-name descname">weights_sum_is_one</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Frame.weights_sum_is_one" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="okama.common.helpers.Index">
+<em class="property">class </em><code class="sig-prename descclassname">okama.common.helpers.</code><code class="sig-name descname">Index</code><a class="headerlink" href="#okama.common.helpers.Index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="okama.common.helpers.Index.beta">
+<em class="property">static </em><code class="sig-name descname">beta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Index.beta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate beta coefficient time series.
+Index (or benchmark) should be in the first position (first column).
+The period should be at least 12 months.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Index.cov_cor">
+<em class="property">static </em><code class="sig-name descname">cov_cor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Index.cov_cor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the accumulated correlation or covariance time series.
+The period should be at least 12 months.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Index.rolling_cov_cor">
+<em class="property">static </em><code class="sig-name descname">rolling_cov_cor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">60</span></em>, <em class="sig-param"><span class="n">fn</span><span class="o">=</span><span class="default_value">'corr'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Index.rolling_cov_cor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the rolling correlation (or covariance) time series.
+The history period should be at least 12 months.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Index.tracking_difference">
+<em class="property">static </em><code class="sig-name descname">tracking_difference</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">accumulated_return</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Index.tracking_difference" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns tracking difference for a rate of return time series.
+Assets are compared with the index or another benchmark.
+Index should be in the first position (first column).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Index.tracking_difference_annualized">
+<em class="property">static </em><code class="sig-name descname">tracking_difference_annualized</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tracking_diff</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Index.tracking_difference_annualized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annualizes the values of tracking difference time series.
+Annual values are available for periods of more than 12 months.
+Returns for less than 12 months can’t be annualized.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Index.tracking_error">
+<em class="property">static </em><code class="sig-name descname">tracking_error</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Index.tracking_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns tracking error for a rate of return time series.
+Assets are compared with the index or another benchmark.
+Index should be in the first position (first column).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="okama.common.helpers.Rebalance">
+<em class="property">class </em><code class="sig-prename descclassname">okama.common.helpers.</code><code class="sig-name descname">Rebalance</code><a class="headerlink" href="#okama.common.helpers.Rebalance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Methods for rebalancing portfolio.</p>
+<dl class="py method">
+<dt id="okama.common.helpers.Rebalance.create_fn_list_ror_ts">
+<em class="property">static </em><code class="sig-name descname">create_fn_list_ror_ts</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">period</span><span class="o">=</span><span class="default_value">'year'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Rebalance.create_fn_list_ror_ts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of functions of weights.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Rebalance.rebalanced_portfolio_return_ts">
+<em class="property">static </em><code class="sig-name descname">rebalanced_portfolio_return_ts</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em>, <em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">period</span><span class="o">=</span><span class="default_value">'year'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Rebalance.rebalanced_portfolio_return_ts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns mean return time series of rebalanced portfolio given returns time series of the assets.
+Default rebalancing period is a Year (end of year)
+For not rebalanced portfolio set Period to ‘none’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="okama.common.helpers.Rebalance.rebalanced_portfolio_wealth_ts">
+<em class="property">static </em><code class="sig-name descname">rebalanced_portfolio_wealth_ts</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em>, <em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">period</span><span class="o">=</span><span class="default_value">'year'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.Rebalance.rebalanced_portfolio_wealth_ts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns wealth index time series of rebalanced portfolio given returns time series of the assets.
+Default rebalancing period is a Year (end of year)
+For not rebalanced portfolio set Period to ‘none’</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="okama.common.helpers.check_rolling_window">
+<code class="sig-prename descclassname">okama.common.helpers.</code><code class="sig-name descname">check_rolling_window</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">window</span></em>, <em class="sig-param"><span class="n">ror</span></em>, <em class="sig-param"><span class="n">window_below_year</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#okama.common.helpers.check_rolling_window" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-okama.common">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-okama.common" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, MBK Development LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
