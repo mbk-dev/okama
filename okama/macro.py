@@ -48,7 +48,7 @@ class MacroABC(ABC):
         namespace = self.symbol.split(".", 1)[-1]
         allowed_namespaces = get_macro_namespaces()
         if namespace not in allowed_namespaces:
-            raise Exception(
+            raise ValueError(
                 f"{namespace} is not in allowed namespaces: {allowed_namespaces}"
             )
 
@@ -76,7 +76,7 @@ class Inflation(MacroABC):
         Return cumulative inflation rate time series for a period from first_date to last_date.
         """
         if self.symbol.split(".", 1)[-1] != "INFL":
-            raise Exception("cumulative_inflation is defined for inflation only")
+            raise ValueError("cumulative_inflation is defined for inflation only")
         return (self.values_ts + 1.0).cumprod() - 1.0
 
     @property
@@ -96,7 +96,7 @@ class Inflation(MacroABC):
         Return 12 months rolling inflation time series.
         """
         if self.symbol.split(".", 1)[-1] != "INFL":
-            raise Exception("cumulative_inflation is defined for inflation only")
+            raise ValueError("cumulative_inflation is defined for inflation only")
         x = (self.values_ts + 1.0).rolling(_MONTHS_PER_YEAR).apply(
             np.prod, raw=True
         ) - 1.0

@@ -235,7 +235,7 @@ class Frame:
             )
             start_period += 1
         if index_total is None:
-            raise Exception("`index_total` should not be `None`")
+            raise ValueError("`index_total` should not be `None`")
         result = index_total
         result = (np.diff(result) / result[:-1] + 1.0).cumprod() - 1.0
         result = [0] + result

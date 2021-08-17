@@ -168,7 +168,7 @@ def test_get_cagr_real(portfolio_rebalanced_month, input_data, expected):
 
 
 def test_get_cagr_real_no_inflation_exception(portfolio_no_inflation):
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         portfolio_no_inflation.get_cagr(period=1, real=True)
 
 
@@ -185,7 +185,7 @@ def test_cumulative_return(portfolio_rebalanced_month, period, real, expected):
 cumulative_return_fail = [
     (1.5, False, TypeError),
     (-1, False, ValueError),
-    (1, True, Exception),
+    (1, True, ValueError),
 ]
 
 
@@ -210,7 +210,7 @@ def test_describe_no_inflation(portfolio_no_inflation):
 def test_percentile_from_history(portfolio_rebalanced_month, portfolio_short_history):
     assert portfolio_rebalanced_month.percentile_from_history(years=1).iloc[0, 1] == approx(0.12456, rel=1e-2)
     with pytest.raises(
-        Exception,
+        ValueError,
         match="Time series does not have enough history to forecast. "
         "Period length is 0.90 years. At least 2 years are required.",
     ):
@@ -235,7 +235,7 @@ def test_get_rolling_cagr(portfolio_rebalanced_month, window, real, expected):
 
 def test_get_rolling_cagr_failing_short_window(portfolio_not_rebalanced):
     with pytest.raises(
-        Exception,
+        ValueError,
         match="window size should be at least 1 year"
     ):
         portfolio_not_rebalanced.get_rolling_cagr(window=1)
@@ -243,7 +243,7 @@ def test_get_rolling_cagr_failing_short_window(portfolio_not_rebalanced):
 
 def test_get_rolling_cagr_failing_long_window(portfolio_not_rebalanced):
     with pytest.raises(
-        Exception,
+        ValueError,
         match="window size is more than data history depth"
     ):
         portfolio_not_rebalanced.get_rolling_cagr(window=100)
@@ -251,7 +251,7 @@ def test_get_rolling_cagr_failing_long_window(portfolio_not_rebalanced):
 
 def test_get_rolling_cagr_failing_no_inflation(portfolio_no_inflation):
     with pytest.raises(
-        Exception,
+        ValueError,
         match="Real return is not defined. Set inflation=True when initiating the class."
     ):
         portfolio_no_inflation.get_rolling_cagr(real=True)
