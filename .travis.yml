@@ -11,6 +11,8 @@ install:
   - pip install ipykernel
 # command to run tests
 script:
+  - python -m ipykernel install --user --name py39
+  - pytest --nbmake examples
   - pytest tests --cov=okama/
 after_success:
   - coveralls
