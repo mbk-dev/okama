@@ -452,7 +452,7 @@ class Portfolio(ListMaker):
         cagr = Frame.get_cagr(df[dt:])
         if real:
             if not hasattr(self, "inflation"):
-                raise Exception(
+                raise ValueError(
                     "Real CAGR is not defined. Set inflation=True in Portfolio to calculate it."
                 )
             mean_inflation = Frame.get_cagr(self.inflation_ts[dt:])
@@ -557,7 +557,7 @@ class Portfolio(ListMaker):
         cr = Frame.get_cumulative_return(df[dt:])
         if real:
             if not hasattr(self, "inflation"):
-                raise Exception(
+                raise ValueError(
                     "Real cumulative return is not defined (no inflation information is available)."
                     "Set inflation=True in Portfolio to calculate it."
                 )
@@ -723,7 +723,7 @@ class Portfolio(ListMaker):
         0.3088967455111862
         """
         if not hasattr(self, "inflation"):
-            raise Exception(
+            raise ValueError(
                 "Real Return is not defined. Set inflation=True to calculate."
             )
         infl_mean = Float.annualize_return(self.inflation_ts.mean())

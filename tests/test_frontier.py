@@ -11,13 +11,13 @@ import okama as ok
 
 @mark.frontier
 def test_init_efficient_frontier_failing():
-    with pytest.raises(Exception, match=r'The number of symbols cannot be less than two'):
+    with pytest.raises(ValueError, match=r'The number of symbols cannot be less than two'):
         ok.EfficientFrontier(assets=['MCFTR.INDX'])
 
 
 @mark.frontier
 def test_bounds_setter_failing(init_efficient_frontier):
-    with pytest.raises(Exception, match=r'The number of symbols \(2\) and the length of bounds \(3\) should be equal.'):
+    with pytest.raises(ValueError, match=r'The number of symbols \(2\) and the length of bounds \(3\) should be equal.'):
         init_efficient_frontier.bounds = ((0, 1.), (0.5, 1.), (0, 0.5))
 
 

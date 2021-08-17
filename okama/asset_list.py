@@ -290,7 +290,7 @@ class AssetList(ListMaker):
         cagr = Frame.get_cagr(df[dt:])
         if real:
             if not hasattr(self, "inflation"):
-                raise Exception(
+                raise ValueError(
                     "Real CAGR is not defined. Set inflation=True in AssetList to calculate it."
                 )
             mean_inflation = Frame.get_cagr(self.inflation_ts[dt:])
@@ -389,7 +389,7 @@ class AssetList(ListMaker):
         cr = Frame.get_cumulative_return(df[dt:])
         if real:
             if not hasattr(self, "inflation"):
-                raise Exception(
+                raise ValueError(
                     "Real cumulative return is not defined (no inflation information is available)."
                     "Set inflation=True in AssetList to calculate it."
                 )
@@ -613,7 +613,7 @@ class AssetList(ListMaker):
         dtype: float64
         """
         if not hasattr(self, "inflation"):
-            raise Exception(
+            raise ValueError(
                 "Real Return is not defined. Set inflation=True to calculate."
             )
         df = pd.concat(

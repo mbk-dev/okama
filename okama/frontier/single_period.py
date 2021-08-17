@@ -96,7 +96,7 @@ class EfficientFrontier(AssetList):
         if weights.success:
             return weights.x
         else:
-            raise Exception("No solutions where found")
+            raise RecursionError("No solutions where found")
 
     @property
     def gmv_monthly(self) -> Tuple[float, float]:
@@ -169,7 +169,7 @@ class EfficientFrontier(AssetList):
             }
             return point
         else:
-            raise Exception("No solutions where found")
+            raise RecursionError("No solutions where found")
 
     def minimize_risk(
         self,
@@ -233,7 +233,7 @@ class EfficientFrontier(AssetList):
             # point['CAGR (approx)'] = r_gmean
             point["Risk"] = a_risk
         else:
-            raise Exception("No solutions were found")
+            raise RecursionError("No solutions were found")
         return point
 
     @property

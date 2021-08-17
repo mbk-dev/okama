@@ -13,7 +13,7 @@ from .conftest import data_folder
 
 @mark.asset_list
 def test_asset_list_init_failing():
-    with pytest.raises(Exception, match=r"Assets must be a list."):
+    with pytest.raises(ValueError, match=r"Assets must be a list."):
         ok.AssetList(assets=("RUB.FX", "MCFTR.INDX"))
 
 
@@ -153,7 +153,7 @@ class TestAssetList:
             self.asset_list.get_cagr(period=3, real=True)
 
     def test_get_cagr_real_no_inflation_exception(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             self.asset_list_no_infl.get_cagr(period=1, real=True)
 
     @pytest.mark.parametrize(
@@ -171,7 +171,7 @@ class TestAssetList:
         (0, False, ValueError),  # window should be at least 12 months for CAGR
         (12.5, False, ValueError),  # not an integer
         (10 * 12, False, ValueError),  # window size should be in the history period
-        (12, True, Exception),  # real CAGR is defined when AssetList(inflation=True) only
+        (12, True, ValueError),  # real CAGR is defined when AssetList(inflation=True) only
     ]
 
     @pytest.mark.parametrize("window, real, exception", get_rolling_cagr_error_data)
@@ -221,7 +221,7 @@ class TestAssetList:
             self.asset_list.get_cumulative_return(period=3, real=True)
 
     def test_get_cumulative_return_real_no_inflation_exception(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             self.asset_list_no_infl.get_cumulative_return(period=1, real=True)
 
     def test_get_rolling_cumulative_return(self):
@@ -286,7 +286,7 @@ class TestAssetList:
 
     def test_tracking_difference_failing(self):
         with pytest.raises(
-            Exception,
+            ValueError,
             match="At least 2 symbols should be provided to calculate Tracking Difference.",
         ):
             self.spy.tracking_difference
@@ -318,7 +318,7 @@ class TestAssetList:
 
     def test_rolling_skewness_failing(self):
         with pytest.raises(
-            Exception, match=r"window size is more than data history depth"
+            ValueError, match=r"window size is more than data history depth"
         ):
             self.asset_list.skewness_rolling(window=24)
 

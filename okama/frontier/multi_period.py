@@ -232,7 +232,7 @@ class EfficientFrontierReb(AssetList):
         acc_return = (ts + 1.).prod() - 1.
         return (1. + acc_return) ** (_MONTHS_PER_YEAR / ts.shape[0]) - 1.
 
-    def minimize_risk(self, target_return: float) -> Dict[str, float]:
+    def minimize_risk(self, target_value: float) -> Dict[str, float]:
         """
         Returns the optimal weights and risk / cagr values for a min risk at the target cagr.
         """
@@ -253,7 +253,7 @@ class EfficientFrontierReb(AssetList):
                             'fun': lambda weights: np.sum(weights) - 1
                             }
         cagr_is_target = {'type': 'eq',
-                          'fun': lambda weights: target_return - self._get_cagr(weights)
+                          'fun': lambda weights: target_value - self._get_cagr(weights)
                           }
 
         weights = minimize(objective_function,
@@ -270,10 +270,10 @@ class EfficientFrontierReb(AssetList):
         if weights.success:
             asset_labels = self.symbols if self.ticker_names else list(self.names.values())
             point = {x: y for x, y in zip(asset_labels, weights.x)}
-            point['CAGR'] = target_return
+            point['CAGR'] = target_value
             point['Risk'] = weights.fun
         else:
-            raise Exception(f'There is no solution for target cagr {target_return}.')
+            raise RecursionError(f'No solution found for target risk value: {target_value}.')
         return point
 
     def maximize_risk(self, target_return: float) -> Dict[str, float]:
@@ -319,7 +319,7 @@ class EfficientFrontierReb(AssetList):
             point['CAGR'] = target_return
             point['Risk'] = - weights.fun
         else:
-            raise Exception(f'There is no solution for target cagr {target_return}.')
+            raise RecursionError(f'No solution found for target risk value: {target_return}.')
         return point
 
     @property

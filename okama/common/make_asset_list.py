@@ -242,7 +242,7 @@ class ListMaker(ABC):
         Rate of return monthly data is adjusted for inflation.
         """
         if not hasattr(self, "inflation"):
-            raise Exception(
+            raise ValueError(
                 "Real return is not defined. Set inflation=True when initiating the class."
             )
         df = (1.0 + df).divide(1.0 + self.inflation_ts, axis=0) - 1.0
