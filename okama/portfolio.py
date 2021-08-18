@@ -483,7 +483,6 @@ class Portfolio(ListMaker):
 
         Examples
         --------
-        Get inflation adjusted rolling CAGR (real annualized return) win 5 years window:
         >>> x = ok.Portfolio(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True)
         >>> x.get_rolling_cagr(window=5*12, real=True)
                  portfolio_7645.PF
