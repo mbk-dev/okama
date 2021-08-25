@@ -11,6 +11,11 @@ import okama as ok
 from .conftest import data_folder
 
 
+def test_initialization_failing():
+    with pytest.raises(ValueError, match=r"Number of tickers \(2\) should be equal to the weights number \(3\)"):
+        ok.Portfolio(assets=['MCFTR.INDX', 'MCFTR.INDX', 'RUB.FX'], weights=[.3, .3, .4])
+
+
 def test_repr(portfolio_rebalanced_year):
     value = pd.Series(dict(
         symbol="pf1.PF",
@@ -207,8 +212,9 @@ def test_describe_no_inflation(portfolio_no_inflation):
     assert_frame_equal(description, description_sample)
 
 
-def test_percentile_from_history(portfolio_rebalanced_month, portfolio_short_history):
+def test_percentile_from_history(portfolio_rebalanced_month, portfolio_no_inflation, portfolio_short_history):
     assert portfolio_rebalanced_month.percentile_from_history(years=1).iloc[0, 1] == approx(0.12456, rel=1e-2)
+    assert portfolio_no_inflation.percentile_from_history(years=1).iloc[0, 1] == approx(0.12456, rel=1e-2)
     with pytest.raises(
         ValueError,
         match="Time series does not have enough history to forecast. "

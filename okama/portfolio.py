@@ -111,9 +111,9 @@ class Portfolio(ListMaker):
         else:
             [validate_real("weight", weight) for weight in weights]
             Frame.weights_sum_is_one(weights)
-            if len(weights) != len(self.symbols):
+            if len(weights) != len(set(self.symbols)):
                 raise ValueError(
-                    f"Number of tickers ({len(self.symbols)}) should be equal "
+                    f"Number of tickers ({len(set(self.symbols))}) should be equal "
                     f"to the weights number ({len(weights)})"
                 )
         self._weights = weights
@@ -498,9 +498,10 @@ class Portfolio(ListMaker):
         2021-04           0.043729
         2021-05           0.042704
         """
-        df = self._add_inflation()
+        df_or_ts = self._add_inflation()
         if real:
-            df = self._make_real_return_time_series(df)
+            df_or_ts = self._make_real_return_time_series(df_or_ts)
+        df = self._make_df_if_series(df_or_ts)
         return Frame.get_rolling_fn(df, window=window, fn=Frame.get_cagr)
 
     def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:

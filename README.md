@@ -18,9 +18,9 @@
 
 # Okama
 
-_okama_ is a Python package developed for asset allocation and investment portfolio optimization tasks according to Modern Portfolio Theory (MPT).
+_okama_ is a library with investment portfolio analyzing & optimization tools.
 
-The package is supplied with **free** «end of day» historical stock markets data and macroeconomic indicators through API.
+_okama_ goes with **free** «end of day» historical stock markets data and macroeconomic indicators through API.
 >...entities should not be multiplied without necessity
 >
 > -- <cite>William of Ockham (c. 1287–1347)</cite>
@@ -163,9 +163,7 @@ The plan for _okama_ is to add more functions that will be useful to investors a
 
 - Make documentation for the package. Finish docstrings for modules, classes, methods and functions.
 - Add Sharpe, Sortino and Diversification ratios to EfficientFrontier, EfficientFrontierReb and Portfolio classes.
-- Make rebalancing period an attribute of Portfolio class.
 - Add withdrawals as an attribute of Portfolio class.
-- Make AssetList class accept Portfolio instances in a list of assets
 - Add Black-Litterman asset allocation 
 - Accelerate optimization for multi-period Efficient Frontier: minimize_risk and maximize_risk methods of EfficientFrontierReb class.
 - Make a single EfficientFrontier class for all optimizations: single-period or multu-period with rebalancing period as a parameter.

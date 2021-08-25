@@ -1,7 +1,8 @@
-.. raw:: html
+.. figure:: /images/ef.png
+    :scale: 60 %
+    :align: center
 
-    <meta prefix="og: http://ogp.me/ns#" property="og:title" content="Okama: Python package for investments" />
-    <meta prefix="og: http://ogp.me/ns#" property="og:description" content="Investment portfolio and stocks analyzing tools for Python with free historical data" />
+.. raw:: html
 
     <embed>
         <p align="center">
@@ -20,22 +21,68 @@
         </p>
     </embed>
 
-==============================
-Welcome to okama documentation
-==============================
+.. meta::
+   :title: Okama Documentation: Python library for investments
+   :description lang=en: okama is a Python library with investment portfolio analyzing & optimization tools
+   :keywords lang=en: okama, python, investments, portfolio optimization, quantitative finance, asset allocation, rebalancing, efficient frontier, financial assets
 
-*okama* is a Python package developed for asset allocation and investment portfolio optimization tasks according to Modern Portfolio Theory (MPT).
+===================
+Okama Documentation
+===================
 
-The package is supplied with **free** «end of day» historical stock markets data and macroeconomic indicators through API.
+*okama* is a library with investment portfolio analyzing & optimization tools.
+
+*okama* goes with **free** «end of day» historical stock markets data and macroeconomic indicators through API.
 
     ...entities should not be multiplied without necessity
 
     *-- William of Ockham (c. 1287–1347)*
 
-Installation
-------------
+Okama main features
+*******************
 
-Okama can be installed from _PyPI:https://pypi.org/project/okama/ :
+* Investment portfolio constrained Markowitz Mean-Variance Analysis (MVA) and optimization
+* Rebalanced portfolio optimization with constraints (multi-period Efficient Frontier)
+* Monte Carlo Simulations for financial assets and investment portfolios
+* Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
+* Forecasting models according to normal and lognormal distribution
+* Testing distribution on historical data
+* Dividend yield and other dividend indicators for stocks
+* Backtesting and comparing historical performance of broad range of assets and indexes in multiple currencies
+* Methods to track the performance of index funds (ETF) and compare them with benchmarks
+* Main macroeconomic indicators: inflation, central banks rates
+* Matplotlib visualization scripts for the Efficient Frontier, Transition map and assets risk / return performance
+
+Financial data and macroeconomic indicators
+*******************************************
+*okama* can be used with free financial data available through API.
+
+End of day historical data
+==========================
+
+* Stocks and ETF for main world markets
+* Mutual funds
+* Commodities
+* Currencies
+* Stock indexes
+
+Macroeconomic indicators
+========================
+
+* Inflation for many countries (USA, United Kingdom, European Union, Russia etc.)
+* Central bank rates
+
+Other historical data
+=====================
+
+* Real estate prices
+* Top bank rates
+
+
+Installation
+************
+
+Okama can be installed from `PyPI <https://pypi.org/project/okama/>`_:
 
 .. code:: text
 
@@ -52,7 +99,7 @@ The latest development version can be installed directly from GitHub:
     The development version of *okama* can have technical and financial issues. Please use carefully at your own risk.
 
 Class Overview
---------------
+**************
 
 
 .. autosummary::
@@ -64,7 +111,7 @@ Class Overview
 
 
 Indices and tables
-==================
+******************
 
 * :ref:`genindex`
 * :ref:`modindex`
