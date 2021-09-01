@@ -5,13 +5,38 @@ import numpy as np
 import pandas as pd
 
 from .validators import validate_integer
-from .helpers import Frame
 from ..macro import Inflation
 from ..asset import Asset
 from ..settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
 
 
 class ListMaker(ABC):
+    """
+    Abstract class to generate a list of assets with properties.
+
+    Parameters
+    ----------
+    assets : list, default None
+        List of assets. Could include tickers or asset like objects (Asset, Portfolio).
+        If None a single asset list with a default ticker is used.
+
+    first_date : str, default None
+        First date of monthly return time series.
+        If None the first date is calculated automatically as the oldest available date for the listed assets.
+
+    last_date : str, default None
+        Last date of monthly return time series.
+        If None the last date is calculated automatically as the newest available date for the listed assets.
+
+    ccy : str, default 'USD'
+        Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
+
+    inflation: bool, default True
+        Defines whether to take inflation data into account in the calculations.
+        Including inflation could limit available data (last_date, first_date)
+        as the inflation data is usually published with a one-month delay.
+        With inflation = False some properties like real return are not available.
+    """
     def __init__(
         self,
         assets: Optional[List[Union[str, Type]]] = None,

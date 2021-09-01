@@ -7,7 +7,7 @@ from ..settings import default_ticker, default_namespace
 
 class API:
     """
-    Set of methods to data from API.
+    Set of methods to get data from API.
     """
     # TODO: introduce 'from' & 'to' for dates.
 

@@ -16,21 +16,53 @@ class Portfolio(ListMaker):
     """
     Implementation of investment portfolio.
 
-    Investments portfolio is a type of financial asset.
-    Arguments are similar to AssetList (weights are added), but different behavior.
-    Works with monthly end of day historical rate of return data.
+    Investments portfolio is a type of financial asset (same as stocks, ETF, mutual funds, currencies etc.).
+    Arguments are similar to AssetList but additionally Portfolio has:
+
+    - weights
+    - rebalancing_period
+    - symbol
 
     The rebalancing is the action of bringing the portfolio that has deviated away
     from original target asset allocation back into line. After rebalancing the portfolio assets
-    have weights set with Portfolio(weights=[...]).
-    Different rebalancing periods are allowed for portfolio: 'month' (default), 'year' or 'none'.
+    have original weights.
 
     Parameters
     ----------
-    rebalancing_period : {"month", "year", "none"}, default "month"
-        Portfolio rebalancing periods. 'none' is for not rebalanced portfolio.
+    assets : list, default None
+        List of assets. Could include tickers or asset like objects (Asset, Portfolio).
+        If None a single asset list with a default ticker is used.
 
-    # TODO: Finish description.
+    first_date : str, default None
+        First date of monthly return time series.
+        If None the first date is calculated automatically as the oldest available date for the listed assets.
+
+    last_date : str, default None
+        Last date of monthly return time series.
+        If None the last date is calculated automatically as the newest available date for the listed assets.
+
+    ccy : str, default 'USD'
+        Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
+
+    inflation: bool, default True
+        Defines whether to take inflation data into account in the calculations.
+        Including inflation could limit available data (last_date, first_date)
+        as the inflation data is usually published with a one-month delay.
+        With inflation = False some properties like real return are not available.
+
+    weights : list of float, default None
+        List of assets weights.
+        The weight of an asset is the percent of an investment portfolio that corresponds to the asset.
+        If weights = None an equally weighted portfolio is created (all weights are equal).
+
+    rebalancing_period : {'month', 'year', 'none'}, default 'month'
+        Rebalancing period (rebalancing frequency) is predetermined time intervals when
+        the investor rebalances the portfolio. If 'none' assets weights are not rebalanced.
+
+    symbol : str, default None
+        Text symbol of portfolio. It is similar to tickers but have a namespace information.
+        Portfolio symbol must end with .PF (all_weather_portfolio.PF).
+        If None a random symbol is generated (portfolio_7802.PF).
     """
 
     def __init__(
@@ -212,7 +244,7 @@ class Portfolio(ListMaker):
         """
         Return text name of portfolio.
 
-        For portfolio name is equal to symbol.
+        For Portfolio name is equal to symbol.
 
         Returns
         -------
@@ -584,6 +616,24 @@ class Portfolio(ListMaker):
         -------
         DataFrame
             Time series of rolling cumulative return and inflation (optional).
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.6, .35, .05], rebalancing_period='year')
+        >>> pf.get_rolling_cumulative_return(window=24, real=True)
+                 portfolio_9012.PF
+        2006-11           0.125728
+        2006-12           0.104348
+        2007-01           0.129601
+        2007-02           0.110680
+        2007-03           0.132610
+                            ...
+        2021-03           0.263755
+        2021-04           0.275474
+        2021-05           0.322736
+        2021-06           0.264963
+        2021-07           0.273801
+        [177 rows x 1 columns]
         """
         ts = self._add_inflation()
         if real:
@@ -938,11 +988,13 @@ class Portfolio(ListMaker):
         Generate descriptive statistics for the portfolio.
 
         Statistics includes:
+
         - YTD (Year To date) compound return
         - CAGR for a given list of periods
         - LTM Dividend yield - last twelve months dividend yield
 
         Risk metrics (full available period):
+
         - risk (standard deviation)
         - CVAR
         - max drawdowns (and dates)
@@ -950,7 +1002,7 @@ class Portfolio(ListMaker):
         Parameters
         ----------
         years : tuple of (int,), default (1, 5, 10)
-            List of periods for CAGR.
+            List of periods for CAGR statistics.
 
         Returns
         -------
@@ -965,6 +1017,8 @@ class Portfolio(ListMaker):
             risk_annual : Return annualized risks (standard deviation).
             get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
             drawdowns : Calculate drawdowns.
+
+        TODO: insert example
         """
         description = pd.DataFrame()
         dt0 = self.last_date
@@ -1035,7 +1089,7 @@ class Portfolio(ListMaker):
     @property
     def table(self) -> pd.DataFrame:
         """
-        Return security name - ticker - weight table.
+        Return table with security name, ticker, weight for assets in the portfolio.
 
         Returns
         -------
@@ -1090,14 +1144,34 @@ class Portfolio(ListMaker):
         it means that 8% of the CAGR values in the distribution are negative in 1 year periods. Or in other words
         the probability of getting negative result after 1 year of investments is 8%.
 
-        Args:
-            distr: norm, lognorm, hist - distribution type (normal or lognormal) or hist for CAGR array from history
-            years: period length when CAGR is calculated
-            score: score that is compared to the elements in CAGR array.
-            n: number of random time series (for 'norm' or 'lognorm' only)
+        Parameters
+        ----------
+        distr: {'norm', 'lognorm', 'hist'}, default 'norm'
+            Distribution type (normal or lognormal).
+            If 'hist' historical distribution properties are used.
 
-        Returns:
-            Percentile-position of score (0-100) relative to distr.
+        years: int, default 1
+            Period length (time frame) in years when CAGR is calculated.
+
+        score: float, default 0
+            Score that is compared to the elements in CAGR array.
+
+        n: int, optional
+            Number of random time series with the defined distributions (for 'norm' or 'lognorm' only).
+            Is not required for historical distribution.
+            For 'norm' or 'lognorm' distribution default value n=1000 is used.
+
+        Returns
+        -------
+        floar
+            Percentile-position of score (0-100) relative to distribution.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.6, .35, .05], rebalancing_period='year')
+        >>> pf.percentile_inverse(distr='lognorm', score=0, years=1, n=5000)
+        18.08
+        The probability of getting negative result (score=0) in 1 year period for lognormal distribution.
         """
         if distr == "hist":
             cagr_distr = self.get_rolling_cagr(years)
@@ -1120,6 +1194,8 @@ class Portfolio(ListMaker):
 
         years - max window size for rolling CAGR (limited with half history of period length).
         percentiles - list of percentiles to be calculated
+
+        #TODO Finish docstring
         """
         self._test_forecast_period(years)
         period_range = range(1, years + 1)

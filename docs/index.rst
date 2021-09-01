@@ -98,27 +98,13 @@ The latest development version can be installed directly from GitHub:
 
     The development version of *okama* can have technical and financial issues. Please use carefully at your own risk.
 
-Class Overview
-**************
-
-
-.. autosummary::
-    :toctree: stubs
-
-    okama.Asset
-    okama.AssetList
-    okama.Portfolio
-
-
-Indices and tables
-******************
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+Contents
+********
 .. toctree::
-    :maxdepth: 2
-    :caption: Content
+    :maxdepth: 1
 
-    source/test
+    source/asset_list
+    source/portfolio
+    source/single_period
+    source/multi_period
+    source/plots

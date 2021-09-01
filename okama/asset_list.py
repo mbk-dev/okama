@@ -10,6 +10,31 @@ from .common.make_asset_list import ListMaker
 class AssetList(ListMaker):
     """
     The list of financial assets implementation.
+
+    AssetList can include stocks, ETF, mutual funds, commodities, currencies and stock indexes (benchmarks).
+
+    Parameters
+    ----------
+    assets : list, default None
+        List of assets. Could include tickers or asset like objects (Asset, Portfolio).
+        If None a single asset list with a default ticker is used.
+
+    first_date : str, default None
+        First date of monthly return time series.
+        If None the first date is calculated automatically as the oldest available date for the listed assets.
+
+    last_date : str, default None
+        Last date of monthly return time series.
+        If None the last date is calculated automatically as the newest available date for the listed assets.
+
+    ccy : str, default 'USD'
+        Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
+
+    inflation: bool, default True
+        Defines whether to take inflation data into account in the calculations.
+        Including inflation could limit available data (last_date, first_date)
+        as the inflation data is usually published with a one-month delay.
+        With inflation = False some properties like real return are not available.
     """
 
     def __repr__(self):
@@ -342,45 +367,6 @@ class AssetList(ListMaker):
         2021-06   0.089275  -0.000248
         [94 rows x 2 columns]
         """
-        # """
-        # Calculate rolling CAGR (Compound Annual Growth Rate) for each asset.
-        #
-        # Compound annual growth rate (CAGR) is the rate of return that would be required for an investment to grow from
-        # its initial to its final value, assuming all incomes were reinvested.
-        #
-        # Parameters
-        # ----------
-        # window : int, default 12
-        #     Size of the moving window in months. Window size should be at least 12 months for CAGR.
-        # real: bool, default False
-        #     CAGR is adjusted for inflation (real CAGR) if True.
-        #     AssetList should be initiated with Inflation=True for real CAGR.
-        #
-        # Returns
-        # -------
-        # DataFrame
-        #     Time series of rolling CAGR and mean inflation (optionaly).
-        #
-        # Notes
-        # -----
-        # CAGR is not defined for periods less than 1 year (NaN values are returned).
-        #
-        # Examples
-        # --------
-        # Get inflation adjusted rolling CAGR (real annualized return) win 5 years window:
-        # >>> x = ok.AssetList(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True)
-        # >>> x.get_rolling_cagr(window=5*12, real=True)
-        #           DXET.XETR  DBXN.XETR
-        # 2013-09   0.012148   0.034538
-        # 2013-10   0.058834   0.034235
-        # 2013-11   0.072305   0.027890
-        # 2013-12   0.056456   0.022916
-        #             ...        ...
-        # 2020-12   0.038441   0.020781
-        # 2021-01   0.045849   0.012216
-        # 2021-02   0.062271   0.006188
-        # 2021-03   0.074446   0.006124
-        # """
         df = self._add_inflation()
         if real:
             df = self._make_real_return_time_series(df)
@@ -493,11 +479,13 @@ class AssetList(ListMaker):
         Generate descriptive statistics for a list of assets.
 
         Statistics includes:
+
         - YTD (Year To date) compound return
         - CAGR for a given list of periods
         - LTM Dividend yield - last twelve months dividend yield
 
         Risk metrics (full period):
+
         - risk (standard deviation)
         - CVAR
         - max drawdowns (and dates of the drawdowns)

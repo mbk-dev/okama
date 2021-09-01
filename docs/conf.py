@@ -14,6 +14,8 @@ import os
 import sys
 from os import path
 
+import okama  # isort:skip
+
 root = path.realpath(path.join(path.dirname(__file__), "..", ".."))
 sys.path.insert(1, root)
 # sys.path.insert(0, os.path.abspath("."))
@@ -31,7 +33,6 @@ author = "Sergey Kikevich"
 # built documents.
 #
 # The short X.Y version.
-import okama  # isort:skip
 
 # version = '%s r%s' % (pandas.__version__, svn_version())
 version = okama.__version__
@@ -95,7 +96,7 @@ html_theme = "sphinx_rtd_theme"
 # }
 
 # If false, no module index is generated.
-html_use_modindex = True
+html_use_modindex = False
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -106,6 +107,9 @@ html_static_path = ["_static"]
 
 # This value controls how to represents typehints.
 autodoc_typehints = "none"
+autodoc_member_order = "bysource"
+autoclass_content = "class"  # to not insert __init__ docstrings
+autodoc_class_signature = "mixed"  # Display the signature with the class name.
 
 # -- Options for numpydoc ------------------------------------------------
 numpydoc_attributes_as_param_list = False
