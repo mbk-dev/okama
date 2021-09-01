@@ -179,7 +179,7 @@ def test_get_cagr_real_no_inflation_exception(portfolio_no_inflation):
 
 @mark.parametrize(
     "period, real, expected",
-    [("YTD", False, 0.01505), (1, False, 0.12269), (2, True, 0.1381)],
+    [("YTD", False, 0.01505), (1, False, 0.12269), (2, True, 0.1268)],
 )
 def test_cumulative_return(portfolio_rebalanced_month, period, real, expected):
     assert portfolio_rebalanced_month.get_cumulative_return(

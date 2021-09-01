@@ -203,8 +203,8 @@ class TestAssetList:
 
     cumulative_testdata2 = [
         ("YTD", -0.0614, -0.0674),
-        (1, -0.1383, 0.1863),
-        (None, -0.1912, 0.2530),
+        (1, -0.1383, 0.1745),
+        (None, -0.1912, 0.2406),
     ]
 
     @mark.parametrize(

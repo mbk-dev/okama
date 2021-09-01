@@ -47,14 +47,18 @@ class API:
         params = {"first_date": first_date, "last_date": last_date, "period": period}
         session.mount("https://", adapter)
         session.mount("http://", adapter)
-        r = session.get(request_url, params=params, verify=False, timeout=cls.default_timeout)
-        if r.status_code != requests.codes.ok:
-            raise Exception(
-                f"Error fetching data for {symbol}:",
+        try:
+            r = session.get(request_url, params=params, verify=False, timeout=cls.default_timeout)
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            if r.status_code == 404:
+                raise requests.exceptions.HTTPError(f"{symbol} is not found in the database.") from errh
+            raise requests.exceptions.HTTPError(
+                f"HTTP error fetching data for {symbol}:",
                 r.status_code,
                 r.reason,
                 request_url,
-            )
+            ) from errh
         return r.text
 
     @classmethod
