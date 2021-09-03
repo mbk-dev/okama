@@ -1296,9 +1296,47 @@ class Portfolio(ListMaker):
         self, distr: str = "norm", years: int = 1, n: int = 100
     ) -> pd.DataFrame:
         """
-        Generates N random monthly returns time series with normal or lognormal distributions.
+        Forecast portfolio monthly rate of return with Monte Carlo simulation.
+
+        Monte Carlo simulation generates n random monthly time series with a given distribution.
         Forecast period should not exceed 1/2 of portfolio history period length.
-        TODO: Finish docstrings
+
+        First date of forecaseted returns is portfolio last_date.
+
+        Parameters
+        ----------
+        distr : {'norm', 'lognorm'}, default 'norm'
+            Distribution type for rate of return time series.
+
+        years : int, default 1
+            Forecast period for portfolio monthly rate of return time series.
+            It should not exceed 1/2 of the portfolio history period length 'period_length'.
+
+        n : int, default 100
+            Number of random rate of return time series to generate with Monte Carlo simulation.
+
+        Returns
+        -------
+        DataFrame
+            Table with n random rate of return monthly time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
+        >>> pf.forecast_monte_carlo_returns(years=8, distr='norm', n=5000)
+                     0         1         2     ...      4997      4998      4999
+        2021-07 -0.008383 -0.013167 -0.031659  ...  0.046717  0.065675  0.017933
+        2021-08  0.038773 -0.023627  0.039208  ... -0.016075  0.034439  0.001856
+        2021-09  0.005026 -0.007195 -0.003300  ... -0.041591  0.021173  0.114225
+        2021-10 -0.007257  0.003013 -0.004958  ...  0.037057 -0.009689 -0.003242
+        2021-11 -0.005006  0.007090  0.020741  ...  0.026509 -0.023554  0.010271
+                   ...       ...       ...  ...       ...       ...       ...
+        2029-02 -0.065898 -0.003673  0.001198  ...  0.039293  0.015963 -0.050704
+        2029-03  0.021215  0.008783 -0.017003  ...  0.035144  0.002169  0.015055
+        2029-04  0.002454 -0.016281  0.017004  ...  0.032535  0.027196 -0.029475
+        2029-05  0.011206  0.023396 -0.013757  ... -0.044717 -0.025613 -0.002066
+        2029-06 -0.016740 -0.007955  0.002862  ... -0.027956 -0.012339  0.048974
+        [96 rows x 5000 columns]
         """
         period_months, ts_index = self._forecast_preparation(years)
         # random returns
@@ -1312,18 +1350,51 @@ class Portfolio(ListMaker):
                 size=[period_months, n]
             )
         else:
-            raise ValueError('distr should be "norm" (default) or "lognorm".')
+            raise ValueError('"distr" must be "norm" (default) or "lognorm".')
         return pd.DataFrame(data=random_returns, index=ts_index)
 
     def forecast_monte_carlo_wealth_indexes(
         self, distr: str = "norm", years: int = 1, n: int = 100
     ) -> pd.DataFrame:
         """
-        Generates N future random wealth indexes.
-        Random distribution could be normal or lognormal.
+        Forecast portfolio wealth index with Monte Carlo simulation.
 
+        Monte Carlo simulation generates n random monthly time series.
+        Each wealth index is calculated with rate of return time series of a given distribution.
+
+        Forecast period should not exceed 1/2 of portfolio history period length.
+        First date of forecasted returns is portfolio last_date.
         First value for the forecasted wealth indexes is the last historical portfolio index value. It is useful
         for a chart with historical wealth index and forecasted values.
+
+        Parameters
+        ----------
+        distr : {'norm', 'lognorm'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
+
+        years : int, default 1
+            Forecast period for portfolio wealth index time series.
+            It should not exceed 1/2 of the portfolio history period length 'period_length'.
+
+        n : int, default 100
+            Number of random wealth indexes to generate with Monte Carlo simulation.
+
+        Returns
+        -------
+        DataFrame
+            Table with n random wealth indexes monthly time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
+        >>> pf.forecast_monte_carlo_wealth_indexes(distr='lognorm', years=5, n=1000)
+                         0            1    ...          998          999
+        2021-07  3895.377293  3895.377293  ...  3895.377293  3895.377293
+        2021-08  3869.854680  4004.814981  ...  3874.455244  3935.913516
+        2021-09  3811.125717  3993.783034  ...  3648.925159  3974.103856
+        2021-10  4053.024519  4232.141143  ...  3870.099003  4082.189688
+        2021-11  4179.544897  4156.839698  ...  3899.249696  4097.003962
+        2021-12  4237.030690  4351.305114  ...  3916.639721  4042.011774
         """
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
@@ -1350,11 +1421,43 @@ class Portfolio(ListMaker):
         years: int = 1,
         percentiles: List[int] = [10, 50, 90],
         n: int = 10000,
-    ) -> dict:
+    ) -> Dict[int, float]:
         """
         Calculate percentiles for forecasted CAGR distribution.
-        CAGR is calculated for each of N future random returns time series.
-        Random distribution could be normal or lognormal.
+
+        CAGR - Compound Annual Growth Rate.
+        CAGR is calculated for each of n future random returns time series of a given distribution.
+        Forecast period should not exceed 1/2 of portfolio history period length.
+
+        Parameters
+        ----------
+        distr : {'norm', 'lognorm'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
+
+        years: int, default 1
+            Forecast period for portfolio CAGR.
+            It should not exceed 1/2 of the portfolio history period length 'period_length'.
+
+        percentiles: list of int, default [10, 50, 90]
+            List of percentiles to be forecasted.
+
+        n : int, default 10000
+            Number of random time series to generate with Monte Carlo simulation.
+
+        Returns
+        -------
+        dict
+            Dictionary {Percentile: value}
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf.forecast_monte_carlo_cagr()
+        {10: -0.0329600265453808, 50: 0.08247141141668779, 90: 0.21338327078214836}
+        Forecast CAGR according to normal distribution within 1 year period.
+        >>> pf.forecast_monte_carlo_cagr(years=5)
+        {10: 0.030625112922274055, 50: 0.08346815557550402, 90: 0.13902575176654647}
+        Forecast CAGR according to normal distribution within 5 year period.
         """
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
