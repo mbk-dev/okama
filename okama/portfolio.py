@@ -1130,7 +1130,7 @@ class Portfolio(ListMaker):
                 f"It should not exceed 1/2 of portfolio history period length {self.period_length / 2} years"
             )
 
-    def percentile_inverse(
+    def percentile_inverse_cagr(
         self,
         distr: str = "norm",
         years: int = 1,
@@ -1138,7 +1138,9 @@ class Portfolio(ListMaker):
         n: Optional[int] = None,
     ) -> float:
         """
-        Compute the percentile rank of a score (CAGR value) in a given time frame.
+        Compute the percentile rank of a score (CAGR value).
+
+        Percentile rank can be calculated for given distribution type or for hsitorical distribution of CAGR.
 
         If percentile_inverse of, for example, 0% (CAGR value) is equal to 8% for 1 year time frame
         it means that 8% of the CAGR values in the distribution are negative in 1 year periods. Or in other words
@@ -1169,7 +1171,7 @@ class Portfolio(ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
-        >>> pf.percentile_inverse(distr='lognorm', score=0, years=1, n=5000)
+        >>> pf.percentile_inverse_cagr(distr='lognorm', score=0, years=1, n=5000)
         18.08
         The probability of getting negative result (score=0) in 1 year period for lognormal distribution.
         """
@@ -1185,7 +1187,7 @@ class Portfolio(ListMaker):
             raise ValueError('distr should be one of "norm", "lognorm", "hist".')
         return scipy.stats.percentileofscore(cagr_distr, score, kind="rank")
 
-    def percentile_from_history(
+    def percentile_history_cagr(
         self, years: int, percentiles: List[int] = [10, 50, 90]
     ) -> pd.DataFrame:
         """
@@ -1211,7 +1213,7 @@ class Portfolio(ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='none')
-        >>> pf.percentile_from_history(years=5, percentiles=[1, 50, 99])
+        >>> pf.percentile_history_cagr(years=5, percentiles=[1, 50, 99])
                      1         50        99
         years
         1     -0.231327  0.098693  0.295343
@@ -1233,18 +1235,16 @@ class Portfolio(ListMaker):
         df.index.rename("years", inplace=True)
         return df
 
-    def forecast_wealth_history(
+    def percentile_wealth_history(
         self, years: int = 1, percentiles: List[int] = [10, 50, 90]
     ) -> pd.DataFrame:
         """
-        Forecast portfolio wealth index percentiles.
+        Calculate portfolio wealth index percentiles.
 
-        Forecast is based on rolling CAGR historical distribution.
+        Percentiles are derived from rolling CAGR historical distribution.
         CAGR - Compound Annual Growth Rate.
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over a given
         time period.
-
-        Each forecasted percentile is derived from 'percentile_from_history' method.
 
         Actual portfolio wealth is adjusted to the last known historical value (from 'wealth_index'). It is useful
         for a chart with historical wealth index and forecasted values.
@@ -1252,11 +1252,12 @@ class Portfolio(ListMaker):
         Parameters
         ----------
         years: int, default 1
-            Forecast period for portfolio wealth index percentiles.
+            Time frame for portfolio wealth index percentiles.
             It should not exceed 1/2 of the portfolio history period length 'period_length'.
+            Percentiles are calculated for periods from 1 to 'years'.
 
         percentiles: list of int, default [10, 50, 90]
-            List of percentiles to be forecasted.
+            List of percentiles to be calculated.
 
         Returns
         -------
@@ -1266,7 +1267,7 @@ class Portfolio(ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
-        >>> pf.forecast_wealth_history(years=5)
+        >>> pf.percentile_wealth_history(years=5)
                         10           50           90
         years
         1      3815.660408  4202.758919  4457.210561
@@ -1276,7 +1277,7 @@ class Portfolio(ListMaker):
         5      4613.287195  5706.343210  6694.576137
         """
         first_value = self.wealth_index[self.symbol].values[-1]
-        percentile_returns = self.percentile_from_history(
+        percentile_returns = self.percentile_history_cagr(
             years=years, percentiles=percentiles
         )
         return first_value * (percentile_returns + 1.0).pow(
@@ -1292,11 +1293,11 @@ class Portfolio(ListMaker):
         ts_index = pd.period_range(start_period, end_period, freq="M")
         return period_months, ts_index
 
-    def forecast_monte_carlo_returns(
+    def monte_carlo_returns_ts(
         self, distr: str = "norm", years: int = 1, n: int = 100
     ) -> pd.DataFrame:
         """
-        Forecast portfolio monthly rate of return with Monte Carlo simulation.
+        Generate portfolio monthly rate of return time series with Monte Carlo simulation.
 
         Monte Carlo simulation generates n random monthly time series with a given distribution.
         Forecast period should not exceed 1/2 of portfolio history period length.
@@ -1323,7 +1324,7 @@ class Portfolio(ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
-        >>> pf.forecast_monte_carlo_returns(years=8, distr='norm', n=5000)
+        >>> pf.monte_carlo_returns_ts(years=8, distr='norm', n=5000)
                      0         1         2     ...      4997      4998      4999
         2021-07 -0.008383 -0.013167 -0.031659  ...  0.046717  0.065675  0.017933
         2021-08  0.038773 -0.023627  0.039208  ... -0.016075  0.034439  0.001856
@@ -1353,11 +1354,11 @@ class Portfolio(ListMaker):
             raise ValueError('"distr" must be "norm" (default) or "lognorm".')
         return pd.DataFrame(data=random_returns, index=ts_index)
 
-    def forecast_monte_carlo_wealth_indexes(
+    def _monte_carlo_wealth(
         self, distr: str = "norm", years: int = 1, n: int = 100
     ) -> pd.DataFrame:
         """
-        Forecast portfolio wealth index with Monte Carlo simulation.
+        Generate portfolio wealth index with Monte Carlo simulation.
 
         Monte Carlo simulation generates n random monthly time series.
         Each wealth index is calculated with rate of return time series of a given distribution.
@@ -1387,7 +1388,7 @@ class Portfolio(ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
-        >>> pf.forecast_monte_carlo_wealth_indexes(distr='lognorm', years=5, n=1000)
+        >>> pf._monte_carlo_wealth(distr='lognorm', years=5, n=1000)
                          0            1    ...          998          999
         2021-07  3895.377293  3895.377293  ...  3895.377293  3895.377293
         2021-08  3869.854680  4004.814981  ...  3874.455244  3935.913516
@@ -1398,7 +1399,7 @@ class Portfolio(ListMaker):
         """
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
-        return_ts = self.forecast_monte_carlo_returns(distr=distr, years=years, n=n)
+        return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
         first_value = self.wealth_index[self.symbol].values[-1]
         return Frame.get_wealth_indexes(return_ts, first_value)
 
@@ -1412,10 +1413,10 @@ class Portfolio(ListMaker):
         """
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
-        return_ts = self.forecast_monte_carlo_returns(distr=distr, years=years, n=n)
+        return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
         return Frame.get_cagr(return_ts)
 
-    def forecast_monte_carlo_cagr(
+    def percentile_distribution_cagr(
         self,
         distr: str = "norm",
         years: int = 1,
@@ -1423,11 +1424,12 @@ class Portfolio(ListMaker):
         n: int = 10000,
     ) -> Dict[int, float]:
         """
-        Calculate percentiles for forecasted CAGR distribution.
+        Calculate percentiles for a given CAGR distribution.
 
         CAGR - Compound Annual Growth Rate.
-        CAGR is calculated for each of n future random returns time series of a given distribution.
-        Forecast period should not exceed 1/2 of portfolio history period length.
+        CAGR is calculated for each of n random returns time series of a given distribution. Random time series are
+        generated with Monte Carlo simulation.
+        CAGR time frame should not exceed 1/2 of portfolio history period length.
 
         Parameters
         ----------
@@ -1435,11 +1437,11 @@ class Portfolio(ListMaker):
             Distribution type for the rate of return of portfolio.
 
         years: int, default 1
-            Forecast period for portfolio CAGR.
+            Time frame for portfolio CAGR.
             It should not exceed 1/2 of the portfolio history period length 'period_length'.
 
         percentiles: list of int, default [10, 50, 90]
-            List of percentiles to be forecasted.
+            List of percentiles to be calculated.
 
         n : int, default 10000
             Number of random time series to generate with Monte Carlo simulation.
@@ -1452,10 +1454,10 @@ class Portfolio(ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
-        >>> pf.forecast_monte_carlo_cagr()
+        >>> pf.percentile_distribution_cagr()
         {10: -0.0329600265453808, 50: 0.08247141141668779, 90: 0.21338327078214836}
         Forecast CAGR according to normal distribution within 1 year period.
-        >>> pf.forecast_monte_carlo_cagr(years=5)
+        >>> pf.percentile_distribution_cagr(years=5)
         {10: 0.030625112922274055, 50: 0.08346815557550402, 90: 0.13902575176654647}
         Forecast CAGR according to normal distribution within 5 year period.
         """
@@ -1470,7 +1472,7 @@ class Portfolio(ListMaker):
             results.update({percentile: value})
         return results
 
-    def forecast_wealth(
+    def percentile_wealth(
         self,
         distr: str = "norm",
         years: int = 1,
@@ -1479,21 +1481,25 @@ class Portfolio(ListMaker):
         n: int = 1000,
     ) -> Dict[int, float]:
         """
-        Calculate percentiles of forecasted random accumulated wealth distribution.
-        Random distribution could be normal lognormal or from history.
+        Calculate percentiles for portfolio wealth indexes distribution.
+
+        Portfolio wealth indexes are derived from CAGR time series with given distribution type.
+        CAGR - Compound Annual Growth Rate.
 
         today_value - the value of portfolio today (before forecast period). If today_value is None
         the last value of the historical wealth indexes is taken.
+
+        TODO: finish docstrings
         """
         if distr == "hist":
             results = (
-                self.forecast_wealth_history(years=years, percentiles=percentiles)
+                self.percentile_wealth_history(years=years, percentiles=percentiles)
                 .iloc[-1]
                 .to_dict()
             )
         elif distr in ["norm", "lognorm"]:
             results = {}
-            wealth_indexes = self.forecast_monte_carlo_wealth_indexes(
+            wealth_indexes = self._monte_carlo_wealth(
                 distr=distr, years=years, n=n
             )
             for percentile in percentiles:
@@ -1529,7 +1535,7 @@ class Portfolio(ListMaker):
         x1 = self.last_date
         x2 = x1.replace(year=x1.year + years)
         y_start_value = wealth[self.symbol].iloc[-1]
-        y_end_values = self.forecast_wealth(
+        y_end_values = self.percentile_wealth(
             distr=distr, years=years, percentiles=percentiles, n=n
         )
         if today_value:
@@ -1572,7 +1578,7 @@ class Portfolio(ListMaker):
         Normal and lognormal distributions could be used for Monte Carlo simulation.
         """
         s1 = self.wealth_index
-        s2 = self.forecast_monte_carlo_wealth_indexes(distr=distr, years=years, n=n)
+        s2 = self._monte_carlo_wealth(distr=distr, years=years, n=n)
         s1[self.symbol].plot(legend=None, figsize=figsize)
         for n in s2:
             s2[n].plot(legend=None)

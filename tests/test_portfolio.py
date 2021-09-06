@@ -213,14 +213,14 @@ def test_describe_no_inflation(portfolio_no_inflation):
 
 
 def test_percentile_from_history(portfolio_rebalanced_month, portfolio_no_inflation, portfolio_short_history):
-    assert portfolio_rebalanced_month.percentile_from_history(years=1).iloc[0, 1] == approx(0.12456, rel=1e-2)
-    assert portfolio_no_inflation.percentile_from_history(years=1).iloc[0, 1] == approx(0.12456, rel=1e-2)
+    assert portfolio_rebalanced_month.percentile_history_cagr(years=1).iloc[0, 1] == approx(0.12456, rel=1e-2)
+    assert portfolio_no_inflation.percentile_history_cagr(years=1).iloc[0, 1] == approx(0.12456, rel=1e-2)
     with pytest.raises(
         ValueError,
         match="Time series does not have enough history to forecast. "
         "Period length is 0.90 years. At least 2 years are required.",
     ):
-        portfolio_short_history.percentile_from_history(years=1)
+        portfolio_short_history.percentile_history_cagr(years=1)
 
 
 def test_table(portfolio_rebalanced_month):
@@ -263,22 +263,28 @@ def test_get_rolling_cagr_failing_no_inflation(portfolio_no_inflation):
         portfolio_no_inflation.get_rolling_cagr(real=True)
 
 
-def test_forecast_monte_carlo_norm_wealth_indexes(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.forecast_monte_carlo_wealth_indexes(
-        years=1, n=1000
+def test_monte_carlo_wealth(portfolio_rebalanced_month):
+    assert portfolio_rebalanced_month._monte_carlo_wealth(
+        distr='norm',
+        years=1,
+        n=1000
     ).iloc[-1, :].mean() == approx(2121, rel=1e-1)
 
 
-def test_forecast_monte_carlo_percentile_wealth_indexes(portfolio_rebalanced_month):
-    dic = portfolio_rebalanced_month.forecast_wealth(years=1, n=100, percentiles=[50])
-    assert dic[50] == approx(2121, rel=1e-1)
+@mark.parametrize(
+    "distribution, expected",
+    [('hist', 2096), ('norm', 2103), ('lognorm', 2093)],
+)
+def test_percentile_wealth(portfolio_rebalanced_month, distribution, expected):
+    dic = portfolio_rebalanced_month.percentile_wealth(distr=distribution, years=1, n=100, percentiles=[50])
+    assert dic[50] == approx(expected, rel=1e-1)
 
 
 def test_forecast_monte_carlo_cagr(portfolio_rebalanced_month):
-    dic = portfolio_rebalanced_month.forecast_monte_carlo_cagr(years=2, distr='lognorm', n=100, percentiles=[50])
+    dic = portfolio_rebalanced_month.percentile_distribution_cagr(years=2, distr='lognorm', n=100, percentiles=[50])
     assert dic[50] == approx(0.12, abs=5e-2)
     with pytest.raises(ValueError):
-        portfolio_rebalanced_month.forecast_monte_carlo_cagr(years=10, distr='lognorm', n=100, percentiles=[50])
+        portfolio_rebalanced_month.percentile_distribution_cagr(years=10, distr='lognorm', n=100, percentiles=[50])
 
 
 def test_skewness(portfolio_rebalanced_month):
