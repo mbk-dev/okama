@@ -1149,8 +1149,8 @@ class Portfolio(ListMaker):
         Parameters
         ----------
         distr: {'norm', 'lognorm', 'hist'}, default 'norm'
-            Distribution type (normal or lognormal).
-            If 'hist' historical distribution properties are used.
+            The rate of teturn distribution type.
+            For 'hist' type percentile is taken from the historical data.
 
         years: int, default 1
             Period length (time frame) in years when CAGR is calculated.
@@ -1160,7 +1160,9 @@ class Portfolio(ListMaker):
 
         n: int, optional
             Number of random time series with the defined distributions (for 'norm' or 'lognorm' only).
-            Is not required for historical distribution.
+            Larger argument values can be used to increase the precision of the calculation. But this will lead
+            to slower performance.
+            Is not required for historical distribution (dist='hist').
             For 'norm' or 'lognorm' distribution default value n=1000 is used.
 
         Returns
@@ -1180,7 +1182,7 @@ class Portfolio(ListMaker):
         elif distr in ["norm", "lognorm"]:
             if not n:
                 n = 1000
-            cagr_distr = self._get_monte_carlo_cagr_distribution(
+            cagr_distr = self._get_cagr_distribution(
                 distr=distr, years=years, n=n
             )
         else:
@@ -1403,13 +1405,13 @@ class Portfolio(ListMaker):
         first_value = self.wealth_index[self.symbol].values[-1]
         return Frame.get_wealth_indexes(return_ts, first_value)
 
-    def _get_monte_carlo_cagr_distribution(
+    def _get_cagr_distribution(
         self, distr: str = "norm", years: int = 1, n: int = 100,
     ) -> pd.Series:
         """
-        Generate random CAGR distribution.
-        CAGR is calculated for each of N future random returns time series.
-        Random distribution could be normal or lognormal.
+        Generate CAGR distribution for the rate of return distribution of a given type.
+
+        CAGR is calculated for each of n random returns time series.
         """
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
@@ -1445,6 +1447,8 @@ class Portfolio(ListMaker):
 
         n : int, default 10000
             Number of random time series to generate with Monte Carlo simulation.
+            Larger argument values can be used to increase the precision of the calculation. But this will lead
+            to slower performance.
 
         Returns
         -------
@@ -1463,7 +1467,7 @@ class Portfolio(ListMaker):
         """
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
-        cagr_distr = self._get_monte_carlo_cagr_distribution(
+        cagr_distr = self._get_cagr_distribution(
             distr=distr, years=years, n=n
         )
         results = {}
@@ -1483,13 +1487,43 @@ class Portfolio(ListMaker):
         """
         Calculate percentiles for portfolio wealth indexes distribution.
 
-        Portfolio wealth indexes are derived from CAGR time series with given distribution type.
-        CAGR - Compound Annual Growth Rate.
+        Portfolio wealth indexes are derived from the rate of return time series of a given distribution type.
 
-        today_value - the value of portfolio today (before forecast period). If today_value is None
-        the last value of the historical wealth indexes is taken.
+        Parameters
+        ----------
+        distr : {'hist', 'norm', 'lognorm'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
+            For 'hist' type percentiles are taken from the historical data.
 
-        TODO: finish docstrings
+        years : int, default 1
+            Investment period length to calculate wealth index.
+            It should not exceed 1/2 of the portfolio history period length 'period_length'.
+
+        percentiles : list of int, default [10, 50, 90]
+            List of percentiles to be calculated.
+
+        today_value :  int, optional
+            Initial value of the wealth index.
+            If today_value is None the last value of the historical wealth indexes is taken. It can be useful to plot
+            the forecast of wealth index togeather with the hitorical data.
+
+        n : int, default 1000
+            Number of random time series to generate with Monte Carlo simulation (for 'norm' or 'lognorm' only).
+            Larger argument values can be used to increase the precision of the calculation. But this will lead
+            to slower performance.
+            Is not required for historical distribution (dist='hist').
+
+        Returns
+        -------
+        dict
+            Dictionary {Percentile: value}
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf.percentile_wealth(distr='hist', years=5, today_value=1000, n=5000)
+        {10: 1228.3741255659957, 50: 1491.7857161011104, 90: 1745.1130920663286}
+        Percentiles values for the wealth index 5 years forecast if the initial value is 1000.
         """
         if distr == "hist":
             results = (
