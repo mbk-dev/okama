@@ -4,20 +4,24 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
+import sys
+from os import path
+
+import matplotlib
+
+import okama  # isort:skip
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-from os import path
-
-import okama  # isort:skip
 
 root = path.realpath(path.join(path.dirname(__file__), "..", ".."))
 sys.path.insert(1, root)
+sys.path.append(os.path.abspath('matplotlib_ext'))
 # sys.path.insert(0, os.path.abspath("."))
 
 
@@ -54,6 +58,7 @@ autosummary_generate = ["index"]
 # ones.
 extensions = [
     # "sphinx.ext.napoleon",
+    'matplotlib.sphinxext.plot_directive',
     "numpydoc",  # handle NumPy documentation formatted docstrings instead of napoleon
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -103,7 +108,7 @@ html_use_modindex = False
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-# -- Options for typehints ------------------------------------------------
+# -- Options for autodoc    ------------------------------------------------
 
 # This value controls how to represents typehints.
 autodoc_typehints = "none"
@@ -114,11 +119,23 @@ autodoc_class_signature = "mixed"  # Display the signature with the class name.
 # -- Options for numpydoc ------------------------------------------------
 numpydoc_attributes_as_param_list = False
 numpydoc_show_class_members = False
+numpydoc_use_plots = True
+numpydoc_class_members_toctree = True
 
 # -- Options for nbsphinx ------------------------------------------------
 
 # nbsphinx do not use requirejs (breaks bootstrap)
 nbsphinx_requirejs_path = ""
+
+# matplotlib plot directive settings
+plot_html_show_formats = False
+plot_include_source = True
+plot_html_show_source_link = False
+plot_pre_code = """
+import numpy as np
+from matplotlib import pyplot as plt
+import okama as ok
+"""
 
 # # Napoleon settings
 # napoleon_google_docstring = False

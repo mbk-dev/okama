@@ -563,12 +563,6 @@ class Portfolio(ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(['BTC-USD.CC', 'LTC-USD.CC'], weights=[.8, .2], last_date='2021-03')
-        >>> pf.get_cumulative_return(period=2)
-        portfolio_6232.PF    9.920432
-        USD.INFL             0.042121
-        dtype: float64
-
-        To get inflation adjusted return (real annualized return) add `real=True` option:
         >>> pf.get_cumulative_return(period=2, real=True)
         portfolio_6232.PF    9.39381
         dtype: float64
@@ -1556,14 +1550,43 @@ class Portfolio(ListMaker):
         figsize: Optional[tuple] = None,
     ):
         """
-        Plots forecasted ranges of wealth indexes (lines) for a given set of percentiles.
+        Plot forecasted ranges of wealth indexes (lines) for a given set of percentiles.
+        Historical wealth index is shown in the same chart.
 
-        distr - the distribution model type:
-        norm - normal distribution
-        lognorm - lognormal distribution
-        hist - percentiles are taken from historical data
-        today_value - the value of portfolio today (before forecast period)
-        n - number of random wealth time series used to calculate percentiles (not needed if distr='hist')
+        Parameters
+        ----------
+        distr : {'hist', 'norm', 'lognorm'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
+            For 'hist' type percentiles are taken from the historical data.
+
+        years : int, default 1
+            Investment period length to calculate wealth index.
+            It should not exceed 1/2 of the portfolio history period length 'period_length'.
+
+        percentiles : list of int, default [10, 50, 90]
+            List of percentiles to be calculated.
+
+        today_value :  int, optional
+            Initial value of the wealth index.
+            If today_value is None the last value of the historical wealth indexes is taken. It can be useful to plot
+            the forecast of wealth index togeather with the hitorical data.
+
+        n : int, default 1000
+            Number of random time series to generate with Monte Carlo simulation (for 'norm' or 'lognorm' only).
+            Larger argument values can be used to increase the precision of the calculation. But this will lead
+            to slower performance.
+            Is not required for historical distribution (dist='hist').
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf.plot_forecast()
+        >>> plt.show()
         """
         wealth = self.wealth_index
         x1 = self.last_date
@@ -1607,9 +1630,36 @@ class Portfolio(ListMaker):
         figsize: Optional[tuple] = None,
     ):
         """
-        Plots N random wealth indexes and historical wealth index.
-        Forecasted indexes are generated accorded to a given distribution (Monte Carlo simulation).
-        Normal and lognormal distributions could be used for Monte Carlo simulation.
+        Plot Monte Carlo simulation for portfolio wealth indexes together with historical wealth index.
+
+        Random wealth indexes are generated according to a given distribution.
+
+        Parameters
+        ----------
+        distr : {'norm', 'lognorm'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
+
+        years : int, default 1
+            Investment period length for new wealth indexes
+            It should not exceed 1/2 of the portfolio history period length 'period_length'.
+
+        n : int, default 20
+            Number of random wealth indexes to generate with Monte Carlo simulation.
+
+        figsize : (float, float), optional
+            Width, height in inches.
+            If None default matplotlib figsize value is used.
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf.plot_forecast_monte_carlo(years=5, distr='lognorm', n=100)
+        >>> plt.show()
         """
         s1 = self.wealth_index
         s2 = self._monte_carlo_wealth(distr=distr, years=years, n=n)
@@ -1619,22 +1669,73 @@ class Portfolio(ListMaker):
 
     # distributions
     @property
-    def skewness(self):
+    def skewness(self) -> pd.Series:
         """
-        Compute expanding skewness of the return time series.
+        Compute expanding skewness of return time series.
+
         For normally distributed data, the skewness should be about zero.
         A skewness value greater than zero means that there is more weight in the right tail of the distribution.
+
+        Returns
+        -------
+        Series
+            Expanding skewness time series
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['BND.US'])
+        >>> pf.skewness
+        Date
+        2008-05   -0.134193
+        2008-06   -0.022349
+        2008-07    0.081412
+        2008-08   -0.020978
+                     ...
+        2021-04    0.441430
+        2021-05    0.445772
+        2021-06    0.437383
+        2021-07    0.425247
+        Freq: M, Name: portfolio_8378.PF, Length: 159, dtype: float64
         """
         return Frame.skewness(self.ror)
 
     def skewness_rolling(self, window: int = 60):
         """
         Compute rolling skewness of the return time series.
+
         For normally distributed data, the skewness should be about zero.
         A skewness value greater than zero means that there is more weight in the right tail of the distribution.
 
-        window - the rolling window size in months (default is 5 years).
-        The window size should be at least 12 months.
+        Parameters
+        ----------
+        window : int, default 60
+            Size of the moving window in months.
+            The window size should be at least 12 months.
+
+        Returns
+        -------
+        Series
+            Expanding skewness time series
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['BND.US'])
+        >>> pf.skewness_rolling(window=12*10)
+        Date
+        2017-04    0.464916
+        2017-05    0.446095
+        2017-06    0.441211
+        2017-07    0.453947
+        2017-08    0.464805
+        ...
+        2021-02    0.007622
+        2021-03    0.000775
+        2021-04    0.002308
+        2021-05    0.022543
+        2021-06   -0.006534
+        2021-07   -0.012192
+        Freq: M, Name: portfolio_8378.PF, dtype: float64
+
         """
         return Frame.skewness_rolling(self.ror, window=window)
 
