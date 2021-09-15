@@ -1,4 +1,8 @@
 @ECHO OFF
+rem to remove everything from _build:
+rem make clean
+rem -E option is used to rebuild all
+rem make html -E
 
 pushd %~dp0
 

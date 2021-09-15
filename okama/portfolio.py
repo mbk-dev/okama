@@ -289,19 +289,10 @@ class Portfolio(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> x = ok.Portfolio(['SPY.US', 'BND.US'])
-        >>> x.wealth_index
-                    portfolio     USD.INFL
-        2007-05  1000.000000  1000.000000
-        2007-06  1004.034950  1008.011590
-        2007-07   992.940364  1007.709187
-        2007-08  1006.642941  1005.895310
-                      ...          ...
-        2020-12  2561.882476  1260.242835
-        2021-01  2537.800781  1265.661880
-        2021-02  2553.408256  1272.623020
-        2021-03  2595.156481  1281.658643
-        [167 rows x 2 columns]
+        >>> x.wealth_index.plot()
+        >>> plt.show()
         """
         df = self._add_inflation()
         df = Frame.get_wealth_indexes(df)
@@ -333,18 +324,10 @@ class Portfolio(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
-        >>> pf.wealth_index_with_assets
-                   portfolio       VOO.US       GLD.US     USD.INFL
-        2010-10  1000.000000  1000.000000  1000.000000  1000.000000
-        2010-11  1041.065584  1036.658420  1058.676480  1001.600480
-        2010-12  1103.779375  1108.395183  1084.508186  1003.303201
-        2011-01  1109.298272  1133.001556  1015.316564  1008.119056
-                      ...          ...          ...          ...
-        2020-12  3381.729677  4043.276231  1394.513920  1192.576493
-        2021-01  3332.356424  4002.034813  1349.610572  1197.704572
-        2021-02  3364.480340  4112.891178  1265.124950  1204.291947
-        2021-03  3480.083884  4301.261594  1250.702526  1212.842420
+        >>> pf.wealth_index_with_assets.plot()
+        >>> plt.show()
         """
         if hasattr(self, "inflation"):
             df = pd.concat(
@@ -415,22 +398,16 @@ class Portfolio(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['VOO.US', 'AGG.US'], weights=[0.4, 0.6])
-        >>> pf.annual_return_ts
-        Date
-        2010    0.034299
-        2011    0.056599
-        2012    0.086613
-        2013    0.107111
-        2014    0.090420
-        2015    0.010381
-        2016    0.063620
-        2017    0.105450
-        2018   -0.013262
-        2019    0.174182
-        2020    0.124668
-        2021    0.030430
-        Freq: A-DEC, Name: portfolio_5364.PF, dtype: float64
+        >>> pf.annual_return_ts.plot(kind='bar')
+        >>> plt.show()
+
+        Plot annual returns for portfolio with EUR as the base currency.
+
+        >>> pf = ok.Portfolio(['VOO.US', 'AGG.US'], weights=[0.4, 0.6], ccy='EUR')
+        >>> pf.annual_return_ts.plot(kind='bar')
+        >>> plt.show()
         """
         return Frame.get_annual_return_ts_from_monthly(self.ror)
 
@@ -469,6 +446,7 @@ class Portfolio(ListMaker):
         {'XCS6.XETR': 'Xtrackers MSCI China UCITS ETF 1C', 'PHAU.LSE': 'WisdomTree Physical Gold'}
 
         To get inflation adjusted return (real annualized return) add `real=True` option:
+
         >>> pf.get_cagr(period=5, real=True)
         portfolio_5625.PF    0.121265
         dtype: float64
@@ -1144,7 +1122,9 @@ class Portfolio(ListMaker):
         ----------
         distr: {'norm', 'lognorm', 'hist'}, default 'norm'
             The rate of teturn distribution type.
-            For 'hist' type percentile is taken from the historical data.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+            'hist' - percentiles are taken from the historical data.
 
         years: int, default 1
             Period length (time frame) in years when CAGR is calculated.
@@ -1304,6 +1284,8 @@ class Portfolio(ListMaker):
         ----------
         distr : {'norm', 'lognorm'}, default 'norm'
             Distribution type for rate of return time series.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
 
         years : int, default 1
             Forecast period for portfolio monthly rate of return time series.
@@ -1431,6 +1413,8 @@ class Portfolio(ListMaker):
         ----------
         distr : {'norm', 'lognorm'}, default 'norm'
             Distribution type for the rate of return of portfolio.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
 
         years: int, default 1
             Time frame for portfolio CAGR.
@@ -1487,7 +1471,9 @@ class Portfolio(ListMaker):
         ----------
         distr : {'hist', 'norm', 'lognorm'}, default 'norm'
             Distribution type for the rate of return of portfolio.
-            For 'hist' type percentiles are taken from the historical data.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+            'hist' - percentiles are taken from the historical data.
 
         years : int, default 1
             Investment period length to calculate wealth index.
@@ -1540,6 +1526,308 @@ class Portfolio(ListMaker):
             results.update((x, y * modifier) for x, y in results.items())
         return results
 
+    # distributions
+    @property
+    def skewness(self) -> pd.Series:
+        """
+        Compute expanding skewness time series for portfolio rate of return.
+
+        For normally distributed data, the skewness should be about zero.
+        A skewness value greater than zero means that there is more weight in the right tail of the distribution.
+
+        Returns
+        -------
+        Series
+            Expanding skewness time series
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['BND.US'])
+        >>> pf.skewness
+        Date
+        2008-05   -0.134193
+        2008-06   -0.022349
+        2008-07    0.081412
+        2008-08   -0.020978
+                     ...
+        2021-04    0.441430
+        2021-05    0.445772
+        2021-06    0.437383
+        2021-07    0.425247
+        Freq: M, Name: portfolio_8378.PF, Length: 159, dtype: float64
+
+        >>> import matplotlib.pyplot as plt
+        >>> pf.skewness.plot()
+        >>> plt.show()
+        """
+        return Frame.skewness(self.ror)
+
+    def skewness_rolling(self, window: int = 60):
+        """
+        Compute rolling skewness of the return time series.
+
+        For normally distributed rate of return, the skewness should be about zero.
+        A skewness value greater than zero means that there is more weight in the right tail of the distribution.
+
+        Parameters
+        ----------
+        window : int, default 60
+            Size of the moving window in months.
+            The window size should be at least 12 months.
+
+        Returns
+        -------
+        Series
+            Expanding skewness time series
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['BND.US'])
+        >>> pf.skewness_rolling(window=12*10)
+        Date
+        2017-04    0.464916
+        2017-05    0.446095
+        2017-06    0.441211
+        2017-07    0.453947
+        2017-08    0.464805
+        ...
+        2021-02    0.007622
+        2021-03    0.000775
+        2021-04    0.002308
+        2021-05    0.022543
+        2021-06   -0.006534
+        2021-07   -0.012192
+        Freq: M, Name: portfolio_8378.PF, dtype: float64
+
+        >>> import matplotlib.pyplot as plt
+        >>> pf.skewness_rolling(window=12*10).plot()
+        >>> plt.show()
+        """
+        return Frame.skewness_rolling(self.ror, window=window)
+
+    @property
+    def kurtosis(self):
+        """
+        Calculate expanding Fisher (normalized) kurtosis time series for portfolio rate of return.
+
+        Kurtosis is a measure of whether the rate of return are heavy-tailed or light-tailed
+        relative to a normal distribution.
+        It should be close to zero for normally distributed rate of return.
+        Kurtosis is the fourth central moment divided by the square of the variance.
+
+        Returns
+        -------
+        Series
+            Expanding kurtosis time series
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['BND.US'])
+        >>> pf.kurtosis
+        Date
+        2008-05   -0.815206
+        2008-06   -0.718330
+        2008-07   -0.610741
+        2008-08   -0.534105
+                     ...
+        2021-04    2.821322
+        2021-05    2.855267
+        2021-06    2.864717
+        2021-07    2.850407
+        Freq: M, Name: portfolio_4411.PF, Length: 159, dtype: float64
+
+        >>> import matplotlib.pyplot as plt
+        >>> pf.kurtosis.plot()
+        >>> plt.show()
+        """
+        return Frame.kurtosis(self.ror)
+
+    def kurtosis_rolling(self, window: int = 60):
+        """
+        Calculate rolling Fisher (normalized) kurtosis time series for portfolio rate of return.
+
+        Kurtosis is a measure of whether the rate of return are heavy-tailed or light-tailed
+        relative to a normal distribution.
+        It should be close to zero for normally distributed rate of return.
+        Kurtosis is the fourth central moment divided by the square of the variance.
+
+        Parameters
+        ----------
+        window : int, default 60
+            Size of the moving window in months.
+            The window size should be at least 12 months.
+
+        Returns
+        -------
+        Series
+            Expanding kurtosis time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['BND.US'])
+        >>> pf.kurtosis_rolling(window=12*10)
+        Date
+        2017-04    4.041599
+        2017-05    4.133518
+        2017-06    4.165099
+        2017-07    4.205125
+        2017-08    4.313773
+        ...
+        2021-03    0.362184
+        2021-04    0.409680
+        2021-05    0.455760
+        2021-06    0.457315
+        2021-07    0.496168
+        Freq: M, Name: portfolio_4411.PF, dtype: float64
+
+        >>> import matplotlib.pyplot as plt
+        >>> pf.kurtosis_rolling(window=12*10).plot()
+        >>> plt.show()
+        """
+        return Frame.kurtosis_rolling(self.ror, window=window)
+
+    @property
+    def jarque_bera(self) -> Dict[str, float]:
+        """
+        Perform Jarque-Bera test for normality of portfolio returns time series.
+
+        Jarque-Bera shows whether the returns have the skewness and kurtosis
+        matching a normal distribution (null hypothesis or H0).
+
+        Returns
+        -------
+        dict
+            Jarque-Bera test statistics and p-value.
+
+        Notes
+        -----
+        Test returns statistics (first row) and p-value (second row).
+        p-value is the probability of obtaining test results, under the assumption that the null hypothesis is correct.
+        In general, a large Jarque-Bera statistics and tiny p-value indicate that null hypothesis is rejected
+        and the time series are not normally distributed.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['BND.US'])
+        >>> pf.jarque_bera
+        {'statistic': 58.27670538027455, 'p-value': 2.2148949341271873e-13}
+        """
+        return Frame.jarque_bera_series(self.ror)
+
+    def kstest(self, distr: str = "norm") -> Dict[str, float]:
+        """
+        Perform one sample Kolmogorov-Smirnov test on portfolio returns and evaluate goodness of fit
+        for a given distribution.
+
+        The one-sample Kolmogorov-Smirnov test compares the rate of return time series against a given distribution.
+
+        Returns
+        -------
+        dict
+            Kolmogorov-Smirnov test statistics and p-value.
+
+        Parameters
+        ----------
+        distr : {'norm', 'lognorm'}, default 'norm'
+            The name of a distribution to fit.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+
+
+        Notes
+        -----
+        Like in Jarque-Bera test returns statistic (first row) and p-value (second row).
+        Null hypotesis (two distributions are similar) is not rejected when p-value is high enough.
+        5% threshold can be used.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['GLD.US'])
+        >>> pf.kstest(distr='lognorm')
+        {'statistic': 0.05001344986084533, 'p-value': 0.6799422889377373}
+
+        >>> pf.kstest(distr='norm')
+        {'statistic': 0.09528000069992831, 'p-value': 0.047761781235967415}
+
+        Kolmogorov-Smirnov test shows that GLD rate of return time series fits lognormal distribution
+        better than normal one.
+        """
+        return Frame.kstest_series(self.ror, distr=distr)
+
+    def plot_percentiles_fit(
+        self, distr: str = "norm", figsize: Optional[tuple] = None
+    ) -> None:
+        """
+        Generate a quantile-quantile (Q-Q) plot of portfolio monthly rate of return against quantiles of a given
+        theoretical distribution.
+
+        A q-q plot is a plot of the quantiles of the portfolio rate of return historical data
+        against the quantiles of a given theoretical distribution.
+
+        Parameters
+        ----------
+        distr : {'norm', 'lognorm'}, default 'norm'
+            The name of a distribution to fit.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+
+        figsize : (float, float), optional
+            Width and height of plot in inches.
+            If None default matplotlib figsize value is used.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf.plot_percentiles_fit(distr='lognorm')
+        >>> plt.show()
+        """
+        plt.figure(figsize=figsize)
+        if distr == "norm":
+            scipy.stats.probplot(self.ror, dist=distr, plot=plt)
+        elif distr == "lognorm":
+            scipy.stats.probplot(
+                self.ror,
+                sparams=(scipy.stats.lognorm.fit(self.ror)),
+                dist=distr,
+                plot=plt,
+            )
+        else:
+            raise ValueError('distr should be "norm" (default) or "lognorm".')
+        plt.show()
+
+    def plot_hist_fit(self, distr: str = "norm", bins: int = None) -> None:
+        """
+        Plot historical distribution histogram for ptrtfolio monthly rate of return time series
+        and theoretical PDF (Probability Distribution Function).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['SP500TR.INDX'])
+        >>> pf.plot_hist_fit(distr='norm')
+        >>> plt.show()
+        """
+        data = self.ror
+        # Plot the histogram
+        plt.hist(data, bins=bins, density=True, alpha=0.6, color="g")
+        # Plot the PDF.Probability Density Function
+        xmin, xmax = plt.xlim()
+        x = np.linspace(xmin, xmax, 100)
+        if distr == "norm":  # Generate PDF
+            mu, std = scipy.stats.norm.fit(data)
+            p = scipy.stats.norm.pdf(x, mu, std)
+        elif distr == "lognorm":
+            std, loc, scale = scipy.stats.lognorm.fit(data)
+            mu = np.log(scale)
+            p = scipy.stats.lognorm.pdf(x, std, loc, scale)
+        else:
+            raise ValueError('distr must be "norm" (default) or "lognorm".')
+        plt.plot(x, p, "k", linewidth=2)
+        title = "Fit results: mu = %.3f,  std = %.3f" % (mu, std)
+        plt.title(title)
+        plt.show()
+
     def plot_forecast(
         self,
         distr: str = "norm",
@@ -1548,7 +1836,7 @@ class Portfolio(ListMaker):
         today_value: Optional[int] = None,
         n: int = 1000,
         figsize: Optional[tuple] = None,
-    ):
+    ) -> plt.axes:
         """
         Plot forecasted ranges of wealth indexes (lines) for a given set of percentiles.
         Historical wealth index is shown in the same chart.
@@ -1557,7 +1845,9 @@ class Portfolio(ListMaker):
         ----------
         distr : {'hist', 'norm', 'lognorm'}, default 'norm'
             Distribution type for the rate of return of portfolio.
-            For 'hist' type percentiles are taken from the historical data.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+            'hist' - percentiles are taken from the historical data.
 
         years : int, default 1
             Investment period length to calculate wealth index.
@@ -1628,7 +1918,7 @@ class Portfolio(ListMaker):
         years: int = 1,
         n: int = 20,
         figsize: Optional[tuple] = None,
-    ):
+    ) -> None:
         """
         Plot Monte Carlo simulation for portfolio wealth indexes together with historical wealth index.
 
@@ -1638,6 +1928,8 @@ class Portfolio(ListMaker):
         ----------
         distr : {'norm', 'lognorm'}, default 'norm'
             Distribution type for the rate of return of portfolio.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
 
         years : int, default 1
             Investment period length for new wealth indexes
@@ -1649,10 +1941,6 @@ class Portfolio(ListMaker):
         figsize : (float, float), optional
             Width, height in inches.
             If None default matplotlib figsize value is used.
-
-        Returns
-        -------
-        Axes : 'matplotlib.axes._subplots.AxesSubplot'
 
         Examples
         --------
@@ -1666,167 +1954,3 @@ class Portfolio(ListMaker):
         s1[self.symbol].plot(legend=None, figsize=figsize)
         for n in s2:
             s2[n].plot(legend=None)
-
-    # distributions
-    @property
-    def skewness(self) -> pd.Series:
-        """
-        Compute expanding skewness of return time series.
-
-        For normally distributed data, the skewness should be about zero.
-        A skewness value greater than zero means that there is more weight in the right tail of the distribution.
-
-        Returns
-        -------
-        Series
-            Expanding skewness time series
-
-        Examples
-        --------
-        >>> pf = ok.Portfolio(['BND.US'])
-        >>> pf.skewness
-        Date
-        2008-05   -0.134193
-        2008-06   -0.022349
-        2008-07    0.081412
-        2008-08   -0.020978
-                     ...
-        2021-04    0.441430
-        2021-05    0.445772
-        2021-06    0.437383
-        2021-07    0.425247
-        Freq: M, Name: portfolio_8378.PF, Length: 159, dtype: float64
-        """
-        return Frame.skewness(self.ror)
-
-    def skewness_rolling(self, window: int = 60):
-        """
-        Compute rolling skewness of the return time series.
-
-        For normally distributed data, the skewness should be about zero.
-        A skewness value greater than zero means that there is more weight in the right tail of the distribution.
-
-        Parameters
-        ----------
-        window : int, default 60
-            Size of the moving window in months.
-            The window size should be at least 12 months.
-
-        Returns
-        -------
-        Series
-            Expanding skewness time series
-
-        Examples
-        --------
-        >>> pf = ok.Portfolio(['BND.US'])
-        >>> pf.skewness_rolling(window=12*10)
-        Date
-        2017-04    0.464916
-        2017-05    0.446095
-        2017-06    0.441211
-        2017-07    0.453947
-        2017-08    0.464805
-        ...
-        2021-02    0.007622
-        2021-03    0.000775
-        2021-04    0.002308
-        2021-05    0.022543
-        2021-06   -0.006534
-        2021-07   -0.012192
-        Freq: M, Name: portfolio_8378.PF, dtype: float64
-
-        """
-        return Frame.skewness_rolling(self.ror, window=window)
-
-    @property
-    def kurtosis(self):
-        """
-        Calculate expanding Fisher (normalized) kurtosis time series for portfolio returns.
-        Kurtosis is the fourth central moment divided by the square of the variance.
-        Kurtosis should be close to zero for normal distribution.
-        """
-        return Frame.kurtosis(self.ror)
-
-    def kurtosis_rolling(self, window: int = 60):
-        """
-        Calculate rolling Fisher (normalized) kurtosis time series for portfolio returns.
-        Kurtosis is the fourth central moment divided by the square of the variance.
-        Kurtosis should be close to zero for normal distribution.
-
-        window - the rolling window size in months (default is 5 years).
-        The window size should be at least 12 months.
-        """
-        return Frame.kurtosis_rolling(self.ror, window=window)
-
-    @property
-    def jarque_bera(self):
-        """
-        Performs Jarque-Bera test for normality.
-        It shows whether the returns have the skewness and kurtosis matching a normal distribution.
-
-        Returns:
-            (The test statistic, The p-value for the hypothesis test)
-            Low statistic numbers correspond to normal distribution.
-        """
-        return Frame.jarque_bera_series(self.ror)
-
-    def kstest(self, distr: str = "norm") -> dict:
-        """
-        Performs Kolmogorov-Smirnov test on portfolio returns and evaluate goodness of fit.
-        Test works with normal and lognormal distributions.
-
-        Returns:
-            (The test statistic, The p-value for the hypothesis test)
-        """
-        return Frame.kstest_series(self.ror, distr=distr)
-
-    def plot_percentiles_fit(
-        self, distr: str = "norm", figsize: Optional[tuple] = None
-    ):
-        """
-        Generates a probability plot of portfolio returns against percentiles of a specified
-        theoretical distribution (the normal distribution by default).
-        Works with normal and lognormal distributions.
-        """
-        plt.figure(figsize=figsize)
-        if distr == "norm":
-            scipy.stats.probplot(self.ror, dist=distr, plot=plt)
-        elif distr == "lognorm":
-            scipy.stats.probplot(
-                self.ror,
-                sparams=(scipy.stats.lognorm.fit(self.ror)),
-                dist=distr,
-                plot=plt,
-            )
-        else:
-            raise ValueError('distr should be "norm" (default) or "lognorm".')
-        plt.show()
-
-    def plot_hist_fit(self, distr: str = "norm", bins: int = None):
-        """
-        Plots historical distribution histogram and theoretical PDF (Probability Distribution Function).
-        Lognormal and normal distributions could be used.
-
-        normal distribution - 'norm'
-        lognormal distribution - 'lognorm'
-        """
-        data = self.ror
-        # Plot the histogram
-        plt.hist(data, bins=bins, density=True, alpha=0.6, color="g")
-        # Plot the PDF.Probability Density Function
-        xmin, xmax = plt.xlim()
-        x = np.linspace(xmin, xmax, 100)
-        if distr == "norm":  # Generate PDF
-            mu, std = scipy.stats.norm.fit(data)
-            p = scipy.stats.norm.pdf(x, mu, std)
-        elif distr == "lognorm":
-            std, loc, scale = scipy.stats.lognorm.fit(data)
-            mu = np.log(scale)
-            p = scipy.stats.lognorm.pdf(x, std, loc, scale)
-        else:
-            raise ValueError('distr should be "norm" (default) or "lognorm".')
-        plt.plot(x, p, "k", linewidth=2)
-        title = "Fit results: mu = %.3f,  std = %.3f" % (mu, std)
-        plt.title(title)
-        plt.show()

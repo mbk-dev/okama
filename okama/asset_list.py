@@ -64,6 +64,13 @@ class AssetList(ListMaker):
         -------
         DataFrame
             Time series of wealth index values for each asset and accumulated inflation.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.AssetList(['SPY.US', 'BND.US'])
+        >>> x.wealth_indexes.plot()
+        >>> plt.show()
         """
         df = self._add_inflation()
         return Frame.get_wealth_indexes(df)

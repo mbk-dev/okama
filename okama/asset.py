@@ -17,23 +17,6 @@ class Asset:
     ----------
     symbol: str, default "SPY.US"
         Symbol is an asset ticker with namespace after dot. The default value is "SPY.US" (SPDR S&P 500 ETF Trust).
-
-    Examples
-    --------
-    >>> asset = ok.Asset()
-    >>> asset
-    symbol                           SPY.US
-    name             SPDR S&P 500 ETF Trust
-    country                             USA
-    exchange                      NYSE ARCA
-    currency                            USD
-    type                                ETF
-    first date                      1993-02
-    last date                       2021-03
-    period length                      28.1
-    dtype: object
-
-    An Asset object could be easy created whithout specifying a symbol Asset() using the default symbol.
     """
 
     def __init__(self, symbol: str = default_ticker):
@@ -124,10 +107,19 @@ class Asset:
         """
         Return close price time series historical monthly data.
 
+        Monthly close time series not adjusted to for corporate actions: dividends and splits.
+
         Returns
         -------
         Series
             Time series of close price historical data (monthly).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.Asset('VOO.US')
+        >>> x.close_monthly.plot()
+        >>> plt.show()
         """
         return Frame.change_period_to_month(self.close_daily)
 

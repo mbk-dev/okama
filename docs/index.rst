@@ -10,7 +10,7 @@
                 <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
                     alt="python"></a> &nbsp;
             <a href="https://pypi.org/project/okama/">
-                <img src="https://img.shields.io/badge/pypi-v1.0.0-brightgreen.svg"
+                <img src="https://img.shields.io/badge/pypi-v1.0.1-brightgreen.svg"
                     alt="pypi"></a> &nbsp;
             <a href='https://coveralls.io/github/mbk-dev/okama?branch=master'>
                 <img src='https://coveralls.io/repos/github/mbk-dev/okama/badge.svg?branch=master'
@@ -98,13 +98,28 @@ The latest development version can be installed directly from GitHub:
 
     The development version of *okama* can have technical and financial issues. Please use carefully at your own risk.
 
-Contents
-********
-.. toctree::
-    :maxdepth: 1
 
-    source/asset_list
-    source/portfolio
-    source/single_period
-    source/multi_period
-    source/plots
+Classes Overview
+****************
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Quick Start
+
+    quickstart
+
+.. autosummary::
+    :toctree: stubs
+    :template: custom-class-template.rst
+    :caption: Main Classes
+
+    okama.Asset
+    okama.AssetList
+    okama.Portfolio
+
+
+Indices and tables
+******************
+
+* :ref:`genindex`
+* :ref:`search`
