@@ -98,15 +98,23 @@ The latest development version can be installed directly from GitHub:
 
     The development version of *okama* can have technical and financial issues. Please use carefully at your own risk.
 
-
-Classes Overview
-****************
-
 .. toctree::
-    :maxdepth: 0
+    :maxdepth: 1
     :caption: Quick Start
 
-    quickstart
+    /jupyter/quickstart
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Index Funds Performance
+
+    /jupyter/funds
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Investment Portfolios
+
+    /jupyter/portfolio
 
 .. autosummary::
     :toctree: stubs

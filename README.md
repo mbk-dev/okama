@@ -1,5 +1,7 @@
 <!-- buttons -->
 <p align="center">
+    <a href="http://okama.readthedocs.io/">
+        <img src="https://img.shields.io/readthedocs/okama.svg?style=popout" alt="docs">
     <a href="https://www.python.org/">
         <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
             alt="python"></a> &nbsp;
@@ -34,6 +36,7 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
   - [Other historical data](#other-historical-data)
 - [Installation](#installation)
 - [Getting started](#getting-started)
+- [Documentation](#documentation)
 - [RoadMap](#roadmap)
 - [Contributing to okama](#contributing-to-okama)
 - [Communication](#communication)
@@ -156,6 +159,10 @@ map = ok.Plots(ls, ccy='USD').plot_transition_map(cagr=False)
 ![](../images/images/readmi08.jpg?v23-11-2020,raw=true "Transition map")  
 
 More examples are available in form of [Jupyter Notebooks](https://github.com/mbk-dev/okama/tree/master/examples).
+
+## Documentation
+
+The official documentation is hosted on readthedocs.org: [https://okama.readthedocs.io/](https://okama.readthedocs.io/)
 
 ## RoadMap
 
