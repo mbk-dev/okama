@@ -16,7 +16,7 @@ import okama  # isort:skip
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 
-root = path.realpath(path.join(path.dirname(__file__), "..", ".."))
+root = path.realpath(path.join(path.dirname(__file__), ".."))
 sys.path.insert(1, root)
 sys.path.append(os.path.abspath('matplotlib_ext'))
 # sys.path.insert(0, os.path.abspath("."))
@@ -77,7 +77,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db"]
 
 
 # -- Options for HTML output -------------------------------------------------

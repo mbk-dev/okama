@@ -103,7 +103,7 @@ Classes Overview
 ****************
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 0
     :caption: Quick Start
 
     quickstart

@@ -5,4 +5,5 @@ nbsphinx==0.8.7
 nbsphinx-link>=1.3.0
 pandoc>=2.14.0
 recommonmark==0.7.1
-okama>=1.0.0
+okama>=1.0.1
+ipython>=7.20.0
