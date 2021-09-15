@@ -1,22 +1,8 @@
-<!-- buttons -->
-<p align="center">
-    <a href="http://okama.readthedocs.io/">
-        <img src="https://img.shields.io/readthedocs/okama.svg?style=popout" alt="docs">
-    <a href="https://www.python.org/">
-        <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
-            alt="python"></a> &nbsp;
-    <a href="https://pypi.org/project/okama/">
-        <img src="https://img.shields.io/badge/pypi-v1.0.1-brightgreen.svg"
-            alt="pypi"></a> &nbsp;
-    <a href='https://coveralls.io/github/mbk-dev/okama?branch=master'>
-        <img src='https://coveralls.io/repos/github/mbk-dev/okama/badge.svg?branch=master' 
-        alt='Coverage Status' /></a>    
-    <a href="https://opensource.org/licenses/MIT">
-        <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg"
-            alt="MIT license"></a> &nbsp;
-</p>
-
-<!-- content -->
+[![Documentation Status](https://img.shields.io/readthedocs/okama.svg?style=popout)](http://okama.readthedocs.io/)
+[![Python](https://img.shields.io/badge/python-v3-brightgreen.svg)](https://www.python.org/)
+[![PyPI Latest Release](https://img.shields.io/pypi/v/okama.svg)](https://pypi.org/project/okama/)
+[![Coverage](https://coveralls.io/repos/github/mbk-dev/okama/badge.svg?branch=master)](https://coveralls.io/github/mbk-dev/okama?branch=master)
+[![License](https://img.shields.io/pypi/l/okama.svg)](https://opensource.org/licenses/MIT)
 
 # Okama
 
