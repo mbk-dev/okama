@@ -13,13 +13,52 @@ from ..settings import _MONTHS_PER_YEAR
 
 class EfficientFrontierReb(AssetList):
     """
-    Efficient Frontier (EF) for rebalanced portfolios.
-    Rebalancing periods could be:
-    'year' - one Year (default)
-    'none' - not rebalanced portfolios
-    Asset labels are set with 'tickers':
-    True - for tickers
-    False - for full asset names
+    Efficient Frontier with multi-period optimization.
+
+    In multi-period optimization portfolios are rebalanced with a given frequency.
+
+    Rebalancing is the process by which an investor restores their portfolio to its target allocation
+    by selling and buying assets. After rebalancing all the assets have original weights.
+
+    Parameters
+    ----------
+    assets : list, default None
+        List of assets. Could include tickers or asset like objects (Asset, Portfolio).
+        If None a single asset list with a default ticker is used.
+
+    first_date : str, default None
+        First date of monthly return time series.
+        If None the first date is calculated automatically as the oldest available date for the listed assets.
+
+    last_date : str, default None
+        Last date of monthly return time series.
+        If None the last date is calculated automatically as the newest available date for the listed assets.
+
+    ccy : str, default 'USD'
+        Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
+
+    inflation : bool, default True
+        Defines whether to take inflation data into account in the calculations.
+        Including inflation could limit available data (last_date, first_date)
+        as the inflation data is usually published with a one-month delay.
+
+    rebalancing_period : {'year', 'none'}, default 'year'
+        Rebalancing period of the portfolios in the multi-period Efficient Frontier.
+        Portfolio is rebalanced every year if rebalancing_period='year'.
+        Portfolio is not rebalanced if rebalancing_period='none'
+
+    n_points : int, default 20
+        Number of points in the Efficient Frontier.
+
+    verbose : bool, default False
+        Defines whether to show technical information during optimization process.
+
+    ticker_names : bool, default True
+        Defines whether to include full names of assets in the optimization report or only tickers.
+
+    Notes
+    -----
+    For monthly rebalanced portfolios okama.EfficientFrontier class could be used.
     """
     # TODO: Add bounds
     def __init__(self,
@@ -28,7 +67,7 @@ class EfficientFrontierReb(AssetList):
                  last_date: Optional[str] = None,
                  ccy: str = 'USD',
                  inflation: bool = True,
-                 reb_period: str = 'year',
+                 rebalancing_period: str = 'year',
                  n_points: int = 20,
                  verbose: bool = False,
                  ticker_names: bool = True,
@@ -36,7 +75,7 @@ class EfficientFrontierReb(AssetList):
         if len(assets) < 2:
             raise ValueError('The number of symbols cannot be less than two')
         super().__init__(assets=assets, first_date=first_date, last_date=last_date, ccy=ccy, inflation=inflation)
-        self.reb_period = reb_period
+        self.rebalancing_period = rebalancing_period
         self.n_points = n_points
         self.ticker_names = ticker_names
         self.verbose = verbose
@@ -49,13 +88,27 @@ class EfficientFrontierReb(AssetList):
             'first_date': self.first_date.strftime("%Y-%m"),
             'last_date': self.last_date.strftime("%Y-%m"),
             'period_length': self._pl_txt,
-            'rebalancing_period': self.reb_period,
+            'rebalancing_period': self.rebalancing_period,
             'inflation': self.inflation if hasattr(self, 'inflation') else 'None',
         }
         return repr(pd.Series(dic))
 
     @property
-    def n_points(self):
+    def n_points(self) -> int:
+        """
+        Return or set number of points in the Efficient Frontier.
+
+        Returns
+        -------
+        int
+            Number of points in the Efficient Frontier.
+
+        Examples
+        --------
+        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'BND.US'])
+        >>> frontier.n_points  # default number of points
+        20
+        """
         return self._n_points
 
     @n_points.setter
@@ -65,9 +118,9 @@ class EfficientFrontierReb(AssetList):
         self._n_points = n_points
 
     @property
-    def reb_period(self):
+    def rebalancing_period(self):
         """
-        Rebalancing period for multi-period Efficient Frontier.
+        Return or set rebalancing period for multi-period Efficient Frontier.
 
         Rebalancing periods could be:
         'year' - one Year (default)
@@ -76,11 +129,20 @@ class EfficientFrontierReb(AssetList):
         Returns
         -------
         str
+            Rebalancing period value.
+
+        Examples
+        --------
+        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'BND.US'])
+        >>> frontier.rebalancing_period  # default rebalancing period is one year
+        'year'
+
+        >>> frontier.rebalancing_period = 'none'  # change for not rebalanced portfolios
         """
         return self._reb_period
 
-    @reb_period.setter
-    def reb_period(self, reb_period: str):
+    @rebalancing_period.setter
+    def rebalancing_period(self, reb_period: str):
         if reb_period not in ['year', 'none']:
             raise ValueError('reb_period: Rebalancing period should be "year" - year or "none" - not rebalanced.')
         self._ef_points = None
@@ -88,6 +150,15 @@ class EfficientFrontierReb(AssetList):
 
     @property
     def ticker_names(self):
+        """
+        Return or set whether to show tickers or full stock names in the reports.
+
+        Returns
+        -------
+        bool
+            True - for tickers.
+            False - for full stock (index) names.
+        """
         return self._tickers
 
     @ticker_names.setter
@@ -98,6 +169,13 @@ class EfficientFrontierReb(AssetList):
 
     @property
     def verbose(self):
+        """
+        Return or set whether to show technical information during the optimization.
+
+        Returns
+        -------
+        bool
+        """
         return self._verbose
 
     @verbose.setter
@@ -109,10 +187,26 @@ class EfficientFrontierReb(AssetList):
     @property
     def gmv_monthly_weights(self) -> np.ndarray:
         """
-        Returns the weights of the Global Minimum Volatility portfolio with monthly values of risk / return
+        Calculate asset weights of the Global Minimum Volatility (GMV) portfolio. The objective function is
+        monthly risk (standard deviation of return).
+
+        Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
+        Along the Efficient Frontier, the left-most point is a portfolio with minimum risk when compared to
+        all possible portfolios of risky assets.
+
+        Returns
+        -------
+        numpy.ndarray
+            GMV portfolio assets weights.
+
+        Examples
+        --------
+        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier.gmv_monthly_weights
+        array([0.0578446, 0.9421554])
         """
         ror = self.assets_ror
-        period = self.reb_period
+        period = self.rebalancing_period
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
         bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples
@@ -137,10 +231,26 @@ class EfficientFrontierReb(AssetList):
     @property
     def gmv_annual_weights(self) -> np.ndarray:
         """
-        Returns the weights of the Global Minimum Volatility portfolio with annualized values of risk / return
+        Calculate asset weights of the Global Minimum Volatility (GMV) portfolio. The objective function is
+        annualized risk (standard deviation of return).
+
+        Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
+        Along the Efficient Frontier, the left-most point is a portfolio with minimum risk when compared to
+        all possible portfolios of risky assets.
+
+        Returns
+        -------
+        numpy.ndarray
+            GMV portfolio assets weights.
+
+        Examples
+        --------
+        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier.gmv_monthly_weights
+        array([0.05373824, 0.94626176])
         """
         ror = self.assets_ror
-        period = self.reb_period
+        period = self.rebalancing_period
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
         bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples!
@@ -166,23 +276,42 @@ class EfficientFrontierReb(AssetList):
 
     def _get_gmv_monthly(self) -> Tuple[float, float]:
         """
-        Returns the risk and return (mean, monthly) of the Global Minimum Volatility portfolio
+        Calculate the risk and return (mean, monthly) of the Global Minimum Volatility portfolio.
+
+        Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
         """
         return (
             Rebalance.return_ts(
-                self.gmv_monthly_weights, self.assets_ror, period=self.reb_period
+                self.gmv_monthly_weights, self.assets_ror, period=self.rebalancing_period
             ).std(),
             Rebalance.return_ts(
-                self.gmv_monthly_weights, self.assets_ror, period=self.reb_period
+                self.gmv_monthly_weights, self.assets_ror, period=self.rebalancing_period
             ).mean(),
         )
 
     @property
     def gmv_annual_values(self) -> Tuple[float, float]:
         """
-        Returns the annual risk (std) and CAGR of the Global Minimum Volatility portfolio.
+        Calculate the annualized risk (standard deviation) and CAGR of the Global Minimum Volatility portfolio.
+
+        Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
+        Compound annual growth rate (CAGR) is the rate of return that would be required for an investment to grow from
+        its initial to its final value, assuming all incomes were reinvested.
+
+        Returns
+        -------
+        tuple
+            Annualized value of risk (standard deviation),
+            Compound annual growth rate (CAGR)
+            for Global Minimum Volatility portfolio (GMV).
+
+        Examples
+        --------
+        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier.gmv_annual_values
+        (0.03695845106087943, 0.04418318557516887)
         """
-        returns = Rebalance.return_ts(self.gmv_annual_weights, self.assets_ror, period=self.reb_period)
+        returns = Rebalance.return_ts(self.gmv_annual_weights, self.assets_ror, period=self.rebalancing_period)
         return (
             Float.annualize_risk(returns.std(), returns.mean()),
             (returns + 1.0).prod() ** (_MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
@@ -191,10 +320,27 @@ class EfficientFrontierReb(AssetList):
     @property
     def global_max_return_portfolio(self) -> dict:
         """
-        Returns the weights and risk / CAGR of the maximum return portfolio point.
+        Find a portfolio with global max CAGR.
+
+        Compound annual growth rate (CAGR) is the rate of return that would be required for an investment to grow from
+        its initial to its final value, assuming all incomes were reinvested.
+
+        The objective function is Accumulated return for rebalanced portfolio time series for the period
+        from 'first_date' to 'last_date'.
+
+        Returns
+        -------
+        dict
+            Weights of assets, CAGR, annualized risk, monthly risk.
+
+        Examples
+        --------
+        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier.global_max_return_portfolio
+        {'Weights': array([1., 0.]), 'CAGR': 0.10797159166196812, 'Risk': 0.1583011735798155, 'Risk_monthly': 0.0410282468594492}
         """
         ror = self.assets_ror
-        period = self.reb_period
+        period = self.rebalancing_period
         n = self.assets_ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
         bounds = ((0.0, 1.0),) * n
@@ -228,13 +374,30 @@ class EfficientFrontierReb(AssetList):
         return point
 
     def _get_cagr(self, weights):
-        ts = Rebalance.return_ts(weights, self.assets_ror, period=self.reb_period)
+        ts = Rebalance.return_ts(weights, self.assets_ror, period=self.rebalancing_period)
         acc_return = (ts + 1.).prod() - 1.
         return (1. + acc_return) ** (_MONTHS_PER_YEAR / ts.shape[0]) - 1.
 
     def minimize_risk(self, target_value: float) -> Dict[str, float]:
         """
-        Returns the optimal weights and risk / cagr values for a min risk at the target cagr.
+        Calculate the portfolio properties to minimize annualized value of risk at the target CAGR.
+
+        Compound annual growth rate (CAGR) is the rate of return that would be required for an investment to grow from
+        its initial to its final value, assuming all incomes were reinvested.
+
+        The objective function is Annualized risk (standard deviation) for rebalanced portfolio time series
+        for the period from 'first_date' to 'last_date'.
+
+        Returns
+        -------
+        dict
+            Weights of assets, CAGR, annualized risk.
+
+        Examples
+        --------
+        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier.minimize_risk(0.107)
+        {'SPY.US': 0.9810857623382343, 'AGG.US': 0.018914237661765643, 'CAGR': 0.107, 'Risk': 0.1549703673806012}
         """
         n = self.assets_ror.shape[1]  # number of assets
 
@@ -242,7 +405,7 @@ class EfficientFrontierReb(AssetList):
 
         def objective_function(w):
             # annual risk
-            ts = Rebalance.return_ts(w, self.assets_ror, period=self.reb_period)
+            ts = Rebalance.return_ts(w, self.assets_ror, period=self.rebalancing_period)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             return Float.annualize_risk(risk_monthly, mean_return)
@@ -276,18 +439,27 @@ class EfficientFrontierReb(AssetList):
             raise RecursionError(f'No solution found for target risk value: {target_value}.')
         return point
 
-    def maximize_risk(self, target_return: float) -> Dict[str, float]:
+    def _maximize_risk(self, target_return: float) -> Dict[str, float]:
         """
-        Returns the optimal weights and risk / cagr values for a max risk at the target cagr.
+        Calculate the portfolio properties to maximize annualized value of risk at the target CAGR.
+
+        The objective function is Annualized risk (standard deviation) for rebalanced portfolio time series
+        for the period from 'first_date' to 'last_date'.
+
+        Returns
+        -------
+        dict
+            Weights of assets, CAGR, annualized risk.
         """
         n = self.assets_ror.shape[1]  # number of assets
 
         init_guess = np.repeat(0, n)
-        init_guess[self.max_cagr_asset_right_to_max_cagr['list_position']] = 1.
+        if self._max_cagr_asset_right_to_max_cagr:
+            init_guess[self._max_cagr_asset_right_to_max_cagr['list_position']] = 1.
 
         def objective_function(w):
             # annual risk
-            ts = Rebalance.return_ts(w, self.assets_ror, period=self.reb_period)
+            ts = Rebalance.return_ts(w, self.assets_ror, period=self.rebalancing_period)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             result = - Float.annualize_risk(risk_monthly, mean_return)
@@ -319,11 +491,11 @@ class EfficientFrontierReb(AssetList):
             point['CAGR'] = target_return
             point['Risk'] = - weights.fun
         else:
-            raise RecursionError(f'No solution found for target risk value: {target_return}.')
+            raise RecursionError(f'No solution found for target CAGR value: {target_return}.')
         return point
 
     @property
-    def max_cagr_asset(self) -> dict:
+    def _max_cagr_asset(self) -> dict:
         """
         Find an asset with max CAGR.
         """
@@ -335,10 +507,11 @@ class EfficientFrontierReb(AssetList):
                 }
 
     @property
-    def max_cagr_asset_right_to_max_cagr(self) -> Optional[dict]:
+    def _max_cagr_asset_right_to_max_cagr(self) -> Optional[dict]:
         """
-        The asset with max CAGR lieing to the right of the global
-        max CAGR point (risk should be more than self.max_return['Risk']).
+        The asset with max CAGR lying to the right of the global max CAGR point
+        (risk should be more than self.max_return['Risk']).
+
         Global max return point should not be an asset.
         """
         tolerance = 0.01  # assets CAGR should be less than max CAGR with certain tolerance
@@ -357,7 +530,7 @@ class EfficientFrontierReb(AssetList):
                         }
 
     @property
-    def max_annual_risk_asset(self) -> dict:
+    def _max_annual_risk_asset(self) -> dict:
         """
         Find an asset with max annual risk.
         """
@@ -369,25 +542,25 @@ class EfficientFrontierReb(AssetList):
                 }
 
     @property
-    def target_cagr_range_left(self) -> np.ndarray:
+    def _target_cagr_range_left(self) -> np.ndarray:
         """
-        Full range of cagr values (from min to max).
+        Full range of CAGR values (from min to max).
         """
         max_cagr = self.global_max_return_portfolio['CAGR']
         min_cagr = Frame.get_cagr(self.assets_ror).min()
         return np.linspace(min_cagr, max_cagr, self.n_points)
 
     @property
-    def target_cagr_range_right(self) -> Optional[np.ndarray]:
+    def _target_cagr_range_right(self) -> Optional[np.ndarray]:
         """
-        Range of cagr values from the Global CAGR max to the max asset cagr
+        Range of CAGR values from the Global CAGR max to the max asset cagr
         to the right of the max CAGR point (if exists).
         """
-        if self.max_cagr_asset_right_to_max_cagr:
-            ticker_cagr = self.max_cagr_asset_right_to_max_cagr['max_asset_cagr']
+        if self._max_cagr_asset_right_to_max_cagr:
+            ticker_cagr = self._max_cagr_asset_right_to_max_cagr['max_asset_cagr']
             max_cagr = self.global_max_return_portfolio['CAGR']
             if not np.isclose(max_cagr, ticker_cagr, rtol=1e-3, atol=1e-05):
-                k = abs((self.target_cagr_range_left[0] - self.target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
+                k = abs((self._target_cagr_range_left[0] - self._target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
                 number_of_points = round(self.n_points / k) + 1
                 target_range = np.linspace(max_cagr, ticker_cagr, number_of_points)
                 return target_range[1:]  # skip the first point (max cagr) as it presents in the left part of the EF
@@ -395,7 +568,24 @@ class EfficientFrontierReb(AssetList):
     @property
     def target_risk_range(self) -> np.ndarray:
         """
-        Range of annual risk values (from min risk to max risk).
+        Calculate range of annualized risk values (from min risk to max risk).
+
+        The number of values in the range is defined by 'n_points'.
+        The risk is defined as standard deviation of monthly rate or returns time series.
+
+        Returns
+        -------
+        numpy.ndarray
+            Annualized risk values (from min risk to max risk)
+
+        Examples
+        --------
+        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier.target_risk_range
+        array([0.03695845, 0.04334491, 0.04973137, 0.05611783, 0.06250429,
+               0.06889075, 0.07527721, 0.08166367, 0.08805012, 0.09443658,
+               0.10082304, 0.1072095 , 0.11359596, 0.11998242, 0.12636888,
+               0.13275534, 0.1391418 , 0.14552826, 0.15191472, 0.15830117])
         """
         min_std = self.gmv_annual_values[0]
         ticker_with_largest_risk = self.assets_ror.std().nlargest(1, keep='first').index.values[0]
@@ -429,7 +619,7 @@ class EfficientFrontierReb(AssetList):
         main_start_time = time.time()
         df = pd.DataFrame()
         # left part of the EF
-        for i, target_cagr in enumerate(self.target_cagr_range_left):
+        for i, target_cagr in enumerate(self._target_cagr_range_left):
             start_time = time.time()
             row = self.minimize_risk(target_cagr)
             df = df.append(row, ignore_index=True)
@@ -437,12 +627,12 @@ class EfficientFrontierReb(AssetList):
             if self.verbose:
                 print(f"left EF point #{i + 1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
         # right part of the EF
-        range_right = self.target_cagr_range_right
+        range_right = self._target_cagr_range_right
         if range_right is not None:  # range_right can be a DataFrame. Must put an explicit "is not None"
             n = len(range_right)
             for i, target_cagr in enumerate(range_right):
                 start_time = time.time()
-                row = self.maximize_risk(target_cagr)
+                row = self._maximize_risk(target_cagr)
                 df = df.append(row, ignore_index=True)
                 end_time = time.time()
                 if self.verbose:
@@ -461,7 +651,7 @@ class EfficientFrontierReb(AssetList):
         weights_df = Float.get_random_weights(n, self.assets_ror.shape[1])
 
         # Portfolio risk and cagr for each set of weights
-        portfolios_ror = weights_df.aggregate(Rebalance.return_ts, ror=self.assets_ror, period=self.reb_period)
+        portfolios_ror = weights_df.aggregate(Rebalance.return_ts, ror=self.assets_ror, period=self.rebalancing_period)
         random_portfolios = pd.DataFrame()
         for _, data in portfolios_ror.iterrows():
             risk_monthly = data.std()

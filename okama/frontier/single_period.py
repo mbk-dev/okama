@@ -11,7 +11,7 @@ from ..common.helpers import Float, Frame
 
 class EfficientFrontier(AssetList):
     """
-    Efficient Frontier (EF) with classic Mean-Variance optimization.
+    Efficient Frontier with classic Mean-Variance optimization.
 
     Efficient Frontier is a set of portfolios which satisfy the condition that no other portfolio exists with a higher
     expected return but with the same risk (standard deviation of return).
@@ -58,7 +58,7 @@ class EfficientFrontier(AssetList):
         Defines whether to show the full Efficient Frontier or only its upper part.
         If 'False' Efficient Frontier has only the points with the return above Global Minimum Volatility (GMV) point.
 
-    tickers : bool, default True
+    ticker_names : bool, default True
         Defines whether to include full names of assets in the optimization report or only tickers.
     """
 
@@ -73,7 +73,7 @@ class EfficientFrontier(AssetList):
         inflation: bool = True,
         full_frontier: bool = True,
         n_points: int = 20,
-        tickers: bool = True,
+        ticker_names: bool = True,
     ):
         if len(assets) < 2:
             raise ValueError("The number of symbols cannot be less than two")
@@ -89,7 +89,7 @@ class EfficientFrontier(AssetList):
         self.bounds = bounds
         self.full_frontier = full_frontier
         self.n_points = n_points
-        self.labels_are_tickers = tickers
+        self.labels_are_tickers = ticker_names
 
     def __repr__(self):
         dic = {
@@ -249,7 +249,7 @@ class EfficientFrontier(AssetList):
 
     def optimize_return(self, option: str = "max") -> dict:
         """
-        Find global max or min for the rate of return within given bounds.
+        Find a portfolio with global max or min for the rate of return within given bounds.
 
         The objective function is an arithmetic mean of monthly Rate of return.
 
