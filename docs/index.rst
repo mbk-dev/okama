@@ -30,7 +30,7 @@
 Okama Documentation
 ===================
 
-*okama* is a library with investment portfolio analyzing & optimization tools.
+*okama* is a library with investment portfolio analyzing & optimization tools. CFA recommendations are used in quantitative finance.
 
 *okama* goes with **free** «end of day» historical stock markets data and macroeconomic indicators through API.
 
@@ -124,6 +124,14 @@ The latest development version can be installed directly from GitHub:
     okama.Asset
     okama.AssetList
     okama.Portfolio
+
+.. autosummary::
+    :toctree: stubs
+    :template: custom-class-template-no-inherited.rst
+
+    okama.EfficientFrontier
+    okama.EfficientFrontierReb
+    okama.Plots
 
 
 Indices and tables

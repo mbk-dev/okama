@@ -30,7 +30,7 @@ class AssetList(ListMaker):
     ccy : str, default 'USD'
         Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
 
-    inflation: bool, default True
+    inflation : bool, default True
         Defines whether to take inflation data into account in the calculations.
         Including inflation could limit available data (last_date, first_date)
         as the inflation data is usually published with a one-month delay.
@@ -78,10 +78,13 @@ class AssetList(ListMaker):
     @property
     def risk_monthly(self) -> pd.Series:
         """
-        Calculate monthly risks (standard deviation of return) for each asset.
+        Calculate monthly risk (standard deviation of return) for each asset.
 
         Monthly risk of the asset is a standard deviation of the rate of return time series.
         Standard deviation (sigma σ) is normalized by N-1.
+
+        Monthly risk is calculated for rate of retirun time series for the sample from 'first_date' to
+        'last_date'.
 
         Returns
         -------
@@ -112,10 +115,37 @@ class AssetList(ListMaker):
         """
         Calculate annualized risks (standard deviation) for each asset.
 
+        Annualized risk is calculated for rate of retirun time series for the sample from 'first_date' to
+        'last_date'.
+
         Returns
         -------
         Series
             Annualized risk (standard deviation) values for each asset in form of Series.
+
+        See Also
+        --------
+        risk_monthly : Calculate montly risk for each asset.
+        risk_annual : Calculate annualized risks.
+        semideviation_monthly : Calculate semideviation monthly values.
+        semideviation_annual : Calculate semideviation annualized values.
+        get_var_historic : Calculate historic Value at Risk (VaR).
+        get_cvar_historic : Calculate historic Conditional Value at Risk (CVaR).
+        drawdowns : Calculate drawdowns.
+
+        Notes
+        -----
+        CFA recomendations are used to annualize risk values [1]_.
+
+        .. [1] `What’s Wrong with Multiplying by the Square Root of Twelve. <https://www.cfainstitute.org/en/research/cfa-digest/2013/11/whats-wrong-with-multiplying-by-the-square-root-of-twelve-digest-summary>`_ Paul D. Kaplan, CFA Institute Journal Review, 2013
+
+        Examples
+        --------
+        >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
+        >>> al.risk_annual
+        GC.COMM    0.195236
+        SHV.US     0.004960
+        dtype: float64
         """
         risk = self.assets_ror.std()
         mean_return = self.assets_ror.mean()
@@ -128,10 +158,30 @@ class AssetList(ListMaker):
 
         Semi-deviation (Downside risk) is the risk of the return being below the expected return.
 
+        Semi-deviation is calculated for rate of retirun time series for the sample from 'first_date' to
+        'last_date'.
+
         Returns
         -------
         Series
             Monthly semideviation values for each asset in form of Series.
+
+        See Also
+        --------
+        risk_monthly : Calculate montly risk for each asset.
+        risk_annual : Calculate annualized risks.
+        semideviation_annual : Calculate semideviation annualized values.
+        get_var_historic : Calculate historic Value at Risk (VaR).
+        get_cvar_historic : Calculate historic Conditional Value at Risk (CVaR).
+        drawdowns : Calculate drawdowns.
+
+        Examples
+        --------
+        >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
+        >>> al.semideviation_monthly
+        GC.COMM    0.033285
+        SHV.US     0.000162
+        dtype: float64
         """
         return Frame.get_semideviation(self.assets_ror)
 
@@ -140,16 +190,38 @@ class AssetList(ListMaker):
         """
         Return semideviation annualized values for each asset.
 
+        Semi-deviation (Downside risk) is the risk of the return being below the expected return.
+
+        Semi-deviation is calculated for rate of retirun time series for the sample from 'first_date' to
+        'last_date'.
+
         Returns
         -------
         Series
             Annualized semideviation values for each asset in form of Series.
+
+        See Also
+        --------
+        risk_monthly : Calculate montly risk for each asset.
+        risk_annual : Calculate annualized risks.
+        semideviation_monthly : Calculate semideviation monthly values.
+        get_var_historic : Calculate historic Value at Risk (VaR).
+        get_cvar_historic : Calculate historic Conditional Value at Risk (CVaR).
+        drawdowns : Calculate drawdowns.
+
+        Examples
+        --------
+        >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
+        >>> al.semideviation_annual
+        GC.COMM    0.115302
+        SHV.US     0.000560
+        dtype: float64
         """
         return Frame.get_semideviation(self.assets_ror) * 12 ** 0.5
 
     def get_var_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
         """
-        Calculate historic Value at Risk (VaR) for the assets.
+        Calculate historic Value at Risk (VaR) for the assets with a given timeframe.
 
         The VaR calculates the potential loss of an investment with a given time frame and confidence level.
         Loss is a positive number (expressed in cumulative return).
@@ -161,10 +233,20 @@ class AssetList(ListMaker):
             Time period size in months
         level : int, default 1
             Confidence level in percents. Default value is 1%.
+
         Returns
         -------
         Series
             VaR values for each asset in form of Series.
+
+        See Also
+        --------
+        risk_monthly : Calculate montly risk for each asset.
+        risk_annual : Calculate annualized risks.
+        semideviation_monthly : Calculate semideviation monthly values.
+        semideviation_annual : Calculate semideviation annualized values.
+        get_cvar_historic : Calculate historic Conditional Value at Risk (CVaR).
+        drawdowns : Calculate drawdowns.
 
         Examples
         --------
@@ -179,7 +261,7 @@ class AssetList(ListMaker):
 
     def get_cvar_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
         """
-        Calculate historic Conditional Value at Risk (CVAR, expected shortfall) for the assets.
+        Calculate historic Conditional Value at Risk (CVAR, expected shortfall) for the assets with a given timeframe.
 
         CVaR is the average loss over a specified time period of unlikely scenarios beyond the confidence level.
         Loss is a positive number (expressed in cumulative return).
@@ -196,6 +278,15 @@ class AssetList(ListMaker):
         -------
         Series
             CVaR values for each asset in form of Series.
+
+        See Also
+        --------
+        risk_monthly : Calculate montly risk for each asset.
+        risk_annual : Calculate annualized risks.
+        semideviation_monthly : Calculate semideviation monthly values.
+        semideviation_annual : Calculate semideviation annualized values.
+        get_var_historic : Calculate historic Value at Risk (VaR).
+        drawdowns : Calculate drawdowns.
 
         Examples
         --------
@@ -220,6 +311,22 @@ class AssetList(ListMaker):
         -------
         DataFrame
             Time series of drawdowns.
+
+        See Also
+        --------
+        risk_monthly : Calculate montly risk for each asset.
+        risk_annual : Calculate annualized risks.
+        semideviation_monthly : Calculate semideviation monthly values.
+        semideviation_annual : Calculate semideviation annualized values.
+        get_var_historic : Calculate historic Value at Risk (VaR).
+        get_cvar_historic : Calculate historic Conditional Value at Risk (CVaR).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> al = ok.AssetList(['SPY.US', 'BND.US'], last_date='2021-08')
+        >>> al.drawdowns.plot()
+        >>> plt.show()
         """
         return Frame.get_drawdowns(self.assets_ror)
 
@@ -235,6 +342,10 @@ class AssetList(ListMaker):
         Series
             Max recovery period for each asset (in months).
 
+        See Also
+        --------
+        drawdowns : Calculate drawdowns time series.
+
         Notes
         -----
         If the last asset maximum value is not recovered NaN is returned.
@@ -247,10 +358,6 @@ class AssetList(ListMaker):
         SPY.US    52
         AGG.US    15
         dtype: int32
-
-        See Also
-        --------
-        drawdowns : Calculate drawdowns time series.
         """
         cummax = self.wealth_indexes.cummax()
         growth = cummax.pct_change()[1:]
@@ -293,6 +400,10 @@ class AssetList(ListMaker):
         Series
             CAGR values for each asset and annualized inflation (optional).
 
+        See Also
+        --------
+        get_rolling_cagr : Calculate rolling CAGR.
+
         Notes
         -----
         CAGR is not defined for periods less than 1 year (NaN values are returned).
@@ -306,6 +417,7 @@ class AssetList(ListMaker):
         dtype: float64
 
         To get inflation adjusted return (real annualized return) add `real=True` option:
+
         >>> x = ok.AssetList(['EURUSD.FX', 'CNYUSD.FX'], inflation=True)
         >>> x.get_cagr(period=5, real=True)
         EURUSD.FX    0.000439
@@ -352,27 +464,28 @@ class AssetList(ListMaker):
         DataFrame
             Time series of rolling CAGR and mean inflation (optionally).
 
+        See Also
+        --------
+        get_rolling_cagr : Calculate rolling CAGR.
+        get_cagr : Calculate CAGR.
+        get_rolling_cumulative_return : Calculate rolling cumulative return.
+        annual_return : Calculate annualized mean return (arithmetic mean).
+
         Notes
         -----
         CAGR is not defined for periods less than 1 year (NaN values are returned).
 
         Examples
         --------
-        >>> x = ok.AssetList(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True
-        >>> x.get_rolling_cagr(window=5*12, real=True)
-                 DXET.XETR  DBXN.XETR
-        2013-09   0.012148   0.034538
-        2013-10   0.058834   0.034235
-        2013-11   0.072305   0.027890
-        2013-12   0.056456   0.022916
-        2014-01   0.083715   0.032526
-                    ...        ...
-        2021-02   0.062271   0.006188
-        2021-03   0.074446   0.006124
-        2021-04   0.074840   0.005586
-        2021-05   0.074614   0.003806
-        2021-06   0.089275  -0.000248
-        [94 rows x 2 columns]
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.AssetList(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True)
+        >>> x.get_rolling_cagr(window=5*12).plot()
+        >>> plt.show()
+
+        For inflation adjusted rolling CAGR add 'real=True' option:
+
+        >>> x.get_rolling_cagr(window=5*12, real=True).plot()
+        >>> plt.show()
         """
         df = self._add_inflation()
         if real:
@@ -404,6 +517,13 @@ class AssetList(ListMaker):
         -------
         Series
             Cumulative return values for each asset and cumulative inflation (if inflation=True in AssetList).
+
+        See Also
+        --------
+        get_rolling_cagr : Calculate rolling CAGR.
+        get_cagr : Calculate CAGR.
+        get_rolling_cumulative_return : Calculate rolling cumulative return.
+        annual_return : Calculate annualized mean return (arithmetic mean).
 
         Examples
         --------
@@ -457,6 +577,25 @@ class AssetList(ListMaker):
         -------
         DataFrame
             Time series of rolling cumulative return.
+
+        See Also
+        --------
+        get_rolling_cagr : Calculate rolling CAGR.
+        get_cagr : Calculate CAGR.
+        get_cumulative_return : Calculate cumulative return.
+        annual_return : Calculate annualized mean return (arithmetic mean).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.AssetList(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True)
+        >>> x.get_rolling_cumulative_return(window=5*12).plot()
+        >>> plt.show()
+
+        For inflation adjusted rolling cumulative return add 'real=True' option:
+
+        >>> x.get_rolling_cumulative_return(window=5*12, real=True).plot()
+        >>> plt.show()
         """
         df = self._add_inflation()
         if real:
@@ -476,6 +615,13 @@ class AssetList(ListMaker):
         -------
         DataFrame
             Calendar annual rate of return time series.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> al = ok.AssetList(['SPY.US', 'BND.US'], last_date='2021-08')
+        >>> al.annual_return_ts.plot(kind='bar')
+        >>> plt.show()
         """
         return Frame.get_annual_return_ts_from_monthly(self.assets_ror)
 
@@ -523,6 +669,20 @@ class AssetList(ListMaker):
         risk_annual : Return annualized risks (standard deviation).
         get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
         drawdowns : Calculate drawdowns.
+
+        Examples
+        --------
+        >>> al = ok.AssetList(['SPY.US', 'AGG.US'], last_date='2021-08')
+        >>> al.describe(years=[1, 10, 15])
+                         property               period    AGG.US    SPY.US inflation
+        0         Compound return                  YTD -0.005620  0.180519  0.048154
+        1                    CAGR              1 years -0.007530  0.363021  0.053717
+        2                    CAGR             10 years  0.032918  0.152310  0.019136
+        3                    CAGR             15 years  0.043013  0.107598  0.019788
+        4                    CAGR  17 years, 10 months  0.039793  0.107972  0.022002
+        5          Dividend yield                  LTM  0.018690  0.012709       NaN
+        6                    Risk  17 years, 10 months  0.037796  0.158301       NaN
+        7                    CVAR  17 years, 10 months  0.023107  0.399398       NaN
         """
         description = pd.DataFrame()
         dt0 = self.last_date
@@ -653,6 +813,7 @@ class AssetList(ListMaker):
         RGBITR.INDX    0.017357
         dtype: float64
         """
+        # TODO: make a single method with mean_return
         if not hasattr(self, "inflation"):
             raise ValueError(
                 "Real Return is not defined. Set inflation=True to calculate."
@@ -673,6 +834,13 @@ class AssetList(ListMaker):
         -------
         DataFrame
             Annual dividends time series for each asset.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='2010-01', last_date='2020-12')
+        >>> x.dividends_annual.plot(kind='bar')
+        >>> plt.show()
         """
         return self._get_assets_dividends().resample("Y").sum()
 
@@ -688,19 +856,10 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
-        >>> x.dividend_growing_years
-                T.US  XOM.US
-        1985     1       1
-        1986     2       2
-        1987     3       3
-        1988     0       4
-        1989     1       5
-        1990     2       6
-        1991     3       7
-        1992     4       8
-        1993     5       9
-        1994     6      10
+        >>> x.dividend_growing_years.plot(kind='bar')
+        >>> plt.show()
         """
         div_growth = self.dividends_annual.pct_change()[1:]
         df = pd.DataFrame()
@@ -724,20 +883,10 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
-        >>> x.dividend_paying_years
-              T.US  XOM.US
-        1984     1       1
-        1985     2       2
-        1986     3       3
-        1987     4       4
-        1988     5       5
-        1989     6       6
-        1990     7       7
-        1991     8       8
-        1992     9       9
-        1993    10      10
-        1994    11      11
+        >>> x.dividend_paying_years.plot(kind='bar')
+        >>> plt.show()
         """
         div_annual = self.dividends_annual
         frame = pd.DataFrame()
@@ -800,21 +949,10 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
-        >>> x.tracking_difference
-                   SPY.US    VOO.US
-        Date
-        2011-01  0.000000  0.000000
-        2011-02 -0.000004 -0.001143
-        2011-03 -0.000322 -0.001566
-        2011-04 -0.000967 -0.001824
-        2011-05 -0.000847 -0.002239
-                   ...       ...
-        2020-09 -0.037189 -0.022919
-        2020-10 -0.030695 -0.018732
-        2020-11 -0.036266 -0.020783
-        2020-12 -0.042560 -0.025097
-        2021-01 -0.042493 -0.025209
+        >>> x.tracking_difference.plot()
+        >>> plt.show()
         """
         accumulated_return = Frame.get_wealth_indexes(
             self.assets_ror
@@ -842,19 +980,9 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
-        >>> x.tracking_difference
-                   SPY.US    VOO.US
-        Date
-        2011-12 -0.002198 -0.002230
-        2012-01 -0.000615 -0.002245
-        2012-02 -0.000413 -0.002539
-        2012-03 -0.001021 -0.002359
-                   ...       ...
-        2020-10 -0.003079 -0.001889
-        2020-11 -0.003599 -0.002076
-        2020-12 -0.004177 -0.002482
-        2021-01 -0.004136 -0.002472
+        >>> x.tracking_difference_annualized.plot()
         """
         return Index.tracking_difference_annualized(self.tracking_difference)
 
@@ -875,19 +1003,10 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
-        >>> x.tracking_error
-                   SPY.US    VOO.US
-        Date
-        2010-10  0.000346  0.001039
-        2010-11  0.000346  0.003030
-        2010-12  0.000283  0.005400
-        2011-01  0.000735  0.005350
-                   ...       ...
-        2020-10  0.003132  0.003370
-        2020-11  0.003127  0.003356
-        2020-12  0.003144  0.003357
-        2021-01  0.003132  0.003343
+        >>> x.tracking_error.plot()
+        >>> plt.show()
         """
         return Index.tracking_error(self.assets_ror)
 
@@ -906,23 +1025,15 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> sp = ok.AssetList(['SP500TR.INDX', 'VBMFX.US', 'GC.COMM', 'VNQ.US'])
         >>> sp.names
         {'SP500TR.INDX': 'S&P 500 (TR)',
         'VBMFX.US': 'VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES',
         'GC.COMM': 'Gold',
         'VNQ.US': 'Vanguard Real Estate Index Fund ETF Shares'}
-        >>> sp.index_corr
-                 VBMFX.US   GC.COMM    VNQ.US
-        2005-10 -0.217992  0.103308  0.681394
-        2005-11 -0.171918  0.213368  0.683557
-        2005-12 -0.191054  0.183656  0.687335
-        2006-01 -0.204574  0.250068  0.699323
-                   ...       ...       ...
-        2020-11 -0.004154  0.065746  0.721346
-        2020-12 -0.006035  0.069420  0.721324
-        2021-01 -0.002942  0.070801  0.721216
-        2021-02 -0.007533  0.067011  0.721464
+        >>> sp.index_corr.plot()
+        >>> plt.show()
         """
         return Index.cov_cor(self.assets_ror, fn="corr")
 
@@ -945,23 +1056,14 @@ class AssetList(ListMaker):
 
         Examples
         --------
-        >>> sp = ok.AssetList(['SP500TR.INDX', 'VBMFX.US', 'GC.COMM', 'VNQ.US'])
+        >>> import matplotlib.pyplot as plt
+        >>> sp = ok.AssetList(['SP500TR.INDX', 'VBMFX.US', 'GC.COMM'])
         >>> sp.names
         {'SP500TR.INDX': 'S&P 500 (TR)',
         'VBMFX.US': 'VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES',
-        'GC.COMM': 'Gold',
-        'VNQ.US': 'Vanguard Real Estate Index Fund ETF Shares'}
-        >>> sp.index_rolling_corr(window=24)
-                 VBMFX.US   GC.COMM    VNQ.US
-        2006-09 -0.072073  0.209741  0.639184
-        2006-10 -0.053556  0.196464  0.657984
-        2006-11  0.048231  0.173406  0.666584
-        2006-12 -0.001431  0.227669  0.634478
-                   ...       ...       ...
-        2020-11 -0.038417  0.122855  0.837298
-        2020-12  0.033282  0.204574  0.820935
-        2021-01  0.046599  0.205193  0.816003
-        2021-02  0.033039  0.181227  0.816178
+        'GC.COMM': 'Gold'}
+        >>> sp.index_rolling_corr(window=24).plot()
+        >>> plt.show()
         """
         return Index.rolling_cov_cor(self.assets_ror, window=window, fn="corr")
 
@@ -991,22 +1093,15 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> sp = ok.AssetList(['SP500TR.INDX', 'VBMFX.US', 'GC.COMM', 'VNQ.US'])
         >>> sp.names
         {'SP500TR.INDX': 'S&P 500 (TR)',
         'VBMFX.US': 'VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES',
         'GC.COMM': 'Gold',
         'VNQ.US': 'Vanguard Real Estate Index Fund ETF Shares'}
-        >>> sp.index_beta
-                 VBMFX.US   GC.COMM    VNQ.US
-        2005-10 -0.541931  0.064489  0.346571
-        2005-11 -0.450691  0.131065  0.364683
-        2005-12 -0.490117  0.110731  0.366512
-        2006-01 -0.531695  0.132016  0.359480
-        2006-02 -0.540665  0.135381  0.360091
-                   ...       ...       ...
-        2020-10 -0.063057  0.069050  0.465525
-        2020-11 -0.018408  0.055676  0.472042
+        >>> sp.index_beta.plot()
+        >>> plt.show()
         """
         return Index.beta(self.assets_ror)
 
@@ -1038,21 +1133,13 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> al = ok.AssetList(['VFINX.US', 'GC.COMM'], last_date='2021-01')
         >>> al.names
         {'VFINX.US': 'VANGUARD 500 INDEX FUND INVESTOR SHARES',
         'GC.COMM': 'Gold'}
-        >>> al.skewness
-                 VFINX.US   GC.COMM
-        1981-02 -0.537554  0.272718
-        1981-03 -0.642592  0.128630
-        1981-04 -0.489567  0.231292
-        1981-05 -0.471067  0.219311
-                   ...       ...
-        2020-10 -0.629908  0.107989
-        2020-11 -0.610480  0.111627
-        2020-12 -0.613742  0.107515
-        2021-01 -0.611421  0.110552
+        >>> al.skewness.plot()
+        >>> plt.show()
         """
         return Frame.skewness(self.assets_ror)
 
@@ -1088,21 +1175,13 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> al = ok.AssetList(['VFINX.US', 'GC.COMM'], last_date='2021-01')
         >>> al.names
         {'VFINX.US': 'VANGUARD 500 INDEX FUND INVESTOR SHARES',
         'GC.COMM': 'Gold'}
-        >>> al.skewness_rolling(window=24)
-                 VFINX.US   GC.COMM
-        1982-01 -0.144778  0.303309
-        1982-02 -0.049833  0.353829
-        1982-03  0.173783  1.198266
-        1982-04  0.176163  1.123462
-                   ...       ...
-        2020-10 -0.547946  0.181045
-        2020-11 -0.473080  0.071605
-        2020-12 -0.597739  0.065503
-        2021-01 -0.480090  0.205303
+        >>> al.skewness_rolling(window=12*5).plot()
+        >>> plt.show()
         """
         return Frame.skewness_rolling(self.assets_ror, window=window)
 
@@ -1131,22 +1210,13 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> al = ok.AssetList(['GC.COMM', 'FNER.INDX'], first_date='2000-01', last_date='2021-01')
         >>> al.names
         {'GC.COMM': 'Gold',
         'FNER.INDX': 'FTSE NAREIT All Equity REITs'}
-        >>> al.kurtosis
-                  GC.COMM  FNER.INDX
-        date
-        2001-01  0.141457  -0.424810
-        2001-02  0.255112  -0.486316
-        2001-03  0.264453  -0.275661
-        2001-04 -0.102208  -0.107295
-                   ...        ...
-        2020-10  0.705098   7.485606
-        2020-11  0.679793   7.400417
-        2020-12  0.663579   7.439888
-        2021-01  0.664566   7.475272
+        >>> al.kurtosis.plot()
+        >>> plt.show()
         """
         return Frame.kurtosis(self.assets_ror)
 
@@ -1180,22 +1250,13 @@ class AssetList(ListMaker):
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> al = ok.AssetList(['GC.COMM', 'FNER.INDX'], first_date='2000-01', last_date='2021-01')
         >>> al.names
         {'GC.COMM': 'Gold',
         'FNER.INDX': 'FTSE NAREIT All Equity REITs'}
-        >>> al.kurtosis_rolling(window=12)
-                  GC.COMM  FNER.INDX
-        date
-        2000-12 -0.044261  -0.640834
-        2001-01 -0.034628  -0.571309
-        2001-02  1.089403  -0.639850
-        2001-03  1.560623  -0.601771
-                   ...        ...
-        2020-10 -0.153749   3.867389
-        2020-11 -0.262682   2.854431
-        2020-12 -0.695676   2.865679
-        2021-01 -0.754352   2.801018
+        >>> al.kurtosis_rolling(window=12*5).plot()
+        >>> plt.show()
         """
         return Frame.kurtosis_rolling(self.assets_ror, window=window)
 

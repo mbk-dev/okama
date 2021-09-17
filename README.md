@@ -6,7 +6,7 @@
 
 # Okama
 
-_okama_ is a library with investment portfolio analyzing & optimization tools.
+_okama_ is a library with investment portfolio analyzing & optimization tools. CFA recommendations are used in quantitative finance.
 
 _okama_ goes with **free** «end of day» historical stock markets data and macroeconomic indicators through API.
 >...entities should not be multiplied without necessity

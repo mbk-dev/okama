@@ -11,10 +11,55 @@ from ..common.helpers import Float, Frame
 
 class EfficientFrontier(AssetList):
     """
-    Efficient Frontier (EF) with classic MVA implementation.
-    n_points - is a number of points in the EF (default is 20).
-    full_frontier = False - shows only the points with the return above GMV
-    tickers = True - labels of data in DataFrame are tickers (asset long names if False)
+    Efficient Frontier (EF) with classic Mean-Variance optimization.
+
+    Efficient Frontier is a set of portfolios which satisfy the condition that no other portfolio exists with a higher
+    expected return but with the same risk (standard deviation of return).
+
+    The points on the Efficient Frontier are obtained through the constrained optimization process
+    (optimization with bounds). Bounds are defined with 'bounds' property.
+
+    In classic Markowitz optimization portfolios are rebalanced monthly and has constant weights
+    (single period optimization).
+
+    Parameters
+    ----------
+    assets : list, default None
+        List of assets. Could include tickers or asset like objects (Asset, Portfolio).
+        If None a single asset list with a default ticker is used.
+
+    first_date : str, default None
+        First date of monthly return time series.
+        If None the first date is calculated automatically as the oldest available date for the listed assets.
+
+    last_date : str, default None
+        Last date of monthly return time series.
+        If None the last date is calculated automatically as the newest available date for the listed assets.
+
+    ccy : str, default 'USD'
+        Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
+
+    bounds: tuple
+        Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
+        If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
+        bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
+        from 0 to 50%. The second asset has no limitations.
+
+    inflation : bool, default True
+        Defines whether to take inflation data into account in the calculations.
+        Including inflation could limit available data (last_date, first_date)
+        as the inflation data is usually published with a one-month delay.
+        With inflation = False some properties like real return are not available.
+
+    n_points : int, default 20
+        Number of points in the Efficient Frontier.
+
+    full_frontier : bool, default False
+        Defines whether to show the full Efficient Frontier or only its upper part.
+        If 'False' Efficient Frontier has only the points with the return above Global Minimum Volatility (GMV) point.
+
+    tickers : bool, default True
+        Defines whether to include full names of assets in the optimization report or only tickers.
     """
 
     def __init__(
@@ -60,7 +105,34 @@ class EfficientFrontier(AssetList):
         return repr(pd.Series(dic))
 
     @property
-    def bounds(self):
+    def bounds(self) -> Tuple[Tuple[float, ...], ...]:
+        """
+        Return bounds for the assets weights.
+
+        Bounds are used in Mean-Variance optimization. Each asset can have weights limitation from 0 to 1.0.
+
+        If an asset has limitation for 10 to 20% bounds are defined as (0.1, 0.2).
+        bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
+        from 0 to 50%. The second asset has no limitations.
+
+        Returns
+        -------
+        tuple
+            Weights bounds used for portfolio optimization.
+
+        Examples
+        --------
+        >>> two_assets = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> two_assets.bounds
+        ((0.0, 1.0), (0.0, 1.0))
+
+        By default there are no limitations for assets weights.
+        Bounds can be set for a Efficient Frontier object.
+
+        >>> two_assets.bounds = ((0.5, 0.9), (0, 1.0))
+
+        Now the optimization is bounded (SPY has weights limits from 50 to 90%).
+        """
         return self._bounds
 
     @bounds.setter
@@ -78,7 +150,26 @@ class EfficientFrontier(AssetList):
     @property
     def gmv_weights(self) -> np.ndarray:
         """
-        Returns the weights of the Global Minimum Volatility portfolio
+        Calculate asset weights of the Global Minimum Volatility (GMV) portfolio within given bounds.
+
+        Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
+        Along the Efficient Frontier, the left-most point is a portfolio with minimum risk when compared to
+        all possible portfolios of risky assets.
+
+        In Mean-Variance optimization risk is defined as a standard deviation of return time series.
+
+        Bounds are defined with 'bounds' property.
+
+        Returns
+        -------
+        numpy.ndarray
+            GMV portfolio assets weights.
+
+        Examples
+        --------
+        >>> two_assets = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> two_assets.gmv_weights
+        array([0.05474178, 0.94525822])
         """
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
@@ -101,7 +192,26 @@ class EfficientFrontier(AssetList):
     @property
     def gmv_monthly(self) -> Tuple[float, float]:
         """
-        Returns the monthly risk and return of the Global Minimum Volatility portfolio
+        Calculate the monthly risk and return of the Global Minimum Volatility (GMV) portfolio within given bounds.
+
+        Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
+        Along the Efficient Frontier, the left-most point is a portfolio with minimum risk when compared to
+        all possible portfolios of risky assets.
+
+        In Mean-Variance optimization risk is defined as a standard deviation of return time series.
+
+        Bounds are defined with 'bounds' property.
+
+        Returns
+        -------
+        tuple
+            risk, return monthly values for GMV portfolio.
+
+        Examples
+        --------
+        >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'])
+        >>> ef.gmv_monthly
+        (0.01024946425526032, 0.0036740056018316597)
         """
         return (
             Frame.get_portfolio_risk(self.gmv_weights, self.assets_ror),
@@ -111,7 +221,26 @@ class EfficientFrontier(AssetList):
     @property
     def gmv_annualized(self) -> Tuple[float, float]:
         """
-        Returns the annualized risk and return of the Global Minimum Volatility portfolio
+        Calculate the annualized risk and return of the Global Minimum Volatility (GMV) portfolio within given bounds.
+
+        Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
+        Along the Efficient Frontier, the left-most point is a portfolio with minimum risk when compared to
+        all possible portfolios of risky assets.
+
+        In Mean-Variance optimization risk is defined as a standard deviation of return time series.
+
+        Bounds are defined with 'bounds' property.
+
+        Returns
+        -------
+        tuple
+            risk, return annualized values for GMV portfolio.
+
+        Examples
+        --------
+        >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'])
+        >>> ef.gmv_annualized
+        (0.03697734994430258, 0.0449899573148429)
         """
         return (
             Float.annualize_risk(self.gmv_monthly[0], self.gmv_monthly[1]),
@@ -120,10 +249,33 @@ class EfficientFrontier(AssetList):
 
     def optimize_return(self, option: str = "max") -> dict:
         """
-        Finds global max or min for the rate of return.
-        Returns monthly values for the risk, mean return and the weights.
-        'max' - search for global maximum
-        'min' - search for global minimum
+        Find global max or min for the rate of return within given bounds.
+
+        The objective function is an arithmetic mean of monthly Rate of return.
+
+        Bounds are defined with 'bounds' property.
+
+        Returns
+        -------
+        dict
+            Weights of assets, risk and return of the portfolio.
+
+        Parameters
+        ----------
+        option : {'max', 'min'}, default 'max'
+            Find objective function global maximun if 'max' or global minimum if 'min'.
+
+        Examples
+        --------
+        >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'])
+        >>> ef.optimize_return(option='max')
+        {'Weights': array([1.00000000e+00, 1.94289029e-16, 1.11022302e-16]), 'Mean_return_monthly': 0.009144, 'Risk_monthly': 0.041956276163975015}
+
+        The global maximum can be found with constrained optimization using bounds.
+
+        >>> ef.bounds = ((0, 1.), (0, 1.), (0.20, 1.))  # The portfolio should have at least 20% of GLD
+        >>> ef.optimize_return(option='max')
+        {'Weights': array([8.00000000e-01, 5.48172618e-16, 2.00000000e-01]), 'Mean_return_monthly': 0.008894299999999997, 'Risk_monthly': 0.035570987973869726}
         """
         n = self.assets_ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
@@ -178,15 +330,42 @@ class EfficientFrontier(AssetList):
         tolerance: float = 1e-08,
     ) -> Dict[str, float]:
         """
-        Finds minimal risk given the target return.
-        Returns a "point" with monthly values:
-        - weights
-        - mean return
-        - CAGR
-        - risk (std)
-        Target return is a monthly or annual value:
-        monthly_return = False / True
-        tolerance - sets the accuracy for the solver
+        Find minimal risk given the target return within given bounds.
+
+        In Mean-Variance optimization the objective function is risk (standard deviation of return time series).
+
+        Optimization returns a "point" on the Efficient Frontier with values:
+
+        - weights of assets
+        - annualized mean rate of return
+        - Compound annual growth rate (CAGR)
+        - annualized risk (annualized value of standard deviation)
+
+        Target return can have a monthly or annual value.
+
+        Bounds are defined with 'bounds' property.
+
+        Returns
+        -------
+        dict
+            Point on the Efficient Frontier with assets weights, mean return, CAGR, risk.
+
+        Parameters
+        ----------
+        target_return : float
+            Rate of return value. The optimization process looks for a portfolio with the target_return
+            and minimum risk.
+            Target return value can be in monthly or annual values depending on 'monthly_return' option.
+        monthly_return : bool, default False
+            Defines whether to use rate of return monthly (True) or annual (False) values.
+        tolerance : float, default 1e-08
+            Sets the accuracy for the solver.
+
+        Examples
+        --------
+        >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'], last_date='2021-07')
+        >>> ef.minimize_risk(target_return=0.044, monthly_return=False)
+        {'SPY.US': 0.03817252986735185, 'AGG.US': 0.9618274701326482, 'GLD.US': 0.0, 'Mean return': 0.04400000000000004, 'CAGR': 0.04335075344214023, 'Risk': 0.037003608635098856}
         """
         if not monthly_return:
             target_return = Float.get_monthly_return_from_annual(target_return)
@@ -218,8 +397,6 @@ class EfficientFrontier(AssetList):
             # Annualize risk and return
             a_r = Float.annualize_return(target_return)
             a_risk = Float.annualize_risk(risk=risk, mean_return=target_return)
-            # # Risk adjusted return approximation
-            # r_gmean = Float.approx_return_risk_adjusted(mean_return=a_r, std=a_risk)
             # CAGR calculation
             portfolio_return_ts = Frame.get_portfolio_return_ts(weights.x, ror)
             cagr = Frame.get_cagr(portfolio_return_ts)
@@ -230,7 +407,6 @@ class EfficientFrontier(AssetList):
             point = {x: y for x, y in zip(asset_labels, weights.x)}
             point["Mean return"] = a_r
             point["CAGR"] = cagr
-            # point['CAGR (approx)'] = r_gmean
             point["Risk"] = a_risk
         else:
             raise RecursionError("No solutions were found")
@@ -239,7 +415,23 @@ class EfficientFrontier(AssetList):
     @property
     def mean_return_range(self) -> np.ndarray:
         """
-        Returns the range of mean monthly returns (from the min to max).
+        Calculate the range of mean monthly returns (from min to max).
+
+        Number of values in the range is defined by 'n_points'.
+
+        Returns
+        -------
+        numpy.ndarray
+            Monthly rate of return values from min to max.
+
+        Examples
+        --------
+        >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'], last_date='2021-07')
+        >>> ef.mean_return_range
+        array([0.0033745 , 0.00367816, 0.00398182, 0.00428547, 0.00458913,
+        0.00489279, 0.00519645, 0.00550011, 0.00580376, 0.00610742,
+        0.00641108, 0.00671474, 0.00701839, 0.00732205, 0.00762571,
+        0.00792937, 0.00823303, 0.00853668, 0.00884034, 0.009144  ])
         """
         if self.full_frontier:
             if self.bounds:
@@ -261,13 +453,66 @@ class EfficientFrontier(AssetList):
     @property
     def ef_points(self) -> pd.DataFrame:
         """
-        DataFrame of weights and risk/return values for the Efficient Frontier.
-        The columns of the DataFrame:
-        - weights
-        - mean return
-        - CAGR
-        - risk (std)
-        All the values are annualized.
+        Calculate points in the Efficient Frontier.
+
+        Each point has values of assets weights, annualized mean return, CAGR, annualized risk (standard deviation).
+
+        The points are obtained through the constrained optimization process (optimization with bounds).
+        Bounds are defined with 'bounds' property.
+
+        Returns
+        -------
+        DataFrame
+            Table of weights and risk/return values for the Efficient Frontier.
+            The columns:
+
+            - assets weights
+            - mean return
+            - CAGR
+            - risk (standard deviation)
+
+            All the values are annualized.
+
+        Examples
+        --------
+        >>> assets = ['SPY.US', 'AGG.US', 'GLD.US']
+        >>> last_date='2021-07'
+        >>> y = ok.EfficientFrontier(assets, last_date=last_date)
+        >>> y.ef_points
+                Risk  Mean return      CAGR        AGG.US        GLD.US        SPY.US
+        0   0.037707     0.041254  0.040579  1.000000e+00  9.278755e-09  2.220446e-16
+        1   0.036979     0.045042  0.044394  9.473684e-01  0.000000e+00  5.263158e-02
+        2   0.038027     0.048842  0.048157  8.947368e-01  0.000000e+00  1.052632e-01
+        3   0.040517     0.052655  0.051879  8.376442e-01  2.061543e-02  1.417404e-01
+        4   0.043944     0.056481  0.055569  7.801725e-01  4.298194e-02  1.768455e-01
+        5   0.048125     0.060320  0.059229  7.227015e-01  6.534570e-02  2.119528e-01
+        6   0.052902     0.064171  0.062856  6.652318e-01  8.770367e-02  2.470646e-01
+        7   0.058144     0.068035  0.066451  6.077632e-01  1.100558e-01  2.821809e-01
+        8   0.063753     0.071912  0.070014  5.502956e-01  1.324040e-01  3.173004e-01
+        9   0.069655     0.075802  0.073543  4.928283e-01  1.547504e-01  3.524213e-01
+        10  0.075796     0.079704  0.077039  4.353613e-01  1.770958e-01  3.875429e-01
+        11  0.082136     0.083620  0.080501  3.778987e-01  1.994207e-01  4.226806e-01
+        12  0.088645     0.087549  0.083928  3.204253e-01  2.217953e-01  4.577794e-01
+        13  0.095300     0.091491  0.087321  2.629559e-01  2.441514e-01  4.928926e-01
+        14  0.102084     0.095446  0.090678  2.054869e-01  2.665062e-01  5.280069e-01
+        15  0.108984     0.099414  0.093999  1.480175e-01  2.888623e-01  5.631202e-01
+        16  0.115991     0.103395  0.097284  9.054789e-02  3.112196e-01  5.982325e-01
+        17  0.123096     0.107389  0.100533  3.307805e-02  3.335779e-01  6.333441e-01
+        18  0.132674     0.111397  0.103452  0.000000e+00  2.432182e-01  7.567818e-01
+        19  0.161413     0.115418  0.103704  1.110223e-16  1.036379e-09  1.000000e+00
+
+        To plot the Efficient Frontier use the DataFrame with the points data. Additionaly 'Plot.plot_assets()'
+        can be used to show the assets in the chart.
+
+        >>> import matplotlib.pyplot as plt
+        >>> fig = plt.figure()
+        >>> # Plot the assets points
+        >>> ok.Plots(assets, last_date=last_date).plot_assets(kind='cagr')  # kind should be set to "cagr" as we take "CAGR" column from the ef_points.
+        >>> ax = plt.gca()
+        >>> # Plot the Efficient Frontier
+        >>> df = y.ef_points
+        >>> ax.plot(df['Risk'], df['CAGR'])  # we chose to plot CAGR which is geometric mean of return series
+        >>> plt.show()
         """
         target_rs = self.mean_return_range
         df = pd.DataFrame(dtype="float")
@@ -279,8 +524,58 @@ class EfficientFrontier(AssetList):
 
     def get_monte_carlo(self, n: int = 100, kind: str = "mean") -> pd.DataFrame:
         """
-        Generate N random risk / cagr point for portfolios.
-        Risk and cagr are calculated for a set of random weights.
+        Generate N random portfolio points with Monte Carlo simulation.
+
+        Each point is a combination of annualized values for Return (CAGR or mean return) and Risk (standard deviation).
+        Risk and Return are calculated for a set of random weights.
+
+        Returns
+        -------
+        DataFrame
+            Table of Return and Risk for random portfolios.
+
+        Parameters
+        ----------
+        n : int, default 100
+            Number of random portfolios to generate with Monte Carlo simulation.
+        kind : {'mean','cagr'}, default 'mean'
+            Use CAGR for return if kind='cagr', or annualized arithmetic mean if kind='mean'.
+
+        Examples
+        --------
+        >>> assets = ['SPY.US', 'AGG.US', 'GLD.US']
+        >>> last_date='2021-07'
+        >>> base_currency = 'EUR'
+        >>> y = ok.EfficientFrontier(assets, ccy=base_currency, last_date=last_date)
+        >>> y.get_monte_carlo(n=10)  # generate 10 random portfolios
+             Return      Risk
+        0  0.090393  0.101900
+        1  0.075611  0.087561
+        2  0.100580  0.151436
+        3  0.109584  0.108251
+        4  0.092985  0.092296
+        5  0.086165  0.108419
+        6  0.116168  0.141825
+        7  0.079040  0.090309
+        8  0.093917  0.092967
+        9  0.102236  0.115301
+
+        To plot Monte Carlo simulation result it's useful to combine in with the Efficien Frontier chart.
+        Additionaly assets points could be plotted with 'Plot.plot_assets()'.
+
+        >>> import matplotlib.pyplot as plt
+        >>> fig = plt.figure()
+        >>> # Plot the assets points (optional).
+        >>> # The same first and last dates, base currency and return type should be used.
+        >>> ok.Plots(assets, ccy=base_currency, last_date=last_date).plot_assets(kind='cagr')
+        >>> ax = plt.gca()
+        >>> # Plot random portfolios risk-return points.
+        >>> mc = y.get_monte_carlo(n=1000, kind='cagr')
+        >>> ax.scatter(mc.Risk, mc.CAGR, linewidth=0, color='green')
+        >>> # Plot the Efficient (optional)
+        >>> df = y.ef_points
+        >>> ax.plot(df['Risk'], df['CAGR'], color='black', linestyle='dashed', linewidth=3)
+        >>> plt.show()
         """
         weights_series = Float.get_random_weights(n, self.assets_ror.shape[1])
 

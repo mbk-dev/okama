@@ -256,12 +256,35 @@ class Portfolio(ListMaker):
     @property
     def ror(self) -> pd.Series:
         """
-        Calculate rate of return time series for portfolio.
+        Calculate monthly rate of return time series for portfolio.
 
         Returns
         -------
         Series
-            Rate of return time series for portfolio.
+            Rate of return monthly time series for portfolio.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(first_date='2020-01', last_date='2020-12')
+        >>> pf.ror
+        Date
+        2020-01   -0.0004
+        2020-02   -0.0792
+        2020-03   -0.1249
+        2020-04    0.1270
+        2020-05    0.0476
+        2020-06    0.0177
+        2020-07    0.0589
+        2020-08    0.0698
+        2020-09   -0.0374
+        2020-10   -0.0249
+        2020-11    0.1088
+        2020-12    0.0370
+        Freq: M, Name: portfolio_4669.PF, dtype: float64
+
+        >>> import matplotlib.pyplot as plt
+        >>> pf.ror.plot(kind='bar')
+        >>> plt.show()
         """
         if self.rebalancing_period == 'month':
             s = Frame.get_portfolio_return_ts(self.weights, self.assets_ror)
