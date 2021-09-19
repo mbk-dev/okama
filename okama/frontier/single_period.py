@@ -453,9 +453,9 @@ class EfficientFrontier(AssetList):
     @property
     def ef_points(self) -> pd.DataFrame:
         """
-        Calculate points in the Efficient Frontier.
+        Generate single period Efficient Frontier.
 
-        Each point has values of assets weights, annualized mean return, CAGR, annualized risk (standard deviation).
+        Each point on the Efficient Frontier is a portfolio with optimized risk for a given return.
 
         The points are obtained through the constrained optimization process (optimization with bounds).
         Bounds are defined with 'bounds' property.
@@ -467,9 +467,9 @@ class EfficientFrontier(AssetList):
             The columns:
 
             - assets weights
-            - mean return
-            - CAGR
-            - risk (standard deviation)
+            - CAGR (geometric mean)
+            - Mean return (arithmetic mean)
+            - Risk (standard deviation)
 
             All the values are annualized.
 
@@ -512,6 +512,11 @@ class EfficientFrontier(AssetList):
         >>> # Plot the Efficient Frontier
         >>> df = y.ef_points
         >>> ax.plot(df['Risk'], df['CAGR'])  # we chose to plot CAGR which is geometric mean of return series
+        >>> # Set the axis labels and the title
+        >>> ax.set_title('Single period Efficient Frontier')
+        >>> ax.set_xlabel('Risk (Standard Deviation)')
+        >>> ax.set_ylabel('Return (CAGR)')
+        >>> ax.legend()
         >>> plt.show()
         """
         target_rs = self.mean_return_range
@@ -524,15 +529,14 @@ class EfficientFrontier(AssetList):
 
     def get_monte_carlo(self, n: int = 100, kind: str = "mean") -> pd.DataFrame:
         """
-        Generate N random portfolio points with Monte Carlo simulation.
+        Generate N random portfolios with Monte Carlo simulation.
 
-        Each point is a combination of annualized values for Return (CAGR or mean return) and Risk (standard deviation).
-        Risk and Return are calculated for a set of random weights.
+        Risk (annualized standard deviation) and Return (CAGR) are calculated for a set of random weights.
 
         Returns
         -------
         DataFrame
-            Table of Return and Risk for random portfolios.
+            Table with Return and Risk values for random portfolios.
 
         Parameters
         ----------
@@ -575,6 +579,11 @@ class EfficientFrontier(AssetList):
         >>> # Plot the Efficient (optional)
         >>> df = y.ef_points
         >>> ax.plot(df['Risk'], df['CAGR'], color='black', linestyle='dashed', linewidth=3)
+        >>> # Set the title and axis labels
+        >>> ax.set_title('Single period Efficient Frontier & Monte Carlo simulation')
+        >>> ax.set_xlabel('Risk (Standard Deviation)')
+        >>> ax.set_ylabel('CAGR')
+        >>> ax.legend()
         >>> plt.show()
         """
         weights_series = Float.get_random_weights(n, self.assets_ror.shape[1])

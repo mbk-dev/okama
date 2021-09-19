@@ -51,7 +51,7 @@ class EfficientFrontierReb(AssetList):
         Number of points in the Efficient Frontier.
 
     verbose : bool, default False
-        Defines whether to show technical information during optimization process.
+        If verbose=True calculates elapsed time for each point and the total elapsed time.
 
     ticker_names : bool, default True
         Defines whether to include full names of assets in the optimization report or only tickers.
@@ -597,20 +597,73 @@ class EfficientFrontierReb(AssetList):
     @property
     def ef_points(self):
         """
-        Return a DataFrame of points for Efficient Frontier when the Objective Function is the risk (std)
-        for rebalanced portfolio.
+        Generate multi-period Efficient Frontier.
 
-        Each point has:
-        - Weights (float)
-        - CAGR (float)
-        - Risk (float)
-        ... and the weights for each asset.
+        Each point on the Efficient Frontier is a rebalanced portfolio with optimized annual risk for a given CAGR.
+        In case of non-convexity along the risk axis, the second part of the chart is generated,
+        where the maximum risk value is found for each point.
+
+        Returns
+        -------
+        DataFrame
+            Table of weights and risk/return values for the Efficient Frontier.
+            The columns:
+
+            - assets weights
+            - CAGR
+            - Risk (standard deviation)
+
+            All the values are annualized.
+
+        Examples
+        --------
+        >>> ls = ['SPY.US', 'GLD.US']
+        >>> curr = 'USD'
+        >>> y = ok.EfficientFrontierReb(assets=ls,
+                                        first_date='2004-12',
+                                        last_date='2020-10',
+                                        ccy=curr,
+                                        rebalancing_period='year',
+                                        ticker_names=True,  # use tickers in DataFrame column names (can be set to False to show full assets names instead tickers)
+                                        n_points=20,  # number of points in the Efficient Frontier
+                                        verbose=False)  # verbose mode is False to skip the progress while the EF points are calcualted
+        >>> y.names
+        {'SPY.US': 'SPDR S&P 500 ETF Trust', 'GLD.US': 'SPDR Gold Shares'}
+        >>> df_reb_year = y.ef_points
+        >>> df_reb_year.head(5)
+               Risk      CAGR    GLD.US    SPY.US
+        0  0.159400  0.087763  0.000000  1.000000
+        1  0.157205  0.088171  0.014261  0.985739
+        2  0.155007  0.088580  0.028941  0.971059
+        3  0.152810  0.088988  0.044079  0.955921
+        4  0.150615  0.089397  0.059713  0.940287
+
+        To compare the Efficient Frontiers of annually rebalanced portfolios with not rebalanced portfolios it's possible to draw 2 charts:
+        rebalancing_period='year' and rebalancing_period='none'.
+
+        >>> import matplotlib.pyplot as plt
+        >>> y.rebalancing_period = 'none'
+        >>> df_not_reb = y.ef_points
+        >>> fig = plt.figure(figsize=(12,6))
+        >>> # Plot the assets points
+        >>> ok.Plots(ls, ccy=curr, first_date='2004-12', last_date='2020-10').plot_assets(kind='cagr')  # should be the same history period and the currency
+        >>> ax = plt.gca()
+        >>> # Plot the Efficient Frontier for annually rebalanced portfolios
+        >>> ax.plot(df_reb_year.Risk, df_reb_year.CAGR, label='Annually rebalanced')
+        >>> # Plot the Efficient Frontier for not rebalanced portfolios
+        >>> ax.plot(df_not_reb.Risk, df_not_reb.CAGR, label='Not rebalanced')
+        >>> # Set axis labels and the title
+        >>> ax.set_title('Multi-period Efficient Frontier')
+        >>> ax.set_xlabel('Risk (Standard Deviation)')
+        >>> ax.set_ylabel('Return (CAGR)')
+        >>> ax.legend()
+        >>> plt.show()
         """
         if self._ef_points is None:
-            self.get_ef_points()
+            self._get_ef_points()
         return self._ef_points
 
-    def get_ef_points(self):
+    def _get_ef_points(self):
         """
         Get all the points for the Efficient Frontier running optimizer.
 
@@ -645,8 +698,60 @@ class EfficientFrontierReb(AssetList):
 
     def get_monte_carlo(self, n: int = 100) -> pd.DataFrame:
         """
-        Generate N random risk / cagr point for rebalanced portfolios.
-        Risk and cagr are calculated for a set of random weights.
+        Generate N random rebalanced portfolios with Monte Carlo simulation.
+
+        Risk (annualized standard deviation) and Return (CAGR) are calculated for a set of random weights.
+
+        Returns
+        -------
+        DataFrame
+            Table with Return (CAGR) and Risk values for random portfolios (random asset weights).
+
+        Parameters
+        ----------
+        n : int, default 100
+            Number of random portfolios to generate with Monte Carlo simulation.
+
+        Examples
+        --------
+        >>> ls_m = ['SPY.US', 'GLD.US', 'PGJ.US', 'RGBITR.INDX', 'MCFTR.INDX']
+        >>> curr_rub = 'RUB'
+        >>> x = ok.EfficientFrontierReb(assets=ls_m,
+                                        first_date='2005-01',
+                                        last_date='2020-11',
+                                        ccy=curr_rub,
+                                        rebalancing_period='year',  # set rebalancing period to one year
+                                        n_points=20,
+                                        verbose=False
+                                       )
+        >>> monte_carlo = x.get_monte_carlo(n=1000)  # it can take some time ...
+        >>> monte_carlo.head(5)  # table of random portfolios properties
+               CAGR      Risk
+        0  0.182937  0.178518
+        1  0.184915  0.172965
+        2  0.154892  0.141681
+        3  0.185500  0.168739
+        4  0.176748  0.192657
+
+        Monte Carlo simulation results can be plotted togeather with the optimized portfolios on the Efficient Frontier.
+
+        >>> import matplotlib.pyplot as plt
+        >>> df_reb_year = x.ef_points  # optimize portfolios for EF. Calculations will take some time ...
+        >>> fig = plt.figure()
+        >>> # Plot the assets points (optional).
+        >>> # The same first and last dates, base currency and return type should be used.
+        >>> ok.Plots(ls_m, ccy=curr_rub, first_date='2005-01', last_date='2020-11').plot_assets(kind='cagr')
+        >>> ax = plt.gca()
+        >>> # Plot random portfolios (Monte Carlo simulation)
+        >>> ax.scatter(monte_carlo.Risk, monte_carlo.CAGR)
+        >>> # Plot the Efficient Frontier
+        >>> ax.plot(df_reb_year.Risk, df_reb_year.CAGR, label='Annually rebalanced')
+        >>> # Set the axis labels and Title
+        >>> ax.set_title('Multi-period Efficient Frontier & Monte Carlo simulation')
+        >>> ax.set_xlabel('Risk (Standard Deviation)')
+        >>> ax.set_ylabel('CAGR')
+        >>> ax.legend()
+        >>> plt.show()
         """
         weights_df = Float.get_random_weights(n, self.assets_ror.shape[1])
 
