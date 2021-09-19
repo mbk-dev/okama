@@ -703,7 +703,8 @@ class EfficientFrontierReb(AssetList):
         Returns
         -------
         DataFrame
-            Table with Return (CAGR) and Risk values for random portfolios (random asset weights).
+            Table with Return (CAGR) and Risk values for random portfolios
+            (portfolios with random asset weights).
 
         Parameters
         ----------
