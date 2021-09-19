@@ -620,15 +620,13 @@ class EfficientFrontierReb(AssetList):
         >>> ls = ['SPY.US', 'GLD.US']
         >>> curr = 'USD'
         >>> y = ok.EfficientFrontierReb(assets=ls,
-                                        first_date='2004-12',
-                                        last_date='2020-10',
-                                        ccy=curr,
-                                        rebalancing_period='year',
-                                        ticker_names=True,  # use tickers in DataFrame column names (can be set to False to show full assets names instead tickers)
-                                        n_points=20,  # number of points in the Efficient Frontier
-                                        verbose=False)  # verbose mode is False to skip the progress while the EF points are calcualted
-        >>> y.names
-        {'SPY.US': 'SPDR S&P 500 ETF Trust', 'GLD.US': 'SPDR Gold Shares'}
+        >>>                             first_date='2004-12',
+        >>>                             last_date='2020-10',
+        >>>                             ccy=curr,
+        >>>                             rebalancing_period='year',
+        >>>                             ticker_names=True,  # use tickers in DataFrame column names (can be set to False to show full assets names instead tickers)
+        >>>                             n_points=20,  # number of points in the Efficient Frontier
+        >>>                             verbose=False)  # verbose mode is False to skip the progress while the EF points are calcualted
         >>> df_reb_year = y.ef_points
         >>> df_reb_year.head(5)
                Risk      CAGR    GLD.US    SPY.US
@@ -644,7 +642,7 @@ class EfficientFrontierReb(AssetList):
         >>> import matplotlib.pyplot as plt
         >>> y.rebalancing_period = 'none'
         >>> df_not_reb = y.ef_points
-        >>> fig = plt.figure(figsize=(12,6))
+        >>> fig = plt.figure()
         >>> # Plot the assets points
         >>> ok.Plots(ls, ccy=curr, first_date='2004-12', last_date='2020-10').plot_assets(kind='cagr')  # should be the same history period and the currency
         >>> ax = plt.gca()
@@ -653,7 +651,7 @@ class EfficientFrontierReb(AssetList):
         >>> # Plot the Efficient Frontier for not rebalanced portfolios
         >>> ax.plot(df_not_reb.Risk, df_not_reb.CAGR, label='Not rebalanced')
         >>> # Set axis labels and the title
-        >>> ax.set_title('Multi-period Efficient Frontier')
+        >>> ax.set_title('Multi-period Efficient Frontier: 2 assets')
         >>> ax.set_xlabel('Risk (Standard Deviation)')
         >>> ax.set_ylabel('Return (CAGR)')
         >>> ax.legend()
@@ -717,15 +715,14 @@ class EfficientFrontierReb(AssetList):
         >>> ls_m = ['SPY.US', 'GLD.US', 'PGJ.US', 'RGBITR.INDX', 'MCFTR.INDX']
         >>> curr_rub = 'RUB'
         >>> x = ok.EfficientFrontierReb(assets=ls_m,
-                                        first_date='2005-01',
-                                        last_date='2020-11',
-                                        ccy=curr_rub,
-                                        rebalancing_period='year',  # set rebalancing period to one year
-                                        n_points=20,
-                                        verbose=False
-                                       )
+        >>>                             first_date='2005-01',
+        >>>                             last_date='2020-11',
+        >>>                             ccy=curr_rub,
+        >>>                             rebalancing_period='year',  # set rebalancing period to one year
+        >>>                             n_points=20,
+        >>>                             verbose=False)
         >>> monte_carlo = x.get_monte_carlo(n=1000)  # it can take some time ...
-        >>> monte_carlo.head(5)  # table of random portfolios properties
+        >>> monte_carlo.head(5)
                CAGR      Risk
         0  0.182937  0.178518
         1  0.184915  0.172965
