@@ -155,6 +155,8 @@ class Portfolio(ListMaker):
         """
         Calculate assets weights time series.
 
+        The weights of assets in Portfolio are not constant if rebalancing_period is different from 'month'.
+
         Returns
         -------
         DataFrame
@@ -162,20 +164,17 @@ class Portfolio(ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.5, 0.5], rebalancing_period='none')
-        >>> pf.weights
-        [0.5, 0.5]
-        >>> pf.weights_ts
-                   SPY.US    AGG.US
-        Date
-        2003-10  0.515361  0.484639
-        2003-11  0.517245  0.482755
-        2003-12  0.527056  0.472944
-                   ...       ...
-        2021-02  0.731292  0.268708
-        2021-03  0.742147  0.257853
-        2021-04  0.750528  0.249472
-        [211 rows x 2 columns]
+        >>> import matplotlib.pyplot as plt
+        >>> reb_period='none'  # The Portfolio is not rebalanced.
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.5, 0.5], rebalancing_period=reb_period)
+        >>> pf.weights_ts.plot()
+        >>> plt.show()
+
+        The weights of assets time series will differ significantly if the portfolio rebalancing_period is 1 year.
+
+        >>> pf.rebalancing_period = 'year'  # set a new rebalancing period
+        >>> pf.weights_ts.plot()
+        >>> plt.show()
         """
         if self.rebalancing_period != 'month':
             return Rebalance.assets_weights_ts(ror=self.assets_ror, period=self.rebalancing_period, weights=self.weights)
@@ -223,6 +222,20 @@ class Portfolio(ListMaker):
         -------
         str
             Text symbol of the portfolio.
+
+        Examples
+        --------
+        >>> p = ok.Portflio()
+        >>> p.symbol  # a randomly generated symbol will be shown
+        'portfolio_5312.PF'
+
+        >>> p.symbol = 'spy_portfolo.PF'  # The symbol can be customized after initialization
+
+        New Portfolio can have a custom symbol.
+
+        >>> p = ok.Portfolio(symbol='aggressive.PF')
+        >>> p.symbol
+        'aggressive.PF'
         """
         return self._symbol
 
@@ -250,6 +263,10 @@ class Portfolio(ListMaker):
         -------
         str
             Text name of the portfolio.
+
+        >>> p = ok.Portfolio()
+        >>> p.name
+        'portfolio_5312.PF'
         """
         return self.symbol
 
@@ -650,6 +667,13 @@ class Portfolio(ListMaker):
         -------
         DataFrame
             Assets monthly close time series adjusted to the base currency.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD')
+        >>> pf.assets_close_monthly.plot()
+        >>> plt.show()
         """
         assets_close_monthly = pd.DataFrame(dtype=float)
         for i, x in enumerate(self.asset_obj_dict.values()):
@@ -677,6 +701,18 @@ class Portfolio(ListMaker):
         -------
         pd.Series
             Monthly portfolio size time series.
+
+        Notes
+        -----
+        'close_mothly' shows the same output as the 'wealth_index'.
+        This property is required as Portfolio must have the same attributes as an Asset.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD')
+        >>> pf.close_monthly.plot()
+        >>> plt.show()
         """
         return self.wealth_index.iloc[:, 0]
 
@@ -685,7 +721,7 @@ class Portfolio(ListMaker):
         """
         Calculate the number of securities monthly time series for the portfolio assets.
 
-        Number of securities is changing over time as the dividends are reinvested.
+        Number of securities in the Portfolio is changing over time as the dividends are reinvested.
         Portfolio rebalancing also affects the number of securities.
 
         Initial number of securities depends on the portfolio size in base currency (1000 units).
@@ -694,6 +730,25 @@ class Portfolio(ListMaker):
         -------
         DataFrame
             Number of securities monthly time series for the portfolio assets.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
+        >>> pf.number_of_securities
+                   SPY.US     BND.US
+        Date
+        2007-05  3.261153   6.687174
+        2007-06  3.337216   6.758447
+        2007-07  3.407015   6.643519
+        2007-08  3.410268   6.663862
+        2007-09  3.372630   6.798730
+                   ...        ...
+        2021-03  3.273521  15.313911
+        2021-04  3.204779  15.685601
+        2021-05  3.196768  15.749127
+        2021-06  3.186124  15.879056
+        2021-07  3.166335  16.003569
+        [171 rows x 2 columns]
         """
         return self.weights_ts.mul(self.wealth_index.iloc[:, 0], axis=0).div(self.assets_close_monthly, axis=0)
 
@@ -709,6 +764,23 @@ class Portfolio(ListMaker):
         -------
         Series
             Portfolio dividends monthly time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
+        >>> pf.dividends
+        2007-05    0.849271
+        2007-06    3.928855
+        2007-07    1.551262
+        2007-08    2.023148
+        2007-09    4.423416
+                     ...
+        2021-03    6.155337
+        2021-04    3.019478
+        2021-05    2.056836
+        2021-06    6.519521
+        2021-07    2.114071
+        Freq: M, Name: portfolio_2951.PF, Length: 171, dtype: float64
         """
         s = (self._get_assets_dividends() * self.number_of_securities).sum(axis=1)
         s.rename(self.symbol, inplace=True)
@@ -742,6 +814,10 @@ class Portfolio(ListMaker):
         2020-12    0.074743
         2021-01    0.073643
         Freq: M, Name: portfolio_8836.PF, Length: 133, dtype: float64
+
+        >>> import matplotlib.pyplot as plt
+        >>> pf.dividend_yield.plot()
+        >>> plt.show()
         """
         df = self.assets_dividend_yield @ self.weights_ts.T
         div_yield_series = pd.Series(np.diag(df), index=df.index)
@@ -991,7 +1067,7 @@ class Portfolio(ListMaker):
         Risk metrics (full available period):
 
         - risk (standard deviation)
-        - CVAR
+        - CVAR (timeframe is 1 year)
         - max drawdowns (and dates)
 
         Parameters
@@ -1013,7 +1089,21 @@ class Portfolio(ListMaker):
             get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
             drawdowns : Calculate drawdowns.
 
-        TODO: insert example
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
+        >>> pf.describe(years=[2, 5, 7])  # 'years' customizes the timeframe for the CAGR
+                    property              period portfolio_2951.PF  inflation
+        0    compound return                 YTD          0.084098   0.048154
+        1               CAGR             2 years          0.141465   0.031566
+        2               CAGR             5 years          0.102494   0.025582
+        3               CAGR             7 years          0.091694   0.019656
+        4               CAGR  14 years, 3 months          0.074305   0.019724
+        5     Dividend yield                 LTM          0.016504        NaN
+        6               Risk  14 years, 3 months          0.086103        NaN
+        7               CVAR  14 years, 3 months          0.214207        NaN
+        8       Max drawdown  14 years, 3 months         -0.266915        NaN
+        9  Max drawdown date  14 years, 3 months           2009-02        NaN
         """
         description = pd.DataFrame()
         dt0 = self.last_date
