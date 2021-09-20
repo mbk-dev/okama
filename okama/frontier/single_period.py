@@ -39,7 +39,7 @@ class EfficientFrontier(AssetList):
     ccy : str, default 'USD'
         Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
 
-    bounds: tuple
+    bounds: tuple of ((float, float),...)
         Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
         If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
         bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
@@ -117,7 +117,7 @@ class EfficientFrontier(AssetList):
 
         Returns
         -------
-        tuple
+        tuple of ((float, float),...)
             Weights bounds used for portfolio optimization.
 
         Examples

@@ -640,7 +640,7 @@ class AssetList(ListMaker):
         Risk metrics (full period):
 
         - risk (standard deviation)
-        - CVAR
+        - CVAR (timeframe is 1 year)
         - max drawdowns (and dates of the drawdowns)
 
         Statistics also shows for each asset:

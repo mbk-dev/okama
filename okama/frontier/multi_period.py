@@ -620,13 +620,13 @@ class EfficientFrontierReb(AssetList):
         >>> ls = ['SPY.US', 'GLD.US']
         >>> curr = 'USD'
         >>> y = ok.EfficientFrontierReb(assets=ls,
-        >>>                             first_date='2004-12',
-        >>>                             last_date='2020-10',
-        >>>                             ccy=curr,
-        >>>                             rebalancing_period='year',
-        >>>                             ticker_names=True,  # use tickers in DataFrame column names (can be set to False to show full assets names instead tickers)
-        >>>                             n_points=20,  # number of points in the Efficient Frontier
-        >>>                             verbose=False)  # verbose mode is False to skip the progress while the EF points are calcualted
+        ...                             first_date='2004-12',
+        ...                             last_date='2020-10',
+        ...                             ccy=curr,
+        ...                             rebalancing_period='year',
+        ...                             ticker_names=True,  # use tickers in DataFrame column names (can be set to False to show full assets names instead tickers)
+        ...                             n_points=20,  # number of points in the Efficient Frontier
+        ...                             verbose=False)  # verbose mode is False to skip the progress while the EF points are calcualted
         >>> df_reb_year = y.ef_points
         >>> df_reb_year.head(5)
                Risk      CAGR    GLD.US    SPY.US
@@ -716,12 +716,12 @@ class EfficientFrontierReb(AssetList):
         >>> ls_m = ['SPY.US', 'GLD.US', 'PGJ.US', 'RGBITR.INDX', 'MCFTR.INDX']
         >>> curr_rub = 'RUB'
         >>> x = ok.EfficientFrontierReb(assets=ls_m,
-        >>>                             first_date='2005-01',
-        >>>                             last_date='2020-11',
-        >>>                             ccy=curr_rub,
-        >>>                             rebalancing_period='year',  # set rebalancing period to one year
-        >>>                             n_points=20,
-        >>>                             verbose=False)
+        ...                             first_date='2005-01',
+        ...                             last_date='2020-11',
+        ...                             ccy=curr_rub,
+        ...                             rebalancing_period='year',  # set rebalancing period to one year
+        ...                             n_points=20,
+        ...                             verbose=False)
         >>> monte_carlo = x.get_monte_carlo(n=1000)  # it can take some time ...
         >>> monte_carlo.head(5)
                CAGR      Risk

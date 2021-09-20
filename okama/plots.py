@@ -11,7 +11,30 @@ from .settings import default_ticker
 
 class Plots(AssetList):
     """
-    Several tools to plot Efficient Frontier, Assets and Transition map.
+    Plotting tools collection to use with financial charts (Efficient Frontier, Assets and Transition map etc.)
+
+    Parameters
+    ----------
+    assets : list, default None
+        List of assets. Could include tickers or asset like objects (Asset, Portfolio).
+        If None a single asset list with a default ticker is used.
+
+    first_date : str, default None
+        First date of monthly return time series.
+        If None the first date is calculated automatically as the oldest available date for the listed assets.
+
+    last_date : str, default None
+        Last date of monthly return time series.
+        If None the last date is calculated automatically as the newest available date for the listed assets.
+
+    ccy : str, default 'USD'
+        Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
+
+    inflation : bool, default True
+        Defines whether to take inflation data into account in the calculations.
+        Including inflation could limit available data (last_date, first_date)
+        as the inflation data is usually published with a one-month delay.
+        With inflation = False some properties like real return are not available.
     """
 
     def __init__(
@@ -44,17 +67,48 @@ class Plots(AssetList):
         pct_values: bool = False,
     ) -> plt.axes:
         """
-        Plots assets scatter (annual risks, annual returns) with the tickers annotations.
-        kind:
-        mean - mean return
-        cagr - CAGR from monthly returns time series
-        tickers:
-        - 'tickers' - shows tickers values (default)
-        - 'names' - shows assets names from database
-        - list of string labels
-        pct_values:
-        False - for algebraic notation
-        True - for percent notation
+        Plot the assets points on the risk-return chart with annotations.
+
+        Annualized values for risk and return are used.
+        Risk is a standard deviation of monthly rate of return time series.
+        Return can be an annualized mean return (expected return) or CAGR (Compound annual growth rate).
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Parameters
+        ----------
+        kind : {'mean', 'cagr'}, default 'mean'
+            Type of Return: annualized mean return (expected return) or CAGR (Compound annual growth rate).
+
+        tickers : {'tickers', 'names'} or list of str, default 'tickers'
+            Annotation type for assets.
+            'tickers' - assets symbols are shown in form of 'SPY.US'
+            'names' - assets names are used like - 'SPDR S&P 500 ETF Trust'
+            To show custom annotations for each asset pass the list of names.
+
+        pct_values : bool, default False
+            Risk and return values in the axes:
+            Algebraic annotation (False)
+            Percents (True)
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.Plots(['SPY.US', 'AGG.US'], ccy='USD', inflation=False)
+        >>> x.plot_assets()
+        >>> plt.show()
+
+        Plotting with default parameters values shows expected return, ticker annotations and algebraic values
+        for risk and return.
+        To use CAGR instead of expected return use kind='cagr'.
+
+        >>> x.plot_assets(kind='cagr',
+        ...               tickers=['US Stocks', 'US Bonds'],  # use custom annotations for the assets
+        ...               pct_values=True  # risk and return values are in percents
+        ...               )
+        >>> plt.show()
         """
         if kind == "mean":
             risks = self.risk_annual
@@ -63,7 +117,7 @@ class Plots(AssetList):
             risks = self.risk_annual
             returns = self.get_cagr().loc[self.symbols]
         else:
-            raise ValueError('kind should be "mean", "cagr" or "cagr_app".')
+            raise ValueError('kind should be "mean" or "cagr".')
         # set lists for single point scatter
         if len(self.symbols) < 2:
             risks = [risks]
@@ -101,8 +155,54 @@ class Plots(AssetList):
         self, bounds=None, full_frontier=False, cagr=True
     ) -> plt.axes:
         """
-        Plots EF weights transition map given a EF points DataFrame.
-        cagr - sets X axe to CAGR (if true) or to risk (if false).
+        Plot Transition Map for optimized portfolios on the single period Efficient Frontier.
+
+        Transition Map shows the relation between asset weights and optimized portfolios properties:
+
+        - CAGR (Compound annual growth rate)
+        - Risk (annualized standard deviation of return)
+
+        Wights are displayed on the y-axis.
+        CAGR or Risk - on the x-axis.
+
+        Constrained optimization with weights bounds is available.
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Parameters
+        ----------
+        bounds: tuple of ((float, float),...)
+            Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
+            If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
+            bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
+            from 0 to 50%. The second asset has no limitations.
+
+        full_frontier : bool, default False
+            Defines whether to show the Transition Map for portfolios on the full Efficient Frontier or
+            only on its upper part.
+            If 'False' only portfolios with the return above Global Minimum Volatility (GMV) point are shown.
+
+        cagr : bool, default True
+            Show the relation between weights and CAGR (if True) or between weights and Risk (if False).
+            of - sets X axe to CAGR (if true) or to risk (if false).
+            CAGR or Risk are displayed on the x-axis.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.Plots(['SPY.US', 'AGG.US', 'GLD.US'], ccy='USD', inflation=False)
+        >>> x.plot_transition_map()
+        >>> plt.show()
+
+        Transition Map with default setting show the relation between Return (CAGR) and assets weights for optimized portfolios.
+        The same relation for Risk can be shown setting cagr=False.
+
+        >>> x.plot_transition_map(cagr=False,
+        ...                       full_frontier=True,  # to see the relation for the full Efficient Frontier
+        ...                       )
+        >>> plt.show()
         """
         ef = EfficientFrontier(
             assets=self.symbols,
@@ -129,7 +229,7 @@ class Plots(AssetList):
                 )
         self.ax.set_xlim(ef[x_axe].min(), ef[x_axe].max())
         if cagr:
-            self.ax.set_xlabel("CAGR (compound annual growth rate)")
+            self.ax.set_xlabel("CAGR (Compound Annual Growth Rate)")
         else:
             self.ax.set_xlabel("Risk (volatility)")
         self.ax.set_ylabel("Weights of assets")
@@ -139,13 +239,56 @@ class Plots(AssetList):
 
     def plot_pair_ef(self, tickers="tickers", bounds=None) -> plt.axes:
         """
-        Plots Efficient Frontier of every pair of assets in a set.
-        tickers:
-        - 'tickers' - shows tickers values (default)
-        - 'names' - shows assets names from database
-        - list of string labels
+        Plot Efficient Frontier of every pair of assets.
 
-        Mean return is used for optimized portfolios.
+        Efficient Frontier is a set of portfolios which satisfy the condition that no other portfolio exists
+        with a higher expected return but with the same risk (standard deviation of return).
+
+        Arithmetic mean (expected return) is used for optimized portfolios.
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Parameters
+        ----------
+        tickers : {'tickers', 'names'} or list of str, default 'tickers'
+            Annotation type for assets.
+            'tickers' - assets symbols are shown in form of 'SPY.US'
+            'names' - assets names are used like - 'SPDR S&P 500 ETF Trust'
+            To show custom annotations for each asset pass the list of names.
+
+        bounds: tuple of ((float, float),...)
+            Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
+            If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
+            bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
+            from 0 to 50%. The second asset has no limitations.
+
+        Notes
+        -----
+        It should be at least 3 assets.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
+        >>> curr = 'USD'
+        >>> last_date = '07-2021'
+        >>> ok.Plots(ls4, ccy=curr, last_date=last_date).plot_pair_ef()
+        >>> plt.show()
+
+        It can be useful to plot the full Efficent Frontier (EF) with optimized 4 assets portfolios
+        together with the EFs for each pair of assets.
+
+        >>> ef4 = ok.EfficientFrontier(assets=ls4, ccy=curr, n_points=100)
+        >>> df4 = ef4.ef_points
+        >>> fig = plt.figure()
+        >>> # Plot Efficient Frontier of every pair of assets. Optimized portfolios will have 2 assets.
+        >>> ok.Plots(ls4, ccy=curr, last_date=last_date).plot_pair_ef()  # mean return is used for optimized portfolios.
+        >>> ax = plt.gca()
+        >>> # Plot the full Efficient Frontier for 4 asset portfolios.
+        >>> ax.plot(df4['Risk'], df4['Mean return'], color = 'black', linestyle='--')
+        >>> plt.show()
         """
         if len(self.symbols) < 3:
             raise ValueError("The number of symbols cannot be less than 3")
