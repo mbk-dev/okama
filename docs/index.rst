@@ -12,11 +12,11 @@
             <a href="https://pypi.org/project/okama/">
                 <img src="https://img.shields.io/badge/pypi-v1.0.1-brightgreen.svg"
                     alt="pypi"></a> &nbsp;
-            <a href='https://coveralls.io/github/mbk-dev/okama?branch=master'>
-                <img src='https://coveralls.io/repos/github/mbk-dev/okama/badge.svg?branch=master'
-                alt='Coverage Status' /></a>
             <a href="https://opensource.org/licenses/MIT">
                 <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg"
+                    alt="MIT license"></a> &nbsp;
+            <a href="https://colab.research.google.com/github/mbk-dev/okama/blob/master/examples/01%20howto.ipynb">
+                <img src="https://colab.research.google.com/assets/colab-badge.svg"
                     alt="MIT license"></a> &nbsp;
         </p>
     </embed>
