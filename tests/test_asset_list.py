@@ -139,8 +139,8 @@ class TestAssetList:
         )
 
     cagr_testdata2 = [
-        (1, -0.0868, 0.2592),
-        (None, -0.1285, 0.3084),
+        (1, -0.0688, 0.2820),
+        (None, -0.1169, 0.3228),
     ]
 
     @mark.parametrize("input_data,expected1,expected2", cagr_testdata2, ids=["1 year", "full period"],)
@@ -202,9 +202,9 @@ class TestAssetList:
         ] == approx(expected3, rel=1e-2)
 
     cumulative_testdata2 = [
-        ("YTD", -0.0614, -0.0674),
-        (1, -0.1383, 0.1745),
-        (None, -0.1912, 0.2406),
+        ("YTD", 0.01424, 0.0077),
+        (1, -0.06885, 0.2820),
+        (None, -0.1260, 0.3541),
     ]
 
     @mark.parametrize(
@@ -238,9 +238,9 @@ class TestAssetList:
         assert self.asset_list.mean_return["RUB.INFL"] == approx(0.0319, rel=1e-2)
 
     def test_real_return(self):
-        assert self.asset_list.real_mean_return["RUB.FX"] == approx(-0.15402, rel=1e-2)
+        assert self.asset_list.real_mean_return["RUB.FX"] == approx(-0.11366, rel=1e-2)
         assert self.asset_list.real_mean_return["MCFTR.INDX"] == approx(
-            0.2671, rel=1e-2
+            0.3276, rel=1e-2
         )
 
     def test_annual_return_ts(self):

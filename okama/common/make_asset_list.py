@@ -60,24 +60,24 @@ class ListMaker(ABC):
             self.assets_last_dates,
             self.assets_ror,
         ) = self._make_list(ls=self._list_of_asset_like_objects).values()
-        if inflation:
-            self.inflation: str = f"{ccy}.INFL"
-            self._inflation_instance: Inflation = Inflation(
-                self.inflation, self.first_date, self.last_date
-            )
-            self.inflation_ts: pd.Series = self._inflation_instance.values_ts
-            self.inflation_first_date: pd.Timestamp = self._inflation_instance.first_date
-            self.inflation_last_date: pd.Timestamp = self._inflation_instance.last_date
-            self.first_date = max(self.first_date, self.inflation_first_date)
-            self.last_date: pd.Timestamp = min(self.last_date, self.inflation_last_date)
-            # Add inflation to the date range dict
-            self.assets_first_dates.update({self.inflation: Inflation(self.inflation).first_date})
-            self.assets_last_dates.update({self.inflation: Inflation(self.inflation).last_date})
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
         self.assets_ror = self.assets_ror[self.first_date:]
         if last_date:
             self.last_date = min(self.last_date, pd.to_datetime(last_date))
+        if inflation:
+            self.inflation: str = f"{ccy}.INFL"
+            self._inflation_instance: Inflation = Inflation(
+                self.inflation, self.first_date, self.last_date
+            )
+            self.inflation_first_date: pd.Timestamp = self._inflation_instance.first_date
+            self.inflation_last_date: pd.Timestamp = self._inflation_instance.last_date
+            self.first_date = max(self.first_date, self.inflation_first_date)
+            self.last_date = min(self.last_date, self.inflation_last_date)
+            self.inflation_ts: pd.Series = self._inflation_instance.values_ts.loc[self.first_date: self.last_date]
+            # Add inflation to the date range dict
+            self.assets_first_dates.update({self.inflation: Inflation(self.inflation).first_date})
+            self.assets_last_dates.update({self.inflation: Inflation(self.inflation).last_date})
         self.assets_ror: pd.DataFrame = self.assets_ror[
             self.first_date : self.last_date
         ]

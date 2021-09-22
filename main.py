@@ -1,7 +1,4 @@
 import okama as ok
 
-ls_m = ['SPY.US', 'GLD.US']
-curr_rub = 'USD'
-x = ok.EfficientFrontierReb(assets=ls_m)
-monte_carlo = x.get_monte_carlo(n=100)  # it can take some time ...
-print(monte_carlo)
+asset_list = ok.AssetList(assets=['RUB.FX', 'MCFTR.INDX'], ccy='RUB', first_date='2019-01', last_date='2020-01', inflation=True)
+print(asset_list.get_cumulative_return(period='ytd', real=True))
