@@ -1,6 +1,7 @@
 [![Documentation Status](https://img.shields.io/readthedocs/okama.svg?style=popout)](http://okama.readthedocs.io/)
 [![Python](https://img.shields.io/badge/python-v3-brightgreen.svg)](https://www.python.org/)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/okama.svg)](https://pypi.org/project/okama/)
+[![Coverage](https://coveralls.io/repos/github/mbk-dev/okama/badge.svg?branch=master)](https://coveralls.io/github/mbk-dev/okama?branch=master)
 [![License](https://img.shields.io/pypi/l/okama.svg)](https://opensource.org/licenses/MIT)
 [![Open In Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mbk-dev/okama/blob/master/examples/01%20howto.ipynb)
 
@@ -154,7 +155,6 @@ The official documentation is hosted on readthedocs.org: [https://okama.readthed
 
 The plan for _okama_ is to add more functions that will be useful to investors and asset managers.
 
-- Make documentation for the package. Finish docstrings for modules, classes, methods and functions.
 - Add Sharpe, Sortino and Diversification ratios to EfficientFrontier, EfficientFrontierReb and Portfolio classes.
 - Add withdrawals as an attribute of Portfolio class.
 - Add Black-Litterman asset allocation 
