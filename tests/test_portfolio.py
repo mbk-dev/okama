@@ -82,7 +82,7 @@ def test_mean_return(portfolio_rebalanced_month):
 
 
 def test_real_mean_return(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.real_mean_return == approx(0.05286, rel=1e-2)
+    assert portfolio_rebalanced_month.real_mean_return == approx(0.07827, rel=1e-2)
 
 
 @mark.parametrize(
@@ -162,7 +162,7 @@ def test_get_cagr(portfolio_rebalanced_month, portfolio_no_inflation):
 
 
 cagr_testdata1 = [
-    (1, 0.0766),
+    (1, 0.0961),
     (None, 0.0710),
 ]
 
@@ -179,7 +179,7 @@ def test_get_cagr_real_no_inflation_exception(portfolio_no_inflation):
 
 @mark.parametrize(
     "period, real, expected",
-    [("YTD", False, 0.01505), (1, False, 0.12269), (2, True, 0.1268)],
+    [("YTD", False, 0.01505), (1, False, 0.12269), (2, True, 0.2299)],
 )
 def test_cumulative_return(portfolio_rebalanced_month, period, real, expected):
     assert portfolio_rebalanced_month.get_cumulative_return(
