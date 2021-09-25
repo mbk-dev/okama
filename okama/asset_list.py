@@ -901,7 +901,9 @@ class AssetList(ListMaker):
 
     def get_dividend_mean_growth_rate(self, period=5) -> pd.Series:
         """
-        Calculate geometric mean of dividends growth rate time series for a given trailing period.
+        Calculate geometric mean of annual dividends growth rate time series for a given trailing period.
+
+        Growth rate is taken for full calendar annual dividends.
 
         Parameters
         ----------
@@ -926,6 +928,7 @@ class AssetList(ListMaker):
         growth_ts = self.dividends_annual.pct_change().iloc[
             1:-1
         ]  # Slice the last year for full dividends
+        growth_ts.replace([np.inf, -np.inf, np.nan], 0, inplace=True)  # replace possible nan and inf
         dt0 = self.last_date
         dt = Date.subtract_years(dt0, period)
         return ((growth_ts[dt:] + 1.0).prod()) ** (1 / period) - 1.0
