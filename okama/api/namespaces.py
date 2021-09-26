@@ -26,7 +26,6 @@ def symbols_in_namespace(namespace: str = default_namespace, response_format: st
         raise ValueError('response_format must be "json" or "frame"')
 
 
-
 @lru_cache()
 def get_assets_namespaces():
     string_response = API.get_assets_namespaces()
