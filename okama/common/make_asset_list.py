@@ -79,7 +79,7 @@ class ListMaker(ABC):
             self.assets_first_dates.update({self.inflation: Inflation(self.inflation).first_date})
             self.assets_last_dates.update({self.inflation: Inflation(self.inflation).last_date})
         self.assets_ror: pd.DataFrame = self.assets_ror[
-            self.first_date : self.last_date
+            self.first_date: self.last_date
         ]
         self.period_length: float = round(
             (self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1
