@@ -1,3 +1,3 @@
 import okama as ok
 
-print(ok.search('aeroflot', namespace=None, response_format='frame'))
+print(ok.search('aeroflot', namespace='MOEX', response_format='frame'))
