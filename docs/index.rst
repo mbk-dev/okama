@@ -10,7 +10,7 @@
                 <img src="https://img.shields.io/badge/python-v3-brightgreen.svg"
                     alt="python"></a> &nbsp;
             <a href="https://pypi.org/project/okama/">
-                <img src="https://img.shields.io/pypi/v/okama.svg)"
+                <img src="https://img.shields.io/pypi/v/okama.svg"
                     alt="PyPI Latest Release"></a> &nbsp;
             <a href='https://coveralls.io/github/mbk-dev/okama?branch=master'>
                             <img src='https://coveralls.io/repos/github/mbk-dev/okama/badge.svg?branch=master'
