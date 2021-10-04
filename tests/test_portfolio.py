@@ -313,6 +313,10 @@ def test_jarque_bera(portfolio_rebalanced_month):
     )
 
 
+def test_get_sharpe_ratio(portfolio_no_inflation):
+    assert portfolio_no_inflation.get_sharpe_ratio(rf_return=0.05) == approx(0.631, rel=1e-2)
+
+
 # This test should be a last one, as it changes the weights
 def test_init_portfolio_failing():
     with pytest.raises(

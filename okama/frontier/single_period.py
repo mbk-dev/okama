@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Dict, List, Union
+from typing import Optional, Tuple, Dict, List
 
 import pandas as pd
 import numpy as np
@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import minimize
 
 from .. import AssetList
-from ..common.helpers import Float, Frame
+from ..common.helpers.helpers import Float, Frame
 
 
 class EfficientFrontier(AssetList):

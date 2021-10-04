@@ -7,7 +7,7 @@ import pandas as pd
 from scipy.optimize import minimize
 
 from .. import AssetList
-from ..common.helpers import Float, Frame, Rebalance
+from ..common.helpers.helpers import Float, Frame, Rebalance
 from ..settings import _MONTHS_PER_YEAR
 
 

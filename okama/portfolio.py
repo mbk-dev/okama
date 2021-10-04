@@ -6,7 +6,8 @@ import pandas as pd
 import scipy.stats
 from matplotlib import pyplot as plt
 
-from .common.helpers import Frame, Rebalance, Float, Date
+from .common.helpers.helpers import Frame, Rebalance, Float, Date
+from .common.helpers import rates
 from .common.make_asset_list import ListMaker
 from .common.validators import validate_real
 from .settings import _MONTHS_PER_YEAR
@@ -1866,6 +1867,33 @@ class Portfolio(ListMaker):
         better than normal one.
         """
         return Frame.kstest_series(self.ror, distr=distr)
+
+    def get_sharpe_ratio(self, rf_return: float = 0) -> float:
+        """
+        Calculate Sharpe ratio.
+
+        The Sharpe ratio is the average annual return in excess of the risk-free rate
+        per unit of risk (annualized standard deviation).
+
+        Parameters
+        ----------
+        rf_return : float, default 0
+            Risk-free rate of return.
+
+        Returns
+        -------
+        float
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['VOO.US', 'BND.US'], weights=[0.40, 0.60])
+        >>> pf.get_sharpe_ratio(rf_return=0.04)
+        0.7412193684695373
+        """
+        return rates.get_sharpe_ratio(
+            pf_return=self.mean_return_annual,
+            rf_return=rf_return,
+            std_deviation=self.risk_annual)
 
     def plot_percentiles_fit(
         self, distr: str = "norm", figsize: Optional[tuple] = None

@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats
 
-from ..settings import _MONTHS_PER_YEAR
+from okama.settings import _MONTHS_PER_YEAR
 
 
 def check_rolling_window(
@@ -580,7 +580,7 @@ class Index:
     @staticmethod
     def tracking_difference_annualized(tracking_diff: pd.DataFrame) -> pd.DataFrame:
         """
-        Annualizes the values of tracking difference time series.
+        Annualize the values of tracking difference time series.
         Annual values are available for periods of more than 12 months.
         Returns for less than 12 months can't be annualized.
         """

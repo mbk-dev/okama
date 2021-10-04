@@ -3,7 +3,7 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 
-from .common.helpers import Frame
+from .common.helpers.helpers import Frame
 from .settings import default_ticker
 from .api.data_queries import QueryData
 from .api.namespaces import get_assets_namespaces

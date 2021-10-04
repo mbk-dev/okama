@@ -36,7 +36,7 @@ from okama.api.namespaces import (
     macro_namespaces,
     symbols_in_namespace,
 )
-from okama.common.helpers import Float, Frame, Rebalance, Date
+from okama.common.helpers.helpers import Float, Frame, Rebalance, Date
 import okama.settings
 
 __version__ = "1.0.2"
