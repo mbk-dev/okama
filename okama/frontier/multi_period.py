@@ -50,6 +50,10 @@ class EfficientFrontierReb(AssetList):
     n_points : int, default 20
         Number of points in the Efficient Frontier.
 
+    full_frontier : bool, default False
+        Defines whether to show the full Efficient Frontier or only its upper part.
+        If 'False' Efficient Frontier has only the points with the return above Global Minimum Volatility (GMV) point.
+
     verbose : bool, default False
         If verbose=True calculates elapsed time for each point and the total elapsed time.
 
@@ -67,6 +71,7 @@ class EfficientFrontierReb(AssetList):
                  last_date: Optional[str] = None,
                  ccy: str = 'USD',
                  inflation: bool = True,
+                 full_frontier: bool = False,
                  rebalancing_period: str = 'year',
                  n_points: int = 20,
                  verbose: bool = False,
@@ -79,6 +84,7 @@ class EfficientFrontierReb(AssetList):
         self.n_points = n_points
         self.ticker_names = ticker_names
         self.verbose = verbose
+        self.full_frontier = full_frontier
         self._ef_points = None
 
     def __repr__(self):
@@ -436,7 +442,7 @@ class EfficientFrontierReb(AssetList):
             point['CAGR'] = target_value
             point['Risk'] = weights.fun
         else:
-            raise RecursionError(f'No solution found for target risk value: {target_value}.')
+            raise RecursionError(f'No solution found for target CAGR value: {target_value}.')
         return point
 
     def _maximize_risk(self, target_return: float) -> Dict[str, float]:
@@ -546,8 +552,12 @@ class EfficientFrontierReb(AssetList):
         """
         Full range of CAGR values (from min to max).
         """
+        if self.full_frontier:
+            min_cagr = Frame.get_cagr(self.assets_ror).min()
+        else:
+            min_cagr = self.gmv_annual_values[1]
         max_cagr = self.global_max_return_portfolio['CAGR']
-        min_cagr = Frame.get_cagr(self.assets_ror).min()
+
         return np.linspace(min_cagr, max_cagr, self.n_points)
 
     @property

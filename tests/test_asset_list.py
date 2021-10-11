@@ -343,3 +343,7 @@ class TestAssetList:
         assert self.asset_list.jarque_bera["MCFTR.INDX"].iloc[-1] == approx(
             0.60333, rel=1e-2
         )
+
+    def test_get_sharpe_ratio(self):
+        assert self.asset_list.get_sharpe_ratio(rf_return=0.06).loc['RUB.FX'] == approx(-1.7617, rel=1e-2)
+        assert self.asset_list.get_sharpe_ratio(rf_return=0.06).loc['MCFTR.INDX'] == approx(2.53, rel=1e-2)

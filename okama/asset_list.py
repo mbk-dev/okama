@@ -3,6 +3,8 @@ from typing import Optional, Union, Tuple
 import numpy as np
 import pandas as pd
 
+import okama.common.helpers.ratios as ratios
+
 from .common.helpers.helpers import Frame, Float, Date, Index
 from .common.make_asset_list import ListMaker
 
@@ -1333,3 +1335,35 @@ class AssetList(ListMaker):
         H0 is not rejected for EDV ETF and it seems to have lognormal distribution.
         """
         return Frame.kstest_dataframe(self.assets_ror, distr=distr)
+
+    def get_sharpe_ratio(self, rf_return: float = 0) -> pd.Series:
+        """
+        Calculate Sharpe ratio for the assets.
+
+        The Sharpe ratio is the average annual return in excess of the risk-free rate
+        per unit of risk (annualized standard deviation).
+
+        Risk-free rate should be taken according to the AssetList base currency.
+
+        Parameters
+        ----------
+        rf_return : float, default 0
+            Risk-free rate of return.
+
+        Returns
+        -------
+        pd.Series
+
+        Examples
+        --------
+        >>> al = ok.AssetList(['VOO.US', 'BND.US'])
+        >>> al.get_sharpe_ratio(rf_return=0.02)
+        VOO.US    0.962619
+        BND.US    0.390814
+        dtype: float64
+        """
+        mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
+        return ratios.get_sharpe_ratio(
+            pf_return=mean_return,
+            rf_return=rf_return,
+            std_deviation=self.risk_annual)

@@ -7,7 +7,7 @@ import scipy.stats
 from matplotlib import pyplot as plt
 
 from .common.helpers.helpers import Frame, Rebalance, Float, Date
-from .common.helpers import rates
+from .common.helpers import ratios
 from .common.make_asset_list import ListMaker
 from .common.validators import validate_real
 from .settings import _MONTHS_PER_YEAR
@@ -1875,6 +1875,8 @@ class Portfolio(ListMaker):
         The Sharpe ratio is the average annual return in excess of the risk-free rate
         per unit of risk (annualized standard deviation).
 
+        Risk-free rate should be taken according to the Portfolio base currency.
+
         Parameters
         ----------
         rf_return : float, default 0
@@ -1890,7 +1892,7 @@ class Portfolio(ListMaker):
         >>> pf.get_sharpe_ratio(rf_return=0.04)
         0.7412193684695373
         """
-        return rates.get_sharpe_ratio(
+        return ratios.get_sharpe_ratio(
             pf_return=self.mean_return_annual,
             rf_return=rf_return,
             std_deviation=self.risk_annual)

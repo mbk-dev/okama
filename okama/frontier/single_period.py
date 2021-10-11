@@ -54,7 +54,7 @@ class EfficientFrontier(AssetList):
     n_points : int, default 20
         Number of points in the Efficient Frontier.
 
-    full_frontier : bool, default False
+    full_frontier : bool, default True
         Defines whether to show the full Efficient Frontier or only its upper part.
         If 'False' Efficient Frontier has only the points with the return above Global Minimum Volatility (GMV) point.
 
