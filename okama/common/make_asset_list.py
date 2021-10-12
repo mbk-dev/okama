@@ -3,8 +3,10 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from .validators import validate_integer
+from ..common.helpers.helpers import Frame, Float
 from ..macro import Inflation
 from ..asset import Asset
 from ..settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
@@ -396,3 +398,95 @@ class ListMaker(ABC):
             Base currency of the Asset List in form of okama.Asset class.
         """
         return self._currency.currency
+
+    def plot_assets(
+        self,
+        kind: str = "mean",
+        tickers: Union[str, list] = "tickers",
+        pct_values: bool = False,
+    ) -> plt.axes:
+        """
+        Plot the assets points on the risk-return chart with annotations.
+
+        Annualized values for risk and return are used.
+        Risk is a standard deviation of monthly rate of return time series.
+        Return can be an annualized mean return (expected return) or CAGR (Compound annual growth rate).
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Parameters
+        ----------
+        kind : {'mean', 'cagr'}, default 'mean'
+            Type of Return: annualized mean return (expected return) or CAGR (Compound annual growth rate).
+
+        tickers : {'tickers', 'names'} or list of str, default 'tickers'
+            Annotation type for assets.
+            'tickers' - assets symbols are shown in form of 'SPY.US'
+            'names' - assets names are used like - 'SPDR S&P 500 ETF Trust'
+            To show custom annotations for each asset pass the list of names.
+
+        pct_values : bool, default False
+            Risk and return values in the axes:
+            Algebraic annotation (False)
+            Percents (True)
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> al = ok.AssetList(['SPY.US', 'AGG.US'], ccy='USD', inflation=False)
+        >>> al.plot_assets()
+        >>> plt.show()
+
+        Plotting with default parameters values shows expected return, ticker annotations and algebraic values
+        for risk and return.
+        To use CAGR instead of expected return use kind='cagr'.
+
+        >>> al.plot_assets(kind='cagr',
+        ...               tickers=['US Stocks', 'US Bonds'],  # use custom annotations for the assets
+        ...               pct_values=True  # risk and return values are in percents
+        ...               )
+        >>> plt.show()
+        """
+        risk_monthly = self.assets_ror.std()
+        mean_return_monthly = self.assets_ror.mean()
+        risks = Float.annualize_risk(risk_monthly, mean_return_monthly)
+        if kind == "mean":
+            returns = Float.annualize_return(self.assets_ror.mean())
+        elif kind == "cagr":
+            returns = Frame.get_cagr(self.assets_ror).loc[self.symbols]
+        else:
+            raise ValueError('kind should be "mean" or "cagr".')
+        # set lists for single point scatter
+        if len(self.symbols) < 2:
+            risks = [risks]
+            returns = [returns]
+        # set the plot
+        ax = plt.gca()
+        plt.autoscale(enable=True, axis="year", tight=False)
+        m = 100 if pct_values else 1
+        ax.scatter(risks * m, returns * m)
+        # Set the labels
+        if tickers == "tickers":
+            asset_labels = self.symbols
+        elif tickers == "names":
+            asset_labels = list(self.names.values())
+        else:
+            if not isinstance(tickers, list):
+                raise ValueError(
+                    "tickers parameter should be a list of string labels."
+                )
+            if len(tickers) != len(self.symbols):
+                raise ValueError("labels and tickers must be of the same length")
+            asset_labels = tickers
+        # draw the points and print the labels
+        for label, x, y in zip(asset_labels, risks, returns):
+            ax.annotate(
+                label,  # this is the text
+                (x * m, y * m),  # this is the point to label
+                textcoords="offset points",  # how to position the text
+                xytext=(0, 10),  # distance from text to points (x,y)
+                ha="center",  # horizontal alignment can be left, right or center
+            )
+        return ax

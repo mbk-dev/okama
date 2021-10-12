@@ -7,6 +7,7 @@ from numpy.testing import assert_allclose
 import pandas as pd
 
 import okama as ok
+from .conftest import data_folder
 
 
 @mark.frontier
@@ -81,3 +82,34 @@ def test_mean_return_range_bounds(init_efficient_frontier_bounds):
 @mark.frontier
 def test_ef_points(init_efficient_frontier):
     assert init_efficient_frontier.ef_points['Mean return'].iloc[-1] == approx(0.20007879286573038, rel=1e-2)
+
+
+@mark.frontier
+def test_get_tangency_portfolio(init_efficient_frontier):
+    rf_rate = 0.05
+    dic = init_efficient_frontier.get_tangency_portfolio(rf_return=rf_rate)
+    expected = [0.388589, 0.611411]
+    assert_allclose(dic["Weights"], expected, atol=1e-2)
+    assert dic['Mean_return'] == approx(0.1647, rel=1e-2)
+
+
+@mark.frontier
+def test_plot_cml(init_efficient_frontier):
+    rf_rate = 0.02
+    axes_data = np.array(init_efficient_frontier.plot_cml(rf_return=rf_rate).lines[1].get_data())
+    expected = np.array([[0, 0.11053], [0.02, 0.1578]])
+    assert_allclose(axes_data, expected, atol=1e-2)
+
+@mark.frontier
+def test_plot_transition_map(init_efficient_frontier_three_assets):
+    axes_data = np.array(init_efficient_frontier_three_assets.plot_transition_map(cagr=False).lines[0].get_data())
+    values = np.genfromtxt(data_folder / 'test_transition_map.csv', delimiter=',')
+    assert axes_data.shape == values.shape
+    assert axes_data[0, 0] == approx(values[0, 0], abs=1e-1)
+
+
+@mark.frontier
+def test_plot_pair_ef(init_efficient_frontier_three_assets):
+    axes_data = init_efficient_frontier_three_assets.plot_pair_ef(tickers='names').lines[0].get_data()
+    values = np.genfromtxt(data_folder / 'test_plot_pair_ef.csv', delimiter=',')
+    assert_allclose(axes_data, values, rtol=1e-1, atol=1e-1)

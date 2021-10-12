@@ -654,7 +654,7 @@ class EfficientFrontierReb(AssetList):
         >>> df_not_reb = y.ef_points
         >>> fig = plt.figure()
         >>> # Plot the assets points
-        >>> ok.Plots(ls, ccy=curr, first_date='2004-12', last_date='2020-10').plot_assets(kind='cagr')  # should be the same history period and the currency
+        >>> y.plot_assets(kind='cagr')
         >>> ax = plt.gca()
         >>> # Plot the Efficient Frontier for annually rebalanced portfolios
         >>> ax.plot(df_reb_year.Risk, df_reb_year.CAGR, label='Annually rebalanced')
@@ -747,8 +747,7 @@ class EfficientFrontierReb(AssetList):
         >>> df_reb_year = x.ef_points  # optimize portfolios for EF. Calculations will take some time ...
         >>> fig = plt.figure()
         >>> # Plot the assets points (optional).
-        >>> # The same first and last dates, base currency and return type should be used.
-        >>> ok.Plots(ls_m, ccy=curr_rub, first_date='2005-01', last_date='2020-11').plot_assets(kind='cagr')
+        >>> x.plot_assets(kind='cagr')
         >>> ax = plt.gca()
         >>> # Plot random portfolios (Monte Carlo simulation)
         >>> ax.scatter(monte_carlo.Risk, monte_carlo.CAGR)

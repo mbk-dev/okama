@@ -120,7 +120,7 @@ class Frame:
         return ror @ weights
 
     @classmethod
-    def get_portfolio_mean_return(cls, weights: list, ror: pd.DataFrame) -> float:
+    def get_portfolio_mean_return(cls, weights: Union[list, np.array], ror: pd.DataFrame) -> float:
         """
         Computes mean return of a portfolio (monthly).
         """
@@ -250,7 +250,7 @@ class Frame:
     # Risk metrics
 
     @classmethod
-    def get_portfolio_risk(cls, weights: list, assets_ror: pd.DataFrame) -> float:
+    def get_portfolio_risk(cls, weights: Union[list, np.array], assets_ror: pd.DataFrame) -> float:
         """
         Compute the standard deviation of return for monthly rebalanced portfolio.
         """

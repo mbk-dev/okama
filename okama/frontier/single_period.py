@@ -1,7 +1,9 @@
+import itertools
 from typing import Optional, Tuple, Dict, List
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 from scipy.optimize import minimize
 
@@ -246,6 +248,66 @@ class EfficientFrontier(AssetList):
             Float.annualize_risk(self.gmv_monthly[0], self.gmv_monthly[1]),
             Float.annualize_return(self.gmv_monthly[1]),
         )
+
+    def get_tangency_portfolio(self, rf_return: float = 0) -> dict:
+        """
+        Calculate asset weights, risk and return values for tangency portfolio within given bounds.
+
+        Tangency portfolio or Maximum Sharpe Ratio (MSR) is the point on the Efficient Frontier where
+        Sharpe Ratio reaches its maximum.
+
+        The Sharpe ratio is the average annual return in excess of the risk-free rate
+        per unit of risk (annualized standard deviation).
+
+        Bounds are defined with 'bounds' property.
+
+        Parameters
+        ----------
+        rf_return : float, default 0
+            Risk-free rate of return.
+
+        Returns
+        -------
+        dict
+             Weights of assets, risk and return of the tangency portfolio.
+
+        Examples
+        --------
+        >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD')
+        >>> ef.get_tangency_portfolio(rf_return=0.02)  # risk free rate of return is 2%
+        {'Weights': array([3.41138555e-01, 1.90819582e-17, 6.58861445e-01]), 'Mean_return': 0.13457274320732382, 'Risk': 0.19563856367290783}
+        """
+        n = self.assets_ror.shape[1]
+        init_guess = np.repeat(1 / n, n)
+
+        def objective_function(w, ror):
+            # Sharpe ratio
+            mean_return_monthly = Frame.get_portfolio_mean_return(w, ror)
+            risk_monthly = Frame.get_portfolio_risk(w, ror)
+            objective_function.mean_return = Float.annualize_return(mean_return_monthly)
+            objective_function.risk = Float.annualize_risk(risk_monthly, mean_return_monthly)
+            return -(objective_function.mean_return - rf_return) / objective_function.risk
+
+        # construct the constraints
+        weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
+        weights = minimize(
+            objective_function,
+            init_guess,
+            args=(self.assets_ror,),
+            method="SLSQP",
+            options={"disp": False},
+            constraints=(weights_sum_to_1,),
+            bounds=self.bounds,
+        )
+        if weights.success:
+            return {
+                "Weights": weights.x,
+                "Mean_return": objective_function.mean_return,
+                "Risk": objective_function.risk,
+            }
+        else:
+            raise RecursionError("No solutions where found")
 
     def optimize_return(self, option: str = "max") -> dict:
         """
@@ -507,7 +569,7 @@ class EfficientFrontier(AssetList):
         >>> import matplotlib.pyplot as plt
         >>> fig = plt.figure()
         >>> # Plot the assets points
-        >>> ok.Plots(assets, last_date=last_date).plot_assets(kind='cagr')  # kind should be set to "cagr" as we take "CAGR" column from the ef_points.
+        >>> y.plot_assets(kind='cagr')  # kind should be set to "cagr" as we take "CAGR" column from the ef_points.
         >>> ax = plt.gca()
         >>> # Plot the Efficient Frontier
         >>> df = y.ef_points
@@ -571,7 +633,7 @@ class EfficientFrontier(AssetList):
         >>> fig = plt.figure()
         >>> # Plot the assets points (optional).
         >>> # The same first and last dates, base currency and return type should be used.
-        >>> ok.Plots(assets, ccy=base_currency, last_date=last_date).plot_assets(kind='cagr')
+        >>> y.plot_assets(kind='cagr')
         >>> ax = plt.gca()
         >>> # Plot random portfolios risk-return points.
         >>> mc = y.get_monte_carlo(n=1000, kind='cagr')
@@ -604,3 +666,201 @@ class EfficientFrontier(AssetList):
                 raise ValueError('kind should be "mean" or "cagr"')
             random_portfolios = random_portfolios.append(row, ignore_index=True)
         return random_portfolios
+
+    def plot_transition_map(self, cagr: bool = True, figsize: Optional[tuple] = None) -> plt.axes:
+        """
+        Plot Transition Map for optimized portfolios on the single period Efficient Frontier.
+
+        Transition Map shows the relation between asset weights and optimized portfolios properties:
+
+        - CAGR (Compound annual growth rate)
+        - Risk (annualized standard deviation of return)
+
+        Wights are displayed on the y-axis.
+        CAGR or Risk - on the x-axis.
+
+        Constrained optimization with weights bounds is available.
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Parameters
+        ----------
+        bounds: tuple of ((float, float),...)
+            Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
+            If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
+            bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
+            from 0 to 50%. The second asset has no limitations.
+
+        cagr : bool, default True
+            Show the relation between weights and CAGR (if True) or between weights and Risk (if False).
+            of - sets X axe to CAGR (if true) or to risk (if false).
+            CAGR or Risk are displayed on the x-axis.
+
+        figsize: (float, float), optional
+            Figure size: width, height in inches.
+            If None default matplotlib size is taken: [6.4, 4.8]
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'], ccy='USD', inflation=False)
+        >>> x.plot_transition_map()
+        >>> plt.show()
+
+        Transition Map with default setting show the relation between Return (CAGR) and assets weights for optimized portfolios.
+        The same relation for Risk can be shown setting cagr=False.
+
+        >>> x.plot_transition_map(cagr=False,
+        ...                       full_frontier=True,  # to see the relation for the full Efficient Frontier
+        ...                       )
+        >>> plt.show()
+        """
+        ef = self.ef_points
+        linestyle = itertools.cycle(("-", "--", ":", "-."))
+        x_axe = "CAGR" if cagr else "Risk"
+        fig, ax = plt.subplots(figsize=figsize)
+        for i in ef:
+            if i not in (
+                "Risk",
+                "Mean return",
+                "CAGR",
+            ):  # select only columns with tickers
+                ax.plot(
+                    ef[x_axe], ef.loc[:, i], linestyle=next(linestyle), label=i
+                )
+        ax.set_xlim(ef[x_axe].min(), ef[x_axe].max())
+        if cagr:
+            ax.set_xlabel("CAGR (Compound Annual Growth Rate)")
+        else:
+            ax.set_xlabel("Risk (volatility)")
+        ax.set_ylabel("Weights of assets")
+        ax.legend(loc="upper left", frameon=False)
+        fig.tight_layout()
+        return ax
+
+    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> plt.axes:
+        """
+        Plot Efficient Frontier of every pair of assets.
+
+        Efficient Frontier is a set of portfolios which satisfy the condition that no other portfolio exists
+        with a higher expected return but with the same risk (standard deviation of return).
+
+        Arithmetic mean (expected return) is used for optimized portfolios.
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Parameters
+        ----------
+        tickers : {'tickers', 'names'} or list of str, default 'tickers'
+            Annotation type for assets.
+            'tickers' - assets symbols are shown in form of 'SPY.US'
+            'names' - assets names are used like - 'SPDR S&P 500 ETF Trust'
+            To show custom annotations for each asset pass the list of names.
+
+        figsize: (float, float), optional
+            Figure size: width, height in inches.
+            If None default matplotlib size is taken: [6.4, 4.8]
+
+        Notes
+        -----
+        It should be at least 3 assets.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
+        >>> curr = 'USD'
+        >>> last_date = '07-2021'
+        >>> ef = ok.EfficientFrontier(ls4, ccy=curr, last_date=last_date)
+        >>> ef.plot_pair_ef()
+        >>> plt.show()
+
+        It can be useful to plot the full Efficent Frontier (EF) with optimized 4 assets portfolios
+        together with the EFs for each pair of assets.
+
+        >>> ef4 = ok.EfficientFrontier(assets=ls4, ccy=curr, n_points=100)
+        >>> df4 = ef4.ef_points
+        >>> fig = plt.figure()
+        >>> # Plot Efficient Frontier of every pair of assets. Optimized portfolios will have 2 assets.
+        >>> ef4.plot_pair_ef()  # mean return is used for optimized portfolios.
+        >>> ax = plt.gca()
+        >>> # Plot the full Efficient Frontier for 4 asset portfolios.
+        >>> ax.plot(df4['Risk'], df4['Mean return'], color = 'black', linestyle='--')
+        >>> plt.show()
+        """
+        if len(self.symbols) < 3:
+            raise ValueError("The number of symbols cannot be less than 3")
+        # self._verify_axes()
+        bool_inflation = bool(self.inflation)
+        fig, ax = plt.subplots(figsize=figsize)
+        for i in itertools.combinations(self.symbols, 2):
+            sym_pair = list(i)
+            index0 = self.symbols.index(sym_pair[0])
+            index1 = self.symbols.index(sym_pair[1])
+            bounds_pair = (self.bounds[index0], self.bounds[index1])
+            ef = EfficientFrontier(
+                assets=sym_pair,
+                ccy=self.currency,
+                first_date=self.first_date,
+                last_date=self.last_date,
+                inflation=bool_inflation,
+                full_frontier=True,
+                bounds=bounds_pair,
+            ).ef_points
+            ax.plot(ef["Risk"], ef["Mean return"])
+        self.plot_assets(kind="mean", tickers=tickers)
+        return ax
+
+    def plot_cml(self, rf_return: float = 0, figsize: Optional[tuple] = None):
+        """
+        Plot Capital Market Line (CML).
+
+        The Capital Market Line (CML) represents portfolios that optimally combine risk and return. It connects the
+        point with risk free rate of return (volatility is zero) with
+        the point of tangency portfolio or Maximum Sharpe Ratio (MSR) point.
+
+        The slope of the CML is the Sharpe ratio of the tangency portfolio.
+
+        Parameters
+        ----------
+        rf_return : float, default 0
+            Risk-free rate of return.
+
+        figsize: (float, float), optional
+            Figure size: width, height in inches.
+            If None default matplotlib size is taken: [6.4, 4.8]
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', full_frontier=True)
+        >>> ef.plot_cml(rf_return=0.05)  # Risk-Free return is 5%
+        >>> plt.show
+        """
+        ef = self.ef_points
+        tg = self.get_tangency_portfolio(rf_return)
+        fig, ax = plt.subplots(figsize=figsize)
+        ax.plot(ef.Risk, ef['Mean return'], color='black')
+        ax.scatter(tg['Risk'], tg['Mean_return'], linewidth=0, color='green')
+        ax.annotate("MSR",
+                    (tg['Risk'], tg['Mean_return']),
+                    textcoords="offset points",  # how to position the text
+                    xytext=(-10, 10),  # distance from text to points (x,y)
+                    ha="center",  # horizontal alignment can be left, right or center
+                    )
+        # plot the line
+        x, y = [0, tg['Risk']], [rf_return, tg['Mean_return']]
+        ax.plot(x, y, linewidth=1)
+        ax.set_ylim(0, )
+        ax.set_xlim(0, )
+        self.plot_assets(kind='mean')
+        return ax

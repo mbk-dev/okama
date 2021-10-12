@@ -26,7 +26,6 @@ from okama.portfolio import Portfolio
 from okama.macro import Inflation, Rate
 from okama.frontier.multi_period import EfficientFrontierReb
 from okama.frontier.single_period import EfficientFrontier
-from okama.plots import Plots
 from okama.api.data_queries import QueryData
 from okama.api.search import search
 from okama.api.api_methods import API
@@ -39,4 +38,4 @@ from okama.api.namespaces import (
 from okama.common.helpers.helpers import Float, Frame, Rebalance, Date
 import okama.settings
 
-__version__ = "1.0.3"
+__version__ = "1.1.0"

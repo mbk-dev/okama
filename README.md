@@ -131,7 +131,7 @@ points = frontier.ef_points
 
 fig = plt.figure(figsize=(12,6))
 fig.subplots_adjust(bottom=0.2, top=1.5)
-ok.Plots(ls, ccy=curr, last_date=last_date).plot_assets(kind='cagr')  # plots the assets points on the chart
+frontier.plot_assets(kind='cagr')  # plots the assets points on the chart
 ax = plt.gca()
 ax.plot(points.Risk, points.CAGR) 
 ```
@@ -141,7 +141,7 @@ ax.plot(points.Risk, points.CAGR)
 ### 4. Get a Transition Map for allocations
 ```python
 ls = ['SPY.US', 'GLD.US', 'BND.US']
-map = ok.Plots(ls, ccy='USD').plot_transition_map(cagr=False)
+map = ok.EfficientFrontier(ls, ccy='USD').plot_transition_map(cagr=False)
 ```
 ![](../images/images/readmi08.jpg?v23-11-2020,raw=true "Transition map")  
 
