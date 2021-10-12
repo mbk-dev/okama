@@ -712,9 +712,7 @@ class EfficientFrontier(AssetList):
         Transition Map with default setting show the relation between Return (CAGR) and assets weights for optimized portfolios.
         The same relation for Risk can be shown setting cagr=False.
 
-        >>> x.plot_transition_map(cagr=False,
-        ...                       full_frontier=True,  # to see the relation for the full Efficient Frontier
-        ...                       )
+        >>> x.plot_transition_map(cagr=False)
         >>> plt.show()
         """
         ef = self.ef_points
