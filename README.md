@@ -118,7 +118,8 @@ pf.dividend_yield.plot()
 ls = ['SPY.US', 'GLD.US']
 curr = 'USD'
 last_date='2020-10'
-frontier = ok.EfficientFrontierReb(ls, last_date=last_date', ccy=curr, reb_period='year')  # Rebalancing periods is one year (dafault value)
+# Rebalancing periods is one year (default value)
+frontier = ok.EfficientFrontierReb(ls, last_date=last_date', ccy=curr, reb_period='year')
 frontier.names
 ```
 ![](../images/images/readmi06.jpg?raw=true) 

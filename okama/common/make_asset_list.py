@@ -465,6 +465,7 @@ class ListMaker(ABC):
         # set the plot
         ax = plt.gca()
         plt.autoscale(enable=True, axis="year", tight=False)
+        ax.margins(.05, .1)  # increase margins on Y-axis from 5% to 10% as `annotate` moves text upwards
         m = 100 if pct_values else 1
         ax.scatter(risks * m, returns * m)
         # Set the labels

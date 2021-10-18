@@ -50,7 +50,7 @@ class EfficientFrontierReb(AssetList):
     n_points : int, default 20
         Number of points in the Efficient Frontier.
 
-    full_frontier : bool, default False
+    full_frontier : bool, default True
         Defines whether to show the full Efficient Frontier or only its upper part.
         If 'False' Efficient Frontier has only the points with the return above Global Minimum Volatility (GMV) point.
 
@@ -71,7 +71,7 @@ class EfficientFrontierReb(AssetList):
                  last_date: Optional[str] = None,
                  ccy: str = 'USD',
                  inflation: bool = True,
-                 full_frontier: bool = False,
+                 full_frontier: bool = True,
                  rebalancing_period: str = 'year',
                  n_points: int = 20,
                  verbose: bool = False,
@@ -85,7 +85,7 @@ class EfficientFrontierReb(AssetList):
         self.ticker_names = ticker_names
         self.verbose = verbose
         self.full_frontier = full_frontier
-        self._ef_points = None
+        self._ef_points = pd.DataFrame(dtype=float)
 
     def __repr__(self):
         dic = {
@@ -151,7 +151,7 @@ class EfficientFrontierReb(AssetList):
     def rebalancing_period(self, reb_period: str):
         if reb_period not in ['year', 'none']:
             raise ValueError('reb_period: Rebalancing period should be "year" - year or "none" - not rebalanced.')
-        self._ef_points = None
+        self._ef_points = pd.DataFrame(dtype=float)  # renew EF points DataFrame
         self._reb_period = reb_period
 
     @property
@@ -571,7 +571,8 @@ class EfficientFrontierReb(AssetList):
             max_cagr = self.global_max_return_portfolio['CAGR']
             if not np.isclose(max_cagr, ticker_cagr, rtol=1e-3, atol=1e-05):
                 k = abs((self._target_cagr_range_left[0] - self._target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
-                number_of_points = round(self.n_points / k) + 1
+                # we don't want too many points in the right range. Therefore if k < 1 n_points value is used
+                number_of_points = round(self.n_points / k) + 1 if k > 1 else self.n_points
                 target_range = np.linspace(max_cagr, ticker_cagr, number_of_points)
                 return target_range[1:]  # skip the first point (max cagr) as it presents in the left part of the EF
 
@@ -667,7 +668,7 @@ class EfficientFrontierReb(AssetList):
         >>> ax.legend()
         >>> plt.show()
         """
-        if self._ef_points is None:
+        if self._ef_points.empty:
             self._get_ef_points()
         return self._ef_points
 

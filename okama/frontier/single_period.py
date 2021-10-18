@@ -92,6 +92,7 @@ class EfficientFrontier(AssetList):
         self.full_frontier = full_frontier
         self.n_points = n_points
         self.labels_are_tickers = ticker_names
+        self._ef_points = pd.DataFrame(dtype=float)
 
     def __repr__(self):
         dic = {
@@ -581,13 +582,15 @@ class EfficientFrontier(AssetList):
         >>> ax.legend()
         >>> plt.show()
         """
-        target_rs = self.mean_return_range
-        df = pd.DataFrame(dtype="float")
-        for x in target_rs:
-            row = self.minimize_risk(x, monthly_return=True)
-            df = df.append(row, ignore_index=True)
-        df = Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
-        return df
+        if self._ef_points.empty:
+            target_rs = self.mean_return_range
+            df = pd.DataFrame(dtype="float")
+            for x in target_rs:
+                row = self.minimize_risk(x, monthly_return=True)
+                df = df.append(row, ignore_index=True)
+            df = Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
+            self._ef_points = df
+        return self._ef_points
 
     def get_monte_carlo(self, n: int = 100, kind: str = "mean") -> pd.DataFrame:
         """
@@ -817,9 +820,8 @@ class EfficientFrontier(AssetList):
         """
         Plot Capital Market Line (CML).
 
-        The Capital Market Line (CML) represents portfolios that optimally combine risk and return. It connects the
-        point with risk free rate of return (volatility is zero) with
-        the point of tangency portfolio or Maximum Sharpe Ratio (MSR) point.
+        The Capital Market Line (CML) is the tangent line drawn from the point of the risk-free asset (volatility is
+        zero) to the point of tangency portfolio or Maximum Sharpe Ratio (MSR) point.
 
         The slope of the CML is the Sharpe ratio of the tangency portfolio.
 
@@ -858,7 +860,13 @@ class EfficientFrontier(AssetList):
         # plot the line
         x, y = [0, tg['Risk']], [rf_return, tg['Mean_return']]
         ax.plot(x, y, linewidth=1)
-        ax.set_ylim(0, )
-        ax.set_xlim(0, )
+        # set the axis size
+        risk_monthly = self.assets_ror.std()
+        mean_return_monthly = self.assets_ror.mean()
+        risks = Float.annualize_risk(risk_monthly, mean_return_monthly)
+        returns = Float.annualize_return(self.assets_ror.mean())
+        ax.set_ylim(0, max(returns) * 1.1)  # height is 10% more than max return
+        ax.set_xlim(0, max(risks) * 1.1)  # width is 10% more than max risk
+        # plot the assets
         self.plot_assets(kind='mean')
         return ax
