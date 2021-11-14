@@ -1,18 +1,41 @@
 import okama as ok
 
-ls = ['SPY.US', 'GLD.US']
-curr = 'USD'
-y = ok.EfficientFrontierReb(assets=ls,
-                            first_date='2004-12',
-                            last_date='2020-10',
-                            ccy=curr,
-                            rebalancing_period='year',  # set rebalancing period to one year
-                            ticker_names=True,  # use tickers in DataFrame column names (can be set to False to show full assets names instead tickers)
-                            n_points=2,  # number of points in the Efficient Frontier
-                            full_frontier=True,
-                            verbose=True)  # verbose mode is ON to show progress while the EF points are calcualted
+tk = ['VCIT.US',
+ 'VTIP.US',
+ 'TIP.US',
+ 'SCHP.US',
+ 'FXRU.MOEX',
+ 'HACK.US',
+ 'JETS.US',
+ 'XAR.US',
+ 'QQQ.US',
+ 'VBR.US',
+ 'VBK.US',
+ 'PGJ.US',
+ 'VOO.US',
+ 'IHAK.US',
+ 'VNQ.US',
+ 'SLV.US',
+ 'GLDM.US']
 
-df_reb_year = y.ef_points
+wt = [0.14,
+ 0.13,
+ 0.03,
+ 0.29,
+ 0.05,
+ 0.03,
+ 0.01,
+ 0.01,
+ 0.01,
+ 0.04,
+ 0.03,
+ 0.01,
+ 0.02,
+ 0.02,
+ 0.03,
+ 0.03,
+ 0.12]
 
+pf = ok.Portfolio(assets=tk, weights=wt, ccy='USD', inflation=True)
 
-print(df_reb_year.head(5))
+print(pf.dividend_yield)

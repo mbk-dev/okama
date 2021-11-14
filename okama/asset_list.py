@@ -992,6 +992,17 @@ class AssetList(ListMaker):
         return Index.tracking_difference_annualized(self.tracking_difference)
 
     @property
+    def tracking_difference_annual(self) -> pd.DataFrame:
+        result = pd.DataFrame()
+        for x in self.assets_ror.resample('Y'):
+            df = x[1]
+            wealth_index = Frame.get_wealth_indexes(df)
+            row = Index.tracking_difference(wealth_index).iloc[[-1]]
+            result = result.append(row, ignore_index=False)
+        result.index = result.index.asfreq('Y')
+        return result
+
+    @property
     def tracking_error(self) -> pd.DataFrame:
         """
         Calculate tracking error time series for the rate of return of assets.

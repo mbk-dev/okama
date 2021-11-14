@@ -232,10 +232,6 @@ class ListMaker(ABC):
         """
         Get monthly dividend time series for a single symbol and adjust to the currency.
         """
-        # first_period = pd.Period(self.first_date, freq="M")
-        # first_day = first_period.to_timestamp(how="Start")
-        # last_period = pd.Period(self.last_date, freq="M")
-        # last_day = last_period.to_timestamp(how="End")
         asset = self.asset_obj_dict[tick]
         s = asset.dividends[self.first_date: self.last_date]
         if asset.currency != self.currency:
@@ -243,7 +239,7 @@ class ListMaker(ABC):
         if remove_forecast:
             s = s[: pd.Period.now(freq="M")]
         # Create time series with zeros to pad the empty spaces in dividends time series
-        index = pd.date_range(start=self.first_date, end=self.last_date, freq="M")
+        index = pd.date_range(start=self.first_date, end=self.last_date, freq="MS")  # 'MS' to include the last period
         period = index.to_period("M")
         pad_s = pd.Series(data=0, index=period)
         return s.add(pad_s, fill_value=0)
