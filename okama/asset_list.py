@@ -970,7 +970,7 @@ class AssetList(ListMaker):
         Calculate annualized tracking difference time series for the rate of return of assets.
 
         Tracking difference is calculated by measuring the accumulated difference between the returns of a benchmark
-        and those of the ETF replicating it (could be mutual funds, or other types of assets).
+        and ETFs replicating it (could be mutual funds, or other types of assets).
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 
@@ -993,6 +993,25 @@ class AssetList(ListMaker):
 
     @property
     def tracking_difference_annual(self) -> pd.DataFrame:
+        """
+        Calculate tracking difference for each calendar year.
+
+        Tracking difference is calculated by measuring the accumulated difference between the returns of a benchmark
+        and ETFs replicating it (could be mutual funds, or other types of assets).
+
+        Benchmark should be in the first position of the symbols list in AssetList parameters.
+
+        Returns
+        -------
+        DataFrame
+            Time series with tracking difference for each calendar year period.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> al = ok.AssetList(['SP500TR.INDX', 'VOO.US', 'SPXS.LSE'], inflation=False)
+        >>> al.tracking_difference_annual.plot(kind='bar')
+        """
         result = pd.DataFrame()
         for x in self.assets_ror.resample('Y'):
             df = x[1]

@@ -301,6 +301,11 @@ class TestAssetList:
             0.451000, rel=1e-2
         )
 
+    def test_tracking_difference_annual(self):
+        assert self.asset_list.tracking_difference_annual.iloc[0, 0] == approx(
+            0.4966, rel=1e-2
+        )
+
     def test_tracking_error(self):
         assert self.asset_list.tracking_error.iloc[-1, 0] == approx(0.19399, rel=1e-2)
 
