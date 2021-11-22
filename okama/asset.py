@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 from .common.helpers.helpers import Frame
-from .settings import default_ticker
+from .settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
 from .api.data_queries import QueryData
 from .api.namespaces import get_assets_namespaces
 
@@ -30,6 +30,10 @@ class Asset:
         self.last_date: pd.Timestamp = self.ror.index[-1].to_timestamp()
         self.period_length: float = round(
             (self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1
+        )
+        self.pl = PeriodLength(
+            self.ror.shape[0] // _MONTHS_PER_YEAR,
+            self.ror.shape[0] % _MONTHS_PER_YEAR,
         )
 
     def __repr__(self):

@@ -15,6 +15,10 @@ from .conftest import data_folder
 def test_asset_list_init_failing():
     with pytest.raises(ValueError, match=r"Assets must be a list."):
         ok.AssetList(assets=("RUB.FX", "MCFTR.INDX"))
+    with pytest.raises(ValueError, match=r"FXRD.MOEX historical data period length is too short. "
+                                         r"It must be at least 3 months."):
+        ok.AssetList(assets=['FXRD.MOEX'], last_date="2021-10", inflation=True)
+
 
 
 @mark.asset_list

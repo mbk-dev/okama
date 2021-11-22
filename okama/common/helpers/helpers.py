@@ -554,6 +554,10 @@ class Date:
             raise TypeError("The period should be integer")
         return new_dt
 
+    @staticmethod
+    def get_difference_in_months(last_day: pd.Timestamp, first_day: pd.Timestamp):
+        return last_day.to_period('M') - first_day.to_period('M')
+
 
 class Index:
     @staticmethod

@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from .validators import validate_integer
-from ..common.helpers.helpers import Frame, Float
+from ..common.helpers.helpers import Frame, Float, Date
 from ..macro import Inflation
 from ..asset import Asset
 from ..settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
@@ -61,7 +61,7 @@ class ListMaker(ABC):
             self.assets_first_dates,
             self.assets_last_dates,
             self.assets_ror,
-        ) = self._make_list(ls=self._list_of_asset_like_objects).values()
+        ) = self._make_list(ls=self._list_of_asset_like_objects, first_date=first_date, last_date=last_date).values()
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
         self.assets_ror = self.assets_ror[self.first_date:]
@@ -101,7 +101,7 @@ class ListMaker(ABC):
     def __len__(self):
         return len(self.symbols)
 
-    def _make_list(self, ls: list) -> dict:
+    def _make_list(self, ls: list, first_date, last_date) -> dict:
         """
         Make an asset list from a list of symbols.
         """
@@ -117,21 +117,26 @@ class ListMaker(ABC):
         df = pd.DataFrame()
         for i, x in enumerate(ls):
             asset = x if hasattr(x, 'symbol') and hasattr(x, 'ror') else Asset(x)
-            asset_obj_dict.update({asset.symbol: asset})
+            if asset.pl.years == 0 and asset.pl.months <= 2:
+                raise ValueError(f'{asset.symbol} period length is {asset.pl.months}. It should be at least 3 months.')
+            asset_first_date = max(asset.first_date, pd.to_datetime(first_date)) if first_date else asset.first_date
+            asset_last_date = min(asset.last_date, pd.to_datetime(last_date)) if last_date else asset.last_date
+            if Date.get_difference_in_months(asset_last_date, asset_first_date).n < 2:
+                raise ValueError(f'{asset.symbol} historical data period length is too short. '
+                                 f'It must be at least 3 months.')
+            asset_obj_dict[asset.symbol] = asset
             if i == 0:  # required to use pd.concat below (df should not be empty).
                 df = self._make_ror(asset, currency_name)
             else:
                 new = self._make_ror(asset, currency_name)
                 df = pd.concat([df, new], axis=1, join="inner", copy="false")
-            currencies.update({asset.symbol: asset.currency})
-            names.update({asset.symbol: asset.name})
-            first_dates.update({asset.symbol: asset.first_date})
-            last_dates.update({asset.symbol: asset.last_date})
-        # Add currency to the date range dict
-        first_dates.update({currency_name: currency_first_date})
-        last_dates.update({currency_name: currency_last_date})
-        currencies.update({"asset list": currency_name})
-
+            currencies[asset.symbol] = asset.currency
+            names[asset.symbol] = asset.name
+            first_dates[asset.symbol] = asset.first_date
+            last_dates[asset.symbol] = asset.last_date
+        first_dates[currency_name] = currency_first_date
+        last_dates[currency_name] = currency_last_date
+        currencies["asset list"] = currency_name
         first_dates_sorted: list = sorted(first_dates.items(), key=lambda y: y[1])
         last_dates_sorted: list = sorted(last_dates.items(), key=lambda y: y[1])
         if isinstance(df, pd.Series):
