@@ -259,7 +259,7 @@ class ListMaker(ABC):
             dic = {}
             for tick in self.symbols:
                 s = self._get_single_asset_dividends(tick, remove_forecast=remove_forecast)
-                dic.update({tick: s})
+                dic[tick] = s
             self._assets_dividends_ts = pd.DataFrame(dic)
         return self._assets_dividends_ts
 
