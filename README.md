@@ -1,3 +1,4 @@
+
 [![Documentation Status](https://img.shields.io/readthedocs/okama.svg?style=popout)](http://okama.readthedocs.io/)
 [![Python](https://img.shields.io/badge/python-v3-brightgreen.svg)](https://www.python.org/)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/okama.svg)](https://pypi.org/project/okama/)
