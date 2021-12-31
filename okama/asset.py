@@ -44,6 +44,7 @@ class Asset:
             "exchange": self.exchange,
             "currency": self.currency,
             "type": self.type,
+            "isin": self.isin,
             "first date": self.first_date.strftime("%Y-%m"),
             "last date": self.last_date.strftime("%Y-%m"),
             "period length": "{:.2f}".format(self.period_length),
@@ -66,6 +67,7 @@ class Asset:
         self.exchange: str = x["exchange"]
         self.currency: str = x["currency"]
         self.type: str = x["type"]
+        self.isin: str = x["isin"]
         self.inflation: str = f"{self.currency}.INFL"
 
     @property

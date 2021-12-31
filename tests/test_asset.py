@@ -12,6 +12,7 @@ def test_get_symbol_data(init_asset_spy):
     assert init_asset_spy.type == "ETF"
     assert init_asset_spy.inflation == "USD.INFL"
     assert init_asset_spy.first_date == pd.to_datetime("1993-02")
+    assert init_asset_spy.isin == "US78462F1030"
 
 
 def test_close_daily(init_asset_spy):
