@@ -13,7 +13,8 @@ def search(search_string: str, namespace: Optional[str] = None, response_format:
         df = symbols_in_namespace(namespace.upper())
         condition1 = df['name'].str.contains(search_string, case=False)
         condition2 = df['ticker'].str.contains(search_string, case=False)
-        frame_response = df[condition1 | condition2]
+        condition3 = df['isin'].str.contains(search_string, case=False)
+        frame_response = df[condition1 | condition2 | condition3]
         if response_format.lower() == 'frame':
             return frame_response
         elif response_format.lower() == 'json':

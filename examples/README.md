@@ -25,3 +25,6 @@ Examples for "backtesting" the distribution of portfolio returns on the historic
    
 7. [forecasting](https://github.com/mbk-dev/okama/blob/master/examples/07%20forecasting.ipynb)
 Examples of forecasting investment portfolio performance according to normal, lognormal or historical distribution.
+
+8. [financial database](https://github.com/mbk-dev/okama/blob/master/examples/08%20financial%20database.ipynb)
+Query okama database for stocks, ETF, mutual funds, indexes, currencies etc.

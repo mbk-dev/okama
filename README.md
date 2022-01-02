@@ -50,8 +50,13 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
 - Stocks and ETF for main world markets
 - Mutual funds
 - Commodities
-- Currencies
 - Stock indexes
+
+### Currencies
+
+- FX currencies
+- Crypto currencies
+- Central bank exchange rates
 
 ### Macroeconomic indicators
 
