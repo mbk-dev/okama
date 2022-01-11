@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 import pandas as pd
@@ -12,10 +12,10 @@ from .settings import default_macro, PeriodLength, _MONTHS_PER_YEAR
 
 class MacroABC(ABC):
     def __init__(
-        self,
-        symbol: str = default_macro,
-        first_date: Union[str, pd.Timestamp] = "1800-01",
-        last_date: Union[str, pd.Timestamp] = "2030-01",
+            self,
+            symbol: str = default_macro,
+            first_date: Union[str, pd.Timestamp] = "1800-01",
+            last_date: Union[str, pd.Timestamp] = "2030-01",
     ):
         self.symbol: str = symbol
         self._check_namespace()
@@ -103,7 +103,7 @@ class Inflation(MacroABC):
         x.dropna(inplace=True)
         return x
 
-    def describe(self, years=[1, 5, 10]) -> pd.DataFrame:
+    def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
         """
         Generate descriptive inflation statistics for a given list of tickers.
         Statistics includes:
@@ -117,7 +117,7 @@ class Inflation(MacroABC):
         df = self.values_ts
         # YTD inflation properties
         year = pd.Timestamp.today().year
-        ts = df[str(year) :]
+        ts = df[str(year):]
         inflation = Frame.get_cumulative_return(ts)
         row1 = {self.name: inflation}
         row1.update(period="YTD", property="compound inflation")
@@ -204,6 +204,6 @@ class Rate(MacroABC):
     def okid(self) -> pd.Series:
         return Frame.get_okid_index(self.values_ts, self.symbol)
 
-    def describe(self, years=[1, 5, 10]):
+    def describe(self, years: Tuple[int, ...] = (1, 5, 10)):
         # TODO: Make describe() for OKID indexes
         pass

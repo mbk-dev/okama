@@ -78,6 +78,7 @@ def _init_asset_list(
         inflation=True,
     )
 
+
 # Portfolio
 @pytest.fixture(scope="package")
 def init_portfolio_values():

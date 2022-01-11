@@ -52,7 +52,7 @@ class API:
             r.raise_for_status()
         except requests.exceptions.HTTPError as errh:
             if r.status_code == 404:
-                raise requests.exceptions.HTTPError(f"{symbol} is not found in the database.") from errh
+                raise requests.exceptions.HTTPError(f"{symbol} is not found in the database.", 404) from errh
             raise requests.exceptions.HTTPError(
                 f"HTTP error fetching data for {symbol}:",
                 r.status_code,
