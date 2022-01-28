@@ -122,6 +122,11 @@ def test_risk(portfolio_rebalanced_month):
     assert portfolio_rebalanced_month.risk_annual == approx(0.139814, rel=1e-2)
 
 
+def test_semideviation(portfolio_rebalanced_month):
+    assert portfolio_rebalanced_month.semideviation_monthly == approx(0.02080, rel=1e-2)
+    assert portfolio_rebalanced_month.semideviation_annual == approx(0.07207, rel=1e-2)
+
+
 def test_get_var_historic(portfolio_rebalanced_month):
     assert portfolio_rebalanced_month.get_var_historic(time_frame=1, level=5) == approx(
         0.03815, rel=1e-2
@@ -315,6 +320,10 @@ def test_jarque_bera(portfolio_rebalanced_month):
 
 def test_get_sharpe_ratio(portfolio_no_inflation):
     assert portfolio_no_inflation.get_sharpe_ratio(rf_return=0.05) == approx(0.631, rel=1e-2)
+
+
+def test_get_sortino_ratio(portfolio_no_inflation):
+    assert portfolio_no_inflation.get_sortino_ratio(t_return=0.05) == approx(1.0615, rel=1e-2)
 
 
 # This test should be a last one, as it changes the weights

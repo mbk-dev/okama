@@ -14,3 +14,14 @@ def get_sharpe_ratio(
     Calculate Sharpe ratio.
     """
     return (pf_return - rf_return) / std_deviation
+
+
+def get_sortino_ratio(
+    pf_return: Union[float, pd.Series],
+    t_return: float,
+    semi_deviation: Union[float, pd.Series],
+):
+    """
+    Calculate Sortino ratio.
+    """
+    return (pf_return - t_return) / semi_deviation

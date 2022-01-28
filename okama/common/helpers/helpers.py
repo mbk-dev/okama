@@ -262,14 +262,20 @@ class Frame:
         return math.sqrt(weights.T @ covmat @ weights)
 
     @staticmethod
-    def get_semideviation(
-        ror: Union[pd.DataFrame, pd.Series]
-    ) -> Union[pd.Series, float]:
+    def get_semideviation(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
         """
-        Returns semideviation for each asset given returns time series.
+        Returns semideviation.
         """
-        is_negative = ror < 0
-        return ror[is_negative].std(ddof=0)
+        below_mean = ror < ror.std(ddof=0)
+        return ror[below_mean].std(ddof=0)
+
+    @staticmethod
+    def get_below_target_semideviation(ror: Union[pd.DataFrame, pd.Series], t_return: float = 0) -> Union[pd.Series, float]:
+        """
+        Returns below target semideviation.
+        """
+        below_target = ror < t_return
+        return ror[below_target].std(ddof=0)
 
     @staticmethod
     def get_var_historic(

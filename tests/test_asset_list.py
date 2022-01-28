@@ -90,12 +90,12 @@ class TestAssetList:
         assert self.asset_list.risk_annual["MCFTR.INDX"] == approx(0.1222, rel=1e-2)
 
     def test_semideviation_monthly(self):
-        assert self.asset_list.semideviation_monthly[0] == approx(0.015614, rel=1e-2)
-        assert self.asset_list.semideviation_monthly[1] == approx(0, abs=1e-2)
+        assert self.asset_list.semideviation_monthly[0] == approx(0.01962, rel=1e-2)
+        assert self.asset_list.semideviation_monthly[1] == approx(0.01109, rel=1e-2)
 
     def test_semideviation_annual(self):
-        assert self.asset_list.semideviation_annual[0] == approx(0.05408, rel=1e-2)
-        assert self.asset_list.semideviation_annual[1] == approx(0, abs=1e-2)
+        assert self.asset_list.semideviation_annual[0] == approx(0.0679, rel=1e-2)
+        assert self.asset_list.semideviation_annual[1] == approx(0.0384, rel=1e-2)
 
     def test_get_var_historic(self):
         assert self.asset_list.get_var_historic(time_frame=1, level=5)["RUB.FX"] == approx(0.0411, rel=1e-2)
@@ -357,3 +357,8 @@ class TestAssetList:
         sharpe_ratio = self.asset_list.get_sharpe_ratio(rf_return=0.06)
         assert sharpe_ratio.loc['RUB.FX'] == approx(-1.7617, rel=1e-2)
         assert sharpe_ratio.loc['MCFTR.INDX'] == approx(2.53, rel=1e-2)
+
+    def test_get_sortino_ratio(self):
+        sortino_ratio = self.asset_list.get_sortino_ratio(t_return=0.02)
+        assert sortino_ratio.loc['RUB.FX'] == approx(-1.5498, rel=1e-2)
+        assert sortino_ratio.loc['MCFTR.INDX'] == approx(10.36, rel=1e-2)

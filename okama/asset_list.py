@@ -181,8 +181,8 @@ class AssetList(ListMaker):
         --------
         >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
         >>> al.semideviation_monthly
-        GC.COMM    0.033285
-        SHV.US     0.000162
+        GC.COMM    0.039358
+        SHV.US     0.000384
         dtype: float64
         """
         return Frame.get_semideviation(self.assets_ror)
@@ -941,7 +941,6 @@ class AssetList(ListMaker):
         """
         Return tracking difference for the rate of return of assets.
 
-
         Tracking difference is calculated by measuring the accumulated difference between the returns of a benchmark
         and those of the ETF replicating it (could be mutual funds, or other types of assets).
 
@@ -1391,9 +1390,55 @@ class AssetList(ListMaker):
         VOO.US    0.962619
         BND.US    0.390814
         dtype: float64
+
+        Notes
+        -----
+        Sharpe ratio formula:
+
+        .. math:: Sh = \frac{R_p-R_f}{\sigma}
         """
         mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
         return ratios.get_sharpe_ratio(
             pf_return=mean_return,
             rf_return=rf_return,
             std_deviation=self.risk_annual)
+
+    def get_sortino_ratio(self, t_return: float = 0) -> pd.Series:
+        """
+        Calculate Sortino ratio for the assets with specified target return.
+
+        Sortion ratio measures the risk-adjusted return of each asset. It is a modification of the Sharpe ratio
+        but penalizes only those returns falling below a specified target rate of return, while
+        the Sharpe ratio penalizes both upside and downside volatility equally.
+
+        Parameters
+        ----------
+        t_return : float, default 0
+            Traget rate of return.
+
+        Returns
+        -------
+        pd.Series
+
+        Examples
+        --------
+        >>> al = ok.AssetList(['VOO.US', 'BND.US'], last_date='2021-12')
+        >>> al.get_sortino_ratio(t_return=0.03)
+        VOO.US    1.321951
+        BND.US    0.028969
+        dtype: float64
+
+        Notes
+        -----
+        Sortino ratio formula:
+
+        .. math:: Sr = \frac{R_p-R_t}{DR}
+
+        DR - target semi-deviation
+        """
+        mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
+        semideviation = Frame.get_below_target_semideviation(ror=self.assets_ror, t_return=t_return) * 12 ** 0.5
+        return ratios.get_sortino_ratio(
+            pf_return=mean_return,
+            t_return=t_return,
+            semi_deviation=semideviation)

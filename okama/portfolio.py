@@ -1897,6 +1897,35 @@ class Portfolio(ListMaker):
             rf_return=rf_return,
             std_deviation=self.risk_annual)
 
+    def get_sortino_ratio(self, t_return: float = 0) -> pd.Series:
+        """
+        Calculate Sortino ratio for the portfolio with specified target return.
+
+        Sortion ratio measures the risk-adjusted return of portfolio. It is a modification of the Sharpe ratio
+        but penalizes only those returns falling below a specified target rate of return, while
+        the Sharpe ratio penalizes both upside and downside volatility equally.
+
+        Parameters
+        ----------
+        t_return : float, default 0
+            Traget rate of return.
+
+        Returns
+        -------
+        pd.Series
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['VOO.US', 'BND.US'], last_date='2021-12')
+        >>> pf.get_sortino_ratio(t_return=0.02)
+        1.4377728903230174
+        """
+        semideviation = Frame.get_below_target_semideviation(ror=self.ror, t_return=t_return) * 12 ** 0.5
+        return ratios.get_sortino_ratio(
+            pf_return=self.mean_return_annual,
+            t_return=t_return,
+            semi_deviation=semideviation)
+
     def plot_percentiles_fit(
         self, distr: str = "norm", figsize: Optional[tuple] = None
     ) -> None:
