@@ -206,7 +206,7 @@ def test_cumulative_return_error(portfolio_no_inflation, period, real, exception
 
 def test_describe_inflation(portfolio_rebalanced_month):
     description = portfolio_rebalanced_month.describe()
-    description_sample = pd.read_pickle(data_folder / "portfolio_description.pkl")
+    description_sample = pd.read_pickle(data_folder / "portfolio_description_new.pkl")
     assert_frame_equal(description, description_sample)
 
 
