@@ -46,13 +46,11 @@ class TestAssetList:
         asset_list_lt_sample = pd.read_pickle(data_folder / "asset_list_lt.pkl")
         currencies_sample = pd.read_pickle(data_folder / "currencies.pkl")
         real_estate_sample = pd.read_pickle(data_folder / "real_estate.pkl")
-        spy_sample = pd.read_pickle(data_folder / "spy.pkl")
         assert_frame_equal(self.asset_list.assets_ror, asset_list_sample)
         assert_frame_equal(self.asset_list_lt.assets_ror, asset_list_lt_sample)
         assert_frame_equal(self.currencies.assets_ror, currencies_sample)
         assert_frame_equal(self.real_estate.assets_ror, real_estate_sample)
-        # SPY adj_close and ror is changing over time
-        assert_frame_equal(self.spy.assets_ror, spy_sample, rtol=1e-2)
+        # adj_close and ror are changing over time for assets with dividends
 
     def test_currencies(self):
         assert self.currencies.pl.years == 1
@@ -314,13 +312,13 @@ class TestAssetList:
         assert self.asset_list.tracking_error.iloc[-1, 0] == approx(0.19399, rel=1e-2)
 
     def test_index_corr(self):
-        assert self.asset_list.index_corr.iloc[-1, 0] == approx(-0.57634, rel=1e-2)
+        assert self.asset_list.index_corr.iloc[-1, 0] == approx(-0.61388, rel=1e-2)
 
     def test_index_beta(self):
-        assert self.asset_list.index_beta.iloc[-1, 0] == approx(-0.563714, rel=1e-2)
+        assert self.asset_list.index_beta.iloc[-1, 0] == approx(-0.603921, rel=1e-2)
 
     def test_skewness(self):
-        assert self.asset_list.skewness["RUB.FX"].iloc[-1] == approx(0.444343, rel=1e-2)
+        assert self.asset_list.skewness["RUB.FX"].iloc[-1] == approx(0.425180, rel=1e-2)
         assert self.asset_list.skewness["MCFTR.INDX"].iloc[-1] == approx(
             0.24876, rel=1e-2
         )
@@ -332,7 +330,7 @@ class TestAssetList:
             self.asset_list.skewness_rolling(window=24)
 
     def test_kurtosis(self):
-        assert self.asset_list.kurtosis["RUB.FX"].iloc[-1] == approx(0.89810, rel=1e-2)
+        assert self.asset_list.kurtosis["RUB.FX"].iloc[-1] == approx(0.8219, rel=1e-2)
         assert self.asset_list.kurtosis["MCFTR.INDX"].iloc[-1] == approx(
             -1.32129, rel=1e-2
         )
@@ -340,14 +338,14 @@ class TestAssetList:
     def test_kurtosis_rolling(self):
         assert self.asset_list_lt.kurtosis_rolling(window=24)["RUB.FX"].iloc[
             -1
-        ] == approx(1.4425, rel=1e-2)
+        ] == approx(1.4208, rel=1e-2)
         assert self.asset_list_lt.kurtosis_rolling(window=24)["MCFTR.INDX"].iloc[
             -1
         ] == approx(-0.11495, rel=1e-2)
 
     def test_jarque_bera(self):
         assert self.asset_list.jarque_bera["RUB.FX"].iloc[-1] == approx(
-            0.84131, rel=1e-2
+            0.85628, rel=1e-2
         )
         assert self.asset_list.jarque_bera["MCFTR.INDX"].iloc[-1] == approx(
             0.60333, rel=1e-2

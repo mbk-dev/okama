@@ -18,6 +18,11 @@ def init_asset_pif():
     return ok.Asset(symbol="0165-70287767.PIF")
 
 
+@pytest.fixture(scope="module")
+def init_asset_usdrub():
+    return ok.Asset(symbol="RUB.FX")
+
+
 # Asset List
 @pytest.fixture(scope="class")
 def assets_from_db():

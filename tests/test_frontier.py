@@ -38,17 +38,17 @@ def test_repr(init_efficient_frontier):
 
 @mark.frontier
 def test_gmv(init_efficient_frontier):
-    assert_allclose(init_efficient_frontier.gmv_weights, np.array([0.67501259, 0.32498741]), rtol=1e-2, atol=1e-2)
+    assert_allclose(init_efficient_frontier.gmv_weights, np.array([0.689278, 0.310722]), rtol=1e-2, atol=1e-2)
 
 
 @mark.frontier
 def test_gmv_monthly(init_efficient_frontier):
-    assert init_efficient_frontier.gmv_monthly[0] == approx(0.026076618401825784, rel=1e-2)
+    assert init_efficient_frontier.gmv_monthly[0] == approx(0.02541, rel=1e-2)
 
 
 @mark.frontier
 def test_gmv_annualized(init_efficient_frontier):
-    assert init_efficient_frontier.gmv_annualized[0] == approx(0.10198459385117883, rel=1e-2)
+    assert init_efficient_frontier.gmv_annualized[0] == approx(0.0992, rel=1e-2)
 
 
 @mark.frontier
@@ -88,9 +88,9 @@ def test_ef_points(init_efficient_frontier):
 def test_get_tangency_portfolio(init_efficient_frontier):
     rf_rate = 0.05
     dic = init_efficient_frontier.get_tangency_portfolio(rf_return=rf_rate)
-    expected = [0.388589, 0.611411]
+    expected = [0.409596, 0.590404]
     assert_allclose(dic["Weights"], expected, atol=1e-2)
-    assert dic['Mean_return'] == approx(0.1647, rel=1e-2)
+    assert dic['Mean_return'] == approx(0.1627, rel=1e-2)
 
 
 @mark.frontier

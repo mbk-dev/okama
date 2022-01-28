@@ -1,6 +1,9 @@
+from pandas._testing import assert_series_equal
 from pytest import mark
 from pytest import approx
 import pandas as pd
+
+from .conftest import data_folder
 
 
 @mark.asset
@@ -15,7 +18,16 @@ def test_get_symbol_data(init_asset_spy):
     assert init_asset_spy.isin == "US78462F1030"
 
 
-def test_close_daily(init_asset_spy):
+def test_usdrub(init_asset_usdrub):
+    close_daily_sample = pd.read_pickle(data_folder / "usdrub_close_daily.pkl")
+    close_monthly_sample = pd.read_pickle(data_folder / "usdrub_close_monthly.pkl")
+    adj_close_sample = pd.read_pickle(data_folder / "usdrub_adj_close.pkl")
+    assert_series_equal(init_asset_usdrub.close_daily['2019-01': '2020-01'], close_daily_sample)
+    assert_series_equal(init_asset_usdrub.close_monthly['2019-01': '2020-01'], close_monthly_sample)
+    assert_series_equal(init_asset_usdrub.adj_close['2019-01': '2020-01'], adj_close_sample)
+
+
+def test_close_daily(init_asset_spy, init_asset_usdrub):
     assert init_asset_spy.close_daily.loc['2000-01-20'] == 144.75
 
 

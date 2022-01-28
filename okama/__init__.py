@@ -38,4 +38,4 @@ from okama.api.namespaces import (
 from okama.common.helpers.helpers import Float, Frame, Rebalance, Date
 import okama.settings
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"

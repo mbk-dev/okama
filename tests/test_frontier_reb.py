@@ -39,7 +39,7 @@ def test_gmv_annual_weights(init_efficient_frontier_reb):
 @mark.rebalance
 @mark.frontier
 def test_gmv_annual_values(init_efficient_frontier_reb):
-    assert init_efficient_frontier_reb.gmv_annual_values[0] == approx(0.09660054, rel=1e-2)
+    assert init_efficient_frontier_reb.gmv_annual_values[0] == approx(0.09239, rel=1e-2)
 
 
 @mark.rebalance

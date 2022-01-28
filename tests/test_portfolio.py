@@ -56,7 +56,6 @@ def test_ror_rebalance(
 def test_ror(portfolio_rebalanced_month):
     portfolio_sample = pd.read_pickle(data_folder / "portfolio.pkl")
     actual = portfolio_rebalanced_month.ror
-    actual.rename("portfolio", inplace=True)
     assert_series_equal(actual, portfolio_sample)
 
 
@@ -108,7 +107,7 @@ def test_number_of_securities(portfolio_not_rebalanced):
 
 
 def test_dividends(portfolio_dividends):
-    assert portfolio_dividends.dividends.iloc[-1] == approx(13.90, rel=1e-2)
+    assert portfolio_dividends.dividends.iloc[-1] == approx(13.28, rel=1e-2)
 
 
 def test_dividend_yield(portfolio_dividends):
@@ -146,7 +145,7 @@ def test_get_cvar_historic(portfolio_rebalanced_month):
 
 
 def test_drawdowns(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.drawdowns.min() == approx(-0.1265, rel=1e-2)
+    assert portfolio_not_rebalanced.drawdowns.min() == approx(-0.1313, rel=1e-2)
 
 
 def test_recovery_period(portfolio_not_rebalanced):
@@ -154,13 +153,13 @@ def test_recovery_period(portfolio_not_rebalanced):
 
 
 def test_get_cagr(portfolio_rebalanced_month, portfolio_no_inflation):
-    values = pd.Series({"pf1.PF": 0.1303543, "RUB.INFL": 0.05548082428015655})
+    values = pd.Series({"pf1.PF": 0.1303298, "RUB.INFL": 0.05548082428015655})
     actual = portfolio_rebalanced_month.get_cagr()
-    assert_series_equal(actual, values, rtol=1e-4)
+    assert_series_equal(actual, values, atol=1e-4)
     # no inflation
-    values = pd.Series({"pf1.PF": 0.1303543})
+    values = pd.Series({"pf1.PF": 0.1303298})
     actual = portfolio_no_inflation.get_cagr()
-    assert_series_equal(actual, values, rtol=1e-4)
+    assert_series_equal(actual, values, atol=1e-4)
     # failing if wrong period
     with pytest.raises(TypeError):
         portfolio_rebalanced_month.get_cagr(period="one year")
@@ -298,7 +297,7 @@ def test_skewness(portfolio_rebalanced_month):
 
 def test_rolling_skewness(portfolio_rebalanced_month):
     assert portfolio_rebalanced_month.skewness_rolling(window=24).iloc[-1] == approx(
-        0.82381, rel=1e-2
+        0.8869, rel=1e-2
     )
 
 
@@ -308,13 +307,13 @@ def test_kurtosis(portfolio_rebalanced_month):
 
 def test_kurtosis_rolling(portfolio_rebalanced_month):
     assert portfolio_rebalanced_month.kurtosis_rolling(window=24).iloc[-1] == approx(
-        1.58931, rel=1e-2
+        1.76521, rel=1e-2
     )
 
 
 def test_jarque_bera(portfolio_rebalanced_month):
     assert portfolio_rebalanced_month.jarque_bera["statistic"] == approx(
-        424.1337, rel=1e-2
+        431.3438, rel=1e-2
     )
 
 
