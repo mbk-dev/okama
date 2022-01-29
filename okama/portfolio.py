@@ -1897,7 +1897,7 @@ class Portfolio(ListMaker):
             rf_return=rf_return,
             std_deviation=self.risk_annual)
 
-    def get_sortino_ratio(self, t_return: float = 0) -> pd.Series:
+    def get_sortino_ratio(self, t_return: float = 0) -> float:
         """
         Calculate Sortino ratio for the portfolio with specified target return.
 
@@ -1912,7 +1912,7 @@ class Portfolio(ListMaker):
 
         Returns
         -------
-        pd.Series
+        float
 
         Examples
         --------
@@ -1925,6 +1925,31 @@ class Portfolio(ListMaker):
             pf_return=self.mean_return_annual,
             t_return=t_return,
             semi_deviation=semideviation)
+
+    @property
+    def diversification_ratio(self) -> float:
+        """
+        Calculate Diversification Ratio for the portfolio.
+
+        The Diversification Ratio is the ratio of the weighted average of assets risks divided by the portfolio risk.
+        In this case risk is the annuilized rate of return standatd deviation.
+
+        Returns
+        -------
+        float
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['VOO.US', 'BND.US'], weights=[0.7, 0.3], last_date='2021-12')
+        >>> pf.diversification_ratio
+        1.1264305597257505
+        """
+        assets_risk = self.assets_ror.std()
+        assets_mean_return = self.assets_ror.mean()
+        assets_annualized_risk = Float.annualize_risk(assets_risk, assets_mean_return)
+        weights = np.asarray(self.weights)
+        sigma_weighted_sum = weights.T @ assets_annualized_risk
+        return sigma_weighted_sum / self.risk_annual
 
     def plot_percentiles_fit(
         self, distr: str = "norm", figsize: Optional[tuple] = None

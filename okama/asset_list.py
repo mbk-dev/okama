@@ -1390,12 +1390,6 @@ class AssetList(ListMaker):
         VOO.US    0.962619
         BND.US    0.390814
         dtype: float64
-
-        Notes
-        -----
-        Sharpe ratio formula:
-
-        .. math:: Sh = \frac{R_p-R_f}{\sigma}
         """
         mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
         return ratios.get_sharpe_ratio(
@@ -1427,14 +1421,6 @@ class AssetList(ListMaker):
         VOO.US    1.321951
         BND.US    0.028969
         dtype: float64
-
-        Notes
-        -----
-        Sortino ratio formula:
-
-        .. math:: Sr = \frac{R_p-R_t}{DR}
-
-        DR - target semi-deviation
         """
         mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
         semideviation = Frame.get_below_target_semideviation(ror=self.assets_ror, t_return=t_return) * 12 ** 0.5

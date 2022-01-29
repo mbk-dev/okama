@@ -1,5 +1,5 @@
 import okama as ok
 
-al = ok.AssetList()
+pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[.7, .3])
 
-print(al.describe())
+print(pf.diversification_ratio)

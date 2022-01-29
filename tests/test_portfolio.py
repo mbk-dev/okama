@@ -325,6 +325,10 @@ def test_get_sortino_ratio(portfolio_no_inflation):
     assert portfolio_no_inflation.get_sortino_ratio(t_return=0.05) == approx(1.0615, rel=1e-2)
 
 
+def test_diversification_ratio(portfolio_no_inflation):
+    assert portfolio_no_inflation.diversification_ratio == approx(1.2961, rel=1e-2)
+
+
 # This test should be a last one, as it changes the weights
 def test_init_portfolio_failing():
     with pytest.raises(
