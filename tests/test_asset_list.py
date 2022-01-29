@@ -254,7 +254,7 @@ class TestAssetList:
         description_sample = pd.read_pickle(data_folder / "asset_list_describe.pkl").iloc[:-2, :]
         cols = list(description_sample.columns.values)
         description = description[cols]  # columns order should not be an issue
-        assert_frame_equal(description, description_sample)
+        assert_frame_equal(description, description_sample, check_dtype=False)
 
     def test_dividend_yield(self):
         assert self.spy.assets_dividend_yield.iloc[-1, 0] == approx(0.0125, abs=1e-3)
