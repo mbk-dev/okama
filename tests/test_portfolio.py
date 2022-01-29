@@ -206,14 +206,14 @@ def test_cumulative_return_error(portfolio_no_inflation, period, real, exception
 
 def test_describe_inflation(portfolio_rebalanced_month):
     description = portfolio_rebalanced_month.describe()
-    description_sample = pd.read_pickle(data_folder / "portfolio_description_new.pkl")
-    assert_frame_equal(description, description_sample, check_dtype=False)
+    description_sample = pd.read_pickle(data_folder / "portfolio_description.pkl")
+    assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False)
 
 
 def test_describe_no_inflation(portfolio_no_inflation):
     description = portfolio_no_inflation.describe()
     description_sample = pd.read_pickle(data_folder / "portfolio_description_no_inflation.pkl")
-    assert_frame_equal(description, description_sample)
+    assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False)
 
 
 def test_percentile_from_history(portfolio_rebalanced_month, portfolio_no_inflation, portfolio_short_history):
