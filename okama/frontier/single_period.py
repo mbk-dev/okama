@@ -355,7 +355,7 @@ class EfficientFrontier(AssetList):
         It is possible to get the most diversified portfolio for a given target rate of return.
         Set `monthly_return=False` to use annual values for the rate of return.
 
-        >> x.get_most_diversified_portfolio(target_return=0.10, monthly_return=False)
+        >>> x.get_most_diversified_portfolio(target_return=0.10, monthly_return=False)
         {'SPY.US': 0.3389762570274293,
         'AGG.US': 0.12915657041748244,
         'VNQ.US': 0.15083042115027034,
