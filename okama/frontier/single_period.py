@@ -93,6 +93,7 @@ class EfficientFrontier(AssetList):
         self.n_points = n_points
         self.labels_are_tickers = ticker_names
         self._ef_points = pd.DataFrame(dtype=float)
+        self._mdp_points = pd.DataFrame(dtype=float)
 
     def __repr__(self):
         dic = {
@@ -706,6 +707,77 @@ class EfficientFrontier(AssetList):
             df = Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
             self._ef_points = df
         return self._ef_points
+
+    @property
+    def mdp_points(self) -> pd.DataFrame:
+        """
+        Generate Most diversified portfolios line.
+
+        Each point on the Most diversified portfolios line is a portfolio with optimized
+        Diversification ratio for a given return.
+
+        The points are obtained through the constrained optimization process (optimization with bounds).
+        Bounds are defined with 'bounds' property.
+
+        Returns
+        -------
+        DataFrame
+            Table of weights and risk/return values for the Efficient Frontier.
+            The columns:
+
+            - assets weights
+            - CAGR (geometric mean)
+            - Mean return (arithmetic mean)
+            - Risk (standard deviation)
+            - Diversification ratio
+
+            All the values are annualized.
+
+        Examples
+        --------
+        >>> ls4 = ['SP500TR.INDX', 'MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+        >>> y = ok.EfficientFrontier(assets=ls4, ccy='RUB', last_date='2021-12', n_points=100)
+        >>> y.mdp_points  # print mdp weights, risk, mean return, CAGR and Diversification ratio
+                Risk  Mean return      CAGR  ...    MCFTR.INDX   RGBITR.INDX  SP500TR.INDX
+        0   0.066040     0.094216  0.092220  ...  2.081668e-16  1.000000e+00  0.000000e+00
+        1   0.064299     0.095342  0.093451  ...  0.000000e+00  9.844942e-01  5.828671e-16
+        2   0.062761     0.096468  0.094670  ...  0.000000e+00  9.689885e-01  1.110223e-16
+        3   0.061445     0.097595  0.095874  ...  5.828671e-16  9.534827e-01  0.000000e+00
+        4   0.060364     0.098724  0.097065  ...  3.191891e-16  9.379769e-01  0.000000e+00
+        ..       ...          ...       ...  ...           ...           ...           ...
+        95  0.258857     0.205984  0.178346  ...  8.840844e-01  1.387779e-17  0.000000e+00
+        96  0.266583     0.207214  0.177941  ...  9.130633e-01  3.469447e-18  0.000000e+00
+        97  0.274594     0.208446  0.177432  ...  9.420422e-01  0.000000e+00  1.075529e-16
+        98  0.282873     0.209678  0.176820  ...  9.710211e-01  2.428613e-17  6.938894e-18
+        99  0.291402     0.210912  0.176103  ...  1.000000e+00  2.775558e-16  3.951094e-09
+        [100 rows x 8 columns]
+
+        To plot the Most diversification portfolios line use the DataFrame with the points data.
+        Additionaly 'Plot.plot_assets()' can be used to show the assets in the chart.
+
+        >>> import matplotlib.pyplot as plt
+        >>> fig = plt.figure()
+        >>> # Plot the assets points
+        >>> y.plot_assets(kind='cagr')  # kind should be set to "cagr" as we take "CAGR" column from the ef_points.
+        >>> ax = plt.gca()
+        >>> # Plot the Most diversified portfolios line
+        >>> df = y.mdp_points
+        >>> ax.plot(df['Risk'], df['CAGR'])  # we chose to plot CAGR which is geometric mean of return series
+        >>> # Set the axis labels and the title
+        >>> ax.set_title('Most diversified portfolios line')
+        >>> ax.set_xlabel('Risk (Standard Deviation)')
+        >>> ax.set_ylabel('Return (CAGR)')
+        >>> plt.show()
+        """
+        if self._mdp_points.empty:
+            target_rs = self.mean_return_range
+            df = pd.DataFrame(dtype="float")
+            for x in target_rs:
+                row = self.get_most_diversified_portfolio(target_return=x, monthly_return=True)
+                df = df.append(row, ignore_index=True)
+            df = Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
+            self._mdp_points = df
+        return self._mdp_points
 
     def get_monte_carlo(self, n: int = 100, kind: str = "mean") -> pd.DataFrame:
         """

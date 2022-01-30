@@ -127,11 +127,18 @@ def test_get_most_diversified_portfolio(init_efficient_frontier):
 
 
 @mark.frontier
+def test_mdp_points(init_efficient_frontier_three_assets):
+    assert init_efficient_frontier_three_assets.mdp_points['Mean return'].iloc[10] == approx(0.12039, rel=1e-2)
+    assert init_efficient_frontier_three_assets.mdp_points['Diversification ratio'].iloc[10] == approx(1.6050, rel=1e-2)
+
+
+@mark.frontier
 def test_plot_cml(init_efficient_frontier):
     rf_rate = 0.02
     axes_data = np.array(init_efficient_frontier.plot_cml(rf_return=rf_rate).lines[1].get_data())
     expected = np.array([[0, 0.11053], [0.02, 0.1578]])
     assert_allclose(axes_data, expected, atol=1e-2)
+
 
 @mark.frontier
 def test_plot_transition_map(init_efficient_frontier_three_assets):

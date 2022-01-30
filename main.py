@@ -1,5 +1,6 @@
 import okama as ok
 
-pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[.7, .3])
+ls3 = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+y = ok.EfficientFrontier(assets=ls3, ccy='USD', n_points=10)
 
-print(pf.diversification_ratio)
+print(y.mdp_points)
