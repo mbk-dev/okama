@@ -95,11 +95,13 @@ def test_get_tangency_portfolio(init_efficient_frontier):
 
 
 @mark.frontier
-def test_most_diversified_portfolio(init_efficient_frontier):
-    dic = init_efficient_frontier.most_diversified_portfolio
+def test_get_most_diversified_portfolio_global(init_efficient_frontier):
+    dic = init_efficient_frontier.get_most_diversified_portfolio()
     dic_expected = {
-        'Weights': np.asarray([0.5811911230126667, 0.41880887698733327]),
-        'Mean_return': 0.3590477401318455,
+        'SPY.US': 0.5811911230126665,
+        'SBMX.MOEX': 0.41880887698733327,
+        'Mean return': 0.147345849732854,
+        'CAGR': 0.14303531962607208,
         'Risk': 0.10193153231742957,
         'Diversification ratio': 1.3203141067677615
     }
@@ -107,6 +109,21 @@ def test_most_diversified_portfolio(init_efficient_frontier):
     df_expected = pd.Series(dic_expected)
     assert_series_equal(df, df_expected, rtol=1e-03)
 
+
+@mark.frontier
+def test_get_most_diversified_portfolio(init_efficient_frontier):
+    dic = init_efficient_frontier.get_most_diversified_portfolio(target_return=0.13, monthly_return=False)
+    dic_expected = {
+        'SPY.US': 0.7772116006495302,
+        'SBMX.MOEX': 0.22278839935046985,
+        'Mean return': 0.13000000306630777,
+        'CAGR': 0.1258096704274465,
+        'Risk': 0.09988773745239889,
+        'Diversification ratio': 1.2385358051048263
+    }
+    df = pd.Series(dic)
+    df_expected = pd.Series(dic_expected)
+    assert_series_equal(df, df_expected, rtol=1e-03)
 
 
 @mark.frontier
