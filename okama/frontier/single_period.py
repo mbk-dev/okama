@@ -279,10 +279,11 @@ class EfficientFrontier(AssetList):
         >>> ef.get_tangency_portfolio(rf_return=0.02)  # risk free rate of return is 2%
         {'Weights': array([3.41138555e-01, 1.90819582e-17, 6.58861445e-01]), 'Mean_return': 0.13457274320732382, 'Risk': 0.19563856367290783}
         """
+        ror = self.assets_ror
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
-        def objective_function(w, ror):
+        def objective_function(w):
             # Sharpe ratio
             mean_return_monthly = Frame.get_portfolio_mean_return(w, ror)
             risk_monthly = Frame.get_portfolio_risk(w, ror)
@@ -295,7 +296,6 @@ class EfficientFrontier(AssetList):
         weights = minimize(
             objective_function,
             init_guess,
-            args=(self.assets_ror,),
             method="SLSQP",
             options={"disp": False},
             constraints=(weights_sum_to_1,),
@@ -406,18 +406,19 @@ class EfficientFrontier(AssetList):
         >>> ef.optimize_return(option='max')
         {'Weights': array([8.00000000e-01, 5.48172618e-16, 2.00000000e-01]), 'Mean_return_monthly': 0.008894299999999997, 'Risk_monthly': 0.035570987973869726}
         """
+        ror = self.assets_ror
         n = self.assets_ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
         # Set the objective function
         if option == "max":
 
-            def objective_function(w, ror):
+            def objective_function(w):
                 month_return_value = Frame.get_portfolio_mean_return(w, ror)
                 return -month_return_value
 
         elif option == "min":
 
-            def objective_function(w, ror):
+            def objective_function(w):
                 month_return_value = Frame.get_portfolio_mean_return(w, ror)
                 return month_return_value
 
@@ -428,7 +429,6 @@ class EfficientFrontier(AssetList):
         weights = minimize(
             objective_function,
             init_guess,
-            args=(self.assets_ror,),
             method="SLSQP",
             constraints=(weights_sum_to_1,),
             bounds=self.bounds,
@@ -438,7 +438,7 @@ class EfficientFrontier(AssetList):
             },  # 1e-06 is not enough to optimize monthly returns
         )
         if weights.success:
-            portfolio_risk = Frame.get_portfolio_risk(weights.x, self.assets_ror)
+            portfolio_risk = Frame.get_portfolio_risk(weights.x, ror)
             if option.lower() == "max":
                 optimized_return = -weights.fun
             else:
