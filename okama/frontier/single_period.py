@@ -310,11 +310,13 @@ class EfficientFrontier(AssetList):
         else:
             raise RecursionError("No solutions where found")
 
-    @property
-    def most_diversified_portfolio(self) -> dict:
+    def get_most_diversified_portfolio(self,
+                                       target_return: Optional[float] = None,
+                                       monthly_return: bool = False,
+                                       ) -> dict:
         """
-        Calculate assets weights, risk, return and diversification ratio for the most diversified portfolio within
-        given bounds.
+        Calculate assets weights, risk, return and Diversification ratio for the most diversified portfolio given
+        the target return within given bounds.
 
         The most diversified portfolio has the largest Diversification Ratio.
 
@@ -324,18 +326,46 @@ class EfficientFrontier(AssetList):
         Returns
         -------
         dict
-             Weights of assets, risk and return of the tangency portfolio.
+             Weights of assets, risk and return of the most diversified portfolio.
+
+        Parameters
+        ----------
+        target_return : float, optional
+            Rate of return value. The optimization process looks for a portfolio with the target_return
+            and largest Diversification ratio. If not sepcifed global most diversified portfolio is obtained.
+            Target return value can be in monthly or annual values depending on 'monthly_return' option.
+        monthly_return : bool, default False
+            Defines whether to use rate of return monthly (True) or annual (False) values.
 
         Examples
         --------
         >>> ls4 = ['SPY.US', 'AGG.US', 'VNQ.US', 'GLD.US']
-        >>> x = ok.EfficientFrontier(assets=ls4, ccy='USD')
-        >>> x.most_diversified_portfolio
-        {'Weights': array([0.19612726, 0.64973055, 0.02009631, 0.13404587]),
-        'Mean_return': 0.195910690912235,
+        >>> x = ok.EfficientFrontier(assets=ls4, ccy='USD', last_date='2021-12')
+        >>> x.get_most_diversified_portfolio()  # get a global most diversified portfolio
+        {'SPY.US': 0.19612726258395477,
+        'AGG.US': 0.649730553241489,
+        'VNQ.US': 0.020096313783052246,
+        'GLD.US': 0.13404587039150392,
+        'Mean return': 0.0637820844415733,
+        'CAGR': 0.062355715886719176,
         'Risk': 0.05510135025563423,
         'Diversification ratio': 1.5665720501693001}
+
+        It is possible to get the most diversified portfolio for a given target rate of return.
+        Set `monthly_return=False` to use annual values for the rate of return.
+
+        >> x.get_most_diversified_portfolio(target_return=0.10, monthly_return=False)
+        {'SPY.US': 0.3389762570274293,
+        'AGG.US': 0.12915657041748244,
+        'VNQ.US': 0.15083042115027034,
+        'GLD.US': 0.3810367514048179,
+        'Mean return': 0.10000000151051025,
+        'CAGR': 0.09370688842211439,
+        'Risk': 0.11725067815643951,
+        'Diversification ratio': 1.4419864802150442}
         """
+        if (not monthly_return) and (target_return is not None):
+            target_return = Float.get_monthly_return_from_annual(target_return)
         ror = self.assets_ror
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
@@ -353,26 +383,40 @@ class EfficientFrontier(AssetList):
             portfolio_risk_monthly = portfolio_ror.std()
 
             objective_function.annual_risk = Float.annualize_risk(portfolio_risk_monthly, portfolio_mean_return_monthly)
-            objective_function.annual_mean_return = Float.annualize_return(portfolio_risk_monthly)
+            objective_function.annual_mean_return = Float.annualize_return(portfolio_mean_return_monthly)
             return - assets_sigma_weighted_sum / objective_function.annual_risk
 
         # construct the constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
+        return_is_target = {
+            "type": "eq",
+            "fun": lambda weights: target_return - Frame.get_portfolio_mean_return(weights, ror),
+        }
+        constraints = (weights_sum_to_1,) if target_return is None else (weights_sum_to_1, return_is_target)
+
+        # set optimizer
         weights = minimize(
             objective_function,
             init_guess,
             method="SLSQP",
             options={"disp": False},
-            constraints=(weights_sum_to_1,),
+            constraints=constraints,
             bounds=self.bounds,
         )
         if weights.success:
-            return {
-                "Weights": weights.x,
-                "Mean_return": objective_function.annual_mean_return,
-                "Risk": objective_function.annual_risk,
-                "Diversification ratio": - weights.fun
-            }
+            # CAGR calculation
+            portfolio_return_ts = Frame.get_portfolio_return_ts(weights.x, ror)
+            cagr = Frame.get_cagr(portfolio_return_ts)
+            if not self.labels_are_tickers:
+                asset_labels = list(self.names.values())
+            else:
+                asset_labels = self.symbols
+            point = {x: y for x, y in zip(asset_labels, weights.x)}
+            point["Mean return"] = objective_function.annual_mean_return
+            point["CAGR"] = cagr
+            point["Risk"] = objective_function.annual_risk
+            point["Diversification ratio"] = - weights.fun
+            return point
         else:
             raise RecursionError("No solutions where found")
 
@@ -494,7 +538,12 @@ class EfficientFrontier(AssetList):
         --------
         >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'], last_date='2021-07')
         >>> ef.minimize_risk(target_return=0.044, monthly_return=False)
-        {'SPY.US': 0.03817252986735185, 'AGG.US': 0.9618274701326482, 'GLD.US': 0.0, 'Mean return': 0.04400000000000004, 'CAGR': 0.04335075344214023, 'Risk': 0.037003608635098856}
+        {'SPY.US': 0.03817252986735185,
+        'AGG.US': 0.9618274701326482,
+        'GLD.US': 0.0,
+        'Mean return': 0.04400000000000004,
+        'CAGR': 0.04335075344214023,
+        'Risk': 0.037003608635098856}
         """
         if not monthly_return:
             target_return = Float.get_monthly_return_from_annual(target_return)
