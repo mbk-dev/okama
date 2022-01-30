@@ -1,4 +1,5 @@
 import pytest
+from pandas._testing import assert_series_equal
 from pytest import approx
 from pytest import mark
 
@@ -91,6 +92,21 @@ def test_get_tangency_portfolio(init_efficient_frontier):
     expected = [0.409596, 0.590404]
     assert_allclose(dic["Weights"], expected, atol=1e-2)
     assert dic['Mean_return'] == approx(0.1627, rel=1e-2)
+
+
+@mark.frontier
+def test_most_diversified_portfolio(init_efficient_frontier):
+    dic = init_efficient_frontier.most_diversified_portfolio
+    dic_expected = {
+        'Weights': np.asarray([0.5811911230126667, 0.41880887698733327]),
+        'Mean_return': 0.3590477401318455,
+        'Risk': 0.10193153231742957,
+        'Diversification ratio': 1.3203141067677615
+    }
+    df = pd.Series(dic)
+    df_expected = pd.Series(dic_expected)
+    assert_series_equal(df, df_expected, rtol=1e-03)
+
 
 
 @mark.frontier

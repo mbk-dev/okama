@@ -310,6 +310,72 @@ class EfficientFrontier(AssetList):
         else:
             raise RecursionError("No solutions where found")
 
+    @property
+    def most_diversified_portfolio(self) -> dict:
+        """
+        Calculate assets weights, risk, return and diversification ratio for the most diversified portfolio within
+        given bounds.
+
+        The most diversified portfolio has the largest Diversification Ratio.
+
+        The Diversification Ratio is the ratio of the weighted average of assets risks divided by the portfolio risk.
+        In this case risk is the annuilized standatd deviation for the rate of return .
+
+        Returns
+        -------
+        dict
+             Weights of assets, risk and return of the tangency portfolio.
+
+        Examples
+        --------
+        >>> ls4 = ['SPY.US', 'AGG.US', 'VNQ.US', 'GLD.US']
+        >>> x = ok.EfficientFrontier(assets=ls4, ccy='USD')
+        >>> x.most_diversified_portfolio
+        {'Weights': array([0.19612726, 0.64973055, 0.02009631, 0.13404587]),
+        'Mean_return': 0.195910690912235,
+        'Risk': 0.05510135025563423,
+        'Diversification ratio': 1.5665720501693001}
+        """
+        ror = self.assets_ror
+        n = self.assets_ror.shape[1]
+        init_guess = np.repeat(1 / n, n)
+
+        def objective_function(w):
+            # Diversification Ratio
+            assets_risk = ror.std()
+            assets_mean_return = self.assets_ror.mean()
+            assets_annualized_risk = Float.annualize_risk(assets_risk, assets_mean_return)
+            weights = np.asarray(w)
+            assets_sigma_weighted_sum = weights.T @ assets_annualized_risk
+
+            portfolio_ror = Frame.get_portfolio_return_ts(w, ror)
+            portfolio_mean_return_monthly = Frame.get_portfolio_mean_return(w, ror)
+            portfolio_risk_monthly = portfolio_ror.std()
+
+            objective_function.annual_risk = Float.annualize_risk(portfolio_risk_monthly, portfolio_mean_return_monthly)
+            objective_function.annual_mean_return = Float.annualize_return(portfolio_risk_monthly)
+            return - assets_sigma_weighted_sum / objective_function.annual_risk
+
+        # construct the constraints
+        weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
+        weights = minimize(
+            objective_function,
+            init_guess,
+            method="SLSQP",
+            options={"disp": False},
+            constraints=(weights_sum_to_1,),
+            bounds=self.bounds,
+        )
+        if weights.success:
+            return {
+                "Weights": weights.x,
+                "Mean_return": objective_function.annual_mean_return,
+                "Risk": objective_function.annual_risk,
+                "Diversification ratio": - weights.fun
+            }
+        else:
+            raise RecursionError("No solutions where found")
+
     def optimize_return(self, option: str = "max") -> dict:
         """
         Find a portfolio with global max or min for the rate of return within given bounds.

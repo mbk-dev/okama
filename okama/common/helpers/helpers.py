@@ -90,7 +90,7 @@ class Float:
 
 class Frame:
     """
-    Group of methods using DataFrame (or Series) input.
+    Group of methods using DataFrame (or Series) inputs.
     """
 
     # Rate of return metrics

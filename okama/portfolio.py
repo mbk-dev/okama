@@ -1932,7 +1932,7 @@ class Portfolio(ListMaker):
         Calculate Diversification Ratio for the portfolio.
 
         The Diversification Ratio is the ratio of the weighted average of assets risks divided by the portfolio risk.
-        In this case risk is the annuilized rate of return standatd deviation.
+        In this case risk is the annuilized standatd deviation for the rate of return .
 
         Returns
         -------
