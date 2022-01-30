@@ -35,6 +35,7 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
 - Rebalanced portfolio optimization with constraints (multi-period Efficient Frontier)
 - Monte Carlo Simulations for financial assets and investment portfolios
 - Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
+- Different financial ratios: Sharpe ratio, Sortino ratio, Diversification ratio 
 - Forecasting models according to normal and lognormal distribution
 - Testing distribution on historical data
 - Dividend yield and other dividend indicators for stocks
@@ -162,7 +163,7 @@ The official documentation is hosted on readthedocs.org: [https://okama.readthed
 
 The plan for _okama_ is to add more functions that will be useful to investors and asset managers.
 
-- Add Sharpe, Sortino and Diversification ratios to EfficientFrontier, EfficientFrontierReb and Portfolio classes.
+- Add Omega ratio to EfficientFrontier, EfficientFrontierReb and Portfolio classes.
 - Add withdrawals as an attribute of Portfolio class.
 - Add Black-Litterman asset allocation 
 - Accelerate optimization for multi-period Efficient Frontier: minimize_risk and maximize_risk methods of EfficientFrontierReb class.
