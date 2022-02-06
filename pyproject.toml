@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "okama"
+version = "1.1.2"
+description = "Investment portfolio and stocks analyzing tools for Python with free historical data."
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pandas = ">=0.25.0"
+numpy = ">=1.16.5"
+scipy = ">=0.14.0"
+matplotlib = "^3.5.1"
+requests = "^2.27.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.0.0"
+nbmake = "^1.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
