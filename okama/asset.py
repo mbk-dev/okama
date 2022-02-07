@@ -3,10 +3,9 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 
-from .common.helpers.helpers import Frame
-from .settings import default_ticker, PeriodLength, _MONTHS_PER_YEAR
-from .api.data_queries import QueryData
-from .api.namespaces import get_assets_namespaces
+from okama import settings
+from okama.api import data_queries, namespaces
+from okama.common.helpers import helpers
 
 
 class Asset:
@@ -19,21 +18,21 @@ class Asset:
         Symbol is an asset ticker with namespace after dot. The default value is "SPY.US" (SPDR S&P 500 ETF Trust).
     """
 
-    def __init__(self, symbol: str = default_ticker):
+    def __init__(self, symbol: str = settings.default_ticker):
         if symbol is None or len(str(symbol).strip()) == 0:
             raise ValueError("Symbol can not be empty")
         self._symbol = str(symbol).strip()
         self._check_namespace()
         self._get_symbol_data(symbol)
-        self.ror: pd.Series = QueryData.get_ror(symbol)
+        self.ror: pd.Series = data_queries.QueryData.get_ror(symbol)
         self.first_date: pd.Timestamp = self.ror.index[0].to_timestamp()
         self.last_date: pd.Timestamp = self.ror.index[-1].to_timestamp()
         self.period_length: float = round(
             (self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1
         )
-        self.pl = PeriodLength(
-            self.ror.shape[0] // _MONTHS_PER_YEAR,
-            self.ror.shape[0] % _MONTHS_PER_YEAR,
+        self.pl = settings.PeriodLength(
+            self.ror.shape[0] // settings._MONTHS_PER_YEAR,
+            self.ror.shape[0] % settings._MONTHS_PER_YEAR,
         )
 
     def __repr__(self):
@@ -53,14 +52,14 @@ class Asset:
 
     def _check_namespace(self):
         namespace = self._symbol.split(".", 1)[-1]
-        allowed_namespaces = get_assets_namespaces()
+        allowed_namespaces = namespaces.get_assets_namespaces()
         if namespace not in allowed_namespaces:
             raise ValueError(
                 f"{namespace} is not in allowed assets namespaces: {allowed_namespaces}"
             )
 
     def _get_symbol_data(self, symbol) -> None:
-        x = QueryData.get_symbol_info(symbol)
+        x = data_queries.QueryData.get_symbol_info(symbol)
         self.ticker: str = x["code"]
         self.name: str = x["name"]
         self.country: str = x["country"]
@@ -94,7 +93,7 @@ class Asset:
         float, None
             Live price of the asset. Returns None if not defined.
         """
-        return QueryData.get_live_price(self.symbol)
+        return data_queries.QueryData.get_live_price(self.symbol)
 
     @property
     def close_daily(self):
@@ -106,7 +105,7 @@ class Asset:
         Series
             Time series of close price historical data (daily).
         """
-        return QueryData.get_close(self.symbol, period='D')
+        return data_queries.QueryData.get_close(self.symbol, period='D')
 
     @property
     def close_monthly(self):
@@ -127,7 +126,7 @@ class Asset:
         >>> x.close_monthly.plot()
         >>> plt.show()
         """
-        return Frame.change_period_to_month(self.close_daily)
+        return helpers.Frame.change_period_to_month(self.close_daily)
 
     @property
     def adj_close(self):
@@ -143,7 +142,7 @@ class Asset:
         Series
             Time series of adjusted close price historical data (daily).
         """
-        return QueryData.get_adj_close(self.symbol, period='D')
+        return data_queries.QueryData.get_adj_close(self.symbol, period='D')
 
     @property
     def dividends(self) -> pd.Series:
@@ -171,7 +170,7 @@ class Asset:
         2021-03-25    0.5264
         Freq: D, Name: VNQ.US, Length: 66, dtype: float64
         """
-        div = QueryData.get_dividends(self.symbol)
+        div = data_queries.QueryData.get_dividends(self.symbol)
         if div.empty:
             # Zero time series for assets where dividend yield is not defined.
             index = pd.date_range(
@@ -188,5 +187,5 @@ class Asset:
         Return NAV time series (monthly) for mutual funds.
         """
         if self.exchange == "PIF":
-            return QueryData.get_nav(self.symbol)
+            return data_queries.QueryData.get_nav(self.symbol)
         return np.nan
