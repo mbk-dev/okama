@@ -6,12 +6,14 @@ import pandas as pd
 
 from scipy.optimize import minimize
 
-from .. import AssetList
-from ..common.helpers.helpers import Float, Frame, Rebalance
-from ..settings import _MONTHS_PER_YEAR
+from okama import asset_list, settings
+from okama.common.helpers import helpers
 
 
-class EfficientFrontierReb(AssetList):
+
+
+
+class EfficientFrontierReb(asset_list.AssetList):
     """
     Efficient Frontier with multi-period optimization.
 
@@ -266,7 +268,7 @@ class EfficientFrontierReb(AssetList):
             ts = Rebalance.return_ts(w, ror, period=period)
             mean_return = ts.mean()
             risk = ts.std()
-            return Float.annualize_risk(risk=risk, mean_return=mean_return)
+            return helpers.Float.annualize_risk(risk=risk, mean_return=mean_return)
 
         # construct the constraints
         weights_sum_to_1 = {'type': 'eq',
@@ -319,8 +321,8 @@ class EfficientFrontierReb(AssetList):
         """
         returns = Rebalance.return_ts(self.gmv_annual_weights, self.assets_ror, period=self.rebalancing_period)
         return (
-            Float.annualize_risk(returns.std(), returns.mean()),
-            (returns + 1.0).prod() ** (_MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
+            helpers.Float.annualize_risk(returns.std(), returns.mean()),
+            (returns + 1.0).prod() ** (settings._MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
         )
 
     @property
@@ -373,8 +375,8 @@ class EfficientFrontierReb(AssetList):
         portfolio_risk = portfolio_ts.std()
         point = {
             'Weights': weights.x,
-            'CAGR': (1 - weights.fun) ** (_MONTHS_PER_YEAR / self.assets_ror.shape[0]) - 1,
-            'Risk': Float.annualize_risk(portfolio_risk, mean_return),
+            'CAGR': (1 - weights.fun) ** (settings._MONTHS_PER_YEAR / self.assets_ror.shape[0]) - 1,
+            'Risk': helpers.Float.annualize_risk(portfolio_risk, mean_return),
             'Risk_monthly': portfolio_risk
         }
         return point
@@ -382,7 +384,7 @@ class EfficientFrontierReb(AssetList):
     def _get_cagr(self, weights):
         ts = Rebalance.return_ts(weights, self.assets_ror, period=self.rebalancing_period)
         acc_return = (ts + 1.).prod() - 1.
-        return (1. + acc_return) ** (_MONTHS_PER_YEAR / ts.shape[0]) - 1.
+        return (1. + acc_return) ** (settings._MONTHS_PER_YEAR / ts.shape[0]) - 1.
 
     def minimize_risk(self, target_value: float) -> Dict[str, float]:
         """
@@ -414,7 +416,7 @@ class EfficientFrontierReb(AssetList):
             ts = Rebalance.return_ts(w, self.assets_ror, period=self.rebalancing_period)
             risk_monthly = ts.std()
             mean_return = ts.mean()
-            return Float.annualize_risk(risk_monthly, mean_return)
+            return helpers.Float.annualize_risk(risk_monthly, mean_return)
 
         # construct the constraints
         bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples for Weights constraints
@@ -468,7 +470,7 @@ class EfficientFrontierReb(AssetList):
             ts = Rebalance.return_ts(w, self.assets_ror, period=self.rebalancing_period)
             risk_monthly = ts.std()
             mean_return = ts.mean()
-            result = - Float.annualize_risk(risk_monthly, mean_return)
+            result = - helpers.Float.annualize_risk(risk_monthly, mean_return)
             return result
 
         # construct the constraints
@@ -602,7 +604,7 @@ class EfficientFrontierReb(AssetList):
         ticker_with_largest_risk = self.assets_ror.std().nlargest(1, keep='first').index.values[0]
         max_std_monthly = self.assets_ror.std().max()
         mean_return = self.assets_ror.loc[:, ticker_with_largest_risk].mean()
-        max_std = Float.annualize_risk(max_std_monthly, mean_return)
+        max_std = helpers.Float.annualize_risk(max_std_monthly, mean_return)
         return np.linspace(min_std, max_std, self.n_points)
 
     @property
@@ -761,7 +763,7 @@ class EfficientFrontierReb(AssetList):
         >>> ax.legend()
         >>> plt.show()
         """
-        weights_df = Float.get_random_weights(n, self.assets_ror.shape[1])
+        weights_df = helpers.Float.get_random_weights(n, self.assets_ror.shape[1])
 
         # Portfolio risk and cagr for each set of weights
         portfolios_ror = weights_df.aggregate(Rebalance.return_ts, ror=self.assets_ror, period=self.rebalancing_period)
@@ -769,7 +771,7 @@ class EfficientFrontierReb(AssetList):
         for _, data in portfolios_ror.iterrows():
             risk_monthly = data.std()
             mean_return = data.mean()
-            risk = Float.annualize_risk(risk_monthly, mean_return)
+            risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
             cagr = Frame.get_cagr(data)
             row = {
                 'Risk': risk,

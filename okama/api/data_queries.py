@@ -6,18 +6,17 @@ import json
 import pandas as pd
 import numpy as np
 
-from .api_methods import API
-from .namespaces import no_dividends_namespaces
+from okama.api import api_methods, namespaces
 
 
 class QueryData:
     """
-    Set of methods to get symbols data from API.
+    Set of methods to get symbols data from api_methods.API.
     """
 
     @staticmethod
     def get_symbol_info(symbol: str) -> Dict[str, str]:
-        json_input = API.get_symbol_info(symbol)
+        json_input = api_methods.API.get_symbol_info(symbol)
         return json.loads(json_input)
 
     @staticmethod
@@ -40,11 +39,11 @@ class QueryData:
         symbol: str, first_date: str = "1913-01-01", last_date: str = "2100-01-01"
     ) -> pd.Series:
         """
-        Requests API for Macroeconomic indicators time series (monthly data).
+        Requests api_methods.API for Macroeconomic indicators time series (monthly data).
         - Inflation time series
         - Bank rates time series
         """
-        csv_input = API.get_macro(
+        csv_input = api_methods.API.get_macro(
             symbol=symbol, first_date=first_date, last_date=last_date
         )
         return QueryData.csv_to_series(csv_input, period="M")
@@ -57,9 +56,9 @@ class QueryData:
         period="M",
     ) -> pd.Series:
         """
-        Requests API for rate of return time series.
+        Requests api_methods.API for rate of return time series.
         """
-        csv_input = API.get_ror(
+        csv_input = api_methods.API.get_ror(
             symbol=symbol, first_date=first_date, last_date=last_date, period=period
         )
         return QueryData.csv_to_series(csv_input, period)
@@ -74,7 +73,7 @@ class QueryData:
         """
         NAV time series for funds (works for PIF namespace only).
         """
-        csv_input = API.get_nav(
+        csv_input = api_methods.API.get_nav(
             symbol=symbol, first_date=first_date, last_date=last_date, period=period
         )
         return QueryData.csv_to_series(csv_input, period=period)
@@ -89,7 +88,7 @@ class QueryData:
         """
         Gets 'close' time series for a ticker.
         """
-        csv_input = API.get_close(
+        csv_input = api_methods.API.get_close(
             symbol=symbol, first_date=first_date, last_date=last_date, period=period
         )
         return QueryData.csv_to_series(csv_input, period)
@@ -104,7 +103,7 @@ class QueryData:
         """
         Gets 'adjusted close' time series for a ticker.
         """
-        csv_input = API.get_adjusted_close(
+        csv_input = api_methods.API.get_adjusted_close(
             symbol=symbol, first_date=first_date, last_date=last_date, period=period
         )
         return QueryData.csv_to_series(csv_input, period)
@@ -116,8 +115,8 @@ class QueryData:
         """
         Dividends time series daily data (dividend payment day should be considered).
         """
-        if symbol.split(".", 1)[-1] not in no_dividends_namespaces():
-            csv_input = API.get_dividends(
+        if symbol.split(".", 1)[-1] not in namespaces.no_dividends_namespaces():
+            csv_input = api_methods.API.get_dividends(
                 symbol, first_date=first_date, last_date=last_date
             )
             ts = QueryData.csv_to_series(csv_input, period="D")
@@ -129,5 +128,5 @@ class QueryData:
 
     @staticmethod
     def get_live_price(symbol: str) -> float:
-        price = API.get_live_price(symbol)
+        price = api_methods.API.get_live_price(symbol)
         return float(price)

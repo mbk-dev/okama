@@ -8,7 +8,7 @@ from numpy.testing import assert_allclose
 import pandas as pd
 
 import okama as ok
-from .conftest import data_folder
+from tests import conftest
 
 
 @mark.frontier
@@ -143,7 +143,7 @@ def test_plot_cml(init_efficient_frontier):
 @mark.frontier
 def test_plot_transition_map(init_efficient_frontier_three_assets):
     axes_data = np.array(init_efficient_frontier_three_assets.plot_transition_map(cagr=False).lines[0].get_data())
-    values = np.genfromtxt(data_folder / 'test_transition_map.csv', delimiter=',')
+    values = np.genfromtxt(conftest.data_folder / 'test_transition_map.csv', delimiter=',')
     assert axes_data.shape == values.shape
     assert axes_data[0, 0] == approx(values[0, 0], abs=1e-1)
 
@@ -151,5 +151,5 @@ def test_plot_transition_map(init_efficient_frontier_three_assets):
 @mark.frontier
 def test_plot_pair_ef(init_efficient_frontier_three_assets):
     axes_data = init_efficient_frontier_three_assets.plot_pair_ef(tickers='names').lines[0].get_data()
-    values = np.genfromtxt(data_folder / 'test_plot_pair_ef.csv', delimiter=',')
+    values = np.genfromtxt(conftest.data_folder / 'test_plot_pair_ef.csv', delimiter=',')
     assert_allclose(axes_data, values, rtol=1e-1, atol=1e-1)

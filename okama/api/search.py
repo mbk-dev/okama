@@ -3,14 +3,13 @@ from typing import Optional
 
 import pandas as pd
 
-from .api_methods import API
-from .namespaces import symbols_in_namespace
+from okama.api import api_methods, namespaces
 
 
 def search(search_string: str, namespace: Optional[str] = None, response_format: str = 'frame') -> json:
     # search for string in a single namespace
     if namespace:
-        df = symbols_in_namespace(namespace.upper())
+        df = namespaces.symbols_in_namespace(namespace.upper())
         condition1 = df['name'].str.contains(search_string, case=False)
         condition2 = df['ticker'].str.contains(search_string, case=False)
         condition3 = df['isin'].str.contains(search_string, case=False)
@@ -22,7 +21,7 @@ def search(search_string: str, namespace: Optional[str] = None, response_format:
         else:
             raise ValueError('response_format must be "json" or "frame"')
     # search for string in all namespaces
-    string_response = API.search(search_string)
+    string_response = api_methods.API.search(search_string)
     json_response = json.loads(string_response)
     if response_format.lower() == 'frame':
         df = pd.DataFrame(json_response[1:], columns=json_response[0])
