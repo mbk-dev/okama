@@ -85,7 +85,7 @@ The latest development version can be installed directly from GitHub:
 ```python
 import okama as ok
 
-x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XETR'], ccy='USD')
+x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XFRA'], ccy='USD')
 x  # all examples are for Jupyter Notebook/iPython. For raw Python interpreter use 'print(x)' instead.
 
 ```
