@@ -113,24 +113,24 @@ class ListMaker(ABC):
         currencies: Dict[str, str] = {}
         df = pd.DataFrame()
         for i, x in enumerate(ls):
-            asset = x if hasattr(x, 'symbol') and hasattr(x, 'ror') else asset.Asset(x)
-            if asset.pl.years == 0 and asset.pl.months <= 2:
-                raise ValueError(f'{asset.symbol} period length is {asset.pl.months}. It should be at least 3 months.')
-            asset_first_date = max(asset.first_date, pd.to_datetime(first_date)) if first_date else asset.first_date
-            asset_last_date = min(asset.last_date, pd.to_datetime(last_date)) if last_date else asset.last_date
+            asset_item = x if hasattr(x, 'symbol') and hasattr(x, 'ror') else asset.Asset(x)
+            if asset_item.pl.years == 0 and asset_item.pl.months <= 2:
+                raise ValueError(f'{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months.')
+            asset_first_date = max(asset_item.first_date, pd.to_datetime(first_date)) if first_date else asset_item.first_date
+            asset_last_date = min(asset_item.last_date, pd.to_datetime(last_date)) if last_date else asset_item.last_date
             if helpers.Date.get_difference_in_months(asset_last_date, asset_first_date).n < 2:
-                raise ValueError(f'{asset.symbol} historical data period length is too short. '
+                raise ValueError(f'{asset_item.symbol} historical data period length is too short. '
                                  f'It must be at least 3 months.')
-            asset_obj_dict[asset.symbol] = asset
+            asset_obj_dict[asset_item.symbol] = asset_item
             if i == 0:  # required to use pd.concat below (df should not be empty).
-                df = self._make_ror(asset, currency_name)
+                df = self._make_ror(asset_item, currency_name)
             else:
-                new = self._make_ror(asset, currency_name)
+                new = self._make_ror(asset_item, currency_name)
                 df = pd.concat([df, new], axis=1, join="inner", copy="false")
-            currencies[asset.symbol] = asset.currency
-            names[asset.symbol] = asset.name
-            first_dates[asset.symbol] = asset.first_date
-            last_dates[asset.symbol] = asset.last_date
+            currencies[asset_item.symbol] = asset_item.currency
+            names[asset_item.symbol] = asset_item.name
+            first_dates[asset_item.symbol] = asset_item.first_date
+            last_dates[asset_item.symbol] = asset_item.last_date
         first_dates[currency_name] = currency_first_date
         last_dates[currency_name] = currency_last_date
         currencies["asset list"] = currency_name

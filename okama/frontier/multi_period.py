@@ -221,7 +221,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         # Set the objective function
         def objective_function(w):
-            risk = Rebalance.return_ts(w, ror, period=period).std()
+            risk = helpers.Rebalance.return_ts(w, ror, period=period).std()
             return risk
 
         # construct the constraints
@@ -265,7 +265,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         # Set the objective function
         def objective_function(w):
-            ts = Rebalance.return_ts(w, ror, period=period)
+            ts = helpers.Rebalance.return_ts(w, ror, period=period)
             mean_return = ts.mean()
             risk = ts.std()
             return helpers.Float.annualize_risk(risk=risk, mean_return=mean_return)
@@ -289,10 +289,10 @@ class EfficientFrontierReb(asset_list.AssetList):
         Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
         """
         return (
-            Rebalance.return_ts(
+            helpers.Rebalance.return_ts(
                 self.gmv_monthly_weights, self.assets_ror, period=self.rebalancing_period
             ).std(),
-            Rebalance.return_ts(
+            helpers.Rebalance.return_ts(
                 self.gmv_monthly_weights, self.assets_ror, period=self.rebalancing_period
             ).mean(),
         )
@@ -319,7 +319,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         >>> frontier.gmv_annual_values
         (0.03695845106087943, 0.04418318557516887)
         """
-        returns = Rebalance.return_ts(self.gmv_annual_weights, self.assets_ror, period=self.rebalancing_period)
+        returns = helpers.Rebalance.return_ts(self.gmv_annual_weights, self.assets_ror, period=self.rebalancing_period)
         return (
             helpers.Float.annualize_risk(returns.std(), returns.mean()),
             (returns + 1.0).prod() ** (settings._MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
@@ -356,7 +356,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         # Set the objective function
         def objective_function(w):
             # Accumulated return for rebalanced portfolio time series
-            objective_function.returns = Rebalance.return_ts(w, ror, period=period)
+            objective_function.returns = helpers.Rebalance.return_ts(w, ror, period=period)
             accumulated_return = (objective_function.returns + 1.).prod() - 1.
             return - accumulated_return
 
@@ -382,7 +382,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         return point
 
     def _get_cagr(self, weights):
-        ts = Rebalance.return_ts(weights, self.assets_ror, period=self.rebalancing_period)
+        ts = helpers.Rebalance.return_ts(weights, self.assets_ror, period=self.rebalancing_period)
         acc_return = (ts + 1.).prod() - 1.
         return (1. + acc_return) ** (settings._MONTHS_PER_YEAR / ts.shape[0]) - 1.
 
@@ -413,7 +413,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         def objective_function(w):
             # annual risk
-            ts = Rebalance.return_ts(w, self.assets_ror, period=self.rebalancing_period)
+            ts = helpers.Rebalance.return_ts(w, self.assets_ror, period=self.rebalancing_period)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             return helpers.Float.annualize_risk(risk_monthly, mean_return)
@@ -467,7 +467,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         def objective_function(w):
             # annual risk
-            ts = Rebalance.return_ts(w, self.assets_ror, period=self.rebalancing_period)
+            ts = helpers.Rebalance.return_ts(w, self.assets_ror, period=self.rebalancing_period)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             result = - helpers.Float.annualize_risk(risk_monthly, mean_return)
@@ -507,8 +507,8 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         Find an asset with max CAGR.
         """
-        max_asset_cagr = Frame.get_cagr(self.assets_ror).max()
-        ticker_with_largest_cagr = Frame.get_cagr(self.assets_ror).nlargest(1, keep='first').index.values[0]
+        max_asset_cagr = helpers.Frame.get_cagr(self.assets_ror).max()
+        ticker_with_largest_cagr = helpers.Frame.get_cagr(self.assets_ror).nlargest(1, keep='first').index.values[0]
         return {'max_asset_cagr': max_asset_cagr,
                 'ticker_with_largest_cagr': ticker_with_largest_cagr,
                 'list_position': self.symbols.index(ticker_with_largest_cagr)
@@ -523,13 +523,13 @@ class EfficientFrontierReb(asset_list.AssetList):
         Global max return point should not be an asset.
         """
         tolerance = 0.01  # assets CAGR should be less than max CAGR with certain tolerance
-        cagr = Frame.get_cagr(self.assets_ror)
+        cagr = helpers.Frame.get_cagr(self.assets_ror)
         global_max_cagr_is_not_asset = (cagr < self.global_max_return_portfolio['CAGR'] * (1 - tolerance)).all()
         if global_max_cagr_is_not_asset:
             condition = self.risk_annual.values > self.global_max_return_portfolio['Risk']
             ror_selected = self.assets_ror.loc[:, condition]
             if not ror_selected.empty:
-                cagr_selected = Frame.get_cagr(ror_selected)
+                cagr_selected = helpers.Frame.get_cagr(ror_selected)
                 max_asset_cagr = cagr_selected.max()
                 ticker_with_largest_cagr = cagr_selected.nlargest(1, keep='first').index.values[0]
                 return {'max_asset_cagr': max_asset_cagr,
@@ -555,7 +555,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         Full range of CAGR values (from min to max).
         """
         if self.full_frontier:
-            min_cagr = Frame.get_cagr(self.assets_ror).min()
+            min_cagr = helpers.Frame.get_cagr(self.assets_ror).min()
         else:
             min_cagr = self.gmv_annual_values[1]
         max_cagr = self.global_max_return_portfolio['CAGR']
@@ -701,7 +701,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 end_time = time.time()
                 if self.verbose:
                     print(f"right EF point #{i + 1}/{n} is done in {end_time - start_time:.2f} sec.")
-        df = Frame.change_columns_order(df, ['Risk', 'CAGR'])
+        df = helpers.Frame.change_columns_order(df, ['Risk', 'CAGR'])
         main_end_time = time.time()
         if self.verbose:
             print(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
@@ -766,13 +766,13 @@ class EfficientFrontierReb(asset_list.AssetList):
         weights_df = helpers.Float.get_random_weights(n, self.assets_ror.shape[1])
 
         # Portfolio risk and cagr for each set of weights
-        portfolios_ror = weights_df.aggregate(Rebalance.return_ts, ror=self.assets_ror, period=self.rebalancing_period)
+        portfolios_ror = weights_df.aggregate(helpers.Rebalance.return_ts, ror=self.assets_ror, period=self.rebalancing_period)
         random_portfolios = pd.DataFrame()
         for _, data in portfolios_ror.iterrows():
             risk_monthly = data.std()
             mean_return = data.mean()
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
-            cagr = Frame.get_cagr(data)
+            cagr = helpers.Frame.get_cagr(data)
             row = {
                 'Risk': risk,
                 'CAGR': cagr
