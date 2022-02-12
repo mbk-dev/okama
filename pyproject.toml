@@ -1,8 +1,30 @@
 [tool.poetry]
 name = "okama"
 version = "1.1.2"
-description = "Investment portfolio and stocks analyzing tools for Python with free historical data."
-authors = ["Your Name <you@example.com>"]
+description = "Modern Portfolio Theory (MPT) Python package"
+authors = ["Sergey Kikevich <sergey@rostsber.ru>"]
+license = "MIT"
+homepage = "https://okama.io"
+repository = "https://github.com/mbk-dev/okama"
+documentation = "https://okama.readthedocs.io/en/master"
+readme = "README.md"
+keywords = ["finance", "investments", "efficient frontier", "python", "optimization"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"

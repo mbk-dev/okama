@@ -2,3 +2,4 @@
 /docs/source/
 /docs/stubs/
 !/main_notebook.ipynb
+dist/
