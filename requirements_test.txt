@@ -1,3 +1,0 @@
-pytest
-nbmake
-pandas >= 1.2.0
