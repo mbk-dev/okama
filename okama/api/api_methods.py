@@ -2,7 +2,7 @@ import requests
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
-from ..settings import default_ticker, default_namespace
+from okama import settings
 
 
 class API:
@@ -33,7 +33,7 @@ class API:
     def connect(
         cls,
         endpoint: str = endpoint_ror,
-        symbol: str = default_ticker,
+        symbol: str = settings.default_ticker,
         first_date: str = "1900-01-01",
         last_date: str = "2100-01-01",
         period: str = "d",
@@ -64,7 +64,7 @@ class API:
     @classmethod
     def get_ror(
         cls,
-        symbol: str = default_ticker,
+        symbol: str = settings.default_ticker,
         first_date: str = "1900-01-01",
         last_date: str = "2100-01-01",
         period: str = "m",
@@ -80,7 +80,7 @@ class API:
     @classmethod
     def get_adjusted_close(
         cls,
-        symbol: str = default_ticker,
+        symbol: str = settings.default_ticker,
         first_date: str = "1900-01-01",
         last_date: str = "2100-01-01",
         period: str = "m",
@@ -96,7 +96,7 @@ class API:
     @classmethod
     def get_close(
         cls,
-        symbol: str = default_ticker,
+        symbol: str = settings.default_ticker,
         first_date: str = "1900-01-01",
         last_date: str = "2100-01-01",
         period: str = "m",
@@ -112,7 +112,7 @@ class API:
     @classmethod
     def get_dividends(
         cls,
-        symbol: str = default_ticker,
+        symbol: str = settings.default_ticker,
         first_date: str = "1900-01-01",
         last_date: str = "2100-01-01",
     ):
@@ -126,7 +126,7 @@ class API:
     @classmethod
     def get_nav(
         cls,
-        symbol: str = default_ticker,
+        symbol: str = settings.default_ticker,
         first_date: str = "1900-01-01",
         last_date: str = "2100-01-01",
         period: str = "m",
@@ -142,7 +142,7 @@ class API:
     @classmethod
     def get_macro(
         cls,
-        symbol: str = default_ticker,
+        symbol: str = settings.default_ticker,
         first_date: str = "1900-01-01",
         last_date: str = "2100-01-01",
     ):
@@ -162,7 +162,7 @@ class API:
         return cls.connect(endpoint=cls.endpoint_namespaces, symbol="")
 
     @classmethod
-    def get_symbols_in_namespace(cls, namespace: str = default_namespace):
+    def get_symbols_in_namespace(cls, namespace: str = settings.default_namespace):
         return cls.connect(endpoint=cls.endpoint_namespaces, symbol=namespace)
 
     @classmethod

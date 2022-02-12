@@ -8,7 +8,7 @@ from pandas.testing import assert_series_equal, assert_frame_equal
 
 import okama as ok
 
-from .conftest import data_folder
+from tests import conftest
 
 
 def test_initialization_failing():
@@ -54,7 +54,7 @@ def test_ror_rebalance(
 
 
 def test_ror(portfolio_rebalanced_month):
-    portfolio_sample = pd.read_pickle(data_folder / "portfolio.pkl")
+    portfolio_sample = pd.read_pickle(conftest.data_folder / "portfolio.pkl")
     actual = portfolio_rebalanced_month.ror
     assert_series_equal(actual, portfolio_sample)
 
@@ -206,13 +206,13 @@ def test_cumulative_return_error(portfolio_no_inflation, period, real, exception
 
 def test_describe_inflation(portfolio_rebalanced_month):
     description = portfolio_rebalanced_month.describe()
-    description_sample = pd.read_pickle(data_folder / "portfolio_description.pkl")
+    description_sample = pd.read_pickle(conftest.data_folder / "portfolio_description.pkl")
     assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False)
 
 
 def test_describe_no_inflation(portfolio_no_inflation):
     description = portfolio_no_inflation.describe()
-    description_sample = pd.read_pickle(data_folder / "portfolio_description_no_inflation.pkl")
+    description_sample = pd.read_pickle(conftest.data_folder / "portfolio_description_no_inflation.pkl")
     assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False)
 
 

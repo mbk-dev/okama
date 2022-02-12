@@ -2,12 +2,10 @@ from typing import List, Optional, Union
 
 from matplotlib import pyplot as plt
 
-from .asset_list import AssetList
-from .common.helpers.helpers import Float
-from .settings import default_ticker
+from okama import settings, asset_list
 
 
-class Plots(AssetList):
+class Plots(asset_list.AssetList):
     """
     Plotting tools collection to use with financial charts (Efficient Frontier, Assets and Transition map etc.)
 
@@ -37,7 +35,7 @@ class Plots(AssetList):
 
     def __init__(
         self,
-        assets: List[str] = [default_ticker],
+        assets: List[str] = [settings.default_ticker],
         first_date: Optional[str] = None,
         last_date: Optional[str] = None,
         ccy: str = "USD",
