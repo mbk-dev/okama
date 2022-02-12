@@ -1,11 +1,13 @@
 import json
 from typing import Optional
+from functools import lru_cache
 
 import pandas as pd
 
 from okama.api import api_methods, namespaces
 
 
+@lru_cache()
 def search(search_string: str, namespace: Optional[str] = None, response_format: str = 'frame') -> json:
     # search for string in a single namespace
     if namespace:
