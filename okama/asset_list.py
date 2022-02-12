@@ -4,12 +4,11 @@ import numpy as np
 import pandas as pd
 
 import okama.common.helpers.ratios as ratios
+from okama.common.helpers import helpers
+from okama.common import make_asset_list
 
-from .common.helpers.helpers import Frame, Float, Date, Index
-from .common.make_asset_list import ListMaker
 
-
-class AssetList(ListMaker):
+class AssetList(make_asset_list.ListMaker):
     """
     The list of financial assets implementation.
 
@@ -75,7 +74,7 @@ class AssetList(ListMaker):
         >>> plt.show()
         """
         df = self._add_inflation()
-        return Frame.get_wealth_indexes(df)
+        return helpers.Frame.get_wealth_indexes(df)
 
     @property
     def risk_monthly(self) -> pd.Series:
@@ -151,7 +150,7 @@ class AssetList(ListMaker):
         """
         risk = self.assets_ror.std()
         mean_return = self.assets_ror.mean()
-        return Float.annualize_risk(risk, mean_return)
+        return helpers.Float.annualize_risk(risk, mean_return)
 
     @property
     def semideviation_monthly(self) -> pd.Series:
@@ -185,7 +184,7 @@ class AssetList(ListMaker):
         SHV.US     0.000384
         dtype: float64
         """
-        return Frame.get_semideviation(self.assets_ror)
+        return helpers.Frame.get_semideviation(self.assets_ror)
 
     @property
     def semideviation_annual(self) -> pd.Series:
@@ -219,7 +218,7 @@ class AssetList(ListMaker):
         SHV.US     0.000560
         dtype: float64
         """
-        return Frame.get_semideviation(self.assets_ror) * 12 ** 0.5
+        return helpers.Frame.get_semideviation(self.assets_ror) * 12 ** 0.5
 
     def get_var_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
         """
@@ -259,7 +258,7 @@ class AssetList(ListMaker):
         Name: VaR, dtype: float64
         """
         df = self.get_rolling_cumulative_return(window=time_frame).loc[:, self.symbols]
-        return Frame.get_var_historic(df, level)
+        return helpers.Frame.get_var_historic(df, level)
 
     def get_cvar_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
         """
@@ -300,7 +299,7 @@ class AssetList(ListMaker):
         Name: VaR, dtype: float64
         """
         df = self.get_rolling_cumulative_return(window=time_frame).loc[:, self.symbols]
-        return Frame.get_cvar_historic(df, level)
+        return helpers.Frame.get_cvar_historic(df, level)
 
     @property
     def drawdowns(self) -> pd.DataFrame:
@@ -330,7 +329,7 @@ class AssetList(ListMaker):
         >>> al.drawdowns.plot()
         >>> plt.show()
         """
-        return Frame.get_drawdowns(self.assets_ror)
+        return helpers.Frame.get_drawdowns(self.assets_ror)
 
     @property
     def recovery_periods(self) -> pd.Series:
@@ -432,14 +431,14 @@ class AssetList(ListMaker):
             dt = self.first_date
         else:
             self._validate_period(period)
-            dt = Date.subtract_years(dt0, period)
-        cagr = Frame.get_cagr(df[dt:])
+            dt = helpers.Date.subtract_years(dt0, period)
+        cagr = helpers.Frame.get_cagr(df[dt:])
         if real:
             if not hasattr(self, "inflation"):
                 raise ValueError(
                     "Real CAGR is not defined. Set inflation=True in AssetList to calculate it."
                 )
-            mean_inflation = Frame.get_cagr(self.inflation_ts[dt:])
+            mean_inflation = helpers.Frame.get_cagr(self.inflation_ts[dt:])
             cagr = (1.0 + cagr) / (1.0 + mean_inflation) - 1.0
             cagr.drop(self.inflation, inplace=True)
         return cagr
@@ -492,7 +491,7 @@ class AssetList(ListMaker):
         df = self._add_inflation()
         if real:
             df = self._make_real_return_time_series(df)
-        return Frame.get_rolling_fn(df, window=window, fn=Frame.get_cagr)
+        return helpers.Frame.get_rolling_fn(df, window=window, fn=helpers.Frame.get_cagr)
 
     def get_cumulative_return(
         self, period: Union[str, int, None] = None, real: bool = False
@@ -545,16 +544,16 @@ class AssetList(ListMaker):
             dt = str(year)
         else:
             self._validate_period(period)
-            dt = Date.subtract_years(dt0, period)
+            dt = helpers.Date.subtract_years(dt0, period)
 
-        cr = Frame.get_cumulative_return(df[dt:])
+        cr = helpers.Frame.get_cumulative_return(df[dt:])
         if real:
             if not hasattr(self, "inflation"):
                 raise ValueError(
                     "Real cumulative return is not defined (no inflation information is available)."
                     "Set inflation=True in AssetList to calculate it."
                 )
-            cumulative_inflation = Frame.get_cumulative_return(self.inflation_ts[dt:])
+            cumulative_inflation = helpers.Frame.get_cumulative_return(self.inflation_ts[dt:])
             cr = (1.0 + cr) / (1.0 + cumulative_inflation) - 1.0
             cr.drop(self.inflation, inplace=True)
         return cr
@@ -602,8 +601,8 @@ class AssetList(ListMaker):
         df = self._add_inflation()
         if real:
             df = self._make_real_return_time_series(df)
-        return Frame.get_rolling_fn(
-            df, window=window, fn=Frame.get_cumulative_return, window_below_year=True
+        return helpers.Frame.get_rolling_fn(
+            df, window=window, fn=helpers.Frame.get_cumulative_return, window_below_year=True
         )
 
     @property
@@ -625,7 +624,7 @@ class AssetList(ListMaker):
         >>> al.annual_return_ts.plot(kind='bar')
         >>> plt.show()
         """
-        return Frame.get_annual_return_ts_from_monthly(self.assets_ror)
+        return helpers.Frame.get_annual_return_ts_from_monthly(self.assets_ror)
 
     def describe(
         self, years: Tuple[int, ...] = (1, 5, 10), tickers: bool = True
@@ -697,7 +696,7 @@ class AssetList(ListMaker):
         # CAGR for a list of periods
         if self.pl.years >= 1:
             for i in years:
-                dt = Date.subtract_years(dt0, i)
+                dt = helpers.Date.subtract_years(dt0, i)
                 if dt >= self.first_date:
                     row = self.get_cagr(period=i).to_dict()
                 else:
@@ -756,10 +755,10 @@ class AssetList(ListMaker):
         # rename columns
         if hasattr(self, "inflation"):
             description.rename(columns={self.inflation: "inflation"}, inplace=True)
-            description = Frame.change_columns_order(
+            description = helpers.Frame.change_columns_order(
                 description, ["inflation"], position="last"
             )
-        description = Frame.change_columns_order(
+        description = helpers.Frame.change_columns_order(
             description, ["property", "period"], position="first"
         )
         if not tickers:
@@ -792,7 +791,7 @@ class AssetList(ListMaker):
         """
         df = self._add_inflation()
         mean = df.mean()
-        return Float.annualize_return(mean)
+        return helpers.Float.annualize_return(mean)
 
     @property
     def real_mean_return(self) -> pd.Series:
@@ -823,8 +822,8 @@ class AssetList(ListMaker):
         df = pd.concat(
             [self.assets_ror, self.inflation_ts], axis=1, join="inner", copy="false"
         )
-        infl_mean = Float.annualize_return(self.inflation_ts.values.mean())
-        ror_mean = Float.annualize_return(df.loc[:, self.symbols].mean())
+        infl_mean = helpers.Float.annualize_return(self.inflation_ts.values.mean())
+        ror_mean = helpers.Float.annualize_return(df.loc[:, self.symbols].mean())
         return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
 
     @property
@@ -932,7 +931,7 @@ class AssetList(ListMaker):
         ]  # Slice the last year for full dividends
         growth_ts.replace([np.inf, -np.inf, np.nan], 0, inplace=True)  # replace possible nan and inf
         dt0 = self.last_date
-        dt = Date.subtract_years(dt0, period)
+        dt = helpers.Date.subtract_years(dt0, period)
         return ((growth_ts[dt:] + 1.0).prod()) ** (1 / period) - 1.0
 
     # index methods
@@ -958,10 +957,10 @@ class AssetList(ListMaker):
         >>> x.tracking_difference.plot()
         >>> plt.show()
         """
-        accumulated_return = Frame.get_wealth_indexes(
+        accumulated_return = helpers.Frame.get_wealth_indexes(
             self.assets_ror
         )  # we don't need inflation here
-        return Index.tracking_difference(accumulated_return)
+        return helpers.Index.tracking_difference(accumulated_return)
 
     @property
     def tracking_difference_annualized(self) -> pd.DataFrame:
@@ -988,7 +987,7 @@ class AssetList(ListMaker):
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
         >>> x.tracking_difference_annualized.plot()
         """
-        return Index.tracking_difference_annualized(self.tracking_difference)
+        return helpers.Index.tracking_difference_annualized(self.tracking_difference)
 
     @property
     def tracking_difference_annual(self) -> pd.DataFrame:
@@ -1014,8 +1013,8 @@ class AssetList(ListMaker):
         result = pd.DataFrame()
         for x in self.assets_ror.resample('Y'):
             df = x[1]
-            wealth_index = Frame.get_wealth_indexes(df)
-            row = Index.tracking_difference(wealth_index).iloc[[-1]]
+            wealth_index = helpers.Frame.get_wealth_indexes(df)
+            row = helpers.Index.tracking_difference(wealth_index).iloc[[-1]]
             result = result.append(row, ignore_index=False)
         result.index = result.index.asfreq('Y')
         return result
@@ -1042,7 +1041,7 @@ class AssetList(ListMaker):
         >>> x.tracking_error.plot()
         >>> plt.show()
         """
-        return Index.tracking_error(self.assets_ror)
+        return helpers.Index.tracking_error(self.assets_ror)
 
     @property
     def index_corr(self) -> pd.DataFrame:
@@ -1069,7 +1068,7 @@ class AssetList(ListMaker):
         >>> sp.index_corr.plot()
         >>> plt.show()
         """
-        return Index.cov_cor(self.assets_ror, fn="corr")
+        return helpers.Index.cov_cor(self.assets_ror, fn="corr")
 
     def index_rolling_corr(self, window: int = 60) -> pd.DataFrame:
         """
@@ -1099,7 +1098,7 @@ class AssetList(ListMaker):
         >>> sp.index_rolling_corr(window=24).plot()
         >>> plt.show()
         """
-        return Index.rolling_cov_cor(self.assets_ror, window=window, fn="corr")
+        return helpers.Index.rolling_cov_cor(self.assets_ror, window=window, fn="corr")
 
     @property
     def index_beta(self) -> pd.DataFrame:
@@ -1137,7 +1136,7 @@ class AssetList(ListMaker):
         >>> sp.index_beta.plot()
         >>> plt.show()
         """
-        return Index.beta(self.assets_ror)
+        return helpers.Index.beta(self.assets_ror)
 
     # distributions
     @property
@@ -1175,7 +1174,7 @@ class AssetList(ListMaker):
         >>> al.skewness.plot()
         >>> plt.show()
         """
-        return Frame.skewness(self.assets_ror)
+        return helpers.Frame.skewness(self.assets_ror)
 
     def skewness_rolling(self, window: int = 60) -> pd.DataFrame:
         """
@@ -1217,7 +1216,7 @@ class AssetList(ListMaker):
         >>> al.skewness_rolling(window=12*5).plot()
         >>> plt.show()
         """
-        return Frame.skewness_rolling(self.assets_ror, window=window)
+        return helpers.Frame.skewness_rolling(self.assets_ror, window=window)
 
     @property
     def kurtosis(self) -> pd.DataFrame:
@@ -1252,7 +1251,7 @@ class AssetList(ListMaker):
         >>> al.kurtosis.plot()
         >>> plt.show()
         """
-        return Frame.kurtosis(self.assets_ror)
+        return helpers.Frame.kurtosis(self.assets_ror)
 
     def kurtosis_rolling(self, window: int = 60):
         """
@@ -1292,7 +1291,7 @@ class AssetList(ListMaker):
         >>> al.kurtosis_rolling(window=12*5).plot()
         >>> plt.show()
         """
-        return Frame.kurtosis_rolling(self.assets_ror, window=window)
+        return helpers.Frame.kurtosis_rolling(self.assets_ror, window=window)
 
     @property
     def jarque_bera(self) -> pd.DataFrame:
@@ -1333,7 +1332,7 @@ class AssetList(ListMaker):
         Null hypothesis (H0) is rejected for FTSE NAREIT Index (FNER.INDX) as Jarque-Bera test shows very small p-value
         and large statistic.
         """
-        return Frame.jarque_bera_dataframe(self.assets_ror)
+        return helpers.Frame.jarque_bera_dataframe(self.assets_ror)
 
     def kstest(self, distr: str = "norm") -> pd.DataFrame:
         """
@@ -1363,7 +1362,7 @@ class AssetList(ListMaker):
 
         H0 is not rejected for EDV ETF and it seems to have lognormal distribution.
         """
-        return Frame.kstest_dataframe(self.assets_ror, distr=distr)
+        return helpers.Frame.kstest_dataframe(self.assets_ror, distr=distr)
 
     def get_sharpe_ratio(self, rf_return: float = 0) -> pd.Series:
         """
@@ -1423,7 +1422,7 @@ class AssetList(ListMaker):
         dtype: float64
         """
         mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
-        semideviation = Frame.get_below_target_semideviation(ror=self.assets_ror, t_return=t_return) * 12 ** 0.5
+        semideviation = helpers.Frame.get_below_target_semideviation(ror=self.assets_ror, t_return=t_return) * 12 ** 0.5
         return ratios.get_sortino_ratio(
             pf_return=mean_return,
             t_return=t_return,
