@@ -2,7 +2,7 @@
 name = "okama"
 version = "1.1.2"
 description = "Modern Portfolio Theory (MPT) Python package"
-authors = ["Sergey Kikevich <sergey@rostsber.ru>"]
+authors = ["Sergey Kikevich <chilango74@gmail.com>"]
 license = "MIT"
 homepage = "https://okama.io"
 repository = "https://github.com/mbk-dev/okama"
@@ -26,16 +26,21 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.7, <3.10"
 pandas = ">=0.25.0"
-numpy = ">=1.16.5"
 scipy = ">=0.14.0"
 matplotlib = "^3.5.1"
 requests = "^2.27.1"
+# A list of all of the optional dependencies included in the below `extras`.
+nbmake = { version = "^1.2", optional = true }
+jupyter = { version = "^1.0.0", optional = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.0"
-nbmake = "^1.2"
+
+[tool.poetry.extras]
+dev = ["nbmake"]
+jupyter = ["jupyter"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
