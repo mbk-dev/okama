@@ -19,6 +19,7 @@ Main features:
 - Matplotlib visualization scripts for the Efficient Frontier, Transition map and assets risk / return performance
 
 """
+from importlib_metadata import version
 
 from okama.asset import Asset
 from okama.asset_list import AssetList
@@ -38,4 +39,4 @@ from okama.api.namespaces import (
 from okama.common.helpers.helpers import Float, Frame, Rebalance, Date
 import okama.settings
 
-__version__ = "1.1.2"
+__version__ = version('okama')
