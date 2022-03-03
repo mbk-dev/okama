@@ -684,7 +684,7 @@ class EfficientFrontierReb(AssetList):
         for i, target_cagr in enumerate(self._target_cagr_range_left):
             start_time = time.time()
             row = self.minimize_risk(target_cagr)
-            df = df.append(row, ignore_index=True)
+            df = df.concat(row, ignore_index=True)
             end_time = time.time()
             if self.verbose:
                 print(f"left EF point #{i + 1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
@@ -695,7 +695,7 @@ class EfficientFrontierReb(AssetList):
             for i, target_cagr in enumerate(range_right):
                 start_time = time.time()
                 row = self._maximize_risk(target_cagr)
-                df = df.append(row, ignore_index=True)
+                df = df.concat(row, ignore_index=True)
                 end_time = time.time()
                 if self.verbose:
                     print(f"right EF point #{i + 1}/{n} is done in {end_time - start_time:.2f} sec.")
@@ -775,5 +775,5 @@ class EfficientFrontierReb(AssetList):
                 'Risk': risk,
                 'CAGR': cagr
             }
-            random_portfolios = random_portfolios.append(row, ignore_index=True)
+            random_portfolios = random_portfolios.concat(row, ignore_index=True)
         return random_portfolios

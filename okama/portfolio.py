@@ -1113,7 +1113,7 @@ class Portfolio(ListMaker):
         ytd_return = self.get_cumulative_return(period="YTD")
         row = ytd_return.to_dict()
         row.update(period="YTD", property="compound return")
-        description = description.append(row, ignore_index=True)
+        description = description.concat(row, ignore_index=True)
         # CAGR for a list of periods
         if self.pl.years >= 1:
             for i in years:
@@ -1127,22 +1127,22 @@ class Portfolio(ListMaker):
                         else {self.symbol: None}
                     )
                 row.update(period=f"{i} years", property="CAGR")
-                description = description.append(row, ignore_index=True)
+                description = description.concat(row, ignore_index=True)
             # CAGR for full period
             row = self.get_cagr(period=None).to_dict()
             row.update(period=self._pl_txt, property="CAGR",)
-            description = description.append(row, ignore_index=True)
+            description = description.concat(row, ignore_index=True)
             # Dividend Yield
             value = self.dividend_yield.iloc[-1]
             row = {self.symbol: value}
             row.update(period="LTM", property=f"Dividend yield",)
-            description = description.append(row, ignore_index=True)
+            description = description.concat(row, ignore_index=True)
         # risk (standard deviation)
         row = {self.symbol: self.risk_annual}
         row.update(
             period=self._pl_txt, property="Risk"
         )
-        description = description.append(row, ignore_index=True)
+        description = description.concat(row, ignore_index=True)
         # CVAR
         if self.pl.years >= 1:
             row = {self.symbol: self.get_cvar_historic()}
@@ -1150,21 +1150,21 @@ class Portfolio(ListMaker):
                 period=self._pl_txt,
                 property="CVAR",
             )
-            description = description.append(row, ignore_index=True)
+            description = description.concat(row, ignore_index=True)
         # max drawdowns
         row = {self.symbol: self.drawdowns.min()}
         row.update(
             period=self._pl_txt,
             property="Max drawdown",
         )
-        description = description.append(row, ignore_index=True)
+        description = description.concat(row, ignore_index=True)
         # max drawdowns dates
         row = {self.symbol: self.drawdowns.idxmin()}
         row.update(
             period=self._pl_txt,
             property="Max drawdown date",
         )
-        description = description.append(row, ignore_index=True)
+        description = description.concat(row, ignore_index=True)
         if hasattr(self, "inflation"):
             description.rename(columns={self.inflation: "inflation"}, inplace=True)
         description = Frame.change_columns_order(
