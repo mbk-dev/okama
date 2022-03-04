@@ -1,6 +1,8 @@
 import okama as ok
 
-ls3 = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
-y = ok.EfficientFrontier(assets=ls3, ccy='USD', n_points=10)
+x = ok.AssetList(assets=['NSEI.INDX'])
+print(x.first_date)
+print(x.period_length)
 
-print(y.mdp_points)
+y = ok.Asset('INRUSD.FX')
+print(y.first_date)

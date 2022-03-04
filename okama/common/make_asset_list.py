@@ -112,25 +112,30 @@ class ListMaker(ABC):
         names: Dict[str, str] = {}
         currencies: Dict[str, str] = {}
         df = pd.DataFrame()
+        input_first_date = pd.to_datetime(first_date) if first_date else None
+        input_last_date = pd.to_datetime(last_date) if last_date else None
         for i, x in enumerate(ls):
             asset_item = x if hasattr(x, 'symbol') and hasattr(x, 'ror') else asset.Asset(x)
+            asset_item_currency = asset.Asset(symbol=f"{asset_item.currency}{currency_name}.FX")
             if asset_item.pl.years == 0 and asset_item.pl.months <= 2:
                 raise ValueError(f'{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months.')
-            asset_first_date = max(asset_item.first_date, pd.to_datetime(first_date)) if first_date else asset_item.first_date
-            asset_last_date = min(asset_item.last_date, pd.to_datetime(last_date)) if last_date else asset_item.last_date
+            asset_first_dates_list = [asset_item.first_date, asset_item_currency.first_date, input_first_date]
+            asset_last_date_list = [asset_item.last_date, asset_item_currency.last_date, input_last_date]
+            asset_first_date = max(x for x in asset_first_dates_list if x is not None)
+            asset_last_date = min(x for x in asset_last_date_list if x is not None)
             if helpers.Date.get_difference_in_months(asset_last_date, asset_first_date).n < 2:
                 raise ValueError(f'{asset_item.symbol} historical data period length is too short. '
                                  f'It must be at least 3 months.')
             asset_obj_dict[asset_item.symbol] = asset_item
             if i == 0:  # required to use pd.concat below (df should not be empty).
-                df = self._make_ror(asset_item, currency_name)
+                df = self._make_ror(asset_item, asset_item_currency, currency_name)
             else:
-                new = self._make_ror(asset_item, currency_name)
+                new = self._make_ror(asset_item, asset_item_currency, currency_name)
                 df = pd.concat([df, new], axis=1, join="inner", copy="false")
             currencies[asset_item.symbol] = asset_item.currency
             names[asset_item.symbol] = asset_item.name
-            first_dates[asset_item.symbol] = asset_item.first_date
-            last_dates[asset_item.symbol] = asset_item.last_date
+            first_dates[asset_item.symbol] = asset_first_date
+            last_dates[asset_item.symbol] = asset_last_date
         first_dates[currency_name] = currency_first_date
         last_dates[currency_name] = currency_last_date
         currencies["asset list"] = currency_name
@@ -152,25 +157,20 @@ class ListMaker(ABC):
             ror=df,
         )
 
-    def _make_ror(self, asset, currency_name):
+    def _make_ror(self, asset: asset.Asset, asset_currency_item: asset.Asset, list_currency_name: str) -> pd.Series:
         return (
             asset.ror
-            if asset.currency == currency_name
-            else self._adjust_ror_to_currency(
-                returns=asset.ror,
-                asset_currency=asset.currency,
-                list_currency=currency_name,
-            )
+            if asset.currency == list_currency_name
+            else self._adjust_ror_to_currency(returns=asset.ror, asset_currency_item=asset_currency_item)
         )
 
     @classmethod
-    def _adjust_ror_to_currency(cls, returns: pd.Series, asset_currency: str, list_currency: str) -> pd.Series:
+    def _adjust_ror_to_currency(cls, returns: pd.Series, asset_currency_item: asset.Asset) -> pd.Series:
         """
         Adjust returns time series to a certain currency.
         """
-        currency = asset.Asset(symbol=f"{asset_currency}{list_currency}.FX")
         asset_mult = returns + 1.0
-        currency_mult = currency.ror + 1.0
+        currency_mult = asset_currency_item.ror + 1.0
         # join dataframes to have the same Time Series Index
         df = pd.concat([asset_mult, currency_mult], axis=1, join="inner", copy="false")
         currency_mult = df.iloc[:, -1]
