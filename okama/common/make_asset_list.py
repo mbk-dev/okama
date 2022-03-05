@@ -167,9 +167,9 @@ class ListMaker(ABC):
             ror=df,
         )
 
-    def _make_ror(self, list_asset: asset.Asset, base_currency_name: str) -> dict:
+    def _make_ror(self, list_asset: asset.Asset, base_currency_name: str) -> pd.Series:
         """
-        Make aseet reate of return time series and get historical date range of the asset currency.
+        Make aseet reate of return time series.
         """
         asset_currency_name = list_asset.currency
         if asset_currency_name == base_currency_name:
