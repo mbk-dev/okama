@@ -5,11 +5,11 @@ import json
 
 import pytest
 
-from okama.api.search import search
+from okama.api import search
 
 
 def test_search_namespace_json():
-    x = search(
+    x = search.search(
         "aeroflot",
         namespace="MOEX",
         response_format="json",
@@ -18,7 +18,7 @@ def test_search_namespace_json():
 
 
 def test_search_namespace_frame():
-    x = search(
+    x = search.search(
         "aeroflot",
         namespace="MOEX",
         response_format="frame",
@@ -27,7 +27,7 @@ def test_search_namespace_frame():
 
 
 def test_search_all_json():
-    x = search(
+    x = search.search(
         "lkoh",
         response_format="json",
     )
@@ -35,7 +35,7 @@ def test_search_all_json():
 
 
 def test_search_all_frame():
-    x = search(
+    x = search.search(
         "lkoh",
         response_format="frame",
     )
@@ -44,4 +44,4 @@ def test_search_all_frame():
 
 def test_search_error():
     with pytest.raises(ValueError):
-        search("arg", response_format='txt')
+        search.search("arg", response_format='txt')

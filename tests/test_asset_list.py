@@ -8,7 +8,7 @@ from pytest import mark
 
 import okama as ok
 
-from .conftest import data_folder
+from tests import conftest
 
 
 @mark.asset_list
@@ -42,10 +42,10 @@ class TestAssetList:
         assert self.asset_list_with_portfolio.tickers == ['pf1', 'RUB', 'MCFTR']
 
     def test_ror(self):
-        asset_list_sample = pd.read_pickle(data_folder / "asset_list.pkl")
-        asset_list_lt_sample = pd.read_pickle(data_folder / "asset_list_lt.pkl")
-        currencies_sample = pd.read_pickle(data_folder / "currencies.pkl")
-        real_estate_sample = pd.read_pickle(data_folder / "real_estate.pkl")
+        asset_list_sample = pd.read_pickle(conftest.data_folder / "asset_list.pkl")
+        asset_list_lt_sample = pd.read_pickle(conftest.data_folder / "asset_list_lt.pkl")
+        currencies_sample = pd.read_pickle(conftest.data_folder / "currencies.pkl")
+        real_estate_sample = pd.read_pickle(conftest.data_folder / "real_estate.pkl")
         assert_frame_equal(self.asset_list.assets_ror, asset_list_sample)
         assert_frame_equal(self.asset_list_lt.assets_ror, asset_list_lt_sample)
         assert_frame_equal(self.currencies.assets_ror, currencies_sample)
@@ -251,10 +251,10 @@ class TestAssetList:
 
     def test_describe(self):
         description = self.asset_list.describe(tickers=False).iloc[:-2, :]  # last 2 rows have fresh lastdate
-        description_sample = pd.read_pickle(data_folder / "asset_list_describe.pkl").iloc[:-2, :]
+        description_sample = pd.read_pickle(conftest.data_folder / "asset_list_describe.pkl").iloc[:-2, :]
         cols = list(description_sample.columns.values)
         description = description[cols]  # columns order should not be an issue
-        assert_frame_equal(description, description_sample, check_dtype=False, check_column_type = False)
+        assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False)
 
     def test_dividend_yield(self):
         assert self.spy.assets_dividend_yield.iloc[-1, 0] == approx(0.0125, abs=1e-3)

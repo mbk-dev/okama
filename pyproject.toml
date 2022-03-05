@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "okama"
+version = "1.1.3"
+description = "Investment portfolio analyzing & optimization tools"
+authors = ["Sergey Kikevich <chilango74@gmail.com>"]
+license = "MIT"
+homepage = "https://okama.io"
+repository = "https://github.com/mbk-dev/okama"
+documentation = "https://okama.readthedocs.io/en/master"
+readme = "README.md"
+keywords = ["finance", "investments", "efficient frontier", "python", "optimization"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.7, <3.10"
+pandas = ">=0.25.0"
+scipy = ">=0.14.0"
+matplotlib = "^3.5.1"
+requests = "^2.27.1"
+# required for python 3.7 only for 3.8+ can use `from importlib.metadata import version`
+importlib-metadata = "^4.11.1"
+# A list of all of the optional dependencies included in the below `extras`.
+sphinx = { version = "^3", optional = true }
+nbmake = { version = "^1.2", optional = true }
+jupyter = { version = "^1.0.0", optional = true }
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.0.0"
+
+[tool.poetry.extras]
+dev = ["nbmake"]
+jupyter = ["jupyter"]
+docs = ["sphinx"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

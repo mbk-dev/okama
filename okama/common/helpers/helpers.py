@@ -5,13 +5,13 @@ import pandas as pd
 import numpy as np
 import scipy.stats
 
-from okama.settings import _MONTHS_PER_YEAR
+from okama import settings
 
 
 def check_rolling_window(
     window: int, ror: Union[pd.Series, pd.DataFrame], window_below_year: bool = False
 ):
-    if not window_below_year and window < _MONTHS_PER_YEAR:
+    if not window_below_year and window < settings._MONTHS_PER_YEAR:
         raise ValueError("window size should be at least 1 year")
     if window > ror.shape[0]:
         raise ValueError("window size is more than data history depth")
@@ -30,12 +30,12 @@ class Float:
         """
         Gets value of monthly return for a given annual return.
         """
-        return (1.0 + annual_return) ** (1 / _MONTHS_PER_YEAR) - 1.0
+        return (1.0 + annual_return) ** (1 / settings._MONTHS_PER_YEAR) - 1.0
 
     @staticmethod
     def annualize_return(
         rate_of_return: Union[float, pd.Series],
-        periods_per_year: int = _MONTHS_PER_YEAR,
+        periods_per_year: int = settings._MONTHS_PER_YEAR,
     ) -> Union[float, pd.Series]:
         """
         Annualizes a return.
@@ -53,8 +53,8 @@ class Float:
         Works with DataFrame inputs (in math.sqrt is not used).
         """
         return (
-            (risk ** 2 + (1 + mean_return) ** 2) ** _MONTHS_PER_YEAR
-            - (1 + mean_return) ** (_MONTHS_PER_YEAR * 2)
+            (risk ** 2 + (1 + mean_return) ** 2) ** settings._MONTHS_PER_YEAR
+            - (1 + mean_return) ** (settings._MONTHS_PER_YEAR * 2)
         ) ** 0.5
 
     @staticmethod
@@ -139,7 +139,7 @@ class Frame:
             return pd.Series(
                 {x: None for x in ror.columns}
             )  # CAGR is not defined for time periods < 1 year
-        return ((ror + 1.0).prod()) ** (_MONTHS_PER_YEAR / ror.shape[0]) - 1.0
+        return ((ror + 1.0).prod()) ** (settings._MONTHS_PER_YEAR / ror.shape[0]) - 1.0
 
     @staticmethod
     def get_cumulative_return(
@@ -210,7 +210,7 @@ class Frame:
             rates["28.09.2018":] = rates["28.09.2018":] * (1 - penalty1)
             rates[:"28.10.2018"] = rates[:"28.10.2018"] * (1 - penalty2)
         # compensate monthly interest capitalization (okid index has it)
-        rates = ((rates + 1.0) ** (1 / _MONTHS_PER_YEAR) - 1) * 12.0
+        rates = ((rates + 1.0) ** (1 / settings._MONTHS_PER_YEAR) - 1) * 12.0
         return rates
 
     @staticmethod
@@ -224,12 +224,12 @@ class Frame:
         start_period = pd.Period(rates.index[0], freq="M")
         end_period = pd.Period(rates.index[-1], freq="M")
         rates = Frame._adjust_rates(rates, symbol)
-        for month_idx in range(_MONTHS_PER_YEAR):
-            rates_yearly = rates.values[month_idx::_MONTHS_PER_YEAR]
-            index_part = np.repeat(rates_yearly, _MONTHS_PER_YEAR)[
+        for month_idx in range(settings._MONTHS_PER_YEAR):
+            rates_yearly = rates.values[month_idx::settings._MONTHS_PER_YEAR]
+            index_part = np.repeat(rates_yearly, settings._MONTHS_PER_YEAR)[
                 : len(rates) - month_idx
             ]
-            index_part = (1 + index_part / _MONTHS_PER_YEAR).cumprod()
+            index_part = (1 + index_part / settings._MONTHS_PER_YEAR).cumprod()
             index_total = (
                 index_part if index_total is None else index_total[1:] + index_part
             )
@@ -343,7 +343,7 @@ class Frame:
         """
         # TODO: implement skewtest (from scipy)
         sk = ror.expanding(min_periods=1).skew()
-        return sk.iloc[_MONTHS_PER_YEAR:]
+        return sk.iloc[settings._MONTHS_PER_YEAR:]
 
     @staticmethod
     def skewness_rolling(
@@ -365,7 +365,7 @@ class Frame:
         Kurtosis should be close to zero for normal distribution.
         """
         kt = ror.expanding(min_periods=1).kurt()
-        return kt.iloc[_MONTHS_PER_YEAR:]
+        return kt.iloc[settings._MONTHS_PER_YEAR:]
 
     @staticmethod
     def kurtosis_rolling(ror: Union[pd.Series, pd.DataFrame], window: int = 60):
@@ -599,7 +599,7 @@ class Index:
         diff = (y + 1.0).pow(pwr, axis=0) - 1.0
         diff = np.sign(tracking_diff) * diff
         return diff.iloc[
-            _MONTHS_PER_YEAR - 1 :
+            settings._MONTHS_PER_YEAR - 1 :
         ]  # returns for the first 11 months can't be annualized
 
     @staticmethod
@@ -635,7 +635,7 @@ class Index:
         cov_matrix_ts = getattr(ror.expanding(), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
         cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
-        return cov_matrix_ts.iloc[_MONTHS_PER_YEAR:]
+        return cov_matrix_ts.iloc[settings._MONTHS_PER_YEAR:]
 
     @staticmethod
     def rolling_cov_cor(
@@ -665,5 +665,5 @@ class Index:
         """
         cov = Index.cov_cor(ror, fn="cov")
         var = ror.expanding().var().drop(columns=ror.columns[0])
-        var = var[_MONTHS_PER_YEAR:]
+        var = var[settings._MONTHS_PER_YEAR:]
         return cov / var
