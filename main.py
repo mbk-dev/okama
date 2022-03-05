@@ -1,8 +1,3 @@
 import okama as ok
 
-x = ok.AssetList(assets=['NSEI.INDX'])
-print(x.first_date)
-print(x.period_length)
-
-y = ok.Asset('INRUSD.FX')
-print(y.first_date)
+print(ok.AssetList(assets=['FXRD.MOEX'], last_date="2021-10", inflation=True))
