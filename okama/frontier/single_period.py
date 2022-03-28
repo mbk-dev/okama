@@ -703,7 +703,7 @@ class EfficientFrontier(asset_list.AssetList):
             df = pd.DataFrame(dtype="float")
             for x in target_rs:
                 row = self.minimize_risk(x, monthly_return=True)
-                df = df.append(row, ignore_index=True)
+                df = pd.concat([df, pd.DataFrame(row, index=[0])], ignore_index=True)
             df = helpers.Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
             self._ef_points = df
         return self._ef_points
@@ -774,7 +774,7 @@ class EfficientFrontier(asset_list.AssetList):
             df = pd.DataFrame(dtype="float")
             for x in target_rs:
                 row = self.get_most_diversified_portfolio(target_return=x, monthly_return=True)
-                df = df.append(row, ignore_index=True)
+                df = pd.concat([df, pd.DataFrame(row, index=[0])], ignore_index=True)
             df = helpers.Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
             self._mdp_points = df
         return self._mdp_points
@@ -854,7 +854,7 @@ class EfficientFrontier(asset_list.AssetList):
                 row = dict(Risk=risk, Return=mean_return)
             else:
                 raise ValueError('kind should be "mean" or "cagr"')
-            random_portfolios = random_portfolios.append(row, ignore_index=True)
+            random_portfolios = pd.concat([random_portfolios, pd.DataFrame(row, index=[0])], ignore_index=True)
         return random_portfolios
 
     def plot_transition_map(self, cagr: bool = True, figsize: Optional[tuple] = None) -> plt.axes:
