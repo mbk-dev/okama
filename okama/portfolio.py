@@ -1264,7 +1264,7 @@ class Portfolio(make_asset_list.ListMaker):
         The probability of getting negative result (score=0) in 1 year period for lognormal distribution.
         """
         if distr == "hist":
-            cagr_distr = self.get_rolling_cagr(years)
+            cagr_distr = self.get_rolling_cagr(years * settings._MONTHS_PER_YEAR)
         elif distr in ["norm", "lognorm"]:
             if not n:
                 n = 1000
