@@ -227,6 +227,14 @@ def test_percentile_from_history(portfolio_rebalanced_month, portfolio_no_inflat
         portfolio_short_history.percentile_history_cagr(years=1)
 
 
+@mark.parametrize(
+    "distribution, expected",
+    [("hist", 18.0), ("norm", 15.86), ("lognorm", 13.34)],
+)
+def test_percentile_inverse_cagr(portfolio_rebalanced_month, distribution, expected):
+    assert portfolio_rebalanced_month.percentile_inverse_cagr(distr=distribution, years=1, score=0, n=5000) == approx(expected, rel=1e-1)
+
+
 def test_table(portfolio_rebalanced_month):
     assert_array_equal(
         portfolio_rebalanced_month.table["ticker"].values,
