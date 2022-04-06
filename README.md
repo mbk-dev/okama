@@ -6,6 +6,8 @@
 [![License](https://img.shields.io/pypi/l/okama.svg)](https://opensource.org/licenses/MIT)
 [![Open In Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mbk-dev/okama/blob/master/examples/01%20howto.ipynb)
 
+**ATTENTION**: Please update okama to `version 1.1.5` or higher to use the latest financial API (api.okama.io)
+
 # Okama
 
 _okama_ is a library with investment portfolio analyzing & optimization tools. CFA recommendations are used in quantitative finance.
