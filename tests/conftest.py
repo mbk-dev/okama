@@ -14,6 +14,11 @@ def init_asset_spy():
 
 
 @pytest.fixture(scope="module")
+def init_asset_eurusd():
+    return ok.Asset(symbol="EURUSD.FX")
+
+
+@pytest.fixture(scope="module")
 def init_asset_pif():
     return ok.Asset(symbol="0165-70287767.PIF")
 

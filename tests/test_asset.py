@@ -27,6 +27,11 @@ def test_usdrub(init_asset_usdrub):
     assert_series_equal(init_asset_usdrub.adj_close['2019-01': '2020-01'], adj_close_sample)
 
 
+def test_eurusd(init_asset_eurusd):
+    close_daily_sample = pd.read_pickle(conftest.data_folder / "eurusd_close_daily.pkl")
+    assert_series_equal(init_asset_eurusd.close_daily['2019-01': '2020-01'], close_daily_sample)
+
+
 def test_close_daily(init_asset_spy, init_asset_usdrub):
     assert init_asset_spy.close_daily.loc['2000-01-20'] == 144.75
 
