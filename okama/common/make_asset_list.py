@@ -480,7 +480,7 @@ class ListMaker(ABC):
         plt.autoscale(enable=True, axis="year", tight=False)
         ax.margins(.05, .1)  # increase margins on Y-axis from 5% to 10% as `annotate` moves text upwards
         m = 100 if pct_values else 1
-        ax.scatter(risks * m, returns * m)
+        ax.scatter(risks * m, returns * m, zorder=10)
         # Set the labels
         if tickers == "tickers":
             asset_labels = self.symbols

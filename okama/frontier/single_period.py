@@ -1037,7 +1037,7 @@ class EfficientFrontier(asset_list.AssetList):
         tg = self.get_tangency_portfolio(rf_return)
         fig, ax = plt.subplots(figsize=figsize)
         ax.plot(ef.Risk, ef['Mean return'], color='black')
-        ax.scatter(tg['Risk'], tg['Mean_return'], linewidth=0, color='green')
+        ax.scatter(tg['Risk'], tg['Mean_return'], linewidth=0, color='green', zorder=10)
         ax.annotate("MSR",
                     (tg['Risk'], tg['Mean_return']),
                     textcoords="offset points",  # how to position the text
