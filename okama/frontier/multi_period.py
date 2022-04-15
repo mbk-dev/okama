@@ -3,6 +3,7 @@ from typing import List, Tuple, Dict, Optional
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 
 from scipy.optimize import minimize
 
@@ -681,26 +682,32 @@ class EfficientFrontierReb(asset_list.AssetList):
         If verbose=True calculates elapsed time for each point and the total elapsed time.
         """
         main_start_time = time.time()
-        ef_points_records = []
+
         # left part of the EF
-        for i, target_cagr in enumerate(self._target_cagr_range_left):
+        def compute_left_part_of_ef(i, target_cagr):
             start_time = time.time()
             row = self.minimize_risk(target_cagr)
-            ef_points_records.append(row)
             end_time = time.time()
             if self.verbose:
                 print(f"left EF point #{i + 1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
+            return row
+        ef_points_records = Parallel(n_jobs=-1)(
+            delayed(compute_left_part_of_ef)(i, target_cagr) for i, target_cagr in enumerate(self._target_cagr_range_left)
+        )
         # right part of the EF
         range_right = self._target_cagr_range_right
         if range_right is not None:  # range_right can be a DataFrame. Must put an explicit "is not None"
-            n = len(range_right)
-            for i, target_cagr in enumerate(range_right):
+            def compute_right_part_of_ef(i, target_cagr):
                 start_time = time.time()
                 row = self._maximize_risk(target_cagr)
                 ef_points_records.append(row)
                 end_time = time.time()
                 if self.verbose:
-                    print(f"right EF point #{i + 1}/{n} is done in {end_time - start_time:.2f} sec.")
+                    print(f"right EF point #{i + 1}/{len(range_right)} is done in {end_time - start_time:.2f} sec.")
+                return row
+            ef_points_records += Parallel(n_jobs=-1)(
+                delayed(compute_right_part_of_ef)(i, target_cagr) for i, target_cagr in enumerate(range_right)
+            )
         df = pd.DataFrame.from_records(ef_points_records)
         df = helpers.Frame.change_columns_order(df, ['Risk', 'CAGR'])
         main_end_time = time.time()
