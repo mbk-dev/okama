@@ -33,6 +33,7 @@ matplotlib = "^3.5.1"
 requests = "^2.27.1"
 # required for python 3.7 only for 3.8+ can use `from importlib.metadata import version`
 importlib-metadata = "^4.11.1"
+joblib = "^1.1.0"
 # A list of all of the optional dependencies included in the below `extras`.
 sphinx = { version = "^3", optional = true }
 nbmake = { version = "^1.2", optional = true }
