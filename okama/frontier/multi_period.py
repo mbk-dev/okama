@@ -681,12 +681,12 @@ class EfficientFrontierReb(asset_list.AssetList):
         If verbose=True calculates elapsed time for each point and the total elapsed time.
         """
         main_start_time = time.time()
-        df = pd.DataFrame()
+        ef_points_records = []
         # left part of the EF
         for i, target_cagr in enumerate(self._target_cagr_range_left):
             start_time = time.time()
             row = self.minimize_risk(target_cagr)
-            df = pd.concat([df, pd.DataFrame(row, index=[0])], ignore_index=True)
+            ef_points_records.append(row)
             end_time = time.time()
             if self.verbose:
                 print(f"left EF point #{i + 1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
@@ -697,10 +697,11 @@ class EfficientFrontierReb(asset_list.AssetList):
             for i, target_cagr in enumerate(range_right):
                 start_time = time.time()
                 row = self._maximize_risk(target_cagr)
-                df = pd.concat([df, pd.DataFrame(row, index=[0])], ignore_index=True)
+                ef_points_records.append(row)
                 end_time = time.time()
                 if self.verbose:
                     print(f"right EF point #{i + 1}/{n} is done in {end_time - start_time:.2f} sec.")
+        df = pd.DataFrame.from_records(ef_points_records)
         df = helpers.Frame.change_columns_order(df, ['Risk', 'CAGR'])
         main_end_time = time.time()
         if self.verbose:
