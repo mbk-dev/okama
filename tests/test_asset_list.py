@@ -15,9 +15,9 @@ from tests import conftest
 def test_asset_list_init_failing():
     with pytest.raises(ValueError, match=r"Assets must be a list."):
         ok.AssetList(assets=("RUB.FX", "MCFTR.INDX"))
-    with pytest.raises(ValueError, match=r"FXRD.MOEX historical data period length is too short. "
+    with pytest.raises(ValueError, match=r"SBGB.MOEX historical data period length is too short. "
                                          r"It must be at least 3 months."):
-        ok.AssetList(assets=['FXRD.MOEX'], last_date="2021-10", inflation=True)
+        ok.AssetList(assets=['SBGB.MOEX'], last_date="2019-02", inflation=True)
 
 
 
@@ -260,7 +260,7 @@ class TestAssetList:
         assert self.spy.assets_dividend_yield.iloc[-1, 0] == approx(0.0125, abs=1e-3)
         assert self.spy_rub.assets_dividend_yield.iloc[-1, 0] == approx(0.01197, abs=1e-3)
         assert self.asset_list.assets_dividend_yield.iloc[:, 0].sum() == 0
-        assert self.asset_list_with_portfolio_dividends.assets_dividend_yield.iloc[-1, 0] == approx(0.0394, abs=1e-3)
+        assert self.asset_list_with_portfolio_dividends.assets_dividend_yield.iloc[-1, 0] == approx(0.0394, abs=1e-2)
 
     def test_dividends_annual(self):
         assert self.spy.dividends_annual.iloc[-2, 0] == approx(

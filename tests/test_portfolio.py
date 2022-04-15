@@ -107,12 +107,12 @@ def test_number_of_securities(portfolio_not_rebalanced):
 
 
 def test_dividends(portfolio_dividends):
-    assert portfolio_dividends.dividends.iloc[-1] == approx(13.28, rel=1e-2)
+    assert portfolio_dividends.dividends.iloc[-1] == approx(10.036, rel=1e-2)
 
 
 def test_dividend_yield(portfolio_dividends):
     assert portfolio_dividends.dividend_yield.iloc[-1] == approx(
-        0.03949, rel=1e-2
+        0.0351, rel=1e-2
     )
 
 
