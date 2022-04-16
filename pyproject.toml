@@ -27,7 +27,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.7, <3.10"
-pandas = ">=0.25.0"
+pandas = ">=1.0.0"
 scipy = ">=0.14.0"
 matplotlib = "^3.5.1"
 requests = "^2.27.1"
@@ -36,10 +36,10 @@ importlib-metadata = "^4.11.1"
 # A list of all of the optional dependencies included in the below `extras`.
 sphinx = { version = "^3", optional = true }
 nbmake = { version = "^1.2", optional = true }
-jupyter = { version = "^1.0.0", optional = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.0"
+jupyter = { version = "^1.0.0", optional = true }
 
 [tool.poetry.extras]
 dev = ["nbmake"]
