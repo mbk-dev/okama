@@ -50,7 +50,7 @@ class TestAssetList:
         assert_frame_equal(self.asset_list_lt.assets_ror, asset_list_lt_sample)
         assert_frame_equal(self.currencies.assets_ror, currencies_sample)
         assert_frame_equal(self.real_estate.assets_ror, real_estate_sample)
-        # adj_close and ror are changing over time for assets with dividends
+        # adj_close and ror are changing over time for assets with dividends & after splits
 
     def test_currencies(self):
         assert self.currencies.pl.years == 1
@@ -101,7 +101,6 @@ class TestAssetList:
         assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)["RUB.FX"] == approx(0.04975, rel=1e-2)
         assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)["MCFTR.INDX"] == approx(0.01229, rel=1e-2)
 
-    @mark.test
     def test_get_cvar_historic(self):
         assert self.asset_list.get_cvar_historic(level=5, time_frame=12)[
             "RUB.FX"
