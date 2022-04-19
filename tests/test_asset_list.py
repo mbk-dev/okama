@@ -275,7 +275,7 @@ class TestAssetList:
 
     def test_get_dividend_mean_growth_rate_valid(self):
         assert self.spy.get_dividend_mean_growth_rate(period=2).iloc[-1] == approx(
-            -0.02765, rel=1e-2
+            -0.02765, abs=1e-2
         )
 
     def test_get_dividend_mean_growth_rate_value_err(self):
