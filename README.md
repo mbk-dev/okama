@@ -110,7 +110,7 @@ x.wealth_indexes.plot()
 
 ```python
 weights = [0.3, 0.2, 0.2, 0.2, 0.1]
-assets = ['T.US', 'XOM.US', 'FRE.XETR', 'SNW.XETR', 'LKOH.MOEX']
+assets = ['T.US', 'XOM.US', 'FRE.XFRA', 'SNW.XFRA', 'LKOH.MOEX']
 pf = ok.Portfolio(assets, weights=weights, ccy='EUR')
 pf.table
 ```
@@ -129,7 +129,7 @@ ls = ['SPY.US', 'GLD.US']
 curr = 'USD'
 last_date='2020-10'
 # Rebalancing periods is one year (default value)
-frontier = ok.EfficientFrontierReb(ls, last_date=last_date', ccy=curr, reb_period='year')
+frontier = ok.EfficientFrontierReb(ls, last_date=last_date, ccy=curr, rebalancing_period='year')
 frontier.names
 ```
 ![](../images/images/readmi06.jpg?raw=true) 
