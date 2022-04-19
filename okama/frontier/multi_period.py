@@ -11,9 +11,6 @@ from okama import asset_list, settings
 from okama.common.helpers import helpers
 
 
-
-
-
 class EfficientFrontierReb(asset_list.AssetList):
     """
     Efficient Frontier with multi-period optimization.
