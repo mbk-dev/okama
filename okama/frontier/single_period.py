@@ -97,14 +97,14 @@ class EfficientFrontier(asset_list.AssetList):
 
     def __repr__(self):
         dic = {
-            'symbols': self.symbols,
-            'currency': self._currency.ticker,
-            'first_date': self.first_date.strftime("%Y-%m"),
-            'last_date': self.last_date.strftime("%Y-%m"),
-            'period_length': self._pl_txt,
-            'bounds': self.bounds,
-            'inflation': self.inflation if hasattr(self, 'inflation') else 'None',
-            'n_points': self.n_points,
+            "symbols": self.symbols,
+            "currency": self._currency.ticker,
+            "first_date": self.first_date.strftime("%Y-%m"),
+            "last_date": self.last_date.strftime("%Y-%m"),
+            "period_length": self._pl_txt,
+            "bounds": self.bounds,
+            "inflation": self.inflation if hasattr(self, "inflation") else "None",
+            "n_points": self.n_points,
         }
         return repr(pd.Series(dic))
 
@@ -288,9 +288,15 @@ class EfficientFrontier(asset_list.AssetList):
             # Sharpe ratio
             mean_return_monthly = helpers.Frame.get_portfolio_mean_return(w, ror)
             risk_monthly = helpers.Frame.get_portfolio_risk(w, ror)
-            objective_function.mean_return = helpers.Float.annualize_return(mean_return_monthly)
-            objective_function.risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
-            return -(objective_function.mean_return - rf_return) / objective_function.risk
+            objective_function.mean_return = helpers.Float.annualize_return(
+                mean_return_monthly
+            )
+            objective_function.risk = helpers.Float.annualize_risk(
+                risk_monthly, mean_return_monthly
+            )
+            return (
+                -(objective_function.mean_return - rf_return) / objective_function.risk
+            )
 
         # construct the constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
@@ -311,10 +317,11 @@ class EfficientFrontier(asset_list.AssetList):
         else:
             raise RecursionError("No solutions where found")
 
-    def get_most_diversified_portfolio(self,
-                                       target_return: Optional[float] = None,
-                                       monthly_return: bool = False,
-                                       ) -> dict:
+    def get_most_diversified_portfolio(
+        self,
+        target_return: Optional[float] = None,
+        monthly_return: bool = False,
+    ) -> dict:
         """
         Calculate assets weights, risk, return and Diversification ratio for the most diversified portfolio given
         the target return within given bounds.
@@ -375,25 +382,38 @@ class EfficientFrontier(asset_list.AssetList):
             # Diversification Ratio
             assets_risk = ror.std()
             assets_mean_return = self.assets_ror.mean()
-            assets_annualized_risk = helpers.Float.annualize_risk(assets_risk, assets_mean_return)
+            assets_annualized_risk = helpers.Float.annualize_risk(
+                assets_risk, assets_mean_return
+            )
             weights = np.asarray(w)
             assets_sigma_weighted_sum = weights.T @ assets_annualized_risk
 
             portfolio_ror = helpers.Frame.get_portfolio_return_ts(w, ror)
-            portfolio_mean_return_monthly = helpers.Frame.get_portfolio_mean_return(w, ror)
+            portfolio_mean_return_monthly = helpers.Frame.get_portfolio_mean_return(
+                w, ror
+            )
             portfolio_risk_monthly = portfolio_ror.std()
 
-            objective_function.annual_risk = helpers.Float.annualize_risk(portfolio_risk_monthly, portfolio_mean_return_monthly)
-            objective_function.annual_mean_return = helpers.Float.annualize_return(portfolio_mean_return_monthly)
-            return - assets_sigma_weighted_sum / objective_function.annual_risk
+            objective_function.annual_risk = helpers.Float.annualize_risk(
+                portfolio_risk_monthly, portfolio_mean_return_monthly
+            )
+            objective_function.annual_mean_return = helpers.Float.annualize_return(
+                portfolio_mean_return_monthly
+            )
+            return -assets_sigma_weighted_sum / objective_function.annual_risk
 
         # construct the constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         return_is_target = {
             "type": "eq",
-            "fun": lambda weights: target_return - helpers.Frame.get_portfolio_mean_return(weights, ror),
+            "fun": lambda weights: target_return
+            - helpers.Frame.get_portfolio_mean_return(weights, ror),
         }
-        constraints = (weights_sum_to_1,) if target_return is None else (weights_sum_to_1, return_is_target)
+        constraints = (
+            (weights_sum_to_1,)
+            if target_return is None
+            else (weights_sum_to_1, return_is_target)
+        )
 
         # set optimizer
         weights = minimize(
@@ -416,7 +436,7 @@ class EfficientFrontier(asset_list.AssetList):
             point["Mean return"] = objective_function.annual_mean_return
             point["CAGR"] = cagr
             point["Risk"] = objective_function.annual_risk
-            point["Diversification ratio"] = - weights.fun
+            point["Diversification ratio"] = -weights.fun
             return point
         else:
             raise RecursionError("No solutions where found")
@@ -773,7 +793,9 @@ class EfficientFrontier(asset_list.AssetList):
             target_rs = self.mean_return_range
             df = pd.DataFrame(dtype="float")
             for x in target_rs:
-                row = self.get_most_diversified_portfolio(target_return=x, monthly_return=True)
+                row = self.get_most_diversified_portfolio(
+                    target_return=x, monthly_return=True
+                )
                 df = pd.concat([df, pd.DataFrame(row, index=[0])], ignore_index=True)
             df = helpers.Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
             self._mdp_points = df
@@ -844,7 +866,9 @@ class EfficientFrontier(asset_list.AssetList):
         random_portfolios = pd.DataFrame(dtype=float)
         for weights in weights_series:
             risk_monthly = helpers.Frame.get_portfolio_risk(weights, self.assets_ror)
-            mean_return_monthly = helpers.Frame.get_portfolio_mean_return(weights, self.assets_ror)
+            mean_return_monthly = helpers.Frame.get_portfolio_mean_return(
+                weights, self.assets_ror
+            )
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
             mean_return = helpers.Float.annualize_return(mean_return_monthly)
             if kind.lower() == "cagr":
@@ -854,10 +878,14 @@ class EfficientFrontier(asset_list.AssetList):
                 row = dict(Risk=risk, Return=mean_return)
             else:
                 raise ValueError('kind should be "mean" or "cagr"')
-            random_portfolios = pd.concat([random_portfolios, pd.DataFrame(row, index=[0])], ignore_index=True)
+            random_portfolios = pd.concat(
+                [random_portfolios, pd.DataFrame(row, index=[0])], ignore_index=True
+            )
         return random_portfolios
 
-    def plot_transition_map(self, cagr: bool = True, figsize: Optional[tuple] = None) -> plt.axes:
+    def plot_transition_map(
+        self, cagr: bool = True, figsize: Optional[tuple] = None
+    ) -> plt.axes:
         """
         Plot Transition Map for optimized portfolios on the single period Efficient Frontier.
 
@@ -915,9 +943,7 @@ class EfficientFrontier(asset_list.AssetList):
                 "Mean return",
                 "CAGR",
             ):  # select only columns with tickers
-                ax.plot(
-                    ef[x_axe], ef.loc[:, i], linestyle=next(linestyle), label=i
-                )
+                ax.plot(ef[x_axe], ef.loc[:, i], linestyle=next(linestyle), label=i)
         ax.set_xlim(ef[x_axe].min(), ef[x_axe].max())
         if cagr:
             ax.set_xlabel("CAGR (Compound Annual Growth Rate)")
@@ -928,7 +954,9 @@ class EfficientFrontier(asset_list.AssetList):
         fig.tight_layout()
         return ax
 
-    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> plt.axes:
+    def plot_pair_ef(
+        self, tickers="tickers", figsize: Optional[tuple] = None
+    ) -> plt.axes:
         """
         Plot Efficient Frontier of every pair of assets.
 
@@ -1036,16 +1064,17 @@ class EfficientFrontier(asset_list.AssetList):
         ef = self.ef_points
         tg = self.get_tangency_portfolio(rf_return)
         fig, ax = plt.subplots(figsize=figsize)
-        ax.plot(ef.Risk, ef['Mean return'], color='black')
-        ax.scatter(tg['Risk'], tg['Mean_return'], linewidth=0, color='green', zorder=10)
-        ax.annotate("MSR",
-                    (tg['Risk'], tg['Mean_return']),
-                    textcoords="offset points",  # how to position the text
-                    xytext=(-10, 10),  # distance from text to points (x,y)
-                    ha="center",  # horizontal alignment can be left, right or center
-                    )
+        ax.plot(ef.Risk, ef["Mean return"], color="black")
+        ax.scatter(tg["Risk"], tg["Mean_return"], linewidth=0, color="green", zorder=10)
+        ax.annotate(
+            "MSR",
+            (tg["Risk"], tg["Mean_return"]),
+            textcoords="offset points",  # how to position the text
+            xytext=(-10, 10),  # distance from text to points (x,y)
+            ha="center",  # horizontal alignment can be left, right or center
+        )
         # plot the line
-        x, y = [0, tg['Risk']], [rf_return, tg['Mean_return']]
+        x, y = [0, tg["Risk"]], [rf_return, tg["Mean_return"]]
         ax.plot(x, y, linewidth=1)
         # set the axis size
         risk_monthly = self.assets_ror.std()
@@ -1055,5 +1084,5 @@ class EfficientFrontier(asset_list.AssetList):
         ax.set_ylim(0, max(returns) * 1.1)  # height is 10% more than max return
         ax.set_xlim(0, max(risks) * 1.1)  # width is 10% more than max risk
         # plot the assets
-        self.plot_assets(kind='mean')
+        self.plot_assets(kind="mean")
         return ax

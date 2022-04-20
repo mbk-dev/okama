@@ -6,7 +6,8 @@ from typing import Optional, Any
 
 def validate_integer(
     arg_name: str,
-    arg_value: Any, *,
+    arg_value: Any,
+    *,
     min_value: Optional[int] = None,
     max_value: Optional[int] = None,
     inclusive: bool = False,
@@ -50,17 +51,14 @@ def validate_integer(
     if not isinstance(arg_value, int):
         raise TypeError(f"{arg_name} must be an integer.")
 
-    ops = {'<=': operator.le,
-           '>=': operator.ge,
-           '>': operator.gt,
-           '<': operator.lt}
+    ops = {"<=": operator.le, ">=": operator.ge, ">": operator.gt, "<": operator.lt}
 
     if inclusive:
-        operator_less = '<'
-        operator_greater = '>'
+        operator_less = "<"
+        operator_greater = ">"
     else:
-        operator_less = '<='
-        operator_greater = '>='
+        operator_less = "<="
+        operator_greater = ">="
 
     if min_value is not None and ops[operator_less](arg_value, min_value):
         if custom_min_message is not None:

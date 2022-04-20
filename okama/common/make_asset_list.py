@@ -9,6 +9,7 @@ from okama import macro, asset, settings
 from okama.common import validators
 from okama.common.helpers import helpers
 
+
 class ListMaker(ABC):
     """
     Abstract class to generate a list of assets with properties.
@@ -36,6 +37,7 @@ class ListMaker(ABC):
         as the inflation data is usually published with a one-month delay.
         With inflation = False some properties like real return are not available.
     """
+
     def __init__(
         self,
         assets: Optional[List[Union[str, Type]]] = None,
@@ -58,10 +60,14 @@ class ListMaker(ABC):
             self.assets_first_dates,
             self.assets_last_dates,
             self.assets_ror,
-        ) = self._make_list(ls=self._list_of_asset_like_objects, first_date=first_date, last_date=last_date).values()
+        ) = self._make_list(
+            ls=self._list_of_asset_like_objects,
+            first_date=first_date,
+            last_date=last_date,
+        ).values()
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
-        self.assets_ror = self.assets_ror[self.first_date:]
+        self.assets_ror = self.assets_ror[self.first_date :]
         if last_date:
             self.last_date = min(self.last_date, pd.to_datetime(last_date))
         if inflation:
@@ -69,16 +75,24 @@ class ListMaker(ABC):
             self._inflation_instance = macro.Inflation(
                 self.inflation, self.first_date, self.last_date
             )
-            self.inflation_first_date: pd.Timestamp = self._inflation_instance.first_date
+            self.inflation_first_date: pd.Timestamp = (
+                self._inflation_instance.first_date
+            )
             self.inflation_last_date: pd.Timestamp = self._inflation_instance.last_date
             self.first_date = max(self.first_date, self.inflation_first_date)
             self.last_date = min(self.last_date, self.inflation_last_date)
-            self.inflation_ts: pd.Series = self._inflation_instance.values_ts.loc[self.first_date: self.last_date]
+            self.inflation_ts: pd.Series = self._inflation_instance.values_ts.loc[
+                self.first_date : self.last_date
+            ]
             # Add inflation to the date range dict
-            self.assets_first_dates.update({self.inflation: macro.Inflation(self.inflation).first_date})
-            self.assets_last_dates.update({self.inflation: macro.Inflation(self.inflation).last_date})
+            self.assets_first_dates.update(
+                {self.inflation: macro.Inflation(self.inflation).first_date}
+            )
+            self.assets_last_dates.update(
+                {self.inflation: macro.Inflation(self.inflation).last_date}
+            )
         self.assets_ror: pd.DataFrame = self.assets_ror[
-            self.first_date: self.last_date
+            self.first_date : self.last_date
         ]
         self.period_length: float = round(
             (self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1
@@ -115,9 +129,13 @@ class ListMaker(ABC):
         input_first_date = pd.to_datetime(first_date) if first_date else None
         input_last_date = pd.to_datetime(last_date) if last_date else None
         for i, x in enumerate(ls):
-            asset_item = x if hasattr(x, 'symbol') and hasattr(x, 'ror') else asset.Asset(x)
+            asset_item = (
+                x if hasattr(x, "symbol") and hasattr(x, "ror") else asset.Asset(x)
+            )
             if asset_item.pl.years == 0 and asset_item.pl.months <= 2:
-                raise ValueError(f'{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months.')
+                raise ValueError(
+                    f"{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months."
+                )
             if i == 0:  # required to use pd.concat below (df should not be empty).
                 df = self._make_ror(asset_item, base_currency_name)
             else:
@@ -132,8 +150,10 @@ class ListMaker(ABC):
             fd_max = max(x for x in fd if x is not None)
             ld_min = min(x for x in ld if x is not None)
             if helpers.Date.get_difference_in_months(ld_min, fd_max).n < 2:
-                raise ValueError(f'{asset_item.symbol} historical data period length is too short. '
-                                 f'It must be at least 3 months.')
+                raise ValueError(
+                    f"{asset_item.symbol} historical data period length is too short. "
+                    f"It must be at least 3 months."
+                )
             # uppend data to dictionaries
             asset_obj_dict[asset_item.symbol] = asset_item
             currencies[asset_item.symbol] = asset_item.currency
@@ -175,12 +195,18 @@ class ListMaker(ABC):
         if asset_currency_name == base_currency_name:
             ror = list_asset.ror
         else:
-            asset_currency = asset.Asset(symbol=f"{asset_currency_name}{base_currency_name}.FX")
-            ror = self._adjust_ror_to_currency(returns=list_asset.ror, asset_currency=asset_currency)
+            asset_currency = asset.Asset(
+                symbol=f"{asset_currency_name}{base_currency_name}.FX"
+            )
+            ror = self._adjust_ror_to_currency(
+                returns=list_asset.ror, asset_currency=asset_currency
+            )
         return ror
 
     @classmethod
-    def _adjust_ror_to_currency(cls, returns: pd.Series, asset_currency: asset.Asset) -> pd.Series:
+    def _adjust_ror_to_currency(
+        cls, returns: pd.Series, asset_currency: asset.Asset
+    ) -> pd.Series:
         """
         Adjust returns time series to a certain currency.
         """
@@ -194,7 +220,9 @@ class ListMaker(ABC):
         x.rename(returns.name, inplace=True)
         return x
 
-    def _adjust_price_to_currency_monthly(self, price: pd.Series, asset_currency: str) -> pd.Series:
+    def _adjust_price_to_currency_monthly(
+        self, price: pd.Series, asset_currency: str
+    ) -> pd.Series:
         """
         Adjust monthly time series of dividends or close values to a base currency.
         """
@@ -203,12 +231,12 @@ class ListMaker(ABC):
         merged = price.to_frame().join(currency_rate, how="left")
         if merged.isnull().values.any():
             # can happen if the first value is missing
-            merged.fillna(method='backfill', inplace=True)
+            merged.fillna(method="backfill", inplace=True)
         return merged.iloc[:, 0].multiply(merged[ccy_symbol], axis=0)
 
     @staticmethod
     def _define_symbol_list(assets):
-        return [asset.symbol if hasattr(asset, 'symbol') else asset for asset in assets]
+        return [asset.symbol if hasattr(asset, "symbol") else asset for asset in assets]
 
     def _add_inflation(self) -> pd.DataFrame:
         """
@@ -250,13 +278,15 @@ class ListMaker(ABC):
         Get monthly dividend time series for a single symbol and adjust to the currency.
         """
         asset = self.asset_obj_dict[tick]
-        s = asset.dividends[self.first_date: self.last_date]
+        s = asset.dividends[self.first_date : self.last_date]
         if asset.currency != self.currency:
             s = self._adjust_price_to_currency_monthly(s, asset.currency)
         if remove_forecast:
             s = s[: pd.Period.now(freq="M")]
         # Create time series with zeros to pad the empty spaces in dividends time series
-        index = pd.date_range(start=self.first_date, end=self.last_date, freq="MS")  # 'MS' to include the last period
+        index = pd.date_range(
+            start=self.first_date, end=self.last_date, freq="MS"
+        )  # 'MS' to include the last period
         period = index.to_period("M")
         pad_s = pd.Series(data=0, index=period)
         return s.add(pad_s, fill_value=0)
@@ -270,7 +300,9 @@ class ListMaker(ABC):
         if self._assets_dividends_ts.empty:
             dic = {}
             for tick in self.symbols:
-                s = self._get_single_asset_dividends(tick, remove_forecast=remove_forecast)
+                s = self._get_single_asset_dividends(
+                    tick, remove_forecast=remove_forecast
+                )
                 dic[tick] = s
             self._assets_dividends_ts = pd.DataFrame(dic)
         return self._assets_dividends_ts
@@ -329,9 +361,13 @@ class ListMaker(ABC):
                 div_monthly = df[tick]
                 if div_monthly.sum() != 0:
                     asset = self.asset_obj_dict[tick]
-                    price_monthly_ts = asset.close_monthly.loc[self.first_date: self.last_date]
+                    price_monthly_ts = asset.close_monthly.loc[
+                        self.first_date : self.last_date
+                    ]
                     if asset.currency != self.currency:
-                        price_monthly_ts = self._adjust_price_to_currency_monthly(price_monthly_ts, asset.currency)
+                        price_monthly_ts = self._adjust_price_to_currency_monthly(
+                            price_monthly_ts, asset.currency
+                        )
                 else:
                     # skipping prices if no dividends
                     div_yield = div_monthly
@@ -478,7 +514,9 @@ class ListMaker(ABC):
         # set the plot
         ax = plt.gca()
         plt.autoscale(enable=True, axis="year", tight=False)
-        ax.margins(.05, .1)  # increase margins on Y-axis from 5% to 10% as `annotate` moves text upwards
+        ax.margins(
+            0.05, 0.1
+        )  # increase margins on Y-axis from 5% to 10% as `annotate` moves text upwards
         m = 100 if pct_values else 1
         ax.scatter(risks * m, returns * m, zorder=10)
         # Set the labels
@@ -488,9 +526,7 @@ class ListMaker(ABC):
             asset_labels = list(self.names.values())
         else:
             if not isinstance(tickers, list):
-                raise ValueError(
-                    "tickers parameter should be a list of string labels."
-                )
+                raise ValueError("tickers parameter should be a list of string labels.")
             if len(tickers) != len(self.symbols):
                 raise ValueError("labels and tickers must be of the same length")
             asset_labels = tickers

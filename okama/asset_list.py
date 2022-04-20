@@ -218,7 +218,7 @@ class AssetList(make_asset_list.ListMaker):
         SHV.US     0.000560
         dtype: float64
         """
-        return helpers.Frame.get_semideviation(self.assets_ror) * 12 ** 0.5
+        return helpers.Frame.get_semideviation(self.assets_ror) * 12**0.5
 
     def get_var_historic(self, time_frame: int = 12, level: int = 1) -> pd.Series:
         """
@@ -365,14 +365,16 @@ class AssetList(make_asset_list.ListMaker):
         max_recovery_periods = pd.Series(dtype=int)
         for name in self.symbols:
             namespace = name.split(".", 1)[-1]
-            if namespace == 'INFL':
+            if namespace == "INFL":
                 continue
             s = growth[name]
             s1 = s.where(s == 0).notnull().astype(int)
             s1_1 = s.where(s == 0).isnull().astype(int).cumsum()
             s2 = s1.groupby(s1_1).cumsum()
             # Max recovery period date should not be in the border (it's not recovered)
-            max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
+            max_period = (
+                s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
+            )
             ser = pd.Series(max_period, index=[name])
             max_recovery_periods = pd.concat([max_recovery_periods, ser])
         return max_recovery_periods
@@ -491,7 +493,9 @@ class AssetList(make_asset_list.ListMaker):
         df = self._add_inflation()
         if real:
             df = self._make_real_return_time_series(df)
-        return helpers.Frame.get_rolling_fn(df, window=window, fn=helpers.Frame.get_cagr)
+        return helpers.Frame.get_rolling_fn(
+            df, window=window, fn=helpers.Frame.get_cagr
+        )
 
     def get_cumulative_return(
         self, period: Union[str, int, None] = None, real: bool = False
@@ -553,7 +557,9 @@ class AssetList(make_asset_list.ListMaker):
                     "Real cumulative return is not defined (no inflation information is available)."
                     "Set inflation=True in AssetList to calculate it."
                 )
-            cumulative_inflation = helpers.Frame.get_cumulative_return(self.inflation_ts[dt:])
+            cumulative_inflation = helpers.Frame.get_cumulative_return(
+                self.inflation_ts[dt:]
+            )
             cr = (1.0 + cr) / (1.0 + cumulative_inflation) - 1.0
             cr.drop(self.inflation, inplace=True)
         return cr
@@ -602,7 +608,10 @@ class AssetList(make_asset_list.ListMaker):
         if real:
             df = self._make_real_return_time_series(df)
         return helpers.Frame.get_rolling_fn(
-            df, window=window, fn=helpers.Frame.get_cumulative_return, window_below_year=True
+            df,
+            window=window,
+            fn=helpers.Frame.get_cumulative_return,
+            window_below_year=True,
         )
 
     @property
@@ -692,7 +701,9 @@ class AssetList(make_asset_list.ListMaker):
         ytd_return = self.get_cumulative_return(period="YTD")
         row = ytd_return.to_dict()
         row.update(period="YTD", property="Compound return")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
+        )
         # CAGR for a list of periods
         if self.pl.years >= 1:
             for i in years:
@@ -702,32 +713,46 @@ class AssetList(make_asset_list.ListMaker):
                 else:
                     row = {x: None for x in df.columns}
                 row.update(period=f"{i} years", property="CAGR")
-                description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+                description = pd.concat(
+                    [description, pd.DataFrame(row, index=[0])], ignore_index=True
+                )
             # CAGR for full period
             row = self.get_cagr(period=None).to_dict()
             row.update(period=self._pl_txt, property="CAGR")
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            description = pd.concat(
+                [description, pd.DataFrame(row, index=[0])], ignore_index=True
+            )
             # Dividend Yield
             row = self.assets_dividend_yield.iloc[-1].to_dict()
             row.update(period="LTM", property="Dividend yield")
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            description = pd.concat(
+                [description, pd.DataFrame(row, index=[0])], ignore_index=True
+            )
         # risk for full period
         row = self.risk_annual.to_dict()
         row.update(period=self._pl_txt, property="Risk")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
+        )
         # CVAR
         if self.pl.years >= 1:
             row = self.get_cvar_historic().to_dict()
             row.update(period=self._pl_txt, property="CVAR")
-            description = pd.concat([description,pd.DataFrame(row, index=[0])], ignore_index=True)
+            description = pd.concat(
+                [description, pd.DataFrame(row, index=[0])], ignore_index=True
+            )
         # max drawdowns
         row = self.drawdowns.min().to_dict()
         row.update(period=self._pl_txt, property="Max drawdowns")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
+        )
         # max drawdowns dates
         row = self.drawdowns.idxmin().to_dict()
         row.update(period=self._pl_txt, property="Max drawdowns dates")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
+        )
         # inception dates
         row = {}
         for ti in self.symbols:
@@ -737,7 +762,9 @@ class AssetList(make_asset_list.ListMaker):
         row.update(period=None, property="Inception date")
         if hasattr(self, "inflation"):
             row.update({self.inflation: self.inflation_first_date.strftime("%Y-%m")})
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
+        )
         # last asset date
         row = {}
         for ti in self.symbols:
@@ -747,11 +774,15 @@ class AssetList(make_asset_list.ListMaker):
         row.update(period=None, property="Last asset date")
         if hasattr(self, "inflation"):
             row.update({self.inflation: self.inflation_last_date.strftime("%Y-%m")})
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
+        )
         # last data date
         row = {x: self.last_date.strftime("%Y-%m") for x in df.columns}
         row.update(period=None, property="Common last data date")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
+        )
         # rename columns
         if hasattr(self, "inflation"):
             description.rename(columns={self.inflation: "inflation"}, inplace=True)
@@ -929,7 +960,9 @@ class AssetList(make_asset_list.ListMaker):
         growth_ts = self.dividends_annual.pct_change().iloc[
             1:-1
         ]  # Slice the last year for full dividends
-        growth_ts.replace([np.inf, -np.inf, np.nan], 0, inplace=True)  # replace possible nan and inf
+        growth_ts.replace(
+            [np.inf, -np.inf, np.nan], 0, inplace=True
+        )  # replace possible nan and inf
         dt0 = self.last_date
         dt = helpers.Date.subtract_years(dt0, period)
         return ((growth_ts[dt:] + 1.0).prod()) ** (1 / period) - 1.0
@@ -1011,12 +1044,12 @@ class AssetList(make_asset_list.ListMaker):
         >>> al.tracking_difference_annual.plot(kind='bar')
         """
         result = pd.DataFrame()
-        for x in self.assets_ror.resample('Y'):
+        for x in self.assets_ror.resample("Y"):
             df = x[1]
             wealth_index = helpers.Frame.get_wealth_indexes(df)
             row = helpers.Index.tracking_difference(wealth_index).iloc[[-1]]
             result = pd.concat([result, row], ignore_index=False)
-        result.index = result.index.asfreq('Y')
+        result.index = result.index.asfreq("Y")
         return result
 
     @property
@@ -1390,11 +1423,14 @@ class AssetList(make_asset_list.ListMaker):
         BND.US    0.390814
         dtype: float64
         """
-        mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
+        mean_return = (
+            self.mean_return.drop(self.inflation)
+            if self.inflation
+            else self.mean_return
+        )
         return ratios.get_sharpe_ratio(
-            pf_return=mean_return,
-            rf_return=rf_return,
-            std_deviation=self.risk_annual)
+            pf_return=mean_return, rf_return=rf_return, std_deviation=self.risk_annual
+        )
 
     def get_sortino_ratio(self, t_return: float = 0) -> pd.Series:
         """
@@ -1421,9 +1457,17 @@ class AssetList(make_asset_list.ListMaker):
         BND.US    0.028969
         dtype: float64
         """
-        mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
-        semideviation = helpers.Frame.get_below_target_semideviation(ror=self.assets_ror, t_return=t_return) * 12 ** 0.5
+        mean_return = (
+            self.mean_return.drop(self.inflation)
+            if self.inflation
+            else self.mean_return
+        )
+        semideviation = (
+            helpers.Frame.get_below_target_semideviation(
+                ror=self.assets_ror, t_return=t_return
+            )
+            * 12**0.5
+        )
         return ratios.get_sortino_ratio(
-            pf_return=mean_return,
-            t_return=t_return,
-            semi_deviation=semideviation)
+            pf_return=mean_return, t_return=t_return, semi_deviation=semideviation
+        )

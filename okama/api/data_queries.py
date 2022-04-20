@@ -110,7 +110,9 @@ class QueryData:
 
     @staticmethod
     def get_dividends(
-        symbol: str, first_date: str = "1913-01-01", last_date: str = "2100-01-01",
+        symbol: str,
+        first_date: str = "1913-01-01",
+        last_date: str = "2100-01-01",
     ) -> pd.Series:
         """
         Dividends time series daily data (dividend payment day should be considered).

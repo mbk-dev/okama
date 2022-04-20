@@ -105,7 +105,7 @@ class Asset:
         Series
             Time series of close price historical data (daily).
         """
-        return data_queries.QueryData.get_close(self.symbol, period='D')
+        return data_queries.QueryData.get_close(self.symbol, period="D")
 
     @property
     def close_monthly(self):
@@ -142,7 +142,7 @@ class Asset:
         Series
             Time series of adjusted close price historical data (daily).
         """
-        return data_queries.QueryData.get_adj_close(self.symbol, period='D')
+        return data_queries.QueryData.get_adj_close(self.symbol, period="D")
 
     @property
     def dividends(self) -> pd.Series:

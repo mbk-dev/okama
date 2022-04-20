@@ -88,7 +88,7 @@ class Portfolio(make_asset_list.ListMaker):
         self.assets_weights = dict(zip(self.symbols, self.weights))
         self._rebalancing_period = None
         self.rebalancing_period = rebalancing_period
-        self._symbol = symbol or f'portfolio_{randint(1000, 9999)}.PF'
+        self._symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
 
     def __repr__(self):
         dic = {
@@ -175,8 +175,12 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.weights_ts.plot()
         >>> plt.show()
         """
-        if self.rebalancing_period != 'month':
-            return helpers.Rebalance.assets_weights_ts(ror=self.assets_ror, period=self.rebalancing_period, weights=self.weights)
+        if self.rebalancing_period != "month":
+            return helpers.Rebalance.assets_weights_ts(
+                ror=self.assets_ror,
+                period=self.rebalancing_period,
+                weights=self.weights,
+            )
         values = np.tile(self.weights, (self.ror.shape[0], 1))
         return pd.DataFrame(values, index=self.ror.index, columns=self.symbols)
 
@@ -200,7 +204,7 @@ class Portfolio(make_asset_list.ListMaker):
 
     @rebalancing_period.setter
     def rebalancing_period(self, rebalancing_period: str):
-        if rebalancing_period in {'none', 'month', 'year'}:
+        if rebalancing_period in {"none", "month", "year"}:
             self._rebalancing_period = rebalancing_period
         else:
             raise ValueError('rebalancing_period must be "year", "month" or "none"')
@@ -240,16 +244,20 @@ class Portfolio(make_asset_list.ListMaker):
 
     @symbol.setter
     def symbol(self, text_symbol: str):
-        if isinstance(text_symbol, str) and '.' in text_symbol:
+        if isinstance(text_symbol, str) and "." in text_symbol:
             if " " in text_symbol:
-                raise ValueError('portfolio text symbol should not have whitespace characters.')
+                raise ValueError(
+                    "portfolio text symbol should not have whitespace characters."
+                )
             namespace = text_symbol.split(".", 1)[-1]
-            if namespace == 'PF':
+            if namespace == "PF":
                 self._symbol = text_symbol
             else:
                 raise ValueError('portfolio symbol must end with ".PF"')
         else:
-            raise ValueError('portfolio symbol must be a string ending with ".PF" namespace.')
+            raise ValueError(
+                'portfolio symbol must be a string ending with ".PF" namespace.'
+            )
 
     @property
     def name(self) -> str:
@@ -302,7 +310,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.ror.plot(kind='bar')
         >>> plt.show()
         """
-        if self.rebalancing_period == 'month':
+        if self.rebalancing_period == "month":
             s = helpers.Frame.get_portfolio_return_ts(self.weights, self.assets_ror)
         else:
             s = helpers.Rebalance.return_ts(
@@ -505,7 +513,7 @@ class Portfolio(make_asset_list.ListMaker):
                     "Real CAGR is not defined. Set inflation=True in Portfolio to calculate it."
                 )
             mean_inflation = helpers.Frame.get_cagr(self.inflation_ts[dt:])
-            cagr = (1. + cagr) / (1. + mean_inflation) - 1.
+            cagr = (1.0 + cagr) / (1.0 + mean_inflation) - 1.0
             cagr.drop(self.inflation, inplace=True)
         return cagr
 
@@ -551,9 +559,13 @@ class Portfolio(make_asset_list.ListMaker):
         if real:
             df_or_ts = self._make_real_return_time_series(df_or_ts)
         df = self._make_df_if_series(df_or_ts)
-        return helpers.Frame.get_rolling_fn(df, window=window, fn=helpers.Frame.get_cagr)
+        return helpers.Frame.get_rolling_fn(
+            df, window=window, fn=helpers.Frame.get_cagr
+        )
 
-    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
+    def get_cumulative_return(
+        self, period: Union[str, int, None] = None, real: bool = False
+    ) -> pd.Series:
         """
         Calculate cumulative return over a given trailing period for the portfolio.
 
@@ -604,12 +616,16 @@ class Portfolio(make_asset_list.ListMaker):
                     "Real cumulative return is not defined (no inflation information is available)."
                     "Set inflation=True in Portfolio to calculate it."
                 )
-            cumulative_inflation = helpers.Frame.get_cumulative_return(self.inflation_ts[dt:])
-            cr = (1. + cr) / (1. + cumulative_inflation) - 1.
+            cumulative_inflation = helpers.Frame.get_cumulative_return(
+                self.inflation_ts[dt:]
+            )
+            cr = (1.0 + cr) / (1.0 + cumulative_inflation) - 1.0
             cr.drop(self.inflation, inplace=True)
         return cr
 
-    def get_rolling_cumulative_return(self, window: int = 12, real: bool = False) -> pd.DataFrame:
+    def get_rolling_cumulative_return(
+        self, window: int = 12, real: bool = False
+    ) -> pd.DataFrame:
         """
         Calculate rolling cumulative return.
 
@@ -677,15 +693,29 @@ class Portfolio(make_asset_list.ListMaker):
         assets_close_monthly = pd.DataFrame(dtype=float)
         for i, x in enumerate(self.asset_obj_dict.values()):
             if i == 0:  # required to use pd.concat below (df should not be empty).
-                assets_close_monthly = x.close_monthly if x.currency == self.currency else self._adjust_price_to_currency_monthly(x.close_monthly, x.currency)
+                assets_close_monthly = (
+                    x.close_monthly
+                    if x.currency == self.currency
+                    else self._adjust_price_to_currency_monthly(
+                        x.close_monthly, x.currency
+                    )
+                )
                 assets_close_monthly.rename(x.symbol, inplace=True)
             else:
-                new = x.close_monthly if x.currency == self.currency else self._adjust_price_to_currency_monthly(x.close_monthly, x.currency)
+                new = (
+                    x.close_monthly
+                    if x.currency == self.currency
+                    else self._adjust_price_to_currency_monthly(
+                        x.close_monthly, x.currency
+                    )
+                )
                 new.rename(x.symbol, inplace=True)
-                assets_close_monthly = pd.concat([assets_close_monthly, new], axis=1, join="inner", copy="false")
+                assets_close_monthly = pd.concat(
+                    [assets_close_monthly, new], axis=1, join="inner", copy="false"
+                )
         if isinstance(assets_close_monthly, pd.Series):
             assets_close_monthly = assets_close_monthly.to_frame()
-        assets_close_monthly = assets_close_monthly[self.first_date: self.last_date]
+        assets_close_monthly = assets_close_monthly[self.first_date : self.last_date]
         return assets_close_monthly
 
     @property
@@ -749,7 +779,9 @@ class Portfolio(make_asset_list.ListMaker):
         2021-07  3.166335  16.003569
         [171 rows x 2 columns]
         """
-        return self.weights_ts.mul(self.wealth_index.iloc[:, 0], axis=0).div(self.assets_close_monthly, axis=0)
+        return self.weights_ts.mul(self.wealth_index.iloc[:, 0], axis=0).div(
+            self.assets_close_monthly, axis=0
+        )
 
     @property
     def dividends(self) -> pd.Series:
@@ -936,7 +968,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.semideviation_annual
         0.1940393544621248
         """
-        return helpers.Frame.get_semideviation(self.ror) * 12 ** 0.5
+        return helpers.Frame.get_semideviation(self.ror) * 12**0.5
 
     def get_var_historic(self, time_frame: int = 12, level=1) -> float:
         """
@@ -1050,7 +1082,9 @@ class Portfolio(make_asset_list.ListMaker):
         s1_1 = s.where(s == 0).isnull().astype(int).cumsum()
         s2 = s1.groupby(s1_1).cumsum()
         # Max recovery period date should not be in the border (means it's not recovered)
-        max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
+        max_period = (
+            s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
+        )
         return max_period
 
     def describe(self, years: Tuple[int] = (1, 5, 10)) -> pd.DataFrame:
@@ -1111,7 +1145,9 @@ class Portfolio(make_asset_list.ListMaker):
         ytd_return = self.get_cumulative_return(period="YTD")
         row = ytd_return.to_dict()
         row.update(period="YTD", property="compound return")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
+        )
         # CAGR for a list of periods
         if self.pl.years >= 1:
             for i in years:
@@ -1125,22 +1161,34 @@ class Portfolio(make_asset_list.ListMaker):
                         else {self.symbol: None}
                     )
                 row.update(period=f"{i} years", property="CAGR")
-                description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+                description = pd.concat(
+                    [description, pd.DataFrame(row, index=[0])], ignore_index=True
+                )
             # CAGR for full period
             row = self.get_cagr(period=None).to_dict()
-            row.update(period=self._pl_txt, property="CAGR",)
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            row.update(
+                period=self._pl_txt,
+                property="CAGR",
+            )
+            description = pd.concat(
+                [description, pd.DataFrame(row, index=[0])], ignore_index=True
+            )
             # Dividend Yield
             value = self.dividend_yield.iloc[-1]
             row = {self.symbol: value}
-            row.update(period="LTM", property=f"Dividend yield",)
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            row.update(
+                period="LTM",
+                property=f"Dividend yield",
+            )
+            description = pd.concat(
+                [description, pd.DataFrame(row, index=[0])], ignore_index=True
+            )
         # risk (standard deviation)
         row = {self.symbol: self.risk_annual}
-        row.update(
-            period=self._pl_txt, property="Risk"
+        row.update(period=self._pl_txt, property="Risk")
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
         )
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # CVAR
         if self.pl.years >= 1:
             row = {self.symbol: self.get_cvar_historic()}
@@ -1148,21 +1196,27 @@ class Portfolio(make_asset_list.ListMaker):
                 period=self._pl_txt,
                 property="CVAR",
             )
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            description = pd.concat(
+                [description, pd.DataFrame(row, index=[0])], ignore_index=True
+            )
         # max drawdowns
         row = {self.symbol: self.drawdowns.min()}
         row.update(
             period=self._pl_txt,
             property="Max drawdown",
         )
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
+        )
         # max drawdowns dates
         row = {self.symbol: self.drawdowns.idxmin()}
         row.update(
             period=self._pl_txt,
             property="Max drawdown date",
         )
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        description = pd.concat(
+            [description, pd.DataFrame(row, index=[0])], ignore_index=True
+        )
         if hasattr(self, "inflation"):
             description.rename(columns={self.inflation: "inflation"}, inplace=True)
         description = helpers.Frame.change_columns_order(
@@ -1268,9 +1322,7 @@ class Portfolio(make_asset_list.ListMaker):
         elif distr in ["norm", "lognorm"]:
             if not n:
                 n = 1000
-            cagr_distr = self._get_cagr_distribution(
-                distr=distr, years=years, n=n
-            )
+            cagr_distr = self._get_cagr_distribution(distr=distr, years=years, n=n)
         else:
             raise ValueError('distr should be one of "norm", "lognorm", "hist".')
         return scipy.stats.percentileofscore(cagr_distr, score, kind="rank")
@@ -1315,7 +1367,9 @@ class Portfolio(make_asset_list.ListMaker):
         returns_dict = {}
         for percentile in percentiles:
             percentile_returns_list = [
-                self.get_rolling_cagr(years * 12).loc[:, self.symbol].quantile(percentile / 100)
+                self.get_rolling_cagr(years * 12)
+                .loc[:, self.symbol]
+                .quantile(percentile / 100)
                 for years in period_range
             ]
             returns_dict.update({percentile: percentile_returns_list})
@@ -1494,7 +1548,10 @@ class Portfolio(make_asset_list.ListMaker):
         return helpers.Frame.get_wealth_indexes(return_ts, first_value)
 
     def _get_cagr_distribution(
-        self, distr: str = "norm", years: int = 1, n: int = 100,
+        self,
+        distr: str = "norm",
+        years: int = 1,
+        n: int = 100,
     ) -> pd.Series:
         """
         Generate CAGR distribution for the rate of return distribution of a given type.
@@ -1557,9 +1614,7 @@ class Portfolio(make_asset_list.ListMaker):
         """
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
-        cagr_distr = self._get_cagr_distribution(
-            distr=distr, years=years, n=n
-        )
+        cagr_distr = self._get_cagr_distribution(distr=distr, years=years, n=n)
         results = {}
         for percentile in percentiles:
             value = cagr_distr.quantile(percentile / 100)
@@ -1625,9 +1680,7 @@ class Portfolio(make_asset_list.ListMaker):
             )
         elif distr in ["norm", "lognorm"]:
             results = {}
-            wealth_indexes = self._monte_carlo_wealth(
-                distr=distr, years=years, n=n
-            )
+            wealth_indexes = self._monte_carlo_wealth(distr=distr, years=years, n=n)
             for percentile in percentiles:
                 value = wealth_indexes.iloc[-1, :].quantile(percentile / 100)
                 results.update({percentile: value})
@@ -1893,7 +1946,8 @@ class Portfolio(make_asset_list.ListMaker):
         return ratios.get_sharpe_ratio(
             pf_return=self.mean_return_annual,
             rf_return=rf_return,
-            std_deviation=self.risk_annual)
+            std_deviation=self.risk_annual,
+        )
 
     def get_sortino_ratio(self, t_return: float = 0) -> float:
         """
@@ -1918,11 +1972,17 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.get_sortino_ratio(t_return=0.02)
         1.4377728903230174
         """
-        semideviation = helpers.Frame.get_below_target_semideviation(ror=self.ror, t_return=t_return) * 12 ** 0.5
+        semideviation = (
+            helpers.Frame.get_below_target_semideviation(
+                ror=self.ror, t_return=t_return
+            )
+            * 12**0.5
+        )
         return ratios.get_sortino_ratio(
             pf_return=self.mean_return_annual,
             t_return=t_return,
-            semi_deviation=semideviation)
+            semi_deviation=semideviation,
+        )
 
     @property
     def diversification_ratio(self) -> float:
@@ -1944,7 +2004,9 @@ class Portfolio(make_asset_list.ListMaker):
         """
         assets_risk = self.assets_ror.std()
         assets_mean_return = self.assets_ror.mean()
-        assets_annualized_risk = helpers.Float.annualize_risk(assets_risk, assets_mean_return)
+        assets_annualized_risk = helpers.Float.annualize_risk(
+            assets_risk, assets_mean_return
+        )
         weights = np.asarray(self.weights)
         sigma_weighted_sum = weights.T @ assets_annualized_risk
         return sigma_weighted_sum / self.risk_annual

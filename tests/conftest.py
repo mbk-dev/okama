@@ -39,11 +39,13 @@ def _init_asset_list(
     request, portfolio_short_history, portfolio_dividends, assets_from_db
 ) -> None:
     request.cls.asset_list_with_portfolio = ok.AssetList(
-        assets=[portfolio_short_history] + assets_from_db, ccy="USD",
+        assets=[portfolio_short_history] + assets_from_db,
+        ccy="USD",
     )
 
     request.cls.asset_list_with_portfolio_dividends = ok.AssetList(
-        assets=[portfolio_dividends] + assets_from_db, ccy="USD",
+        assets=[portfolio_dividends] + assets_from_db,
+        ccy="USD",
     )
 
     request.cls.asset_list = ok.AssetList(
@@ -175,13 +177,13 @@ def init_efficient_frontier_values1():
 @pytest.fixture(scope="module")
 def init_efficient_frontier_values2():
     return dict(
-        assets=['RUB.FX', 'EUR.FX', 'MCFTR.INDX'],
+        assets=["RUB.FX", "EUR.FX", "MCFTR.INDX"],
         ccy="RUB",
-        first_date='2010-01',
-        last_date='2020-01',
+        first_date="2010-01",
+        last_date="2020-01",
         inflation=True,
         n_points=20,
-        full_frontier=True
+        full_frontier=True,
     )
 
 

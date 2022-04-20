@@ -15,35 +15,41 @@ from tests import conftest
 def test_asset_list_init_failing():
     with pytest.raises(ValueError, match=r"Assets must be a list."):
         ok.AssetList(assets=("RUB.FX", "MCFTR.INDX"))
-    with pytest.raises(ValueError, match=r"SBGB.MOEX historical data period length is too short. "
-                                         r"It must be at least 3 months."):
-        ok.AssetList(assets=['SBGB.MOEX'], last_date="2019-02", inflation=True)
-
+    with pytest.raises(
+        ValueError,
+        match=r"SBGB.MOEX historical data period length is too short. "
+        r"It must be at least 3 months.",
+    ):
+        ok.AssetList(assets=["SBGB.MOEX"], last_date="2019-02", inflation=True)
 
 
 @mark.asset_list
 @mark.usefixtures("_init_asset_list")
 class TestAssetList:
     def test_repr(self):
-        value = pd.Series(dict(
-            assets="[pf1.PF, RUB.FX, MCFTR.INDX]",
-            currency="USD",
-            first_date="2019-02",
-            last_date="2020-01",
-            period_length="1 years, 0 months",
-            inflation="USD.INFL"
-        ))
+        value = pd.Series(
+            dict(
+                assets="[pf1.PF, RUB.FX, MCFTR.INDX]",
+                currency="USD",
+                first_date="2019-02",
+                last_date="2020-01",
+                period_length="1 years, 0 months",
+                inflation="USD.INFL",
+            )
+        )
         assert repr(self.asset_list_with_portfolio) == repr(value)
 
     def test_len(self):
         assert self.asset_list.__len__() == 2
 
     def test_tickers(self):
-        assert self.asset_list_with_portfolio.tickers == ['pf1', 'RUB', 'MCFTR']
+        assert self.asset_list_with_portfolio.tickers == ["pf1", "RUB", "MCFTR"]
 
     def test_ror(self):
         asset_list_sample = pd.read_pickle(conftest.data_folder / "asset_list.pkl")
-        asset_list_lt_sample = pd.read_pickle(conftest.data_folder / "asset_list_lt.pkl")
+        asset_list_lt_sample = pd.read_pickle(
+            conftest.data_folder / "asset_list_lt.pkl"
+        )
         currencies_sample = pd.read_pickle(conftest.data_folder / "currencies.pkl")
         real_estate_sample = pd.read_pickle(conftest.data_folder / "real_estate.pkl")
         assert_frame_equal(self.asset_list.assets_ror, asset_list_sample)
@@ -96,10 +102,18 @@ class TestAssetList:
         assert self.asset_list.semideviation_annual[1] == approx(0.0384, rel=1e-2)
 
     def test_get_var_historic(self):
-        assert self.asset_list.get_var_historic(time_frame=1, level=5)["RUB.FX"] == approx(0.0411, rel=1e-2)
-        assert self.asset_list.get_var_historic(time_frame=5, level=1)["MCFTR.INDX"] == approx(-0.1048, rel=1e-2)
-        assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)["RUB.FX"] == approx(0.04975, rel=1e-2)
-        assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)["MCFTR.INDX"] == approx(0.01229, rel=1e-2)
+        assert self.asset_list.get_var_historic(time_frame=1, level=5)[
+            "RUB.FX"
+        ] == approx(0.0411, rel=1e-2)
+        assert self.asset_list.get_var_historic(time_frame=5, level=1)[
+            "MCFTR.INDX"
+        ] == approx(-0.1048, rel=1e-2)
+        assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)[
+            "RUB.FX"
+        ] == approx(0.04975, rel=1e-2)
+        assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)[
+            "MCFTR.INDX"
+        ] == approx(0.01229, rel=1e-2)
 
     def test_get_cvar_historic(self):
         assert self.asset_list.get_cvar_historic(level=5, time_frame=12)[
@@ -113,10 +127,10 @@ class TestAssetList:
         assert self.asset_list.drawdowns.min().sum() == approx(-0.082932, rel=1e-2)
 
     def test_recovery_periods(self):
-        assert self.asset_list.recovery_periods['MCFTR.INDX'] == approx(0, rel=1e-2)
-        assert np.isnan(self.asset_list.recovery_periods['RUB.FX'])
-        assert self.asset_list_lt.recovery_periods['MCFTR.INDX'] == 45
-        assert self.asset_list_lt.recovery_periods['RUB.FX'] == 69
+        assert self.asset_list.recovery_periods["MCFTR.INDX"] == approx(0, rel=1e-2)
+        assert np.isnan(self.asset_list.recovery_periods["RUB.FX"])
+        assert self.asset_list_lt.recovery_periods["MCFTR.INDX"] == 45
+        assert self.asset_list_lt.recovery_periods["RUB.FX"] == 69
 
     cagr_testdata1 = [
         (1, -0.0463, 0.3131, 0.0242),
@@ -144,10 +158,18 @@ class TestAssetList:
         (None, -0.1169, 0.3228),
     ]
 
-    @mark.parametrize("input_data,expected1,expected2", cagr_testdata2, ids=["1 year", "full period"],)
+    @mark.parametrize(
+        "input_data,expected1,expected2",
+        cagr_testdata2,
+        ids=["1 year", "full period"],
+    )
     def test_get_cagr_real(self, input_data, expected1, expected2):
-        assert self.asset_list.get_cagr(period=input_data, real=True)["RUB.FX"] == approx(expected1, abs=1e-2)
-        assert self.asset_list.get_cagr(period=input_data, real=True)["MCFTR.INDX"] == approx(expected2, abs=1e-2)
+        assert self.asset_list.get_cagr(period=input_data, real=True)[
+            "RUB.FX"
+        ] == approx(expected1, abs=1e-2)
+        assert self.asset_list.get_cagr(period=input_data, real=True)[
+            "MCFTR.INDX"
+        ] == approx(expected2, abs=1e-2)
 
     def test_get_cagr_value_error(self):
         with pytest.raises(ValueError):
@@ -172,7 +194,11 @@ class TestAssetList:
         (0, False, ValueError),  # window should be at least 12 months for CAGR
         (12.5, False, ValueError),  # not an integer
         (10 * 12, False, ValueError),  # window size should be in the history period
-        (12, True, ValueError),  # real CAGR is defined when AssetList(inflation=True) only
+        (
+            12,
+            True,
+            ValueError,
+        ),  # real CAGR is defined when AssetList(inflation=True) only
     ]
 
     @pytest.mark.parametrize("window, real, exception", get_rolling_cagr_error_data)
@@ -214,8 +240,12 @@ class TestAssetList:
         ids=["YTD", "1 year", "full period"],
     )
     def test_get_cumulative_return_real(self, input_data, expected1, expected2):
-        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["RUB.FX"] == approx(expected1, abs=1e-2)
-        assert self.asset_list.get_cumulative_return(period=input_data, real=True)["MCFTR.INDX"] == approx(expected2, abs=1e-2)
+        assert self.asset_list.get_cumulative_return(period=input_data, real=True)[
+            "RUB.FX"
+        ] == approx(expected1, abs=1e-2)
+        assert self.asset_list.get_cumulative_return(period=input_data, real=True)[
+            "MCFTR.INDX"
+        ] == approx(expected2, abs=1e-2)
 
     def test_get_cumulative_return_value_error(self):
         with pytest.raises(ValueError):
@@ -249,17 +279,27 @@ class TestAssetList:
         assert self.asset_list.annual_return_ts.iloc[-1, 1] == approx(0.01180, rel=1e-2)
 
     def test_describe(self):
-        description = self.asset_list.describe(tickers=False).iloc[:-2, :]  # last 2 rows have fresh lastdate
-        description_sample = pd.read_pickle(conftest.data_folder / "asset_list_describe.pkl").iloc[:-2, :]
+        description = self.asset_list.describe(tickers=False).iloc[
+            :-2, :
+        ]  # last 2 rows have fresh lastdate
+        description_sample = pd.read_pickle(
+            conftest.data_folder / "asset_list_describe.pkl"
+        ).iloc[:-2, :]
         cols = list(description_sample.columns.values)
         description = description[cols]  # columns order should not be an issue
-        assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False)
+        assert_frame_equal(
+            description, description_sample, check_dtype=False, check_column_type=False
+        )
 
     def test_dividend_yield(self):
         assert self.spy.assets_dividend_yield.iloc[-1, 0] == approx(0.0125, abs=1e-3)
-        assert self.spy_rub.assets_dividend_yield.iloc[-1, 0] == approx(0.01197, abs=1e-3)
+        assert self.spy_rub.assets_dividend_yield.iloc[-1, 0] == approx(
+            0.01197, abs=1e-3
+        )
         assert self.asset_list.assets_dividend_yield.iloc[:, 0].sum() == 0
-        assert self.asset_list_with_portfolio_dividends.assets_dividend_yield.iloc[-1, 0] == approx(0.0394, abs=1e-2)
+        assert self.asset_list_with_portfolio_dividends.assets_dividend_yield.iloc[
+            -1, 0
+        ] == approx(0.0394, abs=1e-2)
 
     def test_dividends_annual(self):
         assert self.spy.dividends_annual.iloc[-2, 0] == approx(
@@ -352,10 +392,10 @@ class TestAssetList:
 
     def test_get_sharpe_ratio(self):
         sharpe_ratio = self.asset_list.get_sharpe_ratio(rf_return=0.06)
-        assert sharpe_ratio.loc['RUB.FX'] == approx(-1.7617, rel=1e-2)
-        assert sharpe_ratio.loc['MCFTR.INDX'] == approx(2.53, rel=1e-2)
+        assert sharpe_ratio.loc["RUB.FX"] == approx(-1.7617, rel=1e-2)
+        assert sharpe_ratio.loc["MCFTR.INDX"] == approx(2.53, rel=1e-2)
 
     def test_get_sortino_ratio(self):
         sortino_ratio = self.asset_list.get_sortino_ratio(t_return=0.02)
-        assert sortino_ratio.loc['RUB.FX'] == approx(-1.5498, rel=1e-2)
-        assert sortino_ratio.loc['MCFTR.INDX'] == approx(10.36, rel=1e-2)
+        assert sortino_ratio.loc["RUB.FX"] == approx(-1.5498, rel=1e-2)
+        assert sortino_ratio.loc["MCFTR.INDX"] == approx(10.36, rel=1e-2)

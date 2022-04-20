@@ -53,7 +53,7 @@ class Float:
         Works with DataFrame inputs (in math.sqrt is not used).
         """
         return (
-            (risk ** 2 + (1 + mean_return) ** 2) ** settings._MONTHS_PER_YEAR
+            (risk**2 + (1 + mean_return) ** 2) ** settings._MONTHS_PER_YEAR
             - (1 + mean_return) ** (settings._MONTHS_PER_YEAR * 2)
         ) ** 0.5
 
@@ -64,7 +64,7 @@ class Float:
         """
         return (
             np.exp(
-                np.log(1.0 + mean_return) - 0.5 * std ** 2 / (1.0 + mean_return) ** 2
+                np.log(1.0 + mean_return) - 0.5 * std**2 / (1.0 + mean_return) ** 2
             )
             - 1.0
         )
@@ -107,7 +107,7 @@ class Frame:
         """
         Change time series period from day to month.
         """
-        return ts.resample('M').last()
+        return ts.resample("M").last()
 
     @classmethod
     def get_portfolio_return_ts(cls, weights: list, ror: pd.DataFrame) -> pd.Series:
@@ -120,7 +120,9 @@ class Frame:
         return ror @ weights
 
     @classmethod
-    def get_portfolio_mean_return(cls, weights: Union[list, np.array], ror: pd.DataFrame) -> float:
+    def get_portfolio_mean_return(
+        cls, weights: Union[list, np.array], ror: pd.DataFrame
+    ) -> float:
         """
         Computes mean return of a portfolio (monthly).
         """
@@ -225,7 +227,7 @@ class Frame:
         end_period = pd.Period(rates.index[-1], freq="M")
         rates = Frame._adjust_rates(rates, symbol)
         for month_idx in range(settings._MONTHS_PER_YEAR):
-            rates_yearly = rates.values[month_idx::settings._MONTHS_PER_YEAR]
+            rates_yearly = rates.values[month_idx :: settings._MONTHS_PER_YEAR]
             index_part = np.repeat(rates_yearly, settings._MONTHS_PER_YEAR)[
                 : len(rates) - month_idx
             ]
@@ -250,7 +252,9 @@ class Frame:
     # Risk metrics
 
     @classmethod
-    def get_portfolio_risk(cls, weights: Union[list, np.array], assets_ror: pd.DataFrame) -> float:
+    def get_portfolio_risk(
+        cls, weights: Union[list, np.array], assets_ror: pd.DataFrame
+    ) -> float:
         """
         Compute the standard deviation of return for monthly rebalanced portfolio.
         """
@@ -262,7 +266,9 @@ class Frame:
         return math.sqrt(weights.T @ covmat @ weights)
 
     @staticmethod
-    def get_semideviation(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
+    def get_semideviation(
+        ror: Union[pd.DataFrame, pd.Series]
+    ) -> Union[pd.Series, float]:
         """
         Returns semideviation.
         """
@@ -270,7 +276,9 @@ class Frame:
         return ror[below_mean].std(ddof=0)
 
     @staticmethod
-    def get_below_target_semideviation(ror: Union[pd.DataFrame, pd.Series], t_return: float = 0) -> Union[pd.Series, float]:
+    def get_below_target_semideviation(
+        ror: Union[pd.DataFrame, pd.Series], t_return: float = 0
+    ) -> Union[pd.Series, float]:
         """
         Returns below target semideviation.
         """
@@ -343,7 +351,7 @@ class Frame:
         """
         # TODO: implement skewtest (from scipy)
         sk = ror.expanding(min_periods=1).skew()
-        return sk.iloc[settings._MONTHS_PER_YEAR:]
+        return sk.iloc[settings._MONTHS_PER_YEAR :]
 
     @staticmethod
     def skewness_rolling(
@@ -365,7 +373,7 @@ class Frame:
         Kurtosis should be close to zero for normal distribution.
         """
         kt = ror.expanding(min_periods=1).kurt()
-        return kt.iloc[settings._MONTHS_PER_YEAR:]
+        return kt.iloc[settings._MONTHS_PER_YEAR :]
 
     @staticmethod
     def kurtosis_rolling(ror: Union[pd.Series, pd.DataFrame], window: int = 60):
@@ -470,7 +478,7 @@ class Rebalance:
 
     @staticmethod
     def assets_wealth_ts(
-            weights: list, ror: pd.DataFrame, *, period: str = "year"
+        weights: list, ror: pd.DataFrame, *, period: str = "year"
     ) -> pd.DataFrame:
         """
         Calculate ASSETS wealth indexes time series of rebalanced portfolio given returns time series of the assets.
@@ -491,7 +499,8 @@ class Rebalance:
                 assets_wealth_indexes_local = inv_period_spread * (1 + df).cumprod()
                 assets_wealth_indexes = pd.concat(
                     [assets_wealth_indexes, assets_wealth_indexes_local],
-                    verify_integrity=True, sort=True
+                    verify_integrity=True,
+                    sort=True,
                 )
                 wealth_index_local = assets_wealth_indexes_local.sum(axis=1)
                 wealth_index = pd.concat(
@@ -502,7 +511,7 @@ class Rebalance:
 
     @staticmethod
     def assets_weights_ts(
-            weights: list, ror: pd.DataFrame, *, period: str = "year"
+        weights: list, ror: pd.DataFrame, *, period: str = "year"
     ) -> pd.DataFrame:
         """
         Calculate assets weights monthly time series for rebalanced portfolio.
@@ -517,8 +526,12 @@ class Rebalance:
         -------
 
         """
-        assets_wealth_indexes = Rebalance.assets_wealth_ts(weights=weights, ror=ror, period=period)
-        portfolio_wealth_index = Rebalance.wealth_ts(weights=weights, ror=ror, period=period)
+        assets_wealth_indexes = Rebalance.assets_wealth_ts(
+            weights=weights, ror=ror, period=period
+        )
+        portfolio_wealth_index = Rebalance.wealth_ts(
+            weights=weights, ror=ror, period=period
+        )
         return assets_wealth_indexes.divide(portfolio_wealth_index, axis=0)
 
     @staticmethod
@@ -534,9 +547,7 @@ class Rebalance:
         first_date = ror.index[0]
         return_first_period = ror.iloc[0] @ weights
 
-        wealth_index = Rebalance.wealth_ts(
-            weights, ror, period=period
-        )
+        wealth_index = Rebalance.wealth_ts(weights, ror, period=period)
         ror = wealth_index.pct_change()
         ror.loc[
             first_date
@@ -562,7 +573,7 @@ class Date:
 
     @staticmethod
     def get_difference_in_months(last_day: pd.Timestamp, first_day: pd.Timestamp):
-        return last_day.to_period('M') - first_day.to_period('M')
+        return last_day.to_period("M") - first_day.to_period("M")
 
 
 class Index:
@@ -635,7 +646,7 @@ class Index:
         cov_matrix_ts = getattr(ror.expanding(), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
         cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
-        return cov_matrix_ts.iloc[settings._MONTHS_PER_YEAR:]
+        return cov_matrix_ts.iloc[settings._MONTHS_PER_YEAR :]
 
     @staticmethod
     def rolling_cov_cor(
@@ -665,5 +676,5 @@ class Index:
         """
         cov = Index.cov_cor(ror, fn="cov")
         var = ror.expanding().var().drop(columns=ror.columns[0])
-        var = var[settings._MONTHS_PER_YEAR:]
+        var = var[settings._MONTHS_PER_YEAR :]
         return cov / var
