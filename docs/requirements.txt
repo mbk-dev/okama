@@ -1,4 +1,4 @@
-sphinx>=4.1.2
+sphinx>=4.5.0
 sphinx_rtd_theme==0.5.2
 numpydoc==1.1.0
 nbsphinx==0.8.7
@@ -6,4 +6,4 @@ nbsphinx-link>=1.3.0
 pandoc>=1.1.0
 recommonmark==0.7.1
 ipython>=7.20.0
-jinja2<3.0.0
+# jinja2<3.0.0
