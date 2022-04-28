@@ -137,7 +137,6 @@ Main classes
 
     okama.EfficientFrontier
     okama.EfficientFrontierReb
-    okama.Plots
 
 
 Indices and tables
