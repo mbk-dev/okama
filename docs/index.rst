@@ -122,6 +122,9 @@ The latest development version can be installed directly from GitHub:
 Main classes
 ************
 
+Assets & Portfolio
+==================
+
 .. autosummary::
     :toctree: stubs
     :template: custom-class-template.rst
@@ -131,6 +134,9 @@ Main classes
     okama.AssetList
     okama.Portfolio
 
+Efficient Frontier
+==================
+
 .. autosummary::
     :toctree: stubs
     :template: custom-class-template-no-inherited.rst
@@ -138,6 +144,15 @@ Main classes
     okama.EfficientFrontier
     okama.EfficientFrontierReb
 
+Macroeconomics
+==============
+
+.. autosummary::
+    :toctree: stubs
+    :template: custom-class-template-no-inherited.rst
+
+    okama.Inflation
+    okama.Rate
 
 Indices and tables
 ******************
