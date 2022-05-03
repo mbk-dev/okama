@@ -1,4 +1,4 @@
 import okama as ok
 
-x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XFRA'], ccy='USD')
-print(x)
+x = ok.AssetList(['SPY.US'], ccy='USD')
+print(x.get_cumulative_return(period='YTD'))

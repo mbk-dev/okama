@@ -14,7 +14,7 @@ from os import path
 
 root = path.realpath(path.join(path.dirname(__file__), ".."))
 sys.path.insert(1, root)
-sys.path.append(os.path.abspath('matplotlib_ext'))
+sys.path.append(os.path.abspath("matplotlib_ext"))
 # sys.path.insert(0, os.path.abspath("."))
 
 import okama  # isort:skip
@@ -56,7 +56,7 @@ add_module_names = False
 # ones.
 extensions = [
     # "sphinx.ext.napoleon",
-    'matplotlib.sphinxext.plot_directive',
+    "matplotlib.sphinxext.plot_directive",
     "numpydoc",  # handle NumPy documentation formatted docstrings instead of napoleon
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -112,9 +112,7 @@ html_use_modindex = False
 # -- Options for autodoc    ------------------------------------------------
 
 autodoc_default_flags = ["members"]
-autodoc_default_options = {
-    'undoc-members': False,
-    'exclude-members': '__init__'}
+autodoc_default_options = {"undoc-members": False, "exclude-members": "__init__"}
 autodoc_typehints = "none"
 autodoc_member_order = "bysource"
 autoclass_content = "class"  # to not insert __init__ docstrings
