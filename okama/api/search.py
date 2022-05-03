@@ -8,9 +8,7 @@ from okama.api import api_methods, namespaces
 
 
 @lru_cache()
-def search(
-    search_string: str, namespace: Optional[str] = None, response_format: str = "frame"
-) -> json:
+def search(search_string: str, namespace: Optional[str] = None, response_format: str = "frame") -> json:
     # search for string in a single namespace
     if namespace:
         df = namespaces.symbols_in_namespace(namespace.upper())

@@ -27,9 +27,7 @@ class Asset:
         self.ror: pd.Series = data_queries.QueryData.get_ror(symbol)
         self.first_date: pd.Timestamp = self.ror.index[0].to_timestamp()
         self.last_date: pd.Timestamp = self.ror.index[-1].to_timestamp()
-        self.period_length: float = round(
-            (self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1
-        )
+        self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1)
         self.pl = settings.PeriodLength(
             self.ror.shape[0] // settings._MONTHS_PER_YEAR,
             self.ror.shape[0] % settings._MONTHS_PER_YEAR,
@@ -54,9 +52,7 @@ class Asset:
         namespace = self._symbol.split(".", 1)[-1]
         allowed_namespaces = namespaces.get_assets_namespaces()
         if namespace not in allowed_namespaces:
-            raise ValueError(
-                f"{namespace} is not in allowed assets namespaces: {allowed_namespaces}"
-            )
+            raise ValueError(f"{namespace} is not in allowed assets namespaces: {allowed_namespaces}")
 
     def _get_symbol_data(self, symbol) -> None:
         x = data_queries.QueryData.get_symbol_info(symbol)
@@ -173,9 +169,7 @@ class Asset:
         div = data_queries.QueryData.get_dividends(self.symbol)
         if div.empty:
             # Zero time series for assets where dividend yield is not defined.
-            index = pd.date_range(
-                start=self.first_date, end=self.last_date, freq="MS", closed=None
-            )
+            index = pd.date_range(start=self.first_date, end=self.last_date, freq="MS", closed=None)
             period = index.to_period("D")
             div = pd.Series(data=0, index=period)
             div.rename(self.symbol, inplace=True)

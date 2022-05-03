@@ -14,9 +14,7 @@ def get_namespaces():
 
 
 @lru_cache()
-def symbols_in_namespace(
-    namespace: str = settings.default_namespace, response_format: str = "frame"
-) -> pd.DataFrame:
+def symbols_in_namespace(namespace: str = settings.default_namespace, response_format: str = "frame") -> pd.DataFrame:
     string_response = api_methods.API.get_symbols_in_namespace(namespace.upper())
     list_of_symbols = json.loads(string_response)
     if response_format.lower() == "frame":

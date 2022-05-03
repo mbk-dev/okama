@@ -12,13 +12,13 @@ import copy
 import sys
 
 
-def strip_blank_lines(l):
+def strip_blank_lines(line):
     "Remove leading and trailing blank lines from a list of lines"
-    while l and not l[0].strip():
-        del l[0]
-    while l and not l[-1].strip():
-        del l[-1]
-    return l
+    while line and not line[0].strip():
+        del line[0]
+    while line and not line[-1].strip():
+        del line[-1]
+    return line
 
 
 class Reader:
@@ -179,8 +179,7 @@ class NumpyDocString(Mapping):
         if len(l2) >= 3 and (set(l2) in ({"-"}, {"="})) and len(l2) != len(l1):
             snip = "\n".join(self._doc._str[:2]) + "..."
             self._error_location(
-                "potentially wrong underline length... \n%s \n%s in \n%s"
-                % (l1, l2, snip),
+                "potentially wrong underline length... \n%s \n%s in \n%s" % (l1, l2, snip),
                 error=False,
             )
         return l2.startswith("-" * len(l1)) or l2.startswith("=" * len(l1))
@@ -403,17 +402,12 @@ class NumpyDocString(Mapping):
                 section = (s.capitalize() for s in section.split(" "))
                 section = " ".join(section)
                 if self.get(section):
-                    self._error_location(
-                        "The section %s appears twice in  %s"
-                        % (section, "\n".join(self._doc._str))
-                    )
+                    self._error_location("The section %s appears twice in  %s" % (section, "\n".join(self._doc._str)))
 
             if section in ("Parameters", "Other Parameters", "Attributes", "Methods"):
                 self[section] = self._parse_param_list(content)
             elif section in ("Returns", "Yields", "Raises", "Warns", "Receives"):
-                self[section] = self._parse_param_list(
-                    content, single_element_is_type=True
-                )
+                self[section] = self._parse_param_list(content, single_element_is_type=True)
             elif section.startswith(".. index::"):
                 self["index"] = self._parse_index(section, content)
             elif section == "See Also":
@@ -689,11 +683,7 @@ class ClassDoc(NumpyDocString):
             for name, func in inspect.getmembers(self._cls)
             if (
                 not name.startswith("_")
-                and (
-                    func is None
-                    or isinstance(func, property)
-                    or inspect.isdatadescriptor(func)
-                )
+                and (func is None or isinstance(func, property) or inspect.isdatadescriptor(func))
                 and self._is_show_member(name)
             )
         ]

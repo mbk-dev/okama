@@ -40,24 +40,18 @@ class API:
         period: str = "d",
     ) -> str:
         session = requests.session()
-        retry_strategy = Retry(
-            total=3, backoff_factor=0.1, status_forcelist=[429, 500, 502, 503, 504]
-        )
+        retry_strategy = Retry(total=3, backoff_factor=0.1, status_forcelist=[429, 500, 502, 503, 504])
         adapter = HTTPAdapter(max_retries=retry_strategy)
         request_url = cls.api_url + endpoint + symbol
         params = {"first_date": first_date, "last_date": last_date, "period": period}
         session.mount("https://", adapter)
         session.mount("http://", adapter)
         try:
-            r = session.get(
-                request_url, params=params, verify=False, timeout=cls.default_timeout
-            )
+            r = session.get(request_url, params=params, verify=False, timeout=cls.default_timeout)
             r.raise_for_status()
         except requests.exceptions.HTTPError as errh:
             if r.status_code == 404:
-                raise requests.exceptions.HTTPError(
-                    f"{symbol} is not found in the database.", 404
-                ) from errh
+                raise requests.exceptions.HTTPError(f"{symbol} is not found in the database.", 404) from errh
             raise requests.exceptions.HTTPError(
                 f"HTTP error fetching data for {symbol}:",
                 r.status_code,

@@ -5,6 +5,8 @@ import os
 import sys
 from os import path
 
+import okama  # isort:skip
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -16,9 +18,6 @@ root = path.realpath(path.join(path.dirname(__file__), ".."))
 sys.path.insert(1, root)
 sys.path.append(os.path.abspath("matplotlib_ext"))
 # sys.path.insert(0, os.path.abspath("."))
-
-import okama  # isort:skip
-import matplotlib
 
 
 # -- Project information -----------------------------------------------------

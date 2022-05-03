@@ -16,9 +16,7 @@ def test_initialization_failing():
         ValueError,
         match=r"Number of tickers \(2\) should be equal to the weights number \(3\)",
     ):
-        ok.Portfolio(
-            assets=["MCFTR.INDX", "MCFTR.INDX", "RUB.FX"], weights=[0.3, 0.3, 0.4]
-        )
+        ok.Portfolio(assets=["MCFTR.INDX", "MCFTR.INDX", "RUB.FX"], weights=[0.3, 0.3, 0.4])
 
 
 def test_repr(portfolio_rebalanced_year):
@@ -46,9 +44,7 @@ def test_symbol_failing(portfolio_rebalanced_year):
         portfolio_rebalanced_year.symbol = 1
     with pytest.raises(ValueError, match='portfolio symbol must end with ".PF"'):
         portfolio_rebalanced_year.symbol = "Not_a_good_symbol_for_portfolio.US"
-    with pytest.raises(
-        ValueError, match="portfolio text symbol should not have whitespace characters."
-    ):
+    with pytest.raises(ValueError, match="portfolio text symbol should not have whitespace characters."):
         portfolio_rebalanced_year.symbol = "Not a good symbol for portfolio.PF"
 
 
@@ -74,23 +70,15 @@ def test_weights(portfolio_rebalanced_month):
 
 
 def test_weights_ts_rebalanced_month(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.weights_ts["RUB.FX"].iloc[-1] == approx(
-        0.5, rel=1e-2
-    )
+    assert portfolio_rebalanced_month.weights_ts["RUB.FX"].iloc[-1] == approx(0.5, rel=1e-2)
 
 
-def test_weights_ts_rebalanced_year(
-    portfolio_rebalanced_year, portfolio_not_rebalanced
-):
-    assert portfolio_rebalanced_year.weights_ts["RUB.FX"].iloc[-2] == approx(
-        0.3907, rel=1e-2
-    )
+def test_weights_ts_rebalanced_year(portfolio_rebalanced_year, portfolio_not_rebalanced):
+    assert portfolio_rebalanced_year.weights_ts["RUB.FX"].iloc[-2] == approx(0.3907, rel=1e-2)
 
 
 def test_weights_ts_not_rebalanced(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.weights_ts["RUB.FX"].iloc[-1] == approx(
-        0.2770, rel=1e-2
-    )
+    assert portfolio_not_rebalanced.weights_ts["RUB.FX"].iloc[-1] == approx(0.2770, rel=1e-2)
 
 
 def test_mean_return(portfolio_rebalanced_month):
@@ -106,21 +94,15 @@ def test_real_mean_return(portfolio_rebalanced_month):
     "window, real, expected",
     [(1, True, 0.01100), (12, False, 0.12269), (12, True, 0.0961)],
 )
-def test_get_rolling_cumulative_return(
-    portfolio_rebalanced_month, window, real, expected
-):
-    assert portfolio_rebalanced_month.get_rolling_cumulative_return(
-        window=window, real=real
-    ).iloc[-1, 0] == approx(expected, rel=1e-2)
+def test_get_rolling_cumulative_return(portfolio_rebalanced_month, window, real, expected):
+    assert portfolio_rebalanced_month.get_rolling_cumulative_return(window=window, real=real).iloc[-1, 0] == approx(
+        expected, rel=1e-2
+    )
 
 
 def test_assets_close_monthly(portfolio_not_rebalanced):
-    assert (
-        portfolio_not_rebalanced.assets_close_monthly.iloc[-1, 0] == 63.0359
-    )  # RUB.FX
-    assert (
-        portfolio_not_rebalanced.assets_close_monthly.iloc[-1, 1] == 5245.6
-    )  # MCFTR.INDX
+    assert portfolio_not_rebalanced.assets_close_monthly.iloc[-1, 0] == 63.0359  # RUB.FX
+    assert portfolio_not_rebalanced.assets_close_monthly.iloc[-1, 1] == 5245.6  # MCFTR.INDX
 
 
 def test_close_monthly(portfolio_not_rebalanced):
@@ -128,12 +110,8 @@ def test_close_monthly(portfolio_not_rebalanced):
 
 
 def test_number_of_securities(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 0] == approx(
-        8.88, rel=1e-2
-    )  # RUB.FX
-    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 1] == approx(
-        0.2787, abs=1e-2
-    )  # MCFTR.INDX
+    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 0] == approx(8.88, rel=1e-2)  # RUB.FX
+    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 1] == approx(0.2787, abs=1e-2)  # MCFTR.INDX
 
 
 def test_dividends(portfolio_dividends):
@@ -155,21 +133,13 @@ def test_semideviation(portfolio_rebalanced_month):
 
 
 def test_get_var_historic(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.get_var_historic(time_frame=1, level=5) == approx(
-        0.03815, rel=1e-2
-    )
-    assert portfolio_rebalanced_month.get_var_historic(time_frame=5, level=1) == approx(
-        0.0969, rel=1e-2
-    )
+    assert portfolio_rebalanced_month.get_var_historic(time_frame=1, level=5) == approx(0.03815, rel=1e-2)
+    assert portfolio_rebalanced_month.get_var_historic(time_frame=5, level=1) == approx(0.0969, rel=1e-2)
 
 
 def test_get_cvar_historic(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.get_cvar_historic(
-        time_frame=1, level=5
-    ) == approx(0.05016, rel=1e-2)
-    assert portfolio_rebalanced_month.get_cvar_historic(
-        time_frame=5, level=1
-    ) == approx(0.10762, rel=1e-2)
+    assert portfolio_rebalanced_month.get_cvar_historic(time_frame=1, level=5) == approx(0.05016, rel=1e-2)
+    assert portfolio_rebalanced_month.get_cvar_historic(time_frame=5, level=1) == approx(0.10762, rel=1e-2)
 
 
 def test_drawdowns(portfolio_not_rebalanced):
@@ -205,9 +175,7 @@ cagr_testdata1 = [
     ids=["1 year", "full period"],
 )
 def test_get_cagr_real(portfolio_rebalanced_month, input_data, expected):
-    assert portfolio_rebalanced_month.get_cagr(period=input_data, real=True).values[
-        0
-    ] == approx(expected, abs=1e-2)
+    assert portfolio_rebalanced_month.get_cagr(period=input_data, real=True).values[0] == approx(expected, abs=1e-2)
 
 
 def test_get_cagr_real_no_inflation_exception(portfolio_no_inflation):
@@ -220,9 +188,9 @@ def test_get_cagr_real_no_inflation_exception(portfolio_no_inflation):
     [("YTD", False, 0.01505), (1, False, 0.12269), (2, True, 0.2299)],
 )
 def test_cumulative_return(portfolio_rebalanced_month, period, real, expected):
-    assert portfolio_rebalanced_month.get_cumulative_return(
-        period=period, real=real
-    ).iloc[0] == approx(expected, abs=1e-2)
+    assert portfolio_rebalanced_month.get_cumulative_return(period=period, real=real).iloc[0] == approx(
+        expected, abs=1e-2
+    )
 
 
 cumulative_return_fail = [
@@ -240,33 +208,19 @@ def test_cumulative_return_error(portfolio_no_inflation, period, real, exception
 
 def test_describe_inflation(portfolio_rebalanced_month):
     description = portfolio_rebalanced_month.describe()
-    description_sample = pd.read_pickle(
-        conftest.data_folder / "portfolio_description.pkl"
-    )
-    assert_frame_equal(
-        description, description_sample, check_dtype=False, check_column_type=False
-    )
+    description_sample = pd.read_pickle(conftest.data_folder / "portfolio_description.pkl")
+    assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False)
 
 
 def test_describe_no_inflation(portfolio_no_inflation):
     description = portfolio_no_inflation.describe()
-    description_sample = pd.read_pickle(
-        conftest.data_folder / "portfolio_description_no_inflation.pkl"
-    )
-    assert_frame_equal(
-        description, description_sample, check_dtype=False, check_column_type=False
-    )
+    description_sample = pd.read_pickle(conftest.data_folder / "portfolio_description_no_inflation.pkl")
+    assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False)
 
 
-def test_percentile_from_history(
-    portfolio_rebalanced_month, portfolio_no_inflation, portfolio_short_history
-):
-    assert portfolio_rebalanced_month.percentile_history_cagr(years=1).iloc[
-        0, 1
-    ] == approx(0.12456, rel=1e-2)
-    assert portfolio_no_inflation.percentile_history_cagr(years=1).iloc[0, 1] == approx(
-        0.12456, rel=1e-2
-    )
+def test_percentile_from_history(portfolio_rebalanced_month, portfolio_no_inflation, portfolio_short_history):
+    assert portfolio_rebalanced_month.percentile_history_cagr(years=1).iloc[0, 1] == approx(0.12456, rel=1e-2)
+    assert portfolio_no_inflation.percentile_history_cagr(years=1).iloc[0, 1] == approx(0.12456, rel=1e-2)
     with pytest.raises(
         ValueError,
         match="Time series does not have enough history to forecast. "
@@ -280,9 +234,9 @@ def test_percentile_from_history(
     [("hist", 18.0), ("norm", 15.86), ("lognorm", 13.34)],
 )
 def test_percentile_inverse_cagr(portfolio_rebalanced_month, distribution, expected):
-    assert portfolio_rebalanced_month.percentile_inverse_cagr(
-        distr=distribution, years=1, score=0, n=5000
-    ) == approx(expected, rel=1e-1)
+    assert portfolio_rebalanced_month.percentile_inverse_cagr(distr=distribution, years=1, score=0, n=5000) == approx(
+        expected, rel=1e-1
+    )
 
 
 def test_table(portfolio_rebalanced_month):
@@ -297,9 +251,9 @@ def test_table(portfolio_rebalanced_month):
     [(12, False, 0.1290), (24, True, 0.08505)],
 )
 def test_get_rolling_cagr(portfolio_rebalanced_month, window, real, expected):
-    assert portfolio_rebalanced_month.get_rolling_cagr(window=window, real=real).iloc[
-        0, -1
-    ] == approx(expected, rel=1e-2)
+    assert portfolio_rebalanced_month.get_rolling_cagr(window=window, real=real).iloc[0, -1] == approx(
+        expected, rel=1e-2
+    )
 
 
 def test_get_rolling_cagr_failing_short_window(portfolio_not_rebalanced):
@@ -321,9 +275,9 @@ def test_get_rolling_cagr_failing_no_inflation(portfolio_no_inflation):
 
 
 def test_monte_carlo_wealth(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month._monte_carlo_wealth(
-        distr="norm", years=1, n=1000
-    ).iloc[-1, :].mean() == approx(2121, rel=1e-1)
+    assert portfolio_rebalanced_month._monte_carlo_wealth(distr="norm", years=1, n=1000).iloc[-1, :].mean() == approx(
+        2121, rel=1e-1
+    )
 
 
 @mark.parametrize(
@@ -331,21 +285,15 @@ def test_monte_carlo_wealth(portfolio_rebalanced_month):
     [("hist", 2096), ("norm", 2103), ("lognorm", 2093)],
 )
 def test_percentile_wealth(portfolio_rebalanced_month, distribution, expected):
-    dic = portfolio_rebalanced_month.percentile_wealth(
-        distr=distribution, years=1, n=100, percentiles=[50]
-    )
+    dic = portfolio_rebalanced_month.percentile_wealth(distr=distribution, years=1, n=100, percentiles=[50])
     assert dic[50] == approx(expected, rel=1e-1)
 
 
 def test_forecast_monte_carlo_cagr(portfolio_rebalanced_month):
-    dic = portfolio_rebalanced_month.percentile_distribution_cagr(
-        years=2, distr="lognorm", n=100, percentiles=[50]
-    )
+    dic = portfolio_rebalanced_month.percentile_distribution_cagr(years=2, distr="lognorm", n=100, percentiles=[50])
     assert dic[50] == approx(0.12, abs=5e-2)
     with pytest.raises(ValueError):
-        portfolio_rebalanced_month.percentile_distribution_cagr(
-            years=10, distr="lognorm", n=100, percentiles=[50]
-        )
+        portfolio_rebalanced_month.percentile_distribution_cagr(years=10, distr="lognorm", n=100, percentiles=[50])
 
 
 def test_skewness(portfolio_rebalanced_month):
@@ -353,9 +301,7 @@ def test_skewness(portfolio_rebalanced_month):
 
 
 def test_rolling_skewness(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.skewness_rolling(window=24).iloc[-1] == approx(
-        0.8869, rel=1e-2
-    )
+    assert portfolio_rebalanced_month.skewness_rolling(window=24).iloc[-1] == approx(0.8869, rel=1e-2)
 
 
 def test_kurtosis(portfolio_rebalanced_month):
@@ -363,27 +309,19 @@ def test_kurtosis(portfolio_rebalanced_month):
 
 
 def test_kurtosis_rolling(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.kurtosis_rolling(window=24).iloc[-1] == approx(
-        1.76521, rel=1e-2
-    )
+    assert portfolio_rebalanced_month.kurtosis_rolling(window=24).iloc[-1] == approx(1.76521, rel=1e-2)
 
 
 def test_jarque_bera(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.jarque_bera["statistic"] == approx(
-        431.3438, rel=1e-2
-    )
+    assert portfolio_rebalanced_month.jarque_bera["statistic"] == approx(431.3438, rel=1e-2)
 
 
 def test_get_sharpe_ratio(portfolio_no_inflation):
-    assert portfolio_no_inflation.get_sharpe_ratio(rf_return=0.05) == approx(
-        0.631, rel=1e-2
-    )
+    assert portfolio_no_inflation.get_sharpe_ratio(rf_return=0.05) == approx(0.631, rel=1e-2)
 
 
 def test_get_sortino_ratio(portfolio_no_inflation):
-    assert portfolio_no_inflation.get_sortino_ratio(t_return=0.05) == approx(
-        1.0615, rel=1e-2
-    )
+    assert portfolio_no_inflation.get_sortino_ratio(t_return=0.05) == approx(1.0615, rel=1e-2)
 
 
 def test_diversification_ratio(portfolio_no_inflation):

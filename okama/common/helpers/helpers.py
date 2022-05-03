@@ -8,9 +8,7 @@ import scipy.stats
 from okama import settings
 
 
-def check_rolling_window(
-    window: int, ror: Union[pd.Series, pd.DataFrame], window_below_year: bool = False
-):
+def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame], window_below_year: bool = False):
     if not window_below_year and window < settings._MONTHS_PER_YEAR:
         raise ValueError("window size should be at least 1 year")
     if window > ror.shape[0]:
@@ -24,9 +22,7 @@ class Float:
     """
 
     @staticmethod
-    def get_monthly_return_from_annual(
-        annual_return: Union[float, pd.Series]
-    ) -> Union[float, pd.Series]:
+    def get_monthly_return_from_annual(annual_return: Union[float, pd.Series]) -> Union[float, pd.Series]:
         """
         Gets value of monthly return for a given annual return.
         """
@@ -44,9 +40,7 @@ class Float:
         return (rate_of_return + 1.0) ** periods_per_year - 1.0
 
     @staticmethod
-    def annualize_risk(
-        risk: Union[float, pd.Series], mean_return: Union[float, pd.Series]
-    ) -> Union[float, pd.Series]:
+    def annualize_risk(risk: Union[float, pd.Series], mean_return: Union[float, pd.Series]) -> Union[float, pd.Series]:
         """
         Annualizes Risk.
         Annualization from month to year (from standard deviation) is by default. Monthly mean return is also required.
@@ -62,12 +56,7 @@ class Float:
         """
         Approximates geometric mean return given mean return and std.
         """
-        return (
-            np.exp(
-                np.log(1.0 + mean_return) - 0.5 * std**2 / (1.0 + mean_return) ** 2
-            )
-            - 1.0
-        )
+        return np.exp(np.log(1.0 + mean_return) - 0.5 * std**2 / (1.0 + mean_return) ** 2) - 1.0
 
     @staticmethod
     def get_random_weights(n: int, w_shape: int) -> pd.Series:
@@ -79,9 +68,7 @@ class Float:
         weights_transposed = rand_nos.transpose() / rand_nos.sum(axis=1)
         weights = weights_transposed.transpose()
         weights_df = pd.DataFrame(weights)
-        return weights_df.aggregate(
-            np.array, axis=1
-        )  # Converts df to DataFrame of np.array
+        return weights_df.aggregate(np.array, axis=1)  # Converts df to DataFrame of np.array
 
     @staticmethod
     def get_purchasing_power(inflation: float, value: float = 1000.0):
@@ -120,9 +107,7 @@ class Frame:
         return ror @ weights
 
     @classmethod
-    def get_portfolio_mean_return(
-        cls, weights: Union[list, np.array], ror: pd.DataFrame
-    ) -> float:
+    def get_portfolio_mean_return(cls, weights: Union[list, np.array], ror: pd.DataFrame) -> float:
         """
         Computes mean return of a portfolio (monthly).
         """
@@ -138,15 +123,11 @@ class Frame:
         Return Compound Annual Rate of Return (CAGR) for each asset given returns time series DataFrame.
         """
         if ror.shape[0] < 12:
-            return pd.Series(
-                {x: None for x in ror.columns}
-            )  # CAGR is not defined for time periods < 1 year
+            return pd.Series({x: None for x in ror.columns})  # CAGR is not defined for time periods < 1 year
         return ((ror + 1.0).prod()) ** (settings._MONTHS_PER_YEAR / ror.shape[0]) - 1.0
 
     @staticmethod
-    def get_cumulative_return(
-        ror: Union[pd.DataFrame, pd.Series]
-    ) -> Union[pd.Series, float]:
+    def get_cumulative_return(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
         """
         Return Compound Return for time series of return (one or several).
         """
@@ -159,9 +140,7 @@ class Frame:
         fn: Callable,
         window_below_year: bool = False,
     ) -> Union[pd.DataFrame, pd.Series]:
-        check_rolling_window(
-            window=window, ror=ror, window_below_year=window_below_year
-        )
+        check_rolling_window(window=window, ror=ror, window_below_year=window_below_year)
         x = ror.rolling(window).apply(fn)
         return x.dropna()
 
@@ -188,9 +167,7 @@ class Frame:
         initial_investments = first_value
         first_date = ror.index[0]
         wealth_index = initial_investments * (ror + 1).cumprod()
-        wealth_index.loc[
-            first_date
-        ] = initial_investments  # replaces NaN with the first period return
+        wealth_index.loc[first_date] = initial_investments  # replaces NaN with the first period return
         wealth_index.sort_index(ascending=True, inplace=True)
         return wealth_index
 
@@ -203,12 +180,8 @@ class Frame:
         """
         if symbol != "RUS_RUB_TOP10.RATE":
             #  license revocation does not happen among TOP 10 banks
-            penalty1 = (
-                14 / 365 / 2
-            )  # penalty for license revocation (period 1 - frequent revocation)
-            penalty2 = (14 / 365) * (
-                30 / 440
-            )  # penalty for license revocation (period 2 - rare revocation)
+            penalty1 = 14 / 365 / 2  # penalty for license revocation (period 1 - frequent revocation)
+            penalty2 = (14 / 365) * (30 / 440)  # penalty for license revocation (period 2 - rare revocation)
             rates["28.09.2018":] = rates["28.09.2018":] * (1 - penalty1)
             rates[:"28.10.2018"] = rates[:"28.10.2018"] * (1 - penalty2)
         # compensate monthly interest capitalization (okid index has it)
@@ -228,13 +201,9 @@ class Frame:
         rates = Frame._adjust_rates(rates, symbol)
         for month_idx in range(settings._MONTHS_PER_YEAR):
             rates_yearly = rates.values[month_idx :: settings._MONTHS_PER_YEAR]
-            index_part = np.repeat(rates_yearly, settings._MONTHS_PER_YEAR)[
-                : len(rates) - month_idx
-            ]
+            index_part = np.repeat(rates_yearly, settings._MONTHS_PER_YEAR)[: len(rates) - month_idx]
             index_part = (1 + index_part / settings._MONTHS_PER_YEAR).cumprod()
-            index_total = (
-                index_part if index_total is None else index_total[1:] + index_part
-            )
+            index_total = index_part if index_total is None else index_total[1:] + index_part
             start_period += 1
         if index_total is None:
             raise ValueError("`index_total` should not be `None`")
@@ -242,9 +211,7 @@ class Frame:
         result = (np.diff(result) / result[:-1] + 1.0).cumprod() - 1.0
         result = [0] + result
         result = (result + 1) * 100
-        result = pd.Series(
-            result, index=pd.period_range(start_period, end_period, freq="M")
-        )
+        result = pd.Series(result, index=pd.period_range(start_period, end_period, freq="M"))
         result.loc[start_period - 1] = 100.0
         result.sort_index(ascending=True, inplace=True)
         return result
@@ -252,9 +219,7 @@ class Frame:
     # Risk metrics
 
     @classmethod
-    def get_portfolio_risk(
-        cls, weights: Union[list, np.array], assets_ror: pd.DataFrame
-    ) -> float:
+    def get_portfolio_risk(cls, weights: Union[list, np.array], assets_ror: pd.DataFrame) -> float:
         """
         Compute the standard deviation of return for monthly rebalanced portfolio.
         """
@@ -266,9 +231,7 @@ class Frame:
         return math.sqrt(weights.T @ covmat @ weights)
 
     @staticmethod
-    def get_semideviation(
-        ror: Union[pd.DataFrame, pd.Series]
-    ) -> Union[pd.Series, float]:
+    def get_semideviation(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
         """
         Returns semideviation.
         """
@@ -286,9 +249,7 @@ class Frame:
         return ror[below_target].std(ddof=0)
 
     @staticmethod
-    def get_var_historic(
-        ror: Union[pd.DataFrame, pd.Series], level: int = 5
-    ) -> Union[pd.Series, float]:
+    def get_var_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:
         """
         Compute monthly historic Value at Risk (VaR) at a specified level.
         """
@@ -298,24 +259,18 @@ class Frame:
         return s
 
     @staticmethod
-    def get_cvar_historic(
-        ror: Union[pd.DataFrame, pd.Series], level: int = 5
-    ) -> Union[pd.Series, float]:
+    def get_cvar_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:
         """
         Compute the Conditional VaR (CVaR) at a specified level.
         """
-        is_beyond = ror <= ror.quantile(
-            level / 100
-        )  # mask: return is less than quantile
+        is_beyond = ror <= ror.quantile(level / 100)  # mask: return is less than quantile
         s = -ror[is_beyond].mean()
         if isinstance(s, pd.Series):
             s.name = "CVaR"
         return s
 
     @staticmethod
-    def get_drawdowns(
-        ror: Union[pd.DataFrame, pd.Series]
-    ) -> Union[pd.DataFrame, pd.Series]:
+    def get_drawdowns(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
         """
         Get drawdowns from return time series.
         """
@@ -324,9 +279,7 @@ class Frame:
         return (wealth_index - previous_peaks) / previous_peaks
 
     @staticmethod
-    def change_columns_order(
-        df: pd.DataFrame, selected_columns: list, position: str = "first"
-    ) -> pd.DataFrame:
+    def change_columns_order(df: pd.DataFrame, selected_columns: list, position: str = "first") -> pd.DataFrame:
         """
         Places selected_columns on the first position (position='first') or last position (position='last').
         """
@@ -354,9 +307,7 @@ class Frame:
         return sk.iloc[settings._MONTHS_PER_YEAR :]
 
     @staticmethod
-    def skewness_rolling(
-        ror: Union[pd.DataFrame, pd.Series], window: int = 60
-    ) -> Union[pd.Series, float]:
+    def skewness_rolling(ror: Union[pd.DataFrame, pd.Series], window: int = 60) -> Union[pd.Series, float]:
         """
         Calculate rolling skewness.
         Window size should be at least 12 months.
@@ -449,9 +400,7 @@ class Rebalance:
     """
 
     @staticmethod
-    def wealth_ts(
-        weights: list, ror: pd.DataFrame, *, period: str = "year"
-    ) -> pd.Series:
+    def wealth_ts(weights: list, ror: pd.DataFrame, *, period: str = "year") -> pd.Series:
         """
         Calculate wealth index time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
@@ -470,16 +419,12 @@ class Rebalance:
                 inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
                 assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
                 wealth_index_local = assets_wealth_indexes.sum(axis=1)
-                wealth_index = pd.concat(
-                    [wealth_index, wealth_index_local], verify_integrity=True, sort=True
-                )
+                wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=True)
                 initial_inv = wealth_index.iloc[-1]
         return wealth_index
 
     @staticmethod
-    def assets_wealth_ts(
-        weights: list, ror: pd.DataFrame, *, period: str = "year"
-    ) -> pd.DataFrame:
+    def assets_wealth_ts(weights: list, ror: pd.DataFrame, *, period: str = "year") -> pd.DataFrame:
         """
         Calculate ASSETS wealth indexes time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
@@ -503,16 +448,12 @@ class Rebalance:
                     sort=True,
                 )
                 wealth_index_local = assets_wealth_indexes_local.sum(axis=1)
-                wealth_index = pd.concat(
-                    [wealth_index, wealth_index_local], verify_integrity=True, sort=True
-                )
+                wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=True)
                 initial_inv = wealth_index.iloc[-1]
         return assets_wealth_indexes
 
     @staticmethod
-    def assets_weights_ts(
-        weights: list, ror: pd.DataFrame, *, period: str = "year"
-    ) -> pd.DataFrame:
+    def assets_weights_ts(weights: list, ror: pd.DataFrame, *, period: str = "year") -> pd.DataFrame:
         """
         Calculate assets weights monthly time series for rebalanced portfolio.
 
@@ -526,18 +467,12 @@ class Rebalance:
         -------
 
         """
-        assets_wealth_indexes = Rebalance.assets_wealth_ts(
-            weights=weights, ror=ror, period=period
-        )
-        portfolio_wealth_index = Rebalance.wealth_ts(
-            weights=weights, ror=ror, period=period
-        )
+        assets_wealth_indexes = Rebalance.assets_wealth_ts(weights=weights, ror=ror, period=period)
+        portfolio_wealth_index = Rebalance.wealth_ts(weights=weights, ror=ror, period=period)
         return assets_wealth_indexes.divide(portfolio_wealth_index, axis=0)
 
     @staticmethod
-    def return_ts(
-        weights: Union[list, np.ndarray], ror: pd.DataFrame, *, period: str = "year"
-    ) -> pd.Series:
+    def return_ts(weights: Union[list, np.ndarray], ror: pd.DataFrame, *, period: str = "year") -> pd.Series:
         """
         Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
@@ -549,9 +484,7 @@ class Rebalance:
 
         wealth_index = Rebalance.wealth_ts(weights, ror, period=period)
         ror = wealth_index.pct_change()
-        ror.loc[
-            first_date
-        ] = return_first_period  # replaces NaN with the first period return
+        ror.loc[first_date] = return_first_period  # replaces NaN with the first period return
         return ror
 
 
@@ -585,17 +518,10 @@ class Index:
         Index should be in the first position (first column).
         """
         if accumulated_return.shape[1] < 2:
-            raise ValueError(
-                "At least 2 symbols should be provided to calculate Tracking Difference."
-            )
+            raise ValueError("At least 2 symbols should be provided to calculate Tracking Difference.")
         initial_value = accumulated_return.iloc[0]
-        difference = (
-            accumulated_return.subtract(accumulated_return.iloc[:, 0], axis=0)
-            / initial_value
-        )
-        difference.drop(
-            difference.columns[0], axis=1, inplace=True
-        )  # drop the first column (stock index data)
+        difference = accumulated_return.subtract(accumulated_return.iloc[:, 0], axis=0) / initial_value
+        difference.drop(difference.columns[0], axis=1, inplace=True)  # drop the first column (stock index data)
         return difference
 
     @staticmethod
@@ -609,9 +535,7 @@ class Index:
         y = abs(tracking_diff)
         diff = (y + 1.0).pow(pwr, axis=0) - 1.0
         diff = np.sign(tracking_diff) * diff
-        return diff.iloc[
-            settings._MONTHS_PER_YEAR - 1 :
-        ]  # returns for the first 11 months can't be annualized
+        return diff.iloc[settings._MONTHS_PER_YEAR - 1 :]  # returns for the first 11 months can't be annualized
 
     @staticmethod
     def tracking_error(ror: pd.DataFrame) -> pd.DataFrame:
@@ -621,16 +545,10 @@ class Index:
         Index should be in the first position (first column).
         """
         if ror.shape[1] < 2:
-            raise ValueError(
-                "At least 2 symbols should be provided to calculate Tracking Error."
-            )
+            raise ValueError("At least 2 symbols should be provided to calculate Tracking Error.")
         cumsum = ror.subtract(ror.iloc[:, 0], axis=0).pow(2, axis=0).cumsum()
-        cumsum.drop(
-            cumsum.columns[0], axis=1, inplace=True
-        )  # drop the first column (stock index data)
-        tracking_error = cumsum.divide((1.0 + np.arange(ror.shape[0])), axis=0).pow(
-            0.5, axis=0
-        )
+        cumsum.drop(cumsum.columns[0], axis=1, inplace=True)  # drop the first column (stock index data)
+        tracking_error = cumsum.divide((1.0 + np.arange(ror.shape[0])), axis=0).pow(0.5, axis=0)
         return tracking_error * np.sqrt(12)
 
     @staticmethod
@@ -649,9 +567,7 @@ class Index:
         return cov_matrix_ts.iloc[settings._MONTHS_PER_YEAR :]
 
     @staticmethod
-    def rolling_cov_cor(
-        ror: pd.DataFrame, window: int = 60, fn: str = "corr"
-    ) -> pd.DataFrame:
+    def rolling_cov_cor(ror: pd.DataFrame, window: int = 60, fn: str = "corr") -> pd.DataFrame:
         """
         Returns the rolling correlation (or covariance) time series.
         The history period should be at least 12 months.

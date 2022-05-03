@@ -35,9 +35,7 @@ def assets_from_db():
 
 
 @pytest.fixture(scope="class")
-def _init_asset_list(
-    request, portfolio_short_history, portfolio_dividends, assets_from_db
-) -> None:
+def _init_asset_list(request, portfolio_short_history, portfolio_dividends, assets_from_db) -> None:
     request.cls.asset_list_with_portfolio = ok.AssetList(
         assets=[portfolio_short_history] + assets_from_db,
         ccy="USD",
@@ -76,12 +74,8 @@ def _init_asset_list(
         last_date="2020-01",
         inflation=True,
     )
-    request.cls.spy = ok.AssetList(
-        first_date="2000-01", last_date="2002-01", inflation=True
-    )
-    request.cls.spy_rub = ok.AssetList(
-        first_date="2000-01", last_date="2002-01", inflation=True, ccy="RUB"
-    )
+    request.cls.spy = ok.AssetList(first_date="2000-01", last_date="2002-01", inflation=True)
+    request.cls.spy_rub = ok.AssetList(first_date="2000-01", last_date="2002-01", inflation=True, ccy="RUB")
     request.cls.real_estate = ok.AssetList(
         assets=["RUS_SEC.RE", "MOW_PR.RE"],
         ccy="RUB",
@@ -156,9 +150,7 @@ def _init_inflation(request):
 
 @pytest.fixture(scope="class")
 def _init_rates(request):
-    request.cls.rates_rub = ok.Rate(
-        symbol="RUS_RUB.RATE", first_date="2015-01", last_date="2020-02"
-    )
+    request.cls.rates_rub = ok.Rate(symbol="RUS_RUB.RATE", first_date="2015-01", last_date="2020-02")
 
 
 # Efficient Frontier Single Period

@@ -35,17 +35,13 @@ class QueryData:
         return ts
 
     @staticmethod
-    def get_macro_ts(
-        symbol: str, first_date: str = "1913-01-01", last_date: str = "2100-01-01"
-    ) -> pd.Series:
+    def get_macro_ts(symbol: str, first_date: str = "1913-01-01", last_date: str = "2100-01-01") -> pd.Series:
         """
         Requests api_methods.API for Macroeconomic indicators time series (monthly data).
         - Inflation time series
         - Bank rates time series
         """
-        csv_input = api_methods.API.get_macro(
-            symbol=symbol, first_date=first_date, last_date=last_date
-        )
+        csv_input = api_methods.API.get_macro(symbol=symbol, first_date=first_date, last_date=last_date)
         return QueryData.csv_to_series(csv_input, period="M")
 
     @staticmethod
@@ -58,9 +54,7 @@ class QueryData:
         """
         Requests api_methods.API for rate of return time series.
         """
-        csv_input = api_methods.API.get_ror(
-            symbol=symbol, first_date=first_date, last_date=last_date, period=period
-        )
+        csv_input = api_methods.API.get_ror(symbol=symbol, first_date=first_date, last_date=last_date, period=period)
         return QueryData.csv_to_series(csv_input, period)
 
     @staticmethod
@@ -73,9 +67,7 @@ class QueryData:
         """
         NAV time series for funds (works for PIF namespace only).
         """
-        csv_input = api_methods.API.get_nav(
-            symbol=symbol, first_date=first_date, last_date=last_date, period=period
-        )
+        csv_input = api_methods.API.get_nav(symbol=symbol, first_date=first_date, last_date=last_date, period=period)
         return QueryData.csv_to_series(csv_input, period=period)
 
     @staticmethod
@@ -88,9 +80,7 @@ class QueryData:
         """
         Gets 'close' time series for a ticker.
         """
-        csv_input = api_methods.API.get_close(
-            symbol=symbol, first_date=first_date, last_date=last_date, period=period
-        )
+        csv_input = api_methods.API.get_close(symbol=symbol, first_date=first_date, last_date=last_date, period=period)
         return QueryData.csv_to_series(csv_input, period)
 
     @staticmethod
@@ -118,9 +108,7 @@ class QueryData:
         Dividends time series daily data (dividend payment day should be considered).
         """
         if symbol.split(".", 1)[-1] not in namespaces.no_dividends_namespaces():
-            csv_input = api_methods.API.get_dividends(
-                symbol, first_date=first_date, last_date=last_date
-            )
+            csv_input = api_methods.API.get_dividends(symbol, first_date=first_date, last_date=last_date)
             ts = QueryData.csv_to_series(csv_input, period="D")
         else:
             # make empty time series when no dividends

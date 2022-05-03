@@ -19,9 +19,7 @@ class MacroABC(ABC):
         self.symbol: str = symbol
         self._check_namespace()
         self._get_symbol_data(symbol)
-        self.values_ts: pd.Series = data_queries.QueryData.get_macro_ts(
-            symbol, first_date, last_date
-        )
+        self.values_ts: pd.Series = data_queries.QueryData.get_macro_ts(symbol, first_date, last_date)
         self.first_date: pd.Timestamp = self.values_ts.index[0].to_timestamp()
         self.last_date: pd.Timestamp = self.values_ts.index[-1].to_timestamp()
         self.pl = settings.PeriodLength(
@@ -47,9 +45,7 @@ class MacroABC(ABC):
         namespace = self.symbol.split(".", 1)[-1]
         allowed_namespaces = namespaces.get_macro_namespaces()
         if namespace not in allowed_namespaces:
-            raise ValueError(
-                f"{namespace} is not in allowed namespaces: {allowed_namespaces}"
-            )
+            raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
 
     def _get_symbol_data(self, symbol):
         x = data_queries.QueryData.get_symbol_info(symbol)
@@ -96,9 +92,7 @@ class Inflation(MacroABC):
         """
         if self.symbol.split(".", 1)[-1] != "INFL":
             raise ValueError("cumulative_inflation is defined for inflation only")
-        x = (self.values_ts + 1.0).rolling(settings._MONTHS_PER_YEAR).apply(
-            np.prod, raw=True
-        ) - 1.0
+        x = (self.values_ts + 1.0).rolling(settings._MONTHS_PER_YEAR).apply(np.prod, raw=True) - 1.0
         x.dropna(inplace=True)
         return x
 
@@ -140,9 +134,7 @@ class Inflation(MacroABC):
                 row2 = {self.name: comp_inflation}
 
                 # max inflation
-                max_inflation = self.rolling_inflation[dt:].nlargest(
-                    n=1
-                )  # largest 12m inflation for selected period
+                max_inflation = self.rolling_inflation[dt:].nlargest(n=1)  # largest 12m inflation for selected period
                 row3 = {self.name: max_inflation.iloc[0]}
                 row3.update(period=max_inflation.index.values[0].strftime("%Y-%m"))
 
@@ -162,25 +154,19 @@ class Inflation(MacroABC):
 
             row4.update(period=f"{i} years", property="1000 purchasing power")
 
-            df_rows = pd.DataFrame.from_records(
-                [row1, row2, row3, row4], index=[0, 1, 2, 3]
-            )
+            df_rows = pd.DataFrame.from_records([row1, row2, row3, row4], index=[0, 1, 2, 3])
             description = pd.concat([description, df_rows], ignore_index=True)
         # Annual inflation for full period available
         ts = df
         full_inflation = helpers.Frame.get_cagr(ts)
         row = {self.name: full_inflation}
         row.update(period=self._pl_txt, property="annual inflation")
-        description = pd.concat(
-            [description, pd.DataFrame(row, index=[0])], ignore_index=True
-        )
+        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # compound inflation
         comp_inflation = helpers.Frame.get_cumulative_return(ts)
         row = {self.name: comp_inflation}
         row.update(period=self._pl_txt, property="compound inflation")
-        description = pd.concat(
-            [description, pd.DataFrame(row, index=[0])], ignore_index=True
-        )
+        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # max inflation for full period available
         max_inflation = self.rolling_inflation.nlargest(n=1)
         row = {self.name: max_inflation.iloc[0]}
@@ -188,18 +174,12 @@ class Inflation(MacroABC):
             period=max_inflation.index.values[0].strftime("%Y-%m"),
             property="max 12m inflation",
         )
-        description = pd.concat(
-            [description, pd.DataFrame(row, index=[0])], ignore_index=True
-        )
+        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # purchase power
         row = {self.name: helpers.Float.get_purchasing_power(comp_inflation)}
         row.update(period=self._pl_txt, property="1000 purchasing power")
-        description = pd.concat(
-            [description, pd.DataFrame(row, index=[0])], ignore_index=True
-        )
-        return helpers.Frame.change_columns_order(
-            description, ["property", "period"], position="first"
-        )
+        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        return helpers.Frame.change_columns_order(description, ["property", "period"], position="first")
 
 
 class Rate(MacroABC):

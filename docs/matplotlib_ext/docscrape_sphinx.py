@@ -70,13 +70,9 @@ class SphinxDocString(NumpyDocString):
             for param in self[name]:
                 param_type = param.type
                 if param_type and self.xref_param_type:
-                    param_type = make_xref(
-                        param_type, self.xref_aliases, self.xref_ignore
-                    )
+                    param_type = make_xref(param_type, self.xref_aliases, self.xref_ignore)
                 if param.name:
-                    out += self._str_indent(
-                        [named_fmt % (param.name.strip(), param_type)]
-                    )
+                    out += self._str_indent([named_fmt % (param.name.strip(), param_type)])
                 else:
                     out += self._str_indent([unnamed_fmt % param_type.strip()])
                 if not param.desc:
@@ -199,9 +195,7 @@ class SphinxDocString(NumpyDocString):
             out += self._str_field_list(name)
             out += [""]
             for param in self[name]:
-                display_param, desc = self._process_param(
-                    param.name, param.desc, fake_autosummary
-                )
+                display_param, desc = self._process_param(param.name, param.desc, fake_autosummary)
                 parts = []
                 if display_param:
                     parts.append(display_param)
@@ -209,9 +203,7 @@ class SphinxDocString(NumpyDocString):
                 if param_type:
                     param_type = param.type
                     if self.xref_param_type:
-                        param_type = make_xref(
-                            param_type, self.xref_aliases, self.xref_ignore
-                        )
+                        param_type = make_xref(param_type, self.xref_aliases, self.xref_ignore)
                     parts.append(param_type)
                 out += self._str_indent([" : ".join(parts)])
 
@@ -246,11 +238,7 @@ class SphinxDocString(NumpyDocString):
 
                 # Check if the referenced member can have a docstring or not
                 param_obj = getattr(self._obj, param.name, None)
-                if not (
-                    callable(param_obj)
-                    or isinstance(param_obj, property)
-                    or inspect.isdatadescriptor(param_obj)
-                ):
+                if not (callable(param_obj) or isinstance(param_obj, property) or inspect.isdatadescriptor(param_obj)):
                     param_obj = None
 
                 if param_obj and pydoc.getdoc(param_obj):
@@ -347,11 +335,7 @@ class SphinxDocString(NumpyDocString):
     def _str_examples(self):
         examples_str = "\n".join(self["Examples"])
 
-        if (
-            self.use_plots
-            and re.search(IMPORT_MATPLOTLIB_RE, examples_str)
-            and "plot::" not in examples_str
-        ):
+        if self.use_plots and re.search(IMPORT_MATPLOTLIB_RE, examples_str) and "plot::" not in examples_str:
             out = []
             out += self._str_header("Examples")
             out += [".. plot::", ""]

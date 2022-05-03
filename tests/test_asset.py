@@ -20,26 +20,16 @@ def test_get_symbol_data(init_asset_spy):
 
 def test_usdrub(init_asset_usdrub):
     close_daily_sample = pd.read_pickle(conftest.data_folder / "usdrub_close_daily.pkl")
-    close_monthly_sample = pd.read_pickle(
-        conftest.data_folder / "usdrub_close_monthly.pkl"
-    )
+    close_monthly_sample = pd.read_pickle(conftest.data_folder / "usdrub_close_monthly.pkl")
     adj_close_sample = pd.read_pickle(conftest.data_folder / "usdrub_adj_close.pkl")
-    assert_series_equal(
-        init_asset_usdrub.close_daily["2019-01":"2020-01"], close_daily_sample
-    )
-    assert_series_equal(
-        init_asset_usdrub.close_monthly["2019-01":"2020-01"], close_monthly_sample
-    )
-    assert_series_equal(
-        init_asset_usdrub.adj_close["2019-01":"2020-01"], adj_close_sample
-    )
+    assert_series_equal(init_asset_usdrub.close_daily["2019-01":"2020-01"], close_daily_sample)
+    assert_series_equal(init_asset_usdrub.close_monthly["2019-01":"2020-01"], close_monthly_sample)
+    assert_series_equal(init_asset_usdrub.adj_close["2019-01":"2020-01"], adj_close_sample)
 
 
 def test_eurusd(init_asset_eurusd):
     close_daily_sample = pd.read_pickle(conftest.data_folder / "eurusd_close_daily.pkl")
-    assert_series_equal(
-        init_asset_eurusd.close_daily["2019-01":"2020-01"], close_daily_sample
-    )
+    assert_series_equal(init_asset_eurusd.close_daily["2019-01":"2020-01"], close_daily_sample)
 
 
 def test_close_daily(init_asset_spy, init_asset_usdrub):
@@ -47,9 +37,7 @@ def test_close_daily(init_asset_spy, init_asset_usdrub):
 
 
 def test_close_monthly(init_asset_spy):
-    assert (
-        init_asset_spy.close_monthly.loc["2000-01"] == 139.625
-    )  # changed in 2022 MAY from 139.5625
+    assert init_asset_spy.close_monthly.loc["2000-01"] == 139.625  # changed in 2022 MAY from 139.5625
 
 
 def test_adj_close(init_asset_spy):
