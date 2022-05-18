@@ -241,17 +241,18 @@ class Portfolio(make_asset_list.ListMaker):
         return self._symbol
 
     @symbol.setter
+    @symbol.setter
     def symbol(self, text_symbol: str):
-        if isinstance(text_symbol, str) and "." in text_symbol:
+        if isinstance(text_symbol, str) and text_symbol.endswith(".PF"):
             if " " in text_symbol:
-                raise ValueError("portfolio text symbol should not have whitespace characters.")
-            namespace = text_symbol.split(".", 1)[-1]
-            if namespace == "PF":
-                self._symbol = text_symbol
-            else:
-                raise ValueError('portfolio symbol must end with ".PF"')
+                raise ValueError(
+                    "portfolio text symbol should not have whitespace characters."
+                )
+            self._symbol = text_symbol
         else:
-            raise ValueError('portfolio symbol must be a string ending with ".PF" namespace.')
+            raise ValueError(
+                'portfolio symbol must be a string ending with ".PF" namespace.'
+            )
 
     @property
     def name(self) -> str:
@@ -1136,7 +1137,7 @@ class Portfolio(make_asset_list.ListMaker):
             row = {self.symbol: value}
             row.update(
                 period="LTM",
-                property=f"Dividend yield",
+                property="Dividend yield",
             )
             description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # risk (standard deviation)
