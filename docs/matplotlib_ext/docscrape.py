@@ -54,8 +54,8 @@ class Reader:
             return ""
 
     def seek_next_non_empty_line(self):
-        for l in self[self._l :]:
-            if l.strip():
+        for line in self[self._l:]:
+            if line.strip():
                 break
             else:
                 self._l += 1
