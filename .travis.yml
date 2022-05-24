@@ -5,8 +5,7 @@ python:
   - "3.9"
 # command to install dependencies
 before_install:
-  - pip install poetry
-  - poetry --version
+  - curl -sSL https://install.python-poetry.org | python3 - --preview
 install:
   - poetry install
   - poetry run pip install pytest-cov
