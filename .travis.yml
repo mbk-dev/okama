@@ -6,6 +6,8 @@ python:
 # command to install dependencies
 before_install:
   - pip install poetry
+  - poetry self update --preview
+  - poetry --version
 install:
   - poetry install
   - poetry run pip install pytest-cov
