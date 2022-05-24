@@ -77,7 +77,7 @@ class ListMaker(ABC):
             self.inflation_last_date: pd.Timestamp = self._inflation_instance.last_date
             self.first_date = max(self.first_date, self.inflation_first_date)
             self.last_date = min(self.last_date, self.inflation_last_date)
-            self.inflation_ts: pd.Series = self._inflation_instance.values_ts.loc[self.first_date : self.last_date]
+            self.inflation_ts: pd.Series = self._inflation_instance.values_monthly.loc[self.first_date: self.last_date]
             # Add inflation to the date range dict
             self.assets_first_dates.update({self.inflation: macro.Inflation(self.inflation).first_date})
             self.assets_last_dates.update({self.inflation: macro.Inflation(self.inflation).last_date})

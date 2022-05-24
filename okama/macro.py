@@ -19,12 +19,12 @@ class MacroABC(ABC):
         self.symbol: str = symbol
         self._check_namespace()
         self._get_symbol_data(symbol)
-        self.values_ts: pd.Series = data_queries.QueryData.get_macro_ts(symbol, first_date, last_date)
-        self.first_date: pd.Timestamp = self.values_ts.index[0].to_timestamp()
-        self.last_date: pd.Timestamp = self.values_ts.index[-1].to_timestamp()
+        self.values_monthly: pd.Series = data_queries.QueryData.get_macro_ts(symbol, first_date, last_date)
+        self.first_date: pd.Timestamp = self.values_monthly.index[0].to_timestamp()
+        self.last_date: pd.Timestamp = self.values_monthly.index[-1].to_timestamp()
         self.pl = settings.PeriodLength(
-            self.values_ts.shape[0] // settings._MONTHS_PER_YEAR,
-            self.values_ts.shape[0] % settings._MONTHS_PER_YEAR,
+            self.values_monthly.shape[0] // settings._MONTHS_PER_YEAR,
+            self.values_monthly.shape[0] % settings._MONTHS_PER_YEAR,
         )
         self._pl_txt = f"{self.pl.years} years, {self.pl.months} months"
 
@@ -42,10 +42,7 @@ class MacroABC(ABC):
         return repr(pd.Series(dic))
 
     def _check_namespace(self):
-        namespace = self.symbol.split(".", 1)[-1]
-        allowed_namespaces = namespaces.get_macro_namespaces()
-        if namespace not in allowed_namespaces:
-            raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
+        pass
 
     def _get_symbol_data(self, symbol):
         x = data_queries.QueryData.get_symbol_info(symbol)
@@ -63,7 +60,15 @@ class MacroABC(ABC):
 class Inflation(MacroABC):
     """
     Inflation related data and methods.
+
+    Inflation symbols are in '.INFL' namespace.
     """
+
+    def _check_namespace(self):
+        namespace = self.symbol.split(".", 1)[-1]
+        allowed_namespaces = ['INFL']
+        if namespace not in allowed_namespaces:
+            raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
 
     @property
     def cumulative_inflation(self) -> pd.Series:
@@ -72,11 +77,11 @@ class Inflation(MacroABC):
         """
         if self.symbol.split(".", 1)[-1] != "INFL":
             raise ValueError("cumulative_inflation is defined for inflation only")
-        return (self.values_ts + 1.0).cumprod() - 1.0
+        return (self.values_monthly + 1.0).cumprod() - 1.0
 
     @property
     def annual_inflation_ts(self):
-        return helpers.Frame.get_annual_return_ts_from_monthly(self.values_ts)
+        return helpers.Frame.get_annual_return_ts_from_monthly(self.values_monthly)
 
     @property
     def purchasing_power_1000(self) -> helpers.Float:
@@ -92,7 +97,7 @@ class Inflation(MacroABC):
         """
         if self.symbol.split(".", 1)[-1] != "INFL":
             raise ValueError("cumulative_inflation is defined for inflation only")
-        x = (self.values_ts + 1.0).rolling(settings._MONTHS_PER_YEAR).apply(np.prod, raw=True) - 1.0
+        x = (self.values_monthly + 1.0).rolling(settings._MONTHS_PER_YEAR).apply(np.prod, raw=True) - 1.0
         x.dropna(inplace=True)
         return x
 
@@ -107,7 +112,7 @@ class Inflation(MacroABC):
         """
         description = pd.DataFrame()
         dt0 = self.last_date
-        df = self.values_ts
+        df = self.values_monthly
         # YTD inflation properties
         year = pd.Timestamp.today().year
         ts = df[str(year) :]
@@ -185,12 +190,35 @@ class Inflation(MacroABC):
 class Rate(MacroABC):
     """
     Rates of central banks and banks.
+
+    Rates symbols are in '.RATE' namespace.
+
+    TODO: Add .values_daily property
     """
 
-    @property
-    def okid(self) -> pd.Series:
-        return helpers.Frame.get_okid_index(self.values_ts, self.symbol)
+    def _check_namespace(self):
+        namespace = self.symbol.split(".", 1)[-1]
+        allowed_namespaces = ['RATE']
+        if namespace not in allowed_namespaces:
+            raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
+
+
+class Indicator(MacroABC):
+    """
+    Macroeconomic indicators and ratios.
+    """
+
+    def _check_namespace(self):
+        """
+        Allowed all macro namespaces except 'INFL' and 'RATES'.
+        """
+        namespace = self.symbol.split(".", 1)[-1]
+        all_macro_namespaces = namespaces.get_macro_namespaces()
+        restricted_namespaces = ['RATE', 'INFL']
+        allowed_namespaces = [x for x in all_macro_namespaces if x not in restricted_namespaces]
+        if namespace not in allowed_namespaces:
+            raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
 
     def describe(self, years: Tuple[int, ...] = (1, 5, 10)):
-        # TODO: Make describe() for OKID indexes
+        # TODO: Make describe()
         pass
