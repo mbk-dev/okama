@@ -35,7 +35,7 @@ requests = "^2.27.1"
 importlib-metadata = "^4.11.1"
 joblib = "^1.1.0"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dev.dependencies]
 pytest = "^6.0.0"
 jupyter = { version = "^1.0.0", optional = true }
 ipykernel = { version = "^6.13.0", optional = true }
