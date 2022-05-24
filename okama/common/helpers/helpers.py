@@ -171,51 +171,6 @@ class Frame:
         wealth_index.sort_index(ascending=True, inplace=True)
         return wealth_index
 
-    @staticmethod
-    def _adjust_rates(rates: pd.Series, symbol: str) -> pd.Series:
-        """
-        Makes several adjustment to the rates before OKID index is computed:
-        - penalty for bank license revocation (except TOP 10 banks)
-        - monthly interest capitalization adjustment
-        """
-        if symbol != "RUS_RUB_TOP10.RATE":
-            #  license revocation does not happen among TOP 10 banks
-            penalty1 = 14 / 365 / 2  # penalty for license revocation (period 1 - frequent revocation)
-            penalty2 = (14 / 365) * (30 / 440)  # penalty for license revocation (period 2 - rare revocation)
-            rates["28.09.2018":] = rates["28.09.2018":] * (1 - penalty1)
-            rates[:"28.10.2018"] = rates[:"28.10.2018"] * (1 - penalty2)
-        # compensate monthly interest capitalization (okid index has it)
-        rates = ((rates + 1.0) ** (1 / settings._MONTHS_PER_YEAR) - 1) * 12.0
-        return rates
-
-    @staticmethod
-    def get_okid_index(rates: pd.Series, symbol: str) -> pd.Series:
-        """
-        Computes OKID index from bank rates time series.
-        The index is a basket of 12 one year bank deposits (1 month shift).
-        symbol is required for rates time series adjustments (for 'RUS_RUB_TOP10.RATE' it's a different adjustment)
-        """
-        index_total = None
-        start_period = pd.Period(rates.index[0], freq="M")
-        end_period = pd.Period(rates.index[-1], freq="M")
-        rates = Frame._adjust_rates(rates, symbol)
-        for month_idx in range(settings._MONTHS_PER_YEAR):
-            rates_yearly = rates.values[month_idx :: settings._MONTHS_PER_YEAR]
-            index_part = np.repeat(rates_yearly, settings._MONTHS_PER_YEAR)[: len(rates) - month_idx]
-            index_part = (1 + index_part / settings._MONTHS_PER_YEAR).cumprod()
-            index_total = index_part if index_total is None else index_total[1:] + index_part
-            start_period += 1
-        if index_total is None:
-            raise ValueError("`index_total` should not be `None`")
-        result = index_total
-        result = (np.diff(result) / result[:-1] + 1.0).cumprod() - 1.0
-        result = [0] + result
-        result = (result + 1) * 100
-        result = pd.Series(result, index=pd.period_range(start_period, end_period, freq="M"))
-        result.loc[start_period - 1] = 100.0
-        result.sort_index(ascending=True, inplace=True)
-        return result
-
     # Risk metrics
 
     @classmethod
