@@ -57,6 +57,3 @@ class TestRates:
         assert self.rates_rub.name == "Max deposit rates (RUB) in Russian banks"
         assert self.rates_rub.first_date == pd.to_datetime("2015-01")
         assert self.rates_rub.last_date == pd.to_datetime("2020-02")
-
-    def test_okid(self):
-        assert self.rates_rub.okid.sum() == approx(6376.2308059223915, rel=1e-4)
