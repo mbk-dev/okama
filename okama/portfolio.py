@@ -241,7 +241,6 @@ class Portfolio(make_asset_list.ListMaker):
         return self._symbol
 
     @symbol.setter
-    @symbol.setter
     def symbol(self, text_symbol: str):
         if isinstance(text_symbol, str) and text_symbol.endswith(".PF"):
             if " " in text_symbol:
@@ -754,7 +753,8 @@ class Portfolio(make_asset_list.ListMaker):
         2021-07  3.166335  16.003569
         [171 rows x 2 columns]
         """
-        return self.weights_ts.mul(self.wealth_index.iloc[:, 0], axis=0).div(self.assets_close_monthly, axis=0)
+        df = self.weights_ts.mul(self.wealth_index.iloc[:, 0], axis=0).div(self.assets_close_monthly, axis=0)
+        return helpers.Frame.change_columns_order(df, self.symbols)
 
     @property
     def dividends(self) -> pd.Series:
