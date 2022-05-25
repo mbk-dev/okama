@@ -202,6 +202,10 @@ class Rate(MacroABC):
         if namespace not in allowed_namespaces:
             raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
 
+    def describe(self, years: Tuple[int, ...] = (1, 5, 10)):
+        # TODO: Make describe()
+        pass
+
 
 class Indicator(MacroABC):
     """
