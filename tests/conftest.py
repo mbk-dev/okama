@@ -153,6 +153,11 @@ def _init_rates(request):
     request.cls.rates_rub = ok.Rate(symbol="RUS_RUB.RATE", first_date="2015-01", last_date="2020-02")
 
 
+@pytest.fixture(scope="class")
+def _init_indicator(request):
+    request.cls.cape10_usd = ok.Indicator(symbol="USA_CAPE10.RATIO", first_date="2021-01", last_date="2022-02")
+
+
 # Efficient Frontier Single Period
 @pytest.fixture(scope="module")
 def init_efficient_frontier_values1():
