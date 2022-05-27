@@ -920,8 +920,7 @@ class AssetList(make_asset_list.ListMaker):
         return ((growth_ts[dt:] + 1.0).prod()) ** (1 / period) - 1.0
 
     # index methods
-    @property
-    def tracking_difference(self) -> pd.DataFrame:
+    def tracking_difference(self, rolling_window = None) -> pd.DataFrame:
         """
         Return tracking difference for the rate of return of assets.
 
@@ -942,11 +941,20 @@ class AssetList(make_asset_list.ListMaker):
         >>> x.tracking_difference.plot()
         >>> plt.show()
         """
-        accumulated_return = helpers.Frame.get_wealth_indexes(self.assets_ror)  # we don't need inflation here
-        return helpers.Index.tracking_difference(accumulated_return)
+        if rolling_window:
+            rolling_cum_return = helpers.Frame.get_rolling_fn(
+                self.assets_ror,
+                window=rolling_window,
+                fn=helpers.Frame.get_cumulative_return,
+                window_below_year=True  # small windows below 12 months are allowed
+            )
+            return rolling_cum_return.subtract(rolling_cum_return.iloc[:, 0], axis=0).iloc[:, 1:]
+        else:
+            accumulated_return = helpers.Frame.get_wealth_indexes(self.assets_ror)  # we don't need inflation here
+            return helpers.Index.tracking_difference(accumulated_return)
 
-    @property
-    def tracking_difference_annualized(self) -> pd.DataFrame:
+
+    def tracking_difference_annualized(self, rolling_window: Optional[int] = None) -> pd.DataFrame:
         """
         Calculate annualized tracking difference time series for the rate of return of assets.
 
@@ -970,7 +978,16 @@ class AssetList(make_asset_list.ListMaker):
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
         >>> x.tracking_difference_annualized.plot()
         """
-        return helpers.Index.tracking_difference_annualized(self.tracking_difference)
+        if rolling_window:
+            rolling_cagr = helpers.Frame.get_rolling_fn(
+                self.assets_ror,
+                window=rolling_window,
+                fn=helpers.Frame.get_cagr,
+                window_below_year=False  # small windows below 12 months are not allowed (CAGR is not defined)
+            )
+            return rolling_cagr.subtract(rolling_cagr.iloc[:, 0], axis=0).iloc[:, 1:]
+        else:
+            return helpers.Index.tracking_difference_annualized(self.tracking_difference())
 
     @property
     def tracking_difference_annual(self) -> pd.DataFrame:

@@ -140,6 +140,11 @@ class Frame:
         fn: Callable,
         window_below_year: bool = False,
     ) -> Union[pd.DataFrame, pd.Series]:
+        """
+        Calculate rolling function with a given window.
+
+        'window_below_year' allows to use window size below 12 monthes (periods).
+        """
         check_rolling_window(window=window, ror=ror, window_below_year=window_below_year)
         x = ror.rolling(window).apply(fn)
         return x.dropna()
