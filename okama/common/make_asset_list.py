@@ -107,6 +107,8 @@ class ListMaker(ABC):
         currency_last_date: pd.Timestamp = self._currency.last_date
 
         asset_obj_dict = {}  # dict of Asset/Portfolio type objects
+        own_first_dates: Dict[str, pd.Timestamp] = {}
+        own_last_dates: Dict[str, pd.Timestamp] = {}
         first_dates: Dict[str, pd.Timestamp] = {}
         last_dates: Dict[str, pd.Timestamp] = {}
         names: Dict[str, str] = {}
@@ -116,6 +118,9 @@ class ListMaker(ABC):
         input_last_date = pd.to_datetime(last_date) if last_date else None
         for i, x in enumerate(ls):
             asset_item = x if hasattr(x, "symbol") and hasattr(x, "ror") else asset.Asset(x)
+            # get asset own first and last dates
+            asset_own_first_date = asset_item.first_date
+            asset_own_last_date = asset_item.last_date
             if asset_item.pl.years == 0 and asset_item.pl.months <= 2:
                 raise ValueError(
                     f"{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months."
@@ -125,7 +130,7 @@ class ListMaker(ABC):
             else:
                 new = self._make_ror(asset_item, base_currency_name)
                 df = pd.concat([df, new], axis=1, join="inner", copy="false")
-            # get first and last dates
+            # get asset first and last dates after adjusting to the currency
             asset_first_date = df.index[0].to_timestamp()
             asset_last_date = df.index[-1].to_timestamp()
             # check first and last dates
@@ -143,8 +148,12 @@ class ListMaker(ABC):
             names[asset_item.symbol] = asset_item.name
             first_dates[asset_item.symbol] = asset_first_date
             last_dates[asset_item.symbol] = asset_last_date
+            own_first_dates[asset_item.symbol] = asset_own_first_date
+            own_last_dates[asset_item.symbol] = asset_own_last_date
         first_dates[base_currency_name] = currency_first_date
         last_dates[base_currency_name] = currency_last_date
+        own_last_dates[base_currency_name] = currency_first_date
+        own_first_dates[base_currency_name] = currency_last_date
         currencies["asset list"] = base_currency_name
         # get first and last dates
         first_date_list = list(first_dates.values()) + [input_first_date]
@@ -152,8 +161,8 @@ class ListMaker(ABC):
         list_first_date = max(x for x in first_date_list if x is not None)
         list_last_date = min(x for x in last_date_list if x is not None)
         # range of last and first dates not limeted by AssetList first_date & lastdate parameters
-        first_dates_sorted: list = sorted(first_dates.items(), key=lambda y: y[1])
-        last_dates_sorted: list = sorted(last_dates.items(), key=lambda y: y[1])
+        own_first_dates_sorted: list = sorted(own_first_dates.items(), key=lambda y: y[1])
+        own_last_dates_sorted: list = sorted(own_last_dates.items(), key=lambda y: y[1])
         if isinstance(df, pd.Series):
             # required to convert Series to DataFrame for single asset list
             df = df.to_frame()
@@ -161,12 +170,12 @@ class ListMaker(ABC):
             asset_obj_list=asset_obj_dict,
             first_date=list_first_date,
             last_date=list_last_date,
-            newest_asset=first_dates_sorted[-1][0],
-            eldest_asset=first_dates_sorted[0][0],
+            newest_asset=own_first_dates_sorted[-1][0],
+            eldest_asset=own_first_dates_sorted[0][0],
             names_dict=names,
             currencies_dict=currencies,
-            assets_first_dates=dict(first_dates_sorted),
-            assets_last_dates=dict(last_dates_sorted),
+            own_first_dates_sorted=dict(own_first_dates_sorted),
+            own_last_dates_sorted=dict(own_last_dates_sorted),
             ror=df,
         )
 
