@@ -1534,8 +1534,8 @@ test_jupyter = []
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.7, <3.10"
-content-hash = "3cce5375fae7dae0dbffb85bb0a6b870e0b3c049bdba7bfced3e1e6287d323fb"
+python-versions = ">=3.7"
+content-hash = "eca8e2f843f8db923eddc24c674c5a0fb777ec836a1d32f407bfa7f897116724"
 
 [metadata.files]
 alabaster = [
