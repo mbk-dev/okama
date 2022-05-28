@@ -1,3 +1,5 @@
+from datetime import date
+
 import pandas as pd
 from pandas.testing import assert_frame_equal
 import numpy as np
@@ -77,6 +79,11 @@ class TestAssetList:
     @mark.smoke
     def test_make_asset_list(self):
         assert self.asset_list.last_date == pd.to_datetime("2020-01")
+        assert self.asset_list.assets_first_dates["MCFTR.INDX"].strftime("%Y-%m-%d") == '2003-03-01'
+        last_month = f'{date.today().strftime("%Y-%m")}-01'
+        assert self.asset_list.assets_last_dates["MCFTR.INDX"].strftime("%Y-%m-%d") == last_month
+        assert self.asset_list.newest_asset == "RUB"
+        assert self.asset_list.eldest_asset == "RUB.FX"
         assert list(self.asset_list.assets_ror) == ["RUB.FX", "MCFTR.INDX"]
 
     def test_calculate_wealth_indexes(self):
