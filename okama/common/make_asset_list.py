@@ -166,6 +166,7 @@ class ListMaker(ABC):
         if isinstance(df, pd.Series):
             # required to convert Series to DataFrame for single asset list
             df = df.to_frame()
+        df.columns.name = "Symbols"  # required for Plotly charts
         return dict(
             asset_obj_list=asset_obj_dict,
             first_date=list_first_date,

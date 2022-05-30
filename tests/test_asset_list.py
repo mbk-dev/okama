@@ -85,6 +85,7 @@ class TestAssetList:
         assert self.asset_list.newest_asset == "RUB"
         assert self.asset_list.eldest_asset == "RUB.FX"
         assert list(self.asset_list.assets_ror) == ["RUB.FX", "MCFTR.INDX"]
+        assert self.asset_list.assets_ror.columns.name == "Symbols"
 
     def test_calculate_wealth_indexes(self):
         assert self.asset_list.wealth_indexes.sum(axis=1)[-1] == approx(
