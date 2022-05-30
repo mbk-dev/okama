@@ -96,4 +96,4 @@ class TestIndicator:
         assert self.cape10_usd.last_date == pd.to_datetime("2022-02")
 
     def test_values_monthly(self):
-        assert self.cape10_usd.values_monthly[-1] == approx(0.0639, abs=1e-4)
+        assert self.cape10_usd.values_monthly[-1] == approx(34.93, rel=1e-4)

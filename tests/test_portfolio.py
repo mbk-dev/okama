@@ -196,6 +196,7 @@ def test_get_cagr_real_no_inflation_exception(portfolio_no_inflation):
 @mark.parametrize(
     "period, real, expected",
     [("YTD", False, 0.01505), (1, False, 0.12269), (2, True, 0.2299)],
+    ids=["YTD - nominal", "1 year - nominal", "2 years - real"]
 )
 def test_cumulative_return(portfolio_rebalanced_month, period, real, expected):
     assert portfolio_rebalanced_month.get_cumulative_return(period=period, real=real).iloc[0] == approx(

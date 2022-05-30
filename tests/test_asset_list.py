@@ -291,13 +291,23 @@ class TestAssetList:
             ValueError,
             match="At least 2 symbols should be provided to calculate Tracking Difference.",
         ):
-            self.spy.tracking_difference
+            self.spy.tracking_difference()
 
-    def test_tracking_difference(self):
-        assert self.asset_list.tracking_difference["MCFTR.INDX"].iloc[-1] == approx(0.4967, rel=1e-2)
+    @mark.parametrize(
+        "window,expected",
+        [(None, 0.4967), (6, 0.1537), (12, 0.3594)],
+        ids=["None", "6 months", "12 months"],
+    )
+    def test_tracking_difference(self, window, expected):
+        assert self.asset_list.tracking_difference(rolling_window=window)["MCFTR.INDX"].iloc[-1] == approx(expected, abs=1e-2)
 
-    def test_tracking_difference_annualized(self):
-        assert self.asset_list.tracking_difference_annualized.iloc[-1, 0] == approx(0.451000, rel=1e-2)
+    @mark.parametrize(
+        "window,expected",
+        [(None, 0.4510), (12, 0.3594)],
+        ids=["None", "12 months"],
+    )
+    def test_tracking_difference_annualized(self, window, expected):
+        assert self.asset_list.tracking_difference_annualized(rolling_window=window).iloc[-1, 0] == approx(expected, abs=1e-2)
 
     def test_tracking_difference_annual(self):
         assert self.asset_list.tracking_difference_annual.iloc[0, 0] == approx(0.4966, rel=1e-2)
