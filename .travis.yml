@@ -5,7 +5,7 @@ dist: focal
 python:
   - "3.8"
   - "3.9"
-  - "3.10"
+
 # command to install dependencies
 before_install:
   - curl -sSL https://install.python-poetry.org | python3 - --preview
