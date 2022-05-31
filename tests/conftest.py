@@ -151,6 +151,8 @@ def _init_inflation(request):
 @pytest.fixture(scope="class")
 def _init_rates(request):
     request.cls.rates_rub = ok.Rate(symbol="RUS_RUB.RATE", first_date="2015-01", last_date="2020-02")
+    request.cls.rates_cbr_rate = ok.Rate(symbol="RUS_CBR.RATE", first_date="2015-01", last_date="2020-02")
+    request.cls.rates_ruonia = ok.Rate(symbol="RUONIA.RATE", first_date="2015-01", last_date="2020-02")
 
 
 @pytest.fixture(scope="class")

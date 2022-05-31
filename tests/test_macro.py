@@ -84,7 +84,12 @@ class TestRates:
         assert self.rates_rub.last_date == pd.to_datetime("2020-02")
 
     def test_values_monthly(self):
-        assert self.rates_rub.values_monthly[-1] == approx(0.0639, abs=1e-4)
+        assert self.rates_rub.values_monthly[-1] == 0.0639
+
+    def test_values_daily(self):
+        assert self.rates_ruonia.values_daily[-1] == 0.0605
+        assert self.rates_ruonia.values_daily.shape[0] == 1846
+        assert self.rates_cbr_rate.values_daily.shape[0] == 62  # RUS_CBR.RATE has only monthly values
 
 
 @mark.indicator

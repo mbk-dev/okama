@@ -41,7 +41,7 @@ class QueryData:
         - Inflation time series
         - Bank rates time series
         """
-        csv_input = api_methods.API.get_macro(symbol=symbol, first_date=first_date, last_date=last_date)
+        csv_input = api_methods.API.get_macro(symbol=symbol, first_date=first_date, last_date=last_date, period=period)
         return QueryData.csv_to_series(csv_input, period=period)
 
     @staticmethod
