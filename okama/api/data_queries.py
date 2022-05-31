@@ -35,14 +35,14 @@ class QueryData:
         return ts
 
     @staticmethod
-    def get_macro_ts(symbol: str, first_date: str = "1913-01-01", last_date: str = "2100-01-01") -> pd.Series:
+    def get_macro_ts(symbol: str, first_date: str = "1913-01-01", last_date: str = "2100-01-01", period: str = "M") -> pd.Series:
         """
         Requests api_methods.API for Macroeconomic indicators time series (monthly data).
         - Inflation time series
         - Bank rates time series
         """
         csv_input = api_methods.API.get_macro(symbol=symbol, first_date=first_date, last_date=last_date)
-        return QueryData.csv_to_series(csv_input, period="M")
+        return QueryData.csv_to_series(csv_input, period=period)
 
     @staticmethod
     def get_ror(

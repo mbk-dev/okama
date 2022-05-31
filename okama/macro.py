@@ -12,14 +12,14 @@ from okama.common.helpers import helpers
 class MacroABC(ABC):
     def __init__(
         self,
-        symbol: str = settings.default_macro,
+        symbol: str,
         first_date: Union[str, pd.Timestamp] = "1800-01",
         last_date: Union[str, pd.Timestamp] = "2030-01",
     ):
         self.symbol: str = symbol
         self._check_namespace()
         self._get_symbol_data(symbol)
-        self.values_monthly: pd.Series = data_queries.QueryData.get_macro_ts(symbol, first_date, last_date)
+        self.values_monthly: pd.Series = data_queries.QueryData.get_macro_ts(symbol, first_date, last_date, period="M")
         self.first_date: pd.Timestamp = self.values_monthly.index[0].to_timestamp()
         self.last_date: pd.Timestamp = self.values_monthly.index[-1].to_timestamp()
         self.pl = settings.PeriodLength(
@@ -63,6 +63,18 @@ class Inflation(MacroABC):
 
     Inflation symbols are in '.INFL' namespace.
     """
+
+    def __init__(
+            self,
+            symbol: str = settings.default_macro_inflation,
+            first_date: Union[str, pd.Timestamp] = "1800-01",
+            last_date: Union[str, pd.Timestamp] = "2030-01",
+    ):
+        super().__init__(
+            symbol,
+            first_date=first_date,
+            last_date=last_date,
+        )
 
     def _check_namespace(self):
         namespace = self.symbol.split(".", 1)[-1]
@@ -196,6 +208,19 @@ class Rate(MacroABC):
     TODO: Add .values_daily property
     """
 
+    def __init__(
+            self,
+            symbol: str = settings.default_macro_rate,
+            first_date: Union[str, pd.Timestamp] = "1800-01",
+            last_date: Union[str, pd.Timestamp] = "2030-01",
+    ):
+        super().__init__(
+            symbol,
+            first_date=first_date,
+            last_date=last_date,
+        )
+        self.values_daily: pd.Series = data_queries.QueryData.get_macro_ts(symbol, first_date, last_date, period="D")
+
     def _check_namespace(self):
         namespace = self.symbol.split(".", 1)[-1]
         allowed_namespaces = ['RATE']
@@ -211,6 +236,17 @@ class Indicator(MacroABC):
     """
     Macroeconomic indicators and ratios.
     """
+    def __init__(
+            self,
+            symbol: str = settings.default_macro_indicator,
+            first_date: Union[str, pd.Timestamp] = "1800-01",
+            last_date: Union[str, pd.Timestamp] = "2030-01",
+    ):
+        super().__init__(
+            symbol,
+            first_date=first_date,
+            last_date=last_date,
+        )
 
     def _check_namespace(self):
         """

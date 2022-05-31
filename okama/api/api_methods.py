@@ -144,6 +144,7 @@ class API:
         symbol: str = settings.default_ticker,
         first_date: str = "1900-01-01",
         last_date: str = "2100-01-01",
+        period: str = "m",
     ):
         """
         Get macro time series (monthly).
@@ -153,7 +154,7 @@ class API:
             symbol=symbol,
             first_date=first_date,
             last_date=last_date,
-            period="m",
+            period=period,
         )
 
     @classmethod

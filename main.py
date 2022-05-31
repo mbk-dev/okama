@@ -1,4 +1,4 @@
 import okama as ok
 
-wheat = ok.AssetList(['W.COMM', 'ZW.COMM'], inflation=False)
-print(wheat.assets_first_dates)
+cape = ok.Indicator()
+print(cape.values_monthly)
