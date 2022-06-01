@@ -477,7 +477,7 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True)
+        >>> x = ok.AssetList(['DXET.XFRA', 'DBXN.XFRA'], ccy='EUR', inflation=True)
         >>> x.get_rolling_cagr(window=5*12).plot()
         >>> plt.show()
 
@@ -583,7 +583,7 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True)
+        >>> x = ok.AssetList(['DXET.XFRA', 'DBXN.XFRA'], ccy='EUR', inflation=True)
         >>> x.get_rolling_cumulative_return(window=5*12).plot()
         >>> plt.show()
 
@@ -929,6 +929,12 @@ class AssetList(make_asset_list.ListMaker):
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 
+        Parameters
+        ----------
+        rolling_window : int or None, default None
+            Size of the moving window in months.
+            If None calculate expanding tracking difference.
+
         Returns
         -------
         DataFrame
@@ -939,6 +945,11 @@ class AssetList(make_asset_list.ListMaker):
         >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
         >>> x.tracking_difference.plot()
+        >>> plt.show()
+
+        To calculate rolling Tracking difference set `rolling_window` to a number of months (moving window size):
+
+        >>> x.tracking_difference.plot(rolling_window = 24)
         >>> plt.show()
         """
         if rolling_window:
@@ -967,6 +978,12 @@ class AssetList(make_asset_list.ListMaker):
         Returns for less than 12 months can't be annualized According to the CFA
         Institute's Global Investment Performance Standards (GIPS).
 
+        Parameters
+        ----------
+        rolling_window : int or None, default None
+            Size of the moving window in months. Must be at least 12 months.
+            If None calculate expanding annualized tracking difference.
+
         Returns
         -------
         DataFrame
@@ -977,6 +994,11 @@ class AssetList(make_asset_list.ListMaker):
         >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
         >>> x.tracking_difference_annualized.plot()
+
+        To calculate rolling annualized tracking difference set `rolling_window` to a number of months (moving window size):
+
+        >>> x.tracking_difference_annualized.plot(rolling_window = 12)
+        >>> plt.show()
         """
         if rolling_window:
             rolling_cagr = helpers.Frame.get_rolling_fn(

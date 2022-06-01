@@ -528,7 +528,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.Portfolio(['DXET.XETR', 'DBXN.XETR'], ccy='EUR', inflation=True)
+        >>> x = ok.Portfolio(['DXET.XFRA', 'DBXN.XFRA'], ccy='EUR', inflation=True)
         >>> x.get_rolling_cagr(window=5*12, real=True)
                  portfolio_7645.PF
         2013-09           0.029914
