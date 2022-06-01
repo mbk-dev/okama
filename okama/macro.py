@@ -204,8 +204,8 @@ class Inflation(MacroABC):
         dt0 = self.last_date
         df = self.values_monthly
         # YTD inflation properties
-        year = pd.Timestamp.today().year
-        ts = df[str(year) :]
+        year = dt0.year
+        ts = df[str(year):]
         inflation = helpers.Frame.get_cumulative_return(ts)
         row1 = {self.name: inflation}
         row1.update(period="YTD", property="compound inflation")
