@@ -72,8 +72,11 @@ End of day historical data
 Macroeconomic indicators
 ========================
 
-* Inflation for many countries (USA, United Kingdom, European Union, Russia etc.)
+For several countries (USA, United Kingdom, European Union, Russia, Israel etc.):
+
+* Inflation
 * Central bank rates
+* CAPE10 (Shiller P/E) Cyclically adjusted price-to-earnings ratios
 
 Other historical data
 =====================

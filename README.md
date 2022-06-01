@@ -63,9 +63,11 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
 - Central bank exchange rates
 
 ### Macroeconomic indicators
+For many countries (USA, United Kingdom, European Union, Russia, Israel etc.):  
 
-- Inflation for many countries (USA, United Kingdom, European Union, Russia etc.)
+- Inflation
 - Central bank rates
+- CAPE10 (Shiller P/E) Cyclically adjusted price-to-earnings ratios
 
 ### Other historical data
 
