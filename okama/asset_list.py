@@ -944,12 +944,12 @@ class AssetList(make_asset_list.ListMaker):
         --------
         >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
-        >>> x.tracking_difference.plot()
+        >>> x.tracking_difference().plot()
         >>> plt.show()
 
         To calculate rolling Tracking difference set `rolling_window` to a number of months (moving window size):
 
-        >>> x.tracking_difference.plot(rolling_window = 24)
+        >>> x.tracking_difference(rolling_window = 24).plot()
         >>> plt.show()
         """
         if rolling_window:
