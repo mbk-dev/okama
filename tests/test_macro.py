@@ -69,10 +69,11 @@ class TestInflation:
         assert list(description.columns) == [
             "property",
             "period",
-            "Russia Inflation Rate",
+            "RUB.INFL",
         ]
-        assert description.loc[3, "Russia Inflation Rate"] == approx(3.0414434004010245, rel=1e-4)
-        assert description.loc[5, "Russia Inflation Rate"] == approx(247.43634907784974, rel=1e-4)
+        assert description.loc[0, "RUB.INFL"] == approx(0.02760, abs=1e-4)  # YTD Compound Inflation
+        assert description.loc[3, "RUB.INFL"] == approx(3.0414434004010245, rel=1e-4)
+        assert description.loc[5, "RUB.INFL"] == approx(247.43634907784974, rel=1e-4)
 
 
 @mark.rates
@@ -90,6 +91,17 @@ class TestRates:
         assert self.rates_ruonia.values_daily[-1] == 0.0605
         assert self.rates_ruonia.values_daily.shape[0] == 1846
         assert self.rates_cbr_rate.values_daily.shape[0] == 62  # RUS_CBR.RATE has only monthly values
+
+    def test_describe(self):
+        description = self.rates_rub.describe(years=[5])
+        assert list(description.columns) == [
+            "property",
+            "period",
+            "RUS_RUB.RATE",
+        ]
+        assert description.loc[0, "RUS_RUB.RATE"] == approx(0.066, abs=1e-4)  # YTD mean
+        assert description.loc[3, "RUS_RUB.RATE"] == approx(0.0639, abs=1e-4)
+        assert description.loc[5, "RUS_RUB.RATE"] == approx(0.08875, abs=1e-4)
 
 
 @mark.indicator

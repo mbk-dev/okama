@@ -207,10 +207,10 @@ class Inflation(MacroABC):
         year = dt0.year
         ts = df[str(year):]
         inflation = helpers.Frame.get_cumulative_return(ts)
-        row1 = {self.name: inflation}
+        row1 = {self.symbol: inflation}
         row1.update(period="YTD", property="compound inflation")
 
-        row2 = {self.name: helpers.Float.get_purchasing_power(inflation)}
+        row2 = {self.symbol: helpers.Float.get_purchasing_power(inflation)}
         row2.update(period="YTD", property="1000 purchasing power")
         rows_df = pd.DataFrame.from_records([row1, row2], index=[0, 1])
         description = pd.concat([description, rows_df], ignore_index=True)
@@ -222,25 +222,25 @@ class Inflation(MacroABC):
                 ts = df[dt:]
                 # mean inflation
                 inflation = helpers.Frame.get_cagr(ts)
-                row1 = {self.name: inflation}
+                row1 = {self.symbol: inflation}
 
                 # compound inflation
                 comp_inflation = helpers.Frame.get_cumulative_return(ts)
-                row2 = {self.name: comp_inflation}
+                row2 = {self.symbol: comp_inflation}
 
                 # max inflation
                 max_inflation = self.rolling_inflation[dt:].nlargest(n=1)  # largest 12m inflation for selected period
-                row3 = {self.name: max_inflation.iloc[0]}
+                row3 = {self.symbol: max_inflation.iloc[0]}
                 row3.update(period=max_inflation.index.values[0].strftime("%Y-%m"))
 
                 # purchase power
-                row4 = {self.name: helpers.Float.get_purchasing_power(comp_inflation)}
+                row4 = {self.symbol: helpers.Float.get_purchasing_power(comp_inflation)}
             else:
-                row1 = {self.name: None}
-                row2 = {self.name: None}
-                row3 = {self.name: None}
+                row1 = {self.symbol: None}
+                row2 = {self.symbol: None}
+                row3 = {self.symbol: None}
                 row3.update(period=f"{i} years")
-                row4 = {self.name: None}
+                row4 = {self.symbol: None}
             row1.update(period=f"{i} years", property="annual inflation")
 
             row2.update(period=f"{i} years", property="compound inflation")
@@ -254,24 +254,24 @@ class Inflation(MacroABC):
         # Annual inflation for full period available
         ts = df
         full_inflation = helpers.Frame.get_cagr(ts)
-        row = {self.name: full_inflation}
+        row = {self.symbol: full_inflation}
         row.update(period=self._pl_txt, property="annual inflation")
         description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # compound inflation
         comp_inflation = helpers.Frame.get_cumulative_return(ts)
-        row = {self.name: comp_inflation}
+        row = {self.symbol: comp_inflation}
         row.update(period=self._pl_txt, property="compound inflation")
         description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # max inflation for full period available
         max_inflation = self.rolling_inflation.nlargest(n=1)
-        row = {self.name: max_inflation.iloc[0]}
+        row = {self.symbol: max_inflation.iloc[0]}
         row.update(
             period=max_inflation.index.values[0].strftime("%Y-%m"),
             property="max 12m inflation",
         )
         description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # purchase power
-        row = {self.name: helpers.Float.get_purchasing_power(comp_inflation)}
+        row = {self.symbol: helpers.Float.get_purchasing_power(comp_inflation)}
         row.update(period=self._pl_txt, property="1000 purchasing power")
         description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         return helpers.Frame.change_columns_order(description, ["property", "period"], position="first")
