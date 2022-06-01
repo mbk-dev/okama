@@ -153,9 +153,11 @@ Macroeconomics
 .. autosummary::
     :toctree: stubs
     :template: custom-class-template-no-inherited.rst
+    :caption: Macroeconomics
 
     okama.Inflation
     okama.Rate
+    okama.Indicator
 
 Indices and tables
 ******************
