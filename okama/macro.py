@@ -52,9 +52,87 @@ class MacroABC(ABC):
         self.currency: str = x["currency"]
         self.type: str = x["type"]
 
-    @abstractmethod
-    def describe(self):
-        pass
+    def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
+        """
+        Generate descriptive statistics for a given list of periods.
+        Statistics includes arithmetic mean, median, max and min values for YTD and given periods.
+        """
+        description = pd.DataFrame()
+        dt0 = self.last_date
+        df = self.values_monthly
+        # YTD properties
+        year = dt0.year
+        ts = df[str(year):]
+        row1 = {self.symbol: ts.mean()}
+        row1.update(period="YTD", property="arithmetic mean")
+        row2 = {self.symbol: ts.median()}
+        row2.update(period="YTD", property="median value")
+        # max value
+        max_value = ts.nlargest(n=1)
+        row3 = {self.symbol: max_value.iloc[0]}
+        row3.update(period=max_value.index.values[0].strftime("%Y-%m"), property="max value")
+        # min value
+        min_value = ts.nsmallest(n=1)
+        row4 = {self.symbol: min_value.iloc[0]}
+        row4.update(period=min_value.index.values[0].strftime("%Y-%m"), property="min value")
+
+        rows_df = pd.DataFrame.from_records([row1, row2, row3, row4], index=[0, 1, 2, 3])
+        description = pd.concat([description, rows_df], ignore_index=True)
+        # properties for a given list of periods
+        for i in years:
+            dt = helpers.Date.subtract_years(dt0, i)
+            if dt >= self.first_date:
+                ts = df[dt:]
+                # arithmetic mean
+                row1 = {self.symbol: ts.mean()}
+                # median
+                row2 = {self.symbol: ts.median()}
+                # max value
+                max_value = ts.nlargest(n=1)
+                row3 = {self.symbol: max_value.iloc[0]}
+                row3.update(period=max_value.index.values[0].strftime("%Y-%m"))
+                # min value
+                min_value = ts.nsmallest(n=1)
+                row4 = {self.symbol: min_value.iloc[0]}
+                row4.update(period=min_value.index.values[0].strftime("%Y-%m"))
+            else:
+                row1 = {self.symbol: None}
+                row2 = {self.symbol: None}
+                row3 = {self.symbol: None}
+                row4 = {self.symbol: None}
+                row3.update(period=f"{i} years")
+                row4.update(period=f"{i} years")
+            row1.update(period=f"{i} years", property="arithmetic mean")
+            row2.update(period=f"{i} years", property="median")
+            row3.update(property="max value")
+            row4.update(property="min value")
+
+            new_rows = pd.DataFrame.from_records([row1, row2, row3, row4], index=[0, 1, 2, 3])
+            description = pd.concat([description, new_rows], ignore_index=True)
+        # Full period
+        # Arithmetic mean
+        row0 = {self.symbol: df.mean()}
+        row0.update(period=self._pl_txt, property="arithmetic mean")
+        # Median
+        row1 = {self.symbol: df.median()}
+        row1.update(period=self._pl_txt, property="median")
+        # max value
+        max_value = df.nlargest(n=1)
+        row2 = {self.symbol: max_value.iloc[0]}
+        row2.update(
+            period=max_value.index.values[0].strftime("%Y-%m"),
+            property="max value",
+        )
+        # min value
+        min_value = df.nsmallest(n=1)
+        row3 = {self.symbol: min_value.iloc[0]}
+        row3.update(
+            period=min_value.index.values[0].strftime("%Y-%m"),
+            property="min value"
+        )
+        new_rows = pd.DataFrame.from_records([row0, row1, row2, row3], index=[0, 1, 2, 3])
+        description = pd.concat([description, new_rows], ignore_index=True)
+        return helpers.Frame.change_columns_order(description, ["property", "period"], position="first")
 
 
 class Inflation(MacroABC):
@@ -115,7 +193,7 @@ class Inflation(MacroABC):
 
     def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
         """
-        Generate descriptive inflation statistics for a given list of tickers.
+        Generate descriptive inflation statistics for a given list of periods.
         Statistics includes:
         - YTD compound inflation
         - Annual inflation (geometric mean) for a given list of periods
@@ -204,8 +282,6 @@ class Rate(MacroABC):
     Rates of central banks and banks.
 
     Rates symbols are in '.RATE' namespace.
-
-    TODO: Add .values_daily property
     """
 
     def __init__(
@@ -226,10 +302,6 @@ class Rate(MacroABC):
         allowed_namespaces = ['RATE']
         if namespace not in allowed_namespaces:
             raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
-
-    def describe(self, years: Tuple[int, ...] = (1, 5, 10)):
-        # TODO: Make describe()
-        pass
 
 
 class Indicator(MacroABC):
@@ -258,7 +330,3 @@ class Indicator(MacroABC):
         allowed_namespaces = [x for x in all_macro_namespaces if x not in restricted_namespaces]
         if namespace not in allowed_namespaces:
             raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
-
-    def describe(self, years: Tuple[int, ...] = (1, 5, 10)):
-        # TODO: Make describe()
-        pass
