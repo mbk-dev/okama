@@ -80,8 +80,8 @@ class TestAssetList:
     def test_make_asset_list(self):
         assert self.asset_list.last_date == pd.to_datetime("2020-01")
         assert self.asset_list.assets_first_dates["MCFTR.INDX"].strftime("%Y-%m-%d") == '2003-03-01'
-        last_month = f'{date.today().strftime("%Y-%m")}-01'
-        assert self.asset_list.assets_last_dates["MCFTR.INDX"].strftime("%Y-%m-%d") == last_month
+        last_year = int(self.asset_list.last_date.year)
+        assert int(self.asset_list.assets_last_dates["MCFTR.INDX"].year) > last_year
         assert self.asset_list.newest_asset == "RUB"
         assert self.asset_list.eldest_asset == "RUB.FX"
         assert list(self.asset_list.assets_ror) == ["RUB.FX", "MCFTR.INDX"]
