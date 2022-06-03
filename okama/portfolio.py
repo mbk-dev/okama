@@ -244,14 +244,10 @@ class Portfolio(make_asset_list.ListMaker):
     def symbol(self, text_symbol: str):
         if isinstance(text_symbol, str) and text_symbol.endswith(".PF"):
             if " " in text_symbol:
-                raise ValueError(
-                    "portfolio text symbol should not have whitespace characters."
-                )
+                raise ValueError("portfolio text symbol should not have whitespace characters.")
             self._symbol = text_symbol
         else:
-            raise ValueError(
-                'portfolio symbol must be a string ending with ".PF" namespace.'
-            )
+            raise ValueError('portfolio symbol must be a string ending with ".PF" namespace.')
 
     @property
     def name(self) -> str:

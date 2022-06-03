@@ -920,7 +920,7 @@ class AssetList(make_asset_list.ListMaker):
         return ((growth_ts[dt:] + 1.0).prod()) ** (1 / period) - 1.0
 
     # index methods
-    def tracking_difference(self, rolling_window = None) -> pd.DataFrame:
+    def tracking_difference(self, rolling_window=None) -> pd.DataFrame:
         """
         Return tracking difference for the rate of return of assets.
 
@@ -957,13 +957,12 @@ class AssetList(make_asset_list.ListMaker):
                 self.assets_ror,
                 window=rolling_window,
                 fn=helpers.Frame.get_cumulative_return,
-                window_below_year=True  # small windows below 12 months are allowed
+                window_below_year=True,  # small windows below 12 months are allowed
             )
             return rolling_cum_return.subtract(rolling_cum_return.iloc[:, 0], axis=0).iloc[:, 1:]
         else:
             accumulated_return = helpers.Frame.get_wealth_indexes(self.assets_ror)  # we don't need inflation here
             return helpers.Index.tracking_difference(accumulated_return)
-
 
     def tracking_difference_annualized(self, rolling_window: Optional[int] = None) -> pd.DataFrame:
         """
@@ -1005,7 +1004,7 @@ class AssetList(make_asset_list.ListMaker):
                 self.assets_ror,
                 window=rolling_window,
                 fn=helpers.Frame.get_cagr,
-                window_below_year=False  # small windows below 12 months are not allowed (CAGR is not defined)
+                window_below_year=False,  # small windows below 12 months are not allowed (CAGR is not defined)
             )
             return rolling_cagr.subtract(rolling_cagr.iloc[:, 0], axis=0).iloc[:, 1:]
         else:

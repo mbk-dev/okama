@@ -146,7 +146,7 @@ def _init_inflation(request):
     request.cls.infl_rub = ok.Inflation(symbol="RUB.INFL", last_date="2001-01")
     request.cls.infl_usd = ok.Inflation(symbol="USD.INFL", last_date="1923-01")
     request.cls.infl_eur = ok.Inflation(symbol="EUR.INFL", last_date="2006-02")
-    request.cls.infl_usd_less_year = ok.Inflation(symbol="USD.INFL", first_date='2006-01', last_date="2006-11")
+    request.cls.infl_usd_less_year = ok.Inflation(symbol="USD.INFL", first_date="2006-01", last_date="2006-11")
 
 
 @pytest.fixture(scope="class")

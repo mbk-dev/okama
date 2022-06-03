@@ -35,10 +35,12 @@ class QueryData:
         return ts
 
     @staticmethod
-    def get_macro_ts(symbol: str,
-                     first_date: Union[str, pd.Timestamp, None] = None,
-                     last_date: Union[str, pd.Timestamp, None] = None,
-                     period: str = "M") -> pd.Series:
+    def get_macro_ts(
+        symbol: str,
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
+        period: str = "M",
+    ) -> pd.Series:
         """
         Requests api_methods.API for Macroeconomic indicators time series (monthly data).
         - Inflation time series

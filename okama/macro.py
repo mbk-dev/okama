@@ -24,6 +24,7 @@ class MacroABC(ABC):
     last_date : str, default None
         Last date of the values time series.
     """
+
     def __init__(
         self,
         symbol: str,
@@ -89,7 +90,7 @@ class MacroABC(ABC):
         df = self.values_monthly
         # YTD properties
         year = dt0.year
-        ts = df[str(year):]
+        ts = df[str(year) :]
         row1 = {self.symbol: ts.mean()}
         row1.update(period="YTD", property="arithmetic mean")
         row2 = {self.symbol: ts.median()}
@@ -153,10 +154,7 @@ class MacroABC(ABC):
         # min value
         min_value = df.nsmallest(n=1)
         row3 = {self.symbol: min_value.iloc[0]}
-        row3.update(
-            period=min_value.index.values[0].strftime("%Y-%m"),
-            property="min value"
-        )
+        row3.update(period=min_value.index.values[0].strftime("%Y-%m"), property="min value")
         new_rows = pd.DataFrame.from_records([row0, row1, row2, row3], index=[0, 1, 2, 3])
         description = pd.concat([description, new_rows], ignore_index=True)
         return helpers.Frame.change_columns_order(description, ["property", "period"], position="first")
@@ -181,10 +179,10 @@ class Inflation(MacroABC):
     """
 
     def __init__(
-            self,
-            symbol: str = settings.default_macro_inflation,
-            first_date: Union[str, pd.Timestamp, None] = None,
-            last_date: Union[str, pd.Timestamp, None] = None,
+        self,
+        symbol: str = settings.default_macro_inflation,
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
     ):
         super().__init__(
             symbol,
@@ -194,7 +192,7 @@ class Inflation(MacroABC):
 
     def _check_namespace(self):
         namespace = self.symbol.split(".", 1)[-1]
-        allowed_namespaces = ['INFL']
+        allowed_namespaces = ["INFL"]
         if namespace not in allowed_namespaces:
             raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
 
@@ -344,7 +342,7 @@ class Inflation(MacroABC):
         df = self.values_monthly
         # YTD inflation properties
         year = dt0.year
-        ts = df[str(year):]
+        ts = df[str(year) :]
         inflation = helpers.Frame.get_cumulative_return(ts)
         row1 = {self.symbol: inflation}
         row1.update(period="YTD", property="compound inflation")
@@ -435,10 +433,10 @@ class Rate(MacroABC):
     """
 
     def __init__(
-            self,
-            symbol: str = settings.default_macro_rate,
-            first_date: Union[str, pd.Timestamp, None] = None,
-            last_date: Union[str, pd.Timestamp, None] = None,
+        self,
+        symbol: str = settings.default_macro_rate,
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
     ):
         super().__init__(
             symbol,
@@ -449,7 +447,7 @@ class Rate(MacroABC):
 
     def _check_namespace(self):
         namespace = self.symbol.split(".", 1)[-1]
-        allowed_namespaces = ['RATE']
+        allowed_namespaces = ["RATE"]
         if namespace not in allowed_namespaces:
             raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
 
@@ -469,11 +467,12 @@ class Indicator(MacroABC):
     last_date : str, default None
         Last date of the values time series (2022-03).
     """
+
     def __init__(
-            self,
-            symbol: str = settings.default_macro_indicator,
-            first_date: Union[str, pd.Timestamp, None] = None,
-            last_date: Union[str, pd.Timestamp, None] = None,
+        self,
+        symbol: str = settings.default_macro_indicator,
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
     ):
         super().__init__(
             symbol,
@@ -487,7 +486,7 @@ class Indicator(MacroABC):
         """
         namespace = self.symbol.split(".", 1)[-1]
         all_macro_namespaces = namespaces.get_macro_namespaces()
-        restricted_namespaces = ['RATE', 'INFL']
+        restricted_namespaces = ["RATE", "INFL"]
         allowed_namespaces = [x for x in all_macro_namespaces if x not in restricted_namespaces]
         if namespace not in allowed_namespaces:
             raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")

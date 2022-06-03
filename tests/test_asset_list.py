@@ -1,5 +1,3 @@
-from datetime import date
-
 import pandas as pd
 from pandas.testing import assert_frame_equal
 import numpy as np
@@ -79,7 +77,7 @@ class TestAssetList:
     @mark.smoke
     def test_make_asset_list(self):
         assert self.asset_list.last_date == pd.to_datetime("2020-01")
-        assert self.asset_list.assets_first_dates["MCFTR.INDX"].strftime("%Y-%m-%d") == '2003-03-01'
+        assert self.asset_list.assets_first_dates["MCFTR.INDX"].strftime("%Y-%m-%d") == "2003-03-01"
         last_year = int(self.asset_list.last_date.year)
         assert int(self.asset_list.assets_last_dates["MCFTR.INDX"].year) > last_year
         assert self.asset_list.newest_asset == "RUB"
@@ -299,7 +297,9 @@ class TestAssetList:
         ids=["None", "6 months", "12 months"],
     )
     def test_tracking_difference(self, window, expected):
-        assert self.asset_list.tracking_difference(rolling_window=window)["MCFTR.INDX"].iloc[-1] == approx(expected, abs=1e-2)
+        assert self.asset_list.tracking_difference(rolling_window=window)["MCFTR.INDX"].iloc[-1] == approx(
+            expected, abs=1e-2
+        )
 
     @mark.parametrize(
         "window,expected",
@@ -307,7 +307,9 @@ class TestAssetList:
         ids=["None", "12 months"],
     )
     def test_tracking_difference_annualized(self, window, expected):
-        assert self.asset_list.tracking_difference_annualized(rolling_window=window).iloc[-1, 0] == approx(expected, abs=1e-2)
+        assert self.asset_list.tracking_difference_annualized(rolling_window=window).iloc[-1, 0] == approx(
+            expected, abs=1e-2
+        )
 
     def test_tracking_difference_annual(self):
         assert self.asset_list.tracking_difference_annual.iloc[0, 0] == approx(0.4966, rel=1e-2)
