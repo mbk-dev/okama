@@ -172,8 +172,8 @@ class Inflation(MacroABC):
     def __init__(
             self,
             symbol: str = settings.default_macro_inflation,
-            first_date: Union[str, pd.Timestamp, None] = None,,
-            last_date: Union[str, pd.Timestamp, None] = None,,
+            first_date: Union[str, pd.Timestamp, None] = None,
+            last_date: Union[str, pd.Timestamp, None] = None,
     ):
         super().__init__(
             symbol,
@@ -192,12 +192,29 @@ class Inflation(MacroABC):
         """
         Calculate cumulative inflation rate time series for the whole period.
 
-        TODO: make example
-
         Returns
         -------
         Series
             Cumulative inflation rate.
+
+        Examples
+        --------
+        >>> x = ok.Inflation('RUB.INFL', first_date='2020-01', last_date='2020-12')
+        >>> x.cumulative_inflation
+        date
+        2020-01    0.004000
+        2020-02    0.007313
+        2020-03    0.012853
+        2020-04    0.021260
+        2020-05    0.024018
+        2020-06    0.026270
+        2020-07    0.029862
+        2020-08    0.029450
+        2020-09    0.028730
+        2020-10    0.033153
+        2020-11    0.040489
+        2020-12    0.049125
+        Freq: M, Name: RUB.INFL, dtype: float64
         """
         if self.symbol.split(".", 1)[-1] != "INFL":
             raise ValueError("cumulative_inflation is defined for inflation only")
@@ -206,41 +223,57 @@ class Inflation(MacroABC):
     @property
     def annual_inflation_ts(self):
         """
-        Calculate annual rate of return time series for each asset.
+        Calculate annual inflation time series.
 
-        Rate of return is calculated for each calendar year.
-
-        TODO: Finish
+        Inflation is calculated for each calendar year.
 
         Returns
         -------
-        DataFrame
-            Calendar annual rate of return time series.
+        Series
+            Calendar annual Inflation time series.
 
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> al = ok.AssetList(['SPY.US', 'BND.US'], last_date='2021-08')
-        >>> al.annual_return_ts.plot(kind='bar')
+        >>> infl = ok.Inflation('EUR.INFL', first_date='2016-01', last_date='2021-12')
+        >>> infl.annual_inflation_ts.plot(kind='bar')
         >>> plt.show()
 
         """
         return helpers.Frame.get_annual_return_ts_from_monthly(self.values_monthly)
 
     @property
-    def purchasing_power_1000(self) -> helpers.Float:
+    def purchasing_power_1000(self) -> float:
         """
-        Return purchasing power of 1000 (in a currency of inflation) after period from first_date to last_date.
+        Calculate purchasing power of 1000 (in the currency of inflation) after period from first_date to last_date.
+
+        Returns
+        -------
+        float
+            The Purchasing power of 1000 currency units.
+
+        Examples
+        --------
+        >>> x = ok.Inflation('RUB.INFL', first_date='2000-01', last_date='2020-12')
+        >>> x.purchasing_power_1000
+        145.8118461948026
         """
         return helpers.Float.get_purchasing_power(self.cumulative_inflation[-1])
 
     @property
     def rolling_inflation(self) -> pd.Series:
         """
-        Return 12 months rolling inflation time series.
+        Calculate 12 months rolling inflation time series.
+
+        Returns
+        -------
+        Series
+            12 months rolling inflation time series.
         """
         if self.symbol.split(".", 1)[-1] != "INFL":
             raise ValueError("cumulative_inflation is defined for inflation only")
+        if self.values_monthly.shape[0] < 12:
+            raise ValueError("data history depth is less than rolling window size (12 months)")
         x = (self.values_monthly + 1.0).rolling(settings._MONTHS_PER_YEAR).apply(np.prod, raw=True) - 1.0
         x.dropna(inplace=True)
         return x

@@ -49,6 +49,10 @@ class TestInflation:
         assert self.infl_eur.purchasing_power_1000 == approx(831.4796016106495, rel=1e-4)
         assert self.infl_rub.purchasing_power_1000 == approx(0.05107911300773333, abs=1e-4)
 
+    def test_rolling_inflation_fails(self):
+        with pytest.raises(ValueError, match=r"data history depth is less than rolling window size \(12 months\)"):
+            self.infl_usd_less_year.rolling_inflation
+
     def test_rolling_inflation(self):
         assert self.infl_eur.rolling_inflation[-1] == approx(0.02317927930197139, abs=1e-4)
         assert self.infl_usd.rolling_inflation[-1] == approx(-0.0058137, abs=1e-4)
