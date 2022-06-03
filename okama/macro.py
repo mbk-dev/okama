@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Union, Tuple
 
 import numpy as np
@@ -10,11 +10,25 @@ from okama.common.helpers import helpers
 
 
 class MacroABC(ABC):
+    """
+    Abstract class for all Macroeconomic parameters.
+
+    Parameters
+    ----------
+    symbol: str
+        Symbol is an asset ticker with namespace after dot. The default value is "SPY.US" (SPDR S&P 500 ETF Trust).
+
+    first_date : str, default None
+        First date of the values time series.
+
+    last_date : str, default None
+        Last date of the values time series.
+    """
     def __init__(
         self,
         symbol: str,
-        first_date: Union[str, pd.Timestamp] = "1800-01",
-        last_date: Union[str, pd.Timestamp] = "2030-01",
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
     ):
         self.symbol: str = symbol
         self._check_namespace()
@@ -54,8 +68,21 @@ class MacroABC(ABC):
 
     def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
         """
-        Generate descriptive statistics for a given list of periods.
-        Statistics includes arithmetic mean, median, max and min values for YTD and given periods.
+        Generate descriptive statistics for YTD and given periods.
+        Statistics includes:
+         - arithmetic mean
+         - median
+         - max and min values
+
+        Parameters
+        ----------
+        years : tuple of (int,), default (1, 5, 10)
+            List of periods for the statistics.
+
+        Returns
+        -------
+        DataFrame
+            Table of descriptive statistics for a list of assets.
         """
         description = pd.DataFrame()
         dt0 = self.last_date
@@ -163,7 +190,14 @@ class Inflation(MacroABC):
     @property
     def cumulative_inflation(self) -> pd.Series:
         """
-        Return cumulative inflation rate time series for a period from first_date to last_date.
+        Calculate cumulative inflation rate time series for the whole period.
+
+        TODO: make example
+
+        Returns
+        -------
+        Series
+            Cumulative inflation rate.
         """
         if self.symbol.split(".", 1)[-1] != "INFL":
             raise ValueError("cumulative_inflation is defined for inflation only")
@@ -171,6 +205,26 @@ class Inflation(MacroABC):
 
     @property
     def annual_inflation_ts(self):
+        """
+        Calculate annual rate of return time series for each asset.
+
+        Rate of return is calculated for each calendar year.
+
+        TODO: Finish
+
+        Returns
+        -------
+        DataFrame
+            Calendar annual rate of return time series.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> al = ok.AssetList(['SPY.US', 'BND.US'], last_date='2021-08')
+        >>> al.annual_return_ts.plot(kind='bar')
+        >>> plt.show()
+
+        """
         return helpers.Frame.get_annual_return_ts_from_monthly(self.values_monthly)
 
     @property

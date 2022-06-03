@@ -1,3 +1,6 @@
+from typing import Union
+
+import pandas as pd
 import requests
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
@@ -35,8 +38,8 @@ class API:
         cls,
         endpoint: str = endpoint_ror,
         symbol: str = settings.default_ticker,
-        first_date: str = "1900-01-01",
-        last_date: str = "2100-01-01",
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
         period: str = "d",
     ) -> str:
         session = requests.session()
@@ -64,8 +67,8 @@ class API:
     def get_ror(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: str = "1900-01-01",
-        last_date: str = "2100-01-01",
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
         period: str = "m",
     ):
         return cls.connect(
@@ -80,8 +83,8 @@ class API:
     def get_adjusted_close(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: str = "1900-01-01",
-        last_date: str = "2100-01-01",
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
         period: str = "m",
     ):
         return cls.connect(
@@ -96,8 +99,8 @@ class API:
     def get_close(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: str = "1900-01-01",
-        last_date: str = "2100-01-01",
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
         period: str = "m",
     ):
         return cls.connect(
@@ -112,8 +115,8 @@ class API:
     def get_dividends(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: str = "1900-01-01",
-        last_date: str = "2100-01-01",
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
     ):
         return cls.connect(
             endpoint=cls.endpoint_dividends,
@@ -126,8 +129,8 @@ class API:
     def get_nav(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: str = "1900-01-01",
-        last_date: str = "2100-01-01",
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
         period: str = "m",
     ):
         return cls.connect(
@@ -142,8 +145,8 @@ class API:
     def get_macro(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: str = "1900-01-01",
-        last_date: str = "2100-01-01",
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
         period: str = "m",
     ):
         """

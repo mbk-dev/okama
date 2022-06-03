@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 
 from io import StringIO
 import json
@@ -35,7 +35,10 @@ class QueryData:
         return ts
 
     @staticmethod
-    def get_macro_ts(symbol: str, first_date: str = "1913-01-01", last_date: str = "2100-01-01", period: str = "M") -> pd.Series:
+    def get_macro_ts(symbol: str,
+                     first_date: Union[str, pd.Timestamp, None] = None,
+                     last_date: Union[str, pd.Timestamp, None] = None,
+                     period: str = "M") -> pd.Series:
         """
         Requests api_methods.API for Macroeconomic indicators time series (monthly data).
         - Inflation time series
