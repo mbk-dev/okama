@@ -16,7 +16,7 @@ class MacroABC(ABC):
     Parameters
     ----------
     symbol: str
-        Symbol is an asset ticker with namespace after dot. The default value is "SPY.US" (SPDR S&P 500 ETF Trust).
+        Symbol (ticker) is unique series of letters with namespace after dot (EUR.INFL).
 
     first_date : str, default None
         First date of the values time series.
@@ -167,6 +167,17 @@ class Inflation(MacroABC):
     Inflation related data and methods.
 
     Inflation symbols are in '.INFL' namespace.
+
+    Parameters
+    ----------
+    symbol: str
+        Inflation symbol is unique series of letters with namespace after dot (EUR.INFL).
+
+    first_date : str, default None
+        First date of the values time series (2020-01).
+
+    last_date : str, default None
+        Last date of the values time series (2022-03).
     """
 
     def __init__(
@@ -269,6 +280,13 @@ class Inflation(MacroABC):
         -------
         Series
             12 months rolling inflation time series.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> infl = ok.Inflation('ILS.INFL', first_date='1980-01', last_date='1989-12')
+        >>> infl.rolling_inflation.plot()
+        >>> plt.show()
         """
         if self.symbol.split(".", 1)[-1] != "INFL":
             raise ValueError("cumulative_inflation is defined for inflation only")
@@ -280,12 +298,46 @@ class Inflation(MacroABC):
 
     def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
         """
-        Generate descriptive inflation statistics for a given list of periods.
+        Generate descriptive inflation statistics for YTD and a given list of periods.
         Statistics includes:
         - YTD compound inflation
         - Annual inflation (geometric mean) for a given list of periods
         - max 12 months inflation for the periods
         - Annual inflation (geometric mean) for the whole history
+
+        Parameters
+        ----------
+        years : tuple of (int,), default (1, 5, 10)
+            List of periods in years for the Inflation.
+
+        Returns
+        -------
+        DataFrame
+            Table of descriptive statistics for Inflation.
+
+        Examples
+        --------
+        >>> infl = ok.Inflation('USD.INFL', last_date='2022-04')
+        >>> infl.describe(years=(1, 15, 50))
+                 property               period    USD.INFL
+        0      compound inflation                  YTD    0.036987
+        1   1000 purchasing power                  YTD  964.332475
+        2        annual inflation              1 years    0.082611
+        3      compound inflation              1 years    0.082611
+        4       max 12m inflation              2022-03    0.085410
+        5   1000 purchasing power              1 years  923.692547
+        6        annual inflation             15 years    0.022632
+        7      compound inflation             15 years    0.398916
+        8       max 12m inflation              2022-03    0.085410
+        9   1000 purchasing power             15 years  714.839226
+        10       annual inflation             50 years    0.039595
+        11     compound inflation             50 years    5.969612
+        12      max 12m inflation              1980-03    0.147383
+        13  1000 purchasing power             50 years  143.480004
+        14       annual inflation  109 years, 3 months    0.031470
+        15     compound inflation  109 years, 3 months   28.519646
+        16      max 12m inflation              1920-06    0.236888
+        17  1000 purchasing power  109 years, 3 months   33.875745
         """
         description = pd.DataFrame()
         dt0 = self.last_date
@@ -369,6 +421,17 @@ class Rate(MacroABC):
     Rates of central banks and banks.
 
     Rates symbols are in '.RATE' namespace.
+
+    Parameters
+    ----------
+    symbol: str
+        Symbol is unique series of letters with namespace after dot (RUB_CBR.RATE).
+
+    first_date : str, default None
+        First date of the values time series.
+
+    last_date : str, default None
+        Last date of the values time series.
     """
 
     def __init__(
@@ -394,6 +457,17 @@ class Rate(MacroABC):
 class Indicator(MacroABC):
     """
     Macroeconomic indicators and ratios.
+
+    Parameters
+    ----------
+    symbol: str
+        Symbol is unique series of letters with namespace after dot (USA_CAPE10.RATIO).
+
+    first_date : str, default None
+        First date of the values time series (2020-01).
+
+    last_date : str, default None
+        Last date of the values time series (2022-03).
     """
     def __init__(
             self,
