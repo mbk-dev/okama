@@ -172,8 +172,8 @@ class Inflation(MacroABC):
     def __init__(
             self,
             symbol: str = settings.default_macro_inflation,
-            first_date: Union[str, pd.Timestamp] = "1800-01",
-            last_date: Union[str, pd.Timestamp] = "2030-01",
+            first_date: Union[str, pd.Timestamp, None] = None,,
+            last_date: Union[str, pd.Timestamp, None] = None,,
     ):
         super().__init__(
             symbol,
@@ -341,8 +341,8 @@ class Rate(MacroABC):
     def __init__(
             self,
             symbol: str = settings.default_macro_rate,
-            first_date: Union[str, pd.Timestamp] = "1800-01",
-            last_date: Union[str, pd.Timestamp] = "2030-01",
+            first_date: Union[str, pd.Timestamp, None] = None,
+            last_date: Union[str, pd.Timestamp, None] = None,
     ):
         super().__init__(
             symbol,
@@ -365,8 +365,8 @@ class Indicator(MacroABC):
     def __init__(
             self,
             symbol: str = settings.default_macro_indicator,
-            first_date: Union[str, pd.Timestamp] = "1800-01",
-            last_date: Union[str, pd.Timestamp] = "2030-01",
+            first_date: Union[str, pd.Timestamp, None] = None,
+            last_date: Union[str, pd.Timestamp, None] = None,
     ):
         super().__init__(
             symbol,
