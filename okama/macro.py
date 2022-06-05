@@ -19,10 +19,10 @@ class MacroABC(ABC):
         Symbol (ticker) is unique series of letters with namespace after dot (EUR.INFL).
 
     first_date : str, default None
-        First date of the values time series.
+        First date of the values monthly time series.
 
     last_date : str, default None
-        Last date of the values time series.
+        Last date of the values monthly time series.
     """
 
     def __init__(
@@ -34,7 +34,8 @@ class MacroABC(ABC):
         self.symbol: str = symbol
         self._check_namespace()
         self._get_symbol_data(symbol)
-        self.values_monthly: pd.Series = data_queries.QueryData.get_macro_ts(symbol, first_date, last_date, period="M")
+        self._first_date = first_date
+        self._last_date = last_date
         self.first_date: pd.Timestamp = self.values_monthly.index[0].to_timestamp()
         self.last_date: pd.Timestamp = self.values_monthly.index[-1].to_timestamp()
         self.pl = settings.PeriodLength(
@@ -59,13 +60,25 @@ class MacroABC(ABC):
     def _check_namespace(self):
         pass
 
-    def _get_symbol_data(self, symbol):
+    def _get_symbol_data(self, symbol) -> None:
         x = data_queries.QueryData.get_symbol_info(symbol)
         self.ticker: str = x["code"]
         self.name: str = x["name"]
         self.country: str = x["country"]
         self.currency: str = x["currency"]
         self.type: str = x["type"]
+
+    @property
+    def values_monthly(self) -> pd.Series:
+        """
+        Return values time series historical monthly data.
+
+        Returns
+        -------
+        Series
+            Time series of values historical data (monthly).
+        """
+        return data_queries.QueryData.get_macro_ts(self.symbol, self._first_date, self._last_date, period="M")
 
     def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
         """
@@ -443,13 +456,24 @@ class Rate(MacroABC):
             first_date=first_date,
             last_date=last_date,
         )
-        self.values_daily: pd.Series = data_queries.QueryData.get_macro_ts(symbol, first_date, last_date, period="D")
 
     def _check_namespace(self):
         namespace = self.symbol.split(".", 1)[-1]
         allowed_namespaces = ["RATE"]
         if namespace not in allowed_namespaces:
             raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
+
+    @property
+    def values_daily(self) -> pd.Series:
+        """
+        Return values time series historical daily data.
+
+        Returns
+        -------
+        Series
+            Time series of values historical data (daily).
+        """
+        return data_queries.QueryData.get_macro_ts(self.symbol, self._first_date, self._last_date, period="D")
 
 
 class Indicator(MacroABC):
