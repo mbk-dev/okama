@@ -53,7 +53,7 @@ Okama main features
 * Dividend yield and other dividend indicators for stocks
 * Backtesting and comparing historical performance of broad range of assets and indexes in multiple currencies
 * Methods to track the performance of index funds (ETF) and compare them with benchmarks
-* Main macroeconomic indicators: inflation, central banks rates
+* Main macroeconomic indicators: inflation, central banks rates, financial ratios
 * Matplotlib visualization scripts for the Efficient Frontier, Transition map and assets risk / return performance
 
 Financial data and macroeconomic indicators
@@ -152,7 +152,7 @@ Macroeconomics
 
 .. autosummary::
     :toctree: stubs
-    :template: custom-class-template-no-inherited.rst
+    :template: custom-class-template.rst
     :caption: Macroeconomics
 
     okama.Inflation
