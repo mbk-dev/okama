@@ -1,4 +1,4 @@
 import okama as ok
 
-ind = ok.Indicator(symbol="USA_CAPE10.RATIO")
-print(ind)
+x = ok.AssetList(['SPY.US', 'BND.US', 'GLD.US'], inflation=False)
+print(x.assets_last_dates)

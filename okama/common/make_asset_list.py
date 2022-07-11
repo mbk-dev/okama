@@ -152,8 +152,8 @@ class ListMaker(ABC):
             own_last_dates[asset_item.symbol] = asset_own_last_date
         first_dates[base_currency_name] = currency_first_date
         last_dates[base_currency_name] = currency_last_date
-        own_last_dates[base_currency_name] = currency_first_date
-        own_first_dates[base_currency_name] = currency_last_date
+        own_last_dates[base_currency_name] = currency_last_date
+        own_first_dates[base_currency_name] = currency_first_date
         currencies["asset list"] = base_currency_name
         # get first and last dates
         first_date_list = list(first_dates.values()) + [input_first_date]
