@@ -80,7 +80,7 @@ class TestAssetList:
         assert self.asset_list.assets_first_dates["MCFTR.INDX"].strftime("%Y-%m-%d") == "2003-03-01"
         last_year = int(self.asset_list.last_date.year)
         assert int(self.asset_list.assets_last_dates["MCFTR.INDX"].year) > last_year
-        assert self.asset_list.newest_asset == "RUB"
+        assert self.asset_list.newest_asset == "MCFTR.INDX"
         assert self.asset_list.eldest_asset == "RUB.FX"
         assert list(self.asset_list.assets_ror) == ["RUB.FX", "MCFTR.INDX"]
         assert self.asset_list.assets_ror.columns.name == "Symbols"

@@ -1055,16 +1055,16 @@ class EfficientFrontier(asset_list.AssetList):
         tg = self.get_tangency_portfolio(rf_return)
         fig, ax = plt.subplots(figsize=figsize)
         ax.plot(ef.Risk, ef["Mean return"], color="black")
-        ax.scatter(tg["Risk"], tg["Mean_return"], linewidth=0, color="green", zorder=10)
+        ax.scatter(tg["Risk"], tg["Rate_of_return"], linewidth=0, color="green", zorder=10)
         ax.annotate(
             "MSR",
-            (tg["Risk"], tg["Mean_return"]),
+            (tg["Risk"], tg["Rate_of_return"]),
             textcoords="offset points",  # how to position the text
             xytext=(-10, 10),  # distance from text to points (x,y)
             ha="center",  # horizontal alignment can be left, right or center
         )
         # plot the line
-        x, y = [0, tg["Risk"]], [rf_return, tg["Mean_return"]]
+        x, y = [0, tg["Risk"]], [rf_return, tg["Rate_of_return"]]
         ax.plot(x, y, linewidth=1)
         # set the axis size
         risk_monthly = self.assets_ror.std()

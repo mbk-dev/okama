@@ -40,8 +40,8 @@ def test_close_monthly(init_asset_spy):
     assert init_asset_spy.close_monthly.loc["2000-01"] == 139.625  # changed in 2022 MAY from 139.5625
 
 
-def test_adj_close(init_asset_spy):
-    assert init_asset_spy.adj_close.loc["2000-01-20"] == approx(97.0629, rel=1e-2)
+def test_adj_close(init_asset_pif):
+    assert init_asset_pif.adj_close.loc["2015-01-20"] == approx(3172.88, rel=1e-2)
 
 
 def test_price(init_asset_spy):

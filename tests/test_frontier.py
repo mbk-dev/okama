@@ -111,13 +111,21 @@ def test_ef_points(init_efficient_frontier):
     assert init_efficient_frontier.ef_points["Mean return"].iloc[-1] == approx(0.20007879286573038, rel=1e-2)
 
 
+test_tangency_data = [
+    (False, [0.409596, 0.590404], 0.1627),   # cagr = False
+    (True, [0.424916, 0.575084], 0.15617)  # cagr = True
+]
+
+
+@pytest.mark.parametrize("cagr, expected_weights, expected_return",
+                         test_tangency_data,
+                         ids=["MSR Arithmetic mean", "MSR geometric mean"])
 @mark.frontier
-def test_get_tangency_portfolio(init_efficient_frontier):
+def test_get_tangency_portfolio(init_efficient_frontier, cagr, expected_weights, expected_return):
     rf_rate = 0.05
-    dic = init_efficient_frontier.get_tangency_portfolio(rf_return=rf_rate)
-    expected = [0.409596, 0.590404]
-    assert_allclose(dic["Weights"], expected, atol=1e-2)
-    assert dic["Mean_return"] == approx(0.1627, rel=1e-2)
+    dic = init_efficient_frontier.get_tangency_portfolio(cagr=cagr, rf_return=rf_rate)
+    assert_allclose(dic["Weights"], expected_weights, atol=1e-2)
+    assert dic["Rate_of_return"] == approx(expected_return, rel=1e-2)
 
 
 @mark.frontier
