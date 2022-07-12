@@ -251,7 +251,7 @@ class EfficientFrontier(asset_list.AssetList):
             helpers.Float.annualize_return(self.gmv_monthly[1]),
         )
 
-    def get_tangency_portfolio(self, rf_return: float = 0) -> dict:
+    def get_tangency_portfolio(self, cagr: bool = False, rf_return: float = 0) -> dict:
         """
         Calculate asset weights, risk and return values for tangency portfolio within given bounds.
 
@@ -265,6 +265,9 @@ class EfficientFrontier(asset_list.AssetList):
 
         Parameters
         ----------
+        cagr : bool, default False
+            Use CAGR (Compound annual growth rate) or geometric mean to calculate Sharpe Ratio.
+
         rf_return : float, default 0
             Risk-free rate of return.
 
@@ -276,22 +279,37 @@ class EfficientFrontier(asset_list.AssetList):
         Examples
         --------
         >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
-        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD')
-        >>> ef.get_tangency_portfolio(rf_return=0.02)  # risk free rate of return is 2%
-        {'Weights': array([3.41138555e-01, 1.90819582e-17, 6.58861445e-01]), 'Mean_return': 0.13457274320732382, 'Risk': 0.19563856367290783}
+        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', last_date='2022-06')
+        >>> ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
+        {'Weights': array([0.30672901, 0.        , 0.69327099]), 'Mean_return': 0.12265215404959617, 'Risk': 0.1882249366394522}
+
+        To calculate tangency portfolio parameters for CAGR (geometric mean) set cagr=True:
+        >>> ef.get_tangency_portfolio(cagr=True, rf_return=0.03)
+        {'Weights': array([2.95364739e-01, 1.08420217e-17, 7.04635261e-01]), 'Mean_return': 0.10654206521088283, 'Risk': 0.048279725208422115}
         """
-        ror = self.assets_ror
+        assets_ror = self.assets_ror
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
-        def objective_function(w):
+        def of_arithmetic_mean(w):
             # Sharpe ratio
-            mean_return_monthly = helpers.Frame.get_portfolio_mean_return(w, ror)
-            risk_monthly = helpers.Frame.get_portfolio_risk(w, ror)
-            objective_function.mean_return = helpers.Float.annualize_return(mean_return_monthly)
-            objective_function.risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
-            return -(objective_function.mean_return - rf_return) / objective_function.risk
+            mean_return_monthly = helpers.Frame.get_portfolio_mean_return(w, assets_ror)
+            risk_monthly = helpers.Frame.get_portfolio_risk(w, assets_ror)
+            of_arithmetic_mean.rate_of_return = helpers.Float.annualize_return(mean_return_monthly)
+            of_arithmetic_mean.risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
+            return -(of_arithmetic_mean.rate_of_return - rf_return) / of_arithmetic_mean.risk
 
+        def of_geometric_mean(w):
+            portfolio_ror = helpers.Frame.get_portfolio_return_ts(w, assets_ror)
+            # Rate of return
+            mean_return_monthly = helpers.Frame.get_portfolio_mean_return(w, assets_ror)
+            of_geometric_mean.rate_of_return = helpers.Frame.get_cagr(portfolio_ror)
+            # Risk
+            risk_monthly = portfolio_ror.std()
+            of_geometric_mean.risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
+            return -(of_geometric_mean.rate_of_return - rf_return) / of_geometric_mean.risk
+
+        objective_function = of_geometric_mean if cagr else of_arithmetic_mean
         # construct the constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         weights = minimize(
@@ -305,7 +323,7 @@ class EfficientFrontier(asset_list.AssetList):
         if weights.success:
             return {
                 "Weights": weights.x,
-                "Mean_return": objective_function.mean_return,
+                "Rate_of_return": objective_function.rate_of_return,
                 "Risk": objective_function.risk,
             }
         else:
