@@ -284,6 +284,7 @@ class EfficientFrontier(asset_list.AssetList):
         {'Weights': array([0.30672901, 0.        , 0.69327099]), 'Mean_return': 0.12265215404959617, 'Risk': 0.1882249366394522}
 
         To calculate tangency portfolio parameters for CAGR (geometric mean) set cagr=True:
+
         >>> ef.get_tangency_portfolio(cagr=True, rf_return=0.03)
         {'Weights': array([2.95364739e-01, 1.08420217e-17, 7.04635261e-01]), 'Mean_return': 0.10654206521088283, 'Risk': 0.048279725208422115}
         """
