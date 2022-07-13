@@ -112,14 +112,14 @@ def test_ef_points(init_efficient_frontier):
 
 
 test_tangency_data = [
-    (False, [0.409596, 0.590404], 0.1627),   # cagr = False
-    (True, [0.424916, 0.575084], 0.15617)  # cagr = True
+    (False, [0.409596, 0.590404], 0.1627),  # cagr = False
+    (True, [0.424916, 0.575084], 0.15617),  # cagr = True
 ]
 
 
-@pytest.mark.parametrize("cagr, expected_weights, expected_return",
-                         test_tangency_data,
-                         ids=["MSR Arithmetic mean", "MSR geometric mean"])
+@pytest.mark.parametrize(
+    "cagr, expected_weights, expected_return", test_tangency_data, ids=["MSR Arithmetic mean", "MSR geometric mean"]
+)
 @mark.frontier
 def test_get_tangency_portfolio(init_efficient_frontier, cagr, expected_weights, expected_return):
     rf_rate = 0.05
