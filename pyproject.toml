@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "okama"
-version = "1.2.1"
+version = "1.2.2"
 description = "Investment portfolio analyzing & optimization tools"
 authors = ["Sergey Kikevich <chilango74@gmail.com>"]
 license = "MIT"
@@ -31,8 +31,6 @@ pandas = ">=1.0.0"
 scipy = ">=0.14.0"
 matplotlib = "^3.5.1"
 requests = "^2.27.1"
-# required for python 3.7 only for 3.8+ can use `from importlib.metadata import version`
-importlib-metadata = "^4.11.1"
 joblib = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
