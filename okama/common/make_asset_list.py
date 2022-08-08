@@ -102,7 +102,7 @@ class ListMaker(ABC):
         """
         Make an asset list from a list of symbols.
         """
-        base_currency_name: str = self._currency.name
+        base_currency_ticker: str = self._currency.ticker
         currency_first_date: pd.Timestamp = self._currency.first_date
         currency_last_date: pd.Timestamp = self._currency.last_date
 
@@ -126,9 +126,9 @@ class ListMaker(ABC):
                     f"{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months."
                 )
             if i == 0:  # required to use pd.concat below (df should not be empty).
-                df = self._make_ror(asset_item, base_currency_name)
+                df = self._make_ror(asset_item, base_currency_ticker)
             else:
-                new = self._make_ror(asset_item, base_currency_name)
+                new = self._make_ror(asset_item, base_currency_ticker)
                 df = pd.concat([df, new], axis=1, join="inner", copy="false")
             # get asset first and last dates after adjusting to the currency
             asset_first_date = df.index[0].to_timestamp()
@@ -150,11 +150,11 @@ class ListMaker(ABC):
             last_dates[asset_item.symbol] = asset_last_date
             own_first_dates[asset_item.symbol] = asset_own_first_date
             own_last_dates[asset_item.symbol] = asset_own_last_date
-        first_dates[base_currency_name] = currency_first_date
-        last_dates[base_currency_name] = currency_last_date
-        own_last_dates[base_currency_name] = currency_last_date
-        own_first_dates[base_currency_name] = currency_first_date
-        currencies["asset list"] = base_currency_name
+        first_dates[base_currency_ticker] = currency_first_date
+        last_dates[base_currency_ticker] = currency_last_date
+        own_last_dates[base_currency_ticker] = currency_last_date
+        own_first_dates[base_currency_ticker] = currency_first_date
+        currencies["asset list"] = base_currency_ticker
         # get first and last dates
         first_date_list = list(first_dates.values()) + [input_first_date]
         last_date_list = list(last_dates.values()) + [input_last_date]

@@ -16,7 +16,7 @@ class API:
     # TODO: introduce 'from' & 'to' for dates.
 
     api_url = "http://api.okama.io:5000"
-    default_timeout = 10  # secondsq
+    default_timeout = 10  # seconds
 
     endpoint_ror = "/api/ts/ror/"
     endpoint_symbol = "/api/symbol/"
