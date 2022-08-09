@@ -111,7 +111,8 @@ def test_close_monthly(portfolio_not_rebalanced):
 
 def test_get_assets_dividends(portfolio_dividends):
     assert portfolio_dividends._get_assets_dividends().iloc[-1, 0] == approx(0, abs=1e-2)
-    assert portfolio_dividends._get_assets_dividends().iloc[-1, 1] == approx(32.77, rel=1e-2)  # T.US 2020-01
+    # T.US 2020-01=$0.3927 , RUBUSD=63.03 (  http://joxi.ru/823dnYWizBvEOA  )
+    assert portfolio_dividends._get_assets_dividends().iloc[-1, 1] == approx(24.75, rel=1e-2)
     assert portfolio_dividends._get_assets_dividends().iloc[-1, 2] == approx(0, rel=1e-2)
 
 
@@ -119,13 +120,13 @@ def test_number_of_securities(portfolio_not_rebalanced, portfolio_dividends):
     assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 0] == approx(8.88, rel=1e-2)  # RUB.FX
     assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 1] == approx(0.2787, abs=1e-2)  # MCFTR.INDX
     # with dividends
-    assert portfolio_dividends.number_of_securities.iloc[-1, 0] == approx(3.90, rel=1e-2)  # SBER.MOEX
-    assert portfolio_dividends.number_of_securities.iloc[-1, 1] == approx(0.41, abs=1e-2)  # T.US
-    assert portfolio_dividends.number_of_securities.iloc[-1, 2] == approx(0.38, abs=1e-2)  # GNS.LSE
+    assert portfolio_dividends.number_of_securities.iloc[-1, 0] == approx(3.97, rel=1e-2)  # SBER.MOEX
+    assert portfolio_dividends.number_of_securities.iloc[-1, 1] == approx(0.425, abs=1e-2)  # T.US
+    assert portfolio_dividends.number_of_securities.iloc[-1, 2] == approx(0.392, abs=1e-2)  # GNS.LSE
 
 
 def test_dividends(portfolio_dividends):
-    assert portfolio_dividends.dividends.iloc[-1] == approx(13.71, rel=1e-2)
+    assert portfolio_dividends.dividends.iloc[-1] == approx(10.54, rel=1e-2)
 
 
 def test_dividend_yield(portfolio_dividends):

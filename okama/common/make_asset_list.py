@@ -270,7 +270,7 @@ class ListMaker(ABC):
 
     def _get_assets_dividends(self, remove_forecast=True) -> pd.DataFrame:
         """
-        Get monthly dividend time series for all assets.
+        Get monthly dividend time series for all assets. Dividend values are adjusted to base currency.
 
         If `remove_forecast=True` all forecasted (future) data is removed from the time series.
         """
