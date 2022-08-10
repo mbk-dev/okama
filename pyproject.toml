@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "okama"
-version = "1.2.2"
+version = "1.2.3"
 description = "Investment portfolio analyzing & optimization tools"
 authors = ["Sergey Kikevich <chilango74@gmail.com>"]
 license = "MIT"
@@ -26,7 +26,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.7, <4.0.0"
+python = ">=3.8, <4.0.0"
 pandas = ">=1.0.0"
 scipy = ">=0.14.0"
 matplotlib = "^3.5.1"

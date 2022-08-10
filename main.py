@@ -1,3 +1,6 @@
 import okama as ok
+from importlib import metadata
 
-print(ok.__version__)
+print(metadata.version('okama'))
+
+# print(ok.__version__)
