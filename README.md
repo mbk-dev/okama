@@ -7,8 +7,6 @@
 [![Open In Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mbk-dev/okama/blob/master/examples/01%20howto.ipynb)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**ATTENTION**: Please update okama to `version 1.1.5` or higher to use the latest financial API (api.okama.io)
-
 # Okama
 
 _okama_ is a library with investment portfolio analyzing & optimization tools. CFA recommendations are used in quantitative finance.
@@ -28,6 +26,7 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
 - [Installation](#installation)
 - [Getting started](#getting-started)
 - [Documentation](#documentation)
+- [Financial Widgets](#financial-widgets)
 - [RoadMap](#roadmap)
 - [Contributing to okama](#contributing-to-okama)
 - [Communication](#communication)
@@ -163,6 +162,13 @@ More examples are available in form of [Jupyter Notebooks](https://github.com/mb
 ## Documentation
 
 The official documentation is hosted on readthedocs.org: [https://okama.readthedocs.io/](https://okama.readthedocs.io/)
+
+## Financial Widgets
+[okama-dash](https://github.com/mbk-dev/okama-dash) repository has interactive financial widgets (multi-page web application) 
+build with _okama_ package and [Dash (plotly)](https://github.com/plotly/dash) framework. Working example is available at 
+[okama.io](https://okama.io/).
+
+![](https://github.com/mbk-dev/okama-dash/blob/images/images/main_page.jpg?raw=true) 
 
 ## RoadMap
 
