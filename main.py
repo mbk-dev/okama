@@ -1,3 +1,3 @@
 import okama as ok
 
-print(ok.__version__)
+ok.Inflation("CNY.INFL").describe()
