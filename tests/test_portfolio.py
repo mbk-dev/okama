@@ -112,7 +112,9 @@ def test_close_monthly(portfolio_not_rebalanced):
 def test_get_assets_dividends(portfolio_dividends):
     assert portfolio_dividends._get_assets_dividends().iloc[-1, 0] == approx(0, abs=1e-2)
     # T.US 2020-01=$0.3927 , RUBUSD=63.03 (  http://joxi.ru/823dnYWizBvEOA  )
-    assert portfolio_dividends._get_assets_dividends().iloc[-1, 1] == approx(24.75, rel=1e-2)
+    # T.US 2020-01=$0.5200 , RUBUSD=63.03 ( http://joxi.ru/Grqjdaliz5Ow9m )  04.09.2022
+    # T.US 2020-01-09, 0.5200 from EOD
+    assert portfolio_dividends._get_assets_dividends().iloc[-1, 1] == approx(32.77, rel=1e-2)
     assert portfolio_dividends._get_assets_dividends().iloc[-1, 2] == approx(0, rel=1e-2)
 
 
@@ -126,7 +128,7 @@ def test_number_of_securities(portfolio_not_rebalanced, portfolio_dividends):
 
 
 def test_dividends(portfolio_dividends):
-    assert portfolio_dividends.dividends.iloc[-1] == approx(10.54, rel=1e-2)
+    assert portfolio_dividends.dividends.iloc[-1] == approx(13.96, rel=1e-2)
 
 
 def test_dividend_yield(portfolio_dividends):

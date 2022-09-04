@@ -257,7 +257,7 @@ class ListMaker(ABC):
         Get monthly dividend time series for a single symbol and adjust to the currency.
         """
         asset = self.asset_obj_dict[tick]
-        s = asset.dividends[self.first_date : self.last_date]
+        s = asset.dividends[self.first_date: self.last_date]
         if asset.currency != self.currency:
             s = self._adjust_price_to_currency_monthly(s, asset.currency)
         if remove_forecast:
