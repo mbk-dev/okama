@@ -169,7 +169,7 @@ class Asset:
         div = data_queries.QueryData.get_dividends(self.symbol)
         if div.empty:
             # Zero time series for assets where dividend yield is not defined.
-            index = pd.date_range(start=self.first_date, end=self.last_date, freq="MS", closed=None)
+            index = pd.date_range(start=self.first_date, end=self.last_date, freq="MS", inclusive=None)
             period = index.to_period("D")
             div = pd.Series(data=0, index=period)
             div.rename(self.symbol, inplace=True)
