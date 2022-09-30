@@ -430,11 +430,13 @@ class EfficientFrontier(asset_list.AssetList):
             # CAGR calculation
             portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(weights.x, ror)
             cagr = helpers.Frame.get_cagr(portfolio_return_ts)
-            if not self.labels_are_tickers:
-                asset_labels = list(self.names.values())
-            else:
-                asset_labels = self.symbols
-            point = {x: y for x, y in zip(asset_labels, weights.x)}
+            asset_labels = (
+                self.symbols
+                if self.labels_are_tickers
+                else list(self.names.values())
+            )
+
+            point = dict(zip(asset_labels, weights.x))
             point["Mean return"] = objective_function.annual_mean_return
             point["CAGR"] = cagr
             point["Risk"] = objective_function.annual_risk
@@ -506,10 +508,7 @@ class EfficientFrontier(asset_list.AssetList):
         )
         if weights.success:
             portfolio_risk = helpers.Frame.get_portfolio_risk(weights.x, ror)
-            if option.lower() == "max":
-                optimized_return = -weights.fun
-            else:
-                optimized_return = weights.fun
+            optimized_return = -weights.fun if option.lower() == "max" else weights.fun
             point = {
                 "Weights": weights.x,
                 "Mean_return_monthly": optimized_return,
@@ -600,11 +599,13 @@ class EfficientFrontier(asset_list.AssetList):
             # CAGR calculation
             portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(weights.x, ror)
             cagr = helpers.Frame.get_cagr(portfolio_return_ts)
-            if not self.labels_are_tickers:
-                asset_labels = list(self.names.values())
-            else:
-                asset_labels = self.symbols
-            point = {x: y for x, y in zip(asset_labels, weights.x)}
+            asset_labels = (
+                self.symbols
+                if self.labels_are_tickers
+                else list(self.names.values())
+            )
+
+            point = dict(zip(asset_labels, weights.x))
             point["Mean return"] = a_r
             point["CAGR"] = cagr
             point["Risk"] = a_risk

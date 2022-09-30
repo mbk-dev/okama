@@ -340,7 +340,7 @@ class ListMaker(ABC):
                 else:
                     # skipping prices if no dividends
                     div_yield = div_monthly
-                    frame.update({tick: div_yield})
+                    frame[tick] = div_yield
                     continue
                 # Get dividend yield time series
                 div_yield = pd.Series(dtype=float)
@@ -351,7 +351,7 @@ class ListMaker(ABC):
                     value = ltm_div / last_price
                     div_yield.at[date] = value
                 div_yield.index = div_yield.index.to_period("M")
-                frame.update({tick: div_yield})
+                frame[tick] = div_yield
             self._dividend_yield = pd.DataFrame(frame)
         return self._dividend_yield
 
@@ -364,7 +364,7 @@ class ListMaker(ABC):
         -------
         list
         """
-        assets = [settings.default_ticker] if not self._assets else self._assets
+        assets = self._assets or [settings.default_ticker]
         if not isinstance(assets, list):
             raise ValueError("Assets must be a list.")
         return assets

@@ -728,20 +728,20 @@ class AssetList(make_asset_list.ListMaker):
         for ti in self.symbols:
             # short_ticker = ti.split(".", 1)[0]
             value = self.assets_first_dates[ti].strftime("%Y-%m")
-            row.update({ti: value})
+            row[ti] = value
         row.update(period=None, property="Inception date")
         if hasattr(self, "inflation"):
-            row.update({self.inflation: self.inflation_first_date.strftime("%Y-%m")})
+            row[self.inflation] = self.inflation_first_date.strftime("%Y-%m")
         description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # last asset date
         row = {}
         for ti in self.symbols:
             # short_ticker = ti.split(".", 1)[0]
             value = self.assets_last_dates[ti].strftime("%Y-%m")
-            row.update({ti: value})
+            row[ti] = value
         row.update(period=None, property="Last asset date")
         if hasattr(self, "inflation"):
-            row.update({self.inflation: self.inflation_last_date.strftime("%Y-%m")})
+            row[self.inflation] = self.inflation_last_date.strftime("%Y-%m")
         description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # last data date
         row = {x: self.last_date.strftime("%Y-%m") for x in df.columns}
@@ -999,16 +999,15 @@ class AssetList(make_asset_list.ListMaker):
         >>> x.tracking_difference_annualized.plot(rolling_window = 12)
         >>> plt.show()
         """
-        if rolling_window:
-            rolling_cagr = helpers.Frame.get_rolling_fn(
-                self.assets_ror,
-                window=rolling_window,
-                fn=helpers.Frame.get_cagr,
-                window_below_year=False,  # small windows below 12 months are not allowed (CAGR is not defined)
-            )
-            return rolling_cagr.subtract(rolling_cagr.iloc[:, 0], axis=0).iloc[:, 1:]
-        else:
+        if not rolling_window:
             return helpers.Index.tracking_difference_annualized(self.tracking_difference())
+        rolling_cagr = helpers.Frame.get_rolling_fn(
+            self.assets_ror,
+            window=rolling_window,
+            fn=helpers.Frame.get_cagr,
+            window_below_year=False,  # small windows below 12 months are not allowed (CAGR is not defined)
+        )
+        return rolling_cagr.subtract(rolling_cagr.iloc[:, 0], axis=0).iloc[:, 1:]
 
     @property
     def tracking_difference_annual(self) -> pd.DataFrame:

@@ -19,9 +19,9 @@ class Asset:
     """
 
     def __init__(self, symbol: str = settings.default_ticker):
-        if symbol is None or len(str(symbol).strip()) == 0:
+        if symbol is None or not symbol.strip():
             raise ValueError("Symbol can not be empty")
-        self._symbol = str(symbol).strip()
+        self._symbol = symbol.strip()
         self._check_namespace()
         self._get_symbol_data(symbol)
         self.ror: pd.Series = data_queries.QueryData.get_ror(symbol)

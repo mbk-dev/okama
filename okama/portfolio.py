@@ -1048,9 +1048,7 @@ class Portfolio(make_asset_list.ListMaker):
         s1 = s.where(s == 0).notnull().astype(int)
         s1_1 = s.where(s == 0).isnull().astype(int).cumsum()
         s2 = s1.groupby(s1_1).cumsum()
-        # Max recovery period date should not be in the border (means it's not recovered)
-        max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
-        return max_period
+        return s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
 
     def describe(self, years: Tuple[int] = (1, 5, 10)) -> pd.DataFrame:
         """
@@ -1262,7 +1260,7 @@ class Portfolio(make_asset_list.ListMaker):
         """
         if distr == "hist":
             cagr_distr = self.get_rolling_cagr(years * settings._MONTHS_PER_YEAR)
-        elif distr in ["norm", "lognorm"]:
+        elif distr in {"norm", "lognorm"}:
             if not n:
                 n = 1000
             cagr_distr = self._get_cagr_distribution(distr=distr, years=years, n=n)
@@ -1311,7 +1309,7 @@ class Portfolio(make_asset_list.ListMaker):
                 self.get_rolling_cagr(years * 12).loc[:, self.symbol].quantile(percentile / 100)
                 for years in period_range
             ]
-            returns_dict.update({percentile: percentile_returns_list})
+            returns_dict[percentile] = percentile_returns_list
         df = pd.DataFrame(returns_dict, index=list(period_range))
         df.index.rename("years", inplace=True)
         return df
@@ -1543,7 +1541,7 @@ class Portfolio(make_asset_list.ListMaker):
         results = {}
         for percentile in percentiles:
             value = cagr_distr.quantile(percentile / 100)
-            results.update({percentile: value})
+            results[percentile] = value
         return results
 
     def percentile_wealth(
@@ -1599,12 +1597,12 @@ class Portfolio(make_asset_list.ListMaker):
         """
         if distr == "hist":
             results = self.percentile_wealth_history(years=years, percentiles=percentiles).iloc[-1].to_dict()
-        elif distr in ["norm", "lognorm"]:
+        elif distr in {"norm", "lognorm"}:
             results = {}
             wealth_indexes = self._monte_carlo_wealth(distr=distr, years=years, n=n)
             for percentile in percentiles:
                 value = wealth_indexes.iloc[-1, :].quantile(percentile / 100)
-                results.update({percentile: value})
+                results[percentile] = value
         else:
             raise ValueError('distr should be "norm", "lognorm" or "hist".')
         if today_value:

@@ -102,9 +102,7 @@ class Frame:
         Returns the mean return time series given portfolio weights and the DataFrame of assets mean returns.
         """
         cls.weights_sum_is_one(weights)
-        if isinstance(ror, pd.Series):  # required for a single asset portfolio
-            return ror
-        return ror @ weights
+        return ror if isinstance(ror, pd.Series) else ror @ weights
 
     @classmethod
     def get_portfolio_mean_return(cls, weights: Union[list, np.array], ror: pd.DataFrame) -> float:
@@ -113,9 +111,7 @@ class Frame:
         """
         # cls.weights_sum_is_one(weights)
         weights = np.asarray(weights)
-        if isinstance(ror.mean(), float):  # required for a single asset portfolio
-            return ror.mean()
-        return weights.T @ ror.mean()
+        return ror.mean() if isinstance(ror.mean(), float) else weights.T @ ror.mean()
 
     @staticmethod
     def get_cagr(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
@@ -350,7 +346,7 @@ class Frame:
         test_dict = {}
         for label, content in ror.items():
             test_values = Frame.kstest_series(content, distr=distr)
-            test_dict.update({label: test_values})
+            test_dict[label] = test_values
         return pd.DataFrame.from_dict(test_dict, orient="columns")
 
 
@@ -455,14 +451,13 @@ class Date:
         Subtract N years (integer) from a date. Used for time series.
         First month is +1 (if today is August the series should start at September to give 12 months).
         """
-        if isinstance(years, int):
-            if dt.month == 12:
-                new_dt = dt.replace(year=dt.year - years + 1, month=1)  # for December
-            else:
-                new_dt = dt.replace(year=dt.year - years, month=dt.month + 1)
-        else:
+        if not isinstance(years, int):
             raise TypeError("The period should be integer")
-        return new_dt
+        return (
+            dt.replace(year=dt.year - years + 1, month=1)
+            if dt.month == 12
+            else dt.replace(year=dt.year - years, month=dt.month + 1)
+        )
 
     @staticmethod
     def get_difference_in_months(last_day: pd.Timestamp, first_day: pd.Timestamp):
