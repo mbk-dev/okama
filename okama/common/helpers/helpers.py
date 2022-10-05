@@ -379,7 +379,7 @@ class Rebalance:
                 inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
                 assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
                 wealth_index_local = assets_wealth_indexes.sum(axis=1)
-                wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=True)
+                wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=False)
                 initial_inv = wealth_index.iloc[-1]
         return wealth_index
 
@@ -390,7 +390,6 @@ class Rebalance:
         Default rebalancing period is a Year (end of year)
         For not rebalanced portfolio set Period to 'none'
         """
-        # Frame.weights_sum_is_one(weights)
         initial_inv = 1000
         assets_wealth_indexes = pd.DataFrame(dtype="float64")
         wealth_index = pd.Series(dtype="float64")
@@ -403,12 +402,12 @@ class Rebalance:
                 inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
                 assets_wealth_indexes_local = inv_period_spread * (1 + df).cumprod()
                 assets_wealth_indexes = pd.concat(
-                    [assets_wealth_indexes, assets_wealth_indexes_local],
+                    [assets_wealth_indexes_local, assets_wealth_indexes],
                     verify_integrity=True,
-                    sort=True,
+                    sort=False,
                 )
                 wealth_index_local = assets_wealth_indexes_local.sum(axis=1)
-                wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=True)
+                wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=False)
                 initial_inv = wealth_index.iloc[-1]
         return assets_wealth_indexes
 
