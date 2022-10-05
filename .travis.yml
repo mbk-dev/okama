@@ -8,7 +8,7 @@ python:
 
 # command to install dependencies
 before_install:
-  - curl -sSL https://install.python-poetry.org | python3 - --preview
+  - curl -sSL https://install.python-poetry.org | python3 -
 install:
   - poetry install
   - poetry run pip install pytest-cov

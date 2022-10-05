@@ -148,6 +148,7 @@ test_monte_carlo = [
     ("cagr", 0.10831, 0.1520, 0.5278),  # kind = 'cagr'
 ]
 
+
 @pytest.mark.parametrize(
     "kind, risk, ror, weight", test_monte_carlo, ids=["Monte Carlo - Arithmetic mean", "Monte Carlo - Geometric mean"]
 )
