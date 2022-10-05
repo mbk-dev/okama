@@ -143,6 +143,23 @@ def test_get_most_diversified_portfolio_global(init_efficient_frontier):
     df_expected = pd.Series(dic_expected)
     assert_series_equal(df, df_expected, rtol=1e-03)
 
+test_monte_carlo = [
+    ("mean", 0.10831, 0.1571, 0.5278),  # kind = 'mean'
+    ("cagr", 0.10831, 0.1520, 0.5278),  # kind = 'cagr'
+]
+
+@pytest.mark.parametrize(
+    "kind, risk, ror, weight", test_monte_carlo, ids=["Monte Carlo - Arithmetic mean", "Monte Carlo - Geometric mean"]
+)
+@mark.frontier
+def test_get_monte_carlo(init_efficient_frontier, kind, risk, ror, weight):
+    np.random.seed(0)
+    rp = init_efficient_frontier.get_monte_carlo(10, kind=kind)
+    rr = "Return" if kind == "mean" else "CAGR"
+    assert rp.loc[9, "Risk"] == approx(risk, abs=1e-3)
+    assert rp.loc[9, rr] == approx(ror, abs=1e-3)
+    assert rp.loc[9, "SBMX.MOEX"] == approx(weight, abs=1e-3)
+
 
 @mark.frontier
 def test_get_most_diversified_portfolio(init_efficient_frontier):
