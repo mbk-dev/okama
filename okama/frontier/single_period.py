@@ -430,10 +430,7 @@ class EfficientFrontier(asset_list.AssetList):
             # CAGR calculation
             portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(weights.x, ror)
             cagr = helpers.Frame.get_cagr(portfolio_return_ts)
-            if not self.labels_are_tickers:
-                asset_labels = list(self.names.values())
-            else:
-                asset_labels = self.symbols
+            asset_labels = self.get_assets_tickers()
             point = {x: y for x, y in zip(asset_labels, weights.x)}
             point["Mean return"] = objective_function.annual_mean_return
             point["CAGR"] = cagr
@@ -600,10 +597,7 @@ class EfficientFrontier(asset_list.AssetList):
             # CAGR calculation
             portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(weights.x, ror)
             cagr = helpers.Frame.get_cagr(portfolio_return_ts)
-            if not self.labels_are_tickers:
-                asset_labels = list(self.names.values())
-            else:
-                asset_labels = self.symbols
+            asset_labels = self.get_assets_tickers()
             point = {x: y for x, y in zip(asset_labels, weights.x)}
             point["Mean return"] = a_r
             point["CAGR"] = cagr
@@ -611,6 +605,13 @@ class EfficientFrontier(asset_list.AssetList):
         else:
             raise RecursionError("No solutions were found")
         return point
+
+    def get_assets_tickers(self) -> list:
+        if not self.labels_are_tickers:
+            asset_labels = list(self.names.values())
+        else:
+            asset_labels = self.symbols
+        return asset_labels
 
     @property
     def mean_return_range(self) -> np.ndarray:
@@ -868,14 +869,21 @@ class EfficientFrontier(asset_list.AssetList):
             mean_return_monthly = helpers.Frame.get_portfolio_mean_return(weights, self.assets_ror)
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
             mean_return = helpers.Float.annualize_return(mean_return_monthly)
+            second_column = "Return" if kind == "mean" else "CAGR"
+
+            asset_labels = self.get_assets_tickers()
+            point = dict(zip(asset_labels, weights))
+            point["Risk"] = risk
             if kind.lower() == "cagr":
                 cagr = helpers.Float.approx_return_risk_adjusted(mean_return, risk)
-                row = dict(Risk=risk, CAGR=cagr)
+                point["CAGR"] = cagr
+
             elif kind.lower() == "mean":
-                row = dict(Risk=risk, Return=mean_return)
+                point["Return"] = mean_return
             else:
                 raise ValueError('kind should be "mean" or "cagr"')
-            random_portfolios = pd.concat([random_portfolios, pd.DataFrame(row, index=[0])], ignore_index=True)
+            random_portfolios = pd.concat([random_portfolios, pd.DataFrame(point, index=[0])], ignore_index=True)
+            random_portfolios = helpers.Frame.change_columns_order(random_portfolios, ["Risk", second_column])
         return random_portfolios
 
     def plot_transition_map(self, cagr: bool = True, figsize: Optional[tuple] = None) -> plt.axes:

@@ -820,7 +820,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> plt.show()
         """
         df = self.assets_dividend_yield @ self.weights_ts.T
-        div_yield_series = pd.Series(np.diag(df), index=df.index)
+        div_yield_series = pd.Series(np.diag(df), index=df.index)   # faster than df1.mul(df2).sum(axis=1)
         div_yield_series.rename(self.symbol, inplace=True)
         return div_yield_series
 

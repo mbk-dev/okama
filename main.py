@@ -1,3 +1,4 @@
 import okama as ok
 
-ok.Inflation("CNY.INFL").describe()
+x = ok.EfficientFrontier(['SPY.US', 'BND.US'])
+print(x.get_monte_carlo(10))
