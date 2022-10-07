@@ -453,7 +453,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         # Calculate points of EF given optimal weights
         if weights.success:
             asset_labels = self.symbols if self.ticker_names else list(self.names.values())
-            point = {x: y for x, y in zip(asset_labels, weights.x)}
+            point = dict(zip(asset_labels, weights.x))
             point["CAGR"] = target_value
             point["Risk"] = weights.fun
         else:
@@ -510,7 +510,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         # Calculate points of EF given optimal weights
         if weights.success:
             asset_labels = self.symbols if self.ticker_names else list(self.names.values())
-            point = {x: y for x, y in zip(asset_labels, weights.x)}
+            point = dict(zip(asset_labels, weights.x))
             point["CAGR"] = target_return
             point["Risk"] = -weights.fun
         else:
@@ -540,8 +540,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         tolerance = 0.01  # assets CAGR should be less than max CAGR with certain tolerance
         cagr = helpers.Frame.get_cagr(self.assets_ror)
-        global_max_cagr_is_not_asset = (cagr < self.global_max_return_portfolio["CAGR"] * (1 - tolerance)).all()
-        if global_max_cagr_is_not_asset:
+        if global_max_cagr_is_not_asset := (cagr < self.global_max_return_portfolio["CAGR"] * (1 - tolerance)).all():
             condition = self.risk_annual.values > self.global_max_return_portfolio["Risk"]
             ror_selected = self.assets_ror.loc[:, condition]
             if not ror_selected.empty:

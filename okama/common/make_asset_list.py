@@ -142,7 +142,7 @@ class ListMaker(ABC):
                 raise ValueError(
                     f"{asset_item.symbol} historical data period length is too short. " f"It must be at least 3 months."
                 )
-            # uppend data to dictionaries
+            # append data to dictionaries
             asset_obj_dict[asset_item.symbol] = asset_item
             currencies[asset_item.symbol] = asset_item.currency
             names[asset_item.symbol] = asset_item.name
@@ -182,7 +182,7 @@ class ListMaker(ABC):
 
     def _make_ror(self, list_asset: asset.Asset, base_currency_name: str) -> pd.Series:
         """
-        Make aseet reate of return time series.
+        Make asset rate of return time series.
         """
         asset_currency_name = list_asset.currency
         if asset_currency_name == base_currency_name:
@@ -257,7 +257,7 @@ class ListMaker(ABC):
         Get monthly dividend time series for a single symbol and adjust to the currency.
         """
         asset = self.asset_obj_dict[tick]
-        s = asset.dividends[self.first_date: self.last_date]
+        s = asset.dividends[self.first_date : self.last_date]
         if asset.currency != self.currency:
             s = self._adjust_price_to_currency_monthly(s, asset.currency)
         if remove_forecast:
@@ -340,7 +340,7 @@ class ListMaker(ABC):
                 else:
                     # skipping prices if no dividends
                     div_yield = div_monthly
-                    frame.update({tick: div_yield})
+                    frame[tick] = div_yield
                     continue
                 # Get dividend yield time series
                 div_yield = pd.Series(dtype=float)
@@ -351,7 +351,7 @@ class ListMaker(ABC):
                     value = ltm_div / last_price
                     div_yield.at[date] = value
                 div_yield.index = div_yield.index.to_period("M")
-                frame.update({tick: div_yield})
+                frame[tick] = div_yield
             self._dividend_yield = pd.DataFrame(frame)
         return self._dividend_yield
 
@@ -364,7 +364,7 @@ class ListMaker(ABC):
         -------
         list
         """
-        assets = [settings.default_ticker] if not self._assets else self._assets
+        assets = self._assets or [settings.default_ticker]
         if not isinstance(assets, list):
             raise ValueError("Assets must be a list.")
         return assets

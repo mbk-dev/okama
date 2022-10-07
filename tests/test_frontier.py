@@ -143,6 +143,7 @@ def test_get_most_diversified_portfolio_global(init_efficient_frontier):
     df_expected = pd.Series(dic_expected)
     assert_series_equal(df, df_expected, rtol=1e-03)
 
+
 test_monte_carlo = [
     ("mean", 0.10831, 0.1571, 0.5278),  # kind = 'mean'
     ("cagr", 0.10831, 0.1520, 0.5278),  # kind = 'cagr'
