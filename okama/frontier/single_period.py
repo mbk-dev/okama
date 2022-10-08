@@ -810,7 +810,7 @@ class EfficientFrontier(asset_list.AssetList):
         Returns
         -------
         DataFrame
-            Table with Return and Risk values for random portfolios.
+            Table with Return, Risk and weights values for random portfolios.
 
         Parameters
         ----------
@@ -826,17 +826,17 @@ class EfficientFrontier(asset_list.AssetList):
         >>> base_currency = 'EUR'
         >>> y = ok.EfficientFrontier(assets, ccy=base_currency, last_date=last_date)
         >>> y.get_monte_carlo(n=10)  # generate 10 random portfolios
-             Return      Risk
-        0  0.090393  0.101900
-        1  0.075611  0.087561
-        2  0.100580  0.151436
-        3  0.109584  0.108251
-        4  0.092985  0.092296
-        5  0.086165  0.108419
-        6  0.116168  0.141825
-        7  0.079040  0.090309
-        8  0.093917  0.092967
-        9  0.102236  0.115301
+               Risk    Return    SPY.US    AGG.US    GLD.US
+        0  0.099168  0.101667  0.470953  0.205227  0.323819
+        1  0.099790  0.076282  0.070792  0.558928  0.370280
+        2  0.129312  0.106620  0.274261  0.050524  0.675215
+        3  0.102031  0.083311  0.129375  0.443444  0.427182
+        4  0.102956  0.105136  0.489213  0.146174  0.364614
+        5  0.095690  0.091834  0.297122  0.335066  0.367812
+        6  0.103747  0.090285  0.203408  0.334694  0.461898
+        7  0.148311  0.099617  0.082660  0.120871  0.796470
+        8  0.115780  0.082983  0.042871  0.422335  0.534794
+        9  0.093903  0.088553  0.266303  0.387332  0.346365
 
         To plot Monte Carlo simulation result it's useful to combine in with the Efficien Frontier chart.
         Additionaly assets points could be plotted with 'Plot.plot_assets()'.
