@@ -908,7 +908,7 @@ python-versions = "*"
 
 [[package]]
 name = "Pillow"
-version = "9.2.0"
+version = "9.1.0"
 description = "Python Imaging Library (Fork)"
 category = "main"
 optional = false
