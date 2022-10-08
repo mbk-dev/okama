@@ -532,6 +532,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
     @property
     def _max_cagr_asset_right_to_max_cagr(self) -> Optional[dict]:
+        # sourcery skip: use-named-expression
         """
         The asset with max CAGR lying to the right of the global max CAGR point
         (risk should be more than self.max_return['Risk']).
@@ -540,7 +541,8 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         tolerance = 0.01  # assets CAGR should be less than max CAGR with certain tolerance
         cagr = helpers.Frame.get_cagr(self.assets_ror)
-        if global_max_cagr_is_not_asset := (cagr < self.global_max_return_portfolio["CAGR"] * (1 - tolerance)).all():
+        global_max_cagr_is_not_asset = (cagr < self.global_max_return_portfolio["CAGR"] * (1 - tolerance)).all()
+        if global_max_cagr_is_not_asset:
             condition = self.risk_annual.values > self.global_max_return_portfolio["Risk"]
             ror_selected = self.assets_ror.loc[:, condition]
             if not ror_selected.empty:
