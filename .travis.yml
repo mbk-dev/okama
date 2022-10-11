@@ -10,11 +10,12 @@ python:
 before_install:
   - curl -sSL https://install.python-poetry.org | python3 -
 install:
-  - poetry install
+  - poetry install --extras test_jupyter
   - poetry run pip install pytest-cov
   - poetry run pip install coveralls
 # command to run tests
 script:
   - poetry run pytest tests --cov=okama/
+  - pytest --nbmake examples --cov=okama/
 after_success:
   - poetry run coveralls
