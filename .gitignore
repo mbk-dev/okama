@@ -5,4 +5,5 @@
 dist/
 __pycache__
 *.pyc
+poetry.lock
 
