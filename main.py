@@ -1,6 +1,4 @@
 import okama as ok
 
-pf = ok.Portfolio()
-
-sc = pf.percentile_inverse_cagr(score=0, distr='hist')
-print(sc)
+close_ts = ok.Asset('TSPX.MOEX').close_monthly
+print(close_ts['2022-01':])

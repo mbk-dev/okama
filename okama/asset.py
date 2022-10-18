@@ -122,7 +122,7 @@ class Asset:
         >>> x.close_monthly.plot()
         >>> plt.show()
         """
-        return helpers.Frame.change_period_to_month(self.close_daily)
+        return data_queries.QueryData.get_close(self.symbol, period="M")
 
     @property
     def adj_close(self):
