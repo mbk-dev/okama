@@ -27,7 +27,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.8, <4.0.0"
-pandas = ">=1.0.0"
+pandas = ">=1.4.0"
 scipy = ">=0.14.0"
 matplotlib = "^3.5.1"
 requests = "^2.27.1"
