@@ -70,7 +70,7 @@ class TestAssetList:
         assert self.currencies.describe().iloc[1, -1] == approx(0.02485, rel=1e-2)
 
     def test_names(self):
-        assert list(self.spy.names.values()) == ["SPDR S&P 500 ETF Trust"]
+        assert list(self.spy.names.values()) == ["SPDR® S&P 500"]
 
     @mark.smoke
     def test_make_asset_list(self):
