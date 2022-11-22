@@ -1,4 +1,8 @@
 import okama as ok
+import matplotlib.pyplot as plt
 
-close_ts = ok.Asset('TSPX.MOEX').close_monthly
-print(close_ts['2022-01':])
+pf = ok.Portfolio(['SP500TR.INDX', 'MCFTR.INDX'], ccy='USD')
+pf.rebalancing_period = 'year'
+pf.wealth_index_with_assets.plot()
+plt.show()
+

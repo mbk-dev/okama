@@ -364,15 +364,10 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.wealth_index_with_assets.plot()
         >>> plt.show()
         """
+        ls = [self.ror, self.assets_ror]
         if hasattr(self, "inflation"):
-            df = pd.concat(
-                [self.ror, self.assets_ror, self.inflation_ts],
-                axis=1,
-                join="inner",
-                copy="false",
-            )
-        else:
-            df = pd.concat([self.ror, self.assets_ror], axis=1, join="inner", copy="false")
+            ls.append(self.inflation_ts)
+        df = pd.concat(ls, axis=1, join="inner", copy="false")
         return helpers.Frame.get_wealth_indexes(df)
 
     @property
@@ -484,6 +479,7 @@ class Portfolio(make_asset_list.ListMaker):
         portfolio_5625.PF    0.121265
         dtype: float64
         """
+        # TODO: add option assets=False
         ts = self._add_inflation()
         df = self._make_df_if_series(ts)
         dt0 = self.last_date
