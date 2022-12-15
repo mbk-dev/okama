@@ -19,6 +19,11 @@ def init_asset_eurusd():
 
 
 @pytest.fixture(scope="module")
+def init_asset_berkshire():
+    return ok.Asset(symbol="BRK.A.US")
+
+
+@pytest.fixture(scope="module")
 def init_asset_pif():
     return ok.Asset(symbol="0165-70287767.PIF")
 

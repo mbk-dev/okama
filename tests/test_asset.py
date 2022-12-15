@@ -8,7 +8,7 @@ from tests import conftest
 
 @mark.asset
 @mark.smoke
-def test_get_symbol_data(init_asset_spy):
+def test_get_symbol_data(init_asset_spy, init_asset_berkshire):
     assert init_asset_spy.name == "SPDR® S&P 500"
     assert init_asset_spy.country == "USA"
     assert init_asset_spy.currency == "USD"
@@ -16,6 +16,7 @@ def test_get_symbol_data(init_asset_spy):
     assert init_asset_spy.inflation == "USD.INFL"
     assert init_asset_spy.first_date == pd.to_datetime("1993-02")
     assert init_asset_spy.isin == "US78462F1030"
+    assert init_asset_berkshire.ticker == "BRK-A"
 
 
 def test_usdrub(init_asset_usdrub):

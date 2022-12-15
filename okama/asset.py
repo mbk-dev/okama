@@ -49,7 +49,7 @@ class Asset:
         return repr(pd.Series(dic))
 
     def _check_namespace(self):
-        namespace = self._symbol.split(".", 1)[-1]
+        namespace = self._symbol.split(".")[-1]
         allowed_namespaces = namespaces.get_assets_namespaces()
         if namespace not in allowed_namespaces:
             raise ValueError(f"{namespace} is not in allowed assets namespaces: {allowed_namespaces}")
