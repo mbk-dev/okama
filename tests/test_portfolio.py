@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from pytest import approx
 from pytest import mark
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_allclose
 from pandas.testing import assert_series_equal, assert_frame_equal
 
 import okama as ok
@@ -54,7 +54,6 @@ def test_symbol_setter(portfolio_rebalanced_year):
 
 
 def test_ror_rebalance(portfolio_rebalanced_year, portfolio_not_rebalanced):
-    print(f"portfolio_rebalanced_year={portfolio_rebalanced_year}")
     assert portfolio_rebalanced_year.ror[-2] == approx(0.01361, rel=1e-2)
     assert portfolio_not_rebalanced.ror[-1] == approx(0.01359, rel=1e-2)
 
@@ -63,6 +62,15 @@ def test_ror(portfolio_rebalanced_month):
     portfolio_sample = pd.read_pickle(conftest.data_folder / "portfolio.pkl")
     actual = portfolio_rebalanced_month.ror
     assert_series_equal(actual, portfolio_sample)
+
+
+def test_wealth_index(portfolio_rebalanced_year):
+    assert portfolio_rebalanced_year.wealth_index.iloc[-1, 1] == approx(1315.848, rel=1e-2)
+
+
+def test_wealth_index_with_assets(portfolio_rebalanced_year, portfolio_no_inflation):
+    result = portfolio_rebalanced_year.wealth_index_with_assets.iloc[-1, :].values
+    assert_allclose(np.array(result), np.array([1906.535, 1120.586, 2924.031, 1315.848]), rtol=1e-02)
 
 
 def test_weights(portfolio_rebalanced_month):
