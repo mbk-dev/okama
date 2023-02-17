@@ -44,6 +44,6 @@ def no_dividends_namespaces():
     return json.loads(string_response)
 
 
-namespaces = get_namespaces()
-assets_namespaces = get_assets_namespaces()
-macro_namespaces = get_macro_namespaces()
+# namespaces = get_namespaces()
+# assets_namespaces = get_assets_namespaces()
+# macro_namespaces = get_macro_namespaces()
