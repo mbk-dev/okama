@@ -886,7 +886,7 @@ class EfficientFrontier(asset_list.AssetList):
             random_portfolios = helpers.Frame.change_columns_order(random_portfolios, ["Risk", second_column])
         return random_portfolios
 
-    def plot_transition_map(self, cagr: bool = True, figsize: Optional[tuple] = None) -> plt.axes:
+    def plot_transition_map(self, x_axe: str = 'risk', figsize: Optional[tuple] = None) -> plt.axes:
         """
         Plot Transition Map for optimized portfolios on the single period Efficient Frontier.
 
@@ -936,7 +936,7 @@ class EfficientFrontier(asset_list.AssetList):
         """
         ef = self.ef_points
         linestyle = itertools.cycle(("-", "--", ":", "-."))
-        x_axe = "CAGR" if cagr else "Risk"
+        x_axe = "CAGR" if x_axe else "Risk"
         fig, ax = plt.subplots(figsize=figsize)
         for i in ef:
             if i not in (
@@ -946,7 +946,7 @@ class EfficientFrontier(asset_list.AssetList):
             ):  # select only columns with tickers
                 ax.plot(ef[x_axe], ef.loc[:, i], linestyle=next(linestyle), label=i)
         ax.set_xlim(ef[x_axe].min(), ef[x_axe].max())
-        if cagr:
+        if x_axe:
             ax.set_xlabel("CAGR (Compound Annual Growth Rate)")
         else:
             ax.set_xlabel("Risk (volatility)")
