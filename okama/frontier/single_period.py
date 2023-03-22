@@ -72,7 +72,7 @@ class EfficientFrontier(asset_list.AssetList):
         last_date: Optional[str] = None,
         ccy: str = "USD",
         bounds: Optional[Tuple[Tuple[float, ...], ...]] = None,
-        inflation: bool = True,
+        inflation: bool = False,
         full_frontier: bool = True,
         n_points: int = 20,
         ticker_names: bool = True,
@@ -1041,6 +1041,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Parameters
         ----------
+        TODO: add y_axe parameter (arithmetic_mean or cagr)
         rf_return : float, default 0
             Risk-free rate of return.
 
