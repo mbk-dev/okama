@@ -214,10 +214,11 @@ def init_efficient_frontier_reb():
     ls = ["SPY.US", "GLD.US"]
     return ok.EfficientFrontierReb(
         assets=ls,
-        ccy="RUB",
+        ccy="USD",
         first_date="2019-01",
         last_date="2020-02",
         n_points=3,
         verbose=False,
         full_frontier=True,
+        inflation=True
     )
