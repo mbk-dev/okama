@@ -179,17 +179,17 @@ def init_efficient_frontier_values1():
     )
 
 
-# @pytest.fixture(scope="module")
-# def init_efficient_frontier_values2():
-#     return dict(
-#         assets=["SPY.US", "AGG.US", "GLD.US"],
-#         ccy="USD",
-#         first_date="2010-01",
-#         last_date="2020-01",
-#         inflation=True,
-#         n_points=20,
-#         full_frontier=True,
-#     )
+@pytest.fixture(scope="module")
+def init_efficient_frontier_values2():
+    return dict(
+        assets=["SPY.US", "AGG.US", "GLD.US"],
+        ccy="USD",
+        first_date="2010-01",
+        last_date="2020-01",
+        inflation=True,
+        n_points=20,
+        full_frontier=True,
+    )
 
 
 @pytest.fixture(scope="module")

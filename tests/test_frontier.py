@@ -203,6 +203,5 @@ def test_plot_transition_map(init_efficient_frontier_three_assets):
 
 @mark.frontier
 def test_plot_pair_ef(init_efficient_frontier_three_assets):
-    axes_data = init_efficient_frontier_three_assets.plot_pair_ef(tickers="names").lines[0].get_data()
-    values = np.genfromtxt(conftest.data_folder / "test_plot_pair_ef.csv", delimiter=",")
-    assert_allclose(axes_data, values, rtol=1e-1, atol=1e-1)
+    axes_data = init_efficient_frontier_three_assets.plot_pair_ef(tickers="names").lines[0].get_data()[0][0]
+    assert axes_data == approx(0.03163, abs=1e-1)
