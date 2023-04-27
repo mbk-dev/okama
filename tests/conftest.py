@@ -170,7 +170,7 @@ def _init_indicator(request):
 @pytest.fixture(scope="module")
 def init_efficient_frontier_values1():
     return dict(
-        assets=["SPY.US", "SBMX.MOEX"],
+        assets=["MCFTR.INDX", "RGBITR.INDX"],
         ccy="RUB",
         first_date="2018-11",
         last_date="2020-02",
@@ -179,17 +179,17 @@ def init_efficient_frontier_values1():
     )
 
 
-@pytest.fixture(scope="module")
-def init_efficient_frontier_values2():
-    return dict(
-        assets=["RUB.FX", "EUR.FX", "MCFTR.INDX"],
-        ccy="RUB",
-        first_date="2010-01",
-        last_date="2020-01",
-        inflation=True,
-        n_points=20,
-        full_frontier=True,
-    )
+# @pytest.fixture(scope="module")
+# def init_efficient_frontier_values2():
+#     return dict(
+#         assets=["SPY.US", "AGG.US", "GLD.US"],
+#         ccy="USD",
+#         first_date="2010-01",
+#         last_date="2020-01",
+#         inflation=True,
+#         n_points=20,
+#         full_frontier=True,
+#     )
 
 
 @pytest.fixture(scope="module")
