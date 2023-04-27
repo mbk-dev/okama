@@ -1,4 +1,6 @@
 import okama as ok
 
-print(ok.namespaces)
+al = ok.AssetList(['SPY.US', ok.Portfolio()])
 
+for a in al:
+    print(a.symbol)

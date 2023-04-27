@@ -9,7 +9,7 @@ from tests import conftest
 @mark.asset
 @mark.smoke
 def test_get_symbol_data(init_asset_spy, init_asset_berkshire):
-    assert init_asset_spy.name == "SPDR® S&P 500"
+    assert init_asset_spy.name == "SPDR S&P 500 ETF Trust"
     assert init_asset_spy.country == "USA"
     assert init_asset_spy.currency == "USD"
     assert init_asset_spy.type == "ETF"
