@@ -91,6 +91,9 @@ class ListMaker(ABC):
         self._dividend_yield: pd.DataFrame = pd.DataFrame(dtype=float)
         self._assets_dividends_ts: pd.DataFrame = pd.DataFrame(dtype=float)
 
+    def __iter__(self):
+        return iter(self.asset_obj_dict.values())
+
     @abstractmethod
     def __repr__(self):
         pass
