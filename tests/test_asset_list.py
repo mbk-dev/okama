@@ -41,6 +41,10 @@ class TestAssetList:
     def test_len(self):
         assert self.asset_list.__len__() == 2
 
+    def test_iter(self):
+        tickers = [asset.symbol for asset in self.asset_list]
+        assert tickers == ["RUB.FX", "MCFTR.INDX"]
+
     def test_tickers(self):
         assert self.asset_list_with_portfolio.tickers == ["pf1", "RUB", "MCFTR"]
 
