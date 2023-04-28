@@ -36,7 +36,7 @@ def init_asset_usdrub():
 # Asset List
 @pytest.fixture(scope="class")
 def assets_from_db():
-    return ["RUB.FX", "MCFTR.INDX"]
+    return ["USDRUB.CBR", "MCFTR.INDX"]
 
 
 @pytest.fixture(scope="class")
@@ -94,7 +94,7 @@ def _init_asset_list(request, portfolio_short_history, portfolio_dividends, asse
 @pytest.fixture(scope="package")
 def init_portfolio_values():
     return dict(
-        assets=["RUB.FX", "MCFTR.INDX"],
+        assets=["RGBITR.INDX", "MCFTR.INDX"],
         ccy="RUB",
         first_date="2015-01",
         last_date="2020-01",
