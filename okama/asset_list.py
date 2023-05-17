@@ -1040,8 +1040,7 @@ class AssetList(make_asset_list.ListMaker):
         result.index = result.index.asfreq("Y")
         return result
 
-    @property
-    def tracking_error(self) -> pd.DataFrame:
+    def tracking_error(self, rolling_window: Optional[int] = None) -> pd.DataFrame:
         """
         Calculate tracking error time series for the rate of return of assets.
 
@@ -1062,7 +1061,15 @@ class AssetList(make_asset_list.ListMaker):
         >>> x.tracking_error.plot()
         >>> plt.show()
         """
-        return helpers.Index.tracking_error(self.assets_ror)
+        if rolling_window:
+            return helpers.Index.rolling_fn(
+                df=self.assets_ror,
+                window=rolling_window,
+                fn=helpers.Index.tracking_error,
+                window_below_year=False,  # small windows below 12 months are not allowed (CAGR is not defined)
+            )
+        else:
+            return helpers.Index.tracking_error(self.assets_ror)
 
     @property
     def index_corr(self) -> pd.DataFrame:
