@@ -365,7 +365,7 @@ class Rebalance:
         """
         Calculate wealth index time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
-        For not rebalanced portfolio set Period to 'none'
+        For not rebalanced portfolio set Period to 'none'.
         """
         # Frame.weights_sum_is_one(weights)
         initial_inv = 1000
@@ -416,16 +416,6 @@ class Rebalance:
     def assets_weights_ts(weights: list, ror: pd.DataFrame, *, period: str = "year") -> pd.DataFrame:
         """
         Calculate assets weights monthly time series for rebalanced portfolio.
-
-        Parameters
-        ----------
-        weights
-        ror
-        period
-
-        Returns
-        -------
-
         """
         assets_wealth_indexes = Rebalance.assets_wealth_ts(weights=weights, ror=ror, period=period)
         portfolio_wealth_index = Rebalance.wealth_ts(weights=weights, ror=ror, period=period)
@@ -550,6 +540,27 @@ class Index:
         The period should be at least 12 months.
         """
         cov = Index.cov_cor(ror, fn="cov")
-        var = ror.expanding().var().drop(columns=ror.columns[0])
-        var = var[settings._MONTHS_PER_YEAR :]
-        return cov / var
+        benchmark_var = ror.loc[:, ror.columns[0]].expanding().var()
+        benchmark_var = benchmark_var.iloc[settings._MONTHS_PER_YEAR :]
+        return cov.divide(benchmark_var, axis=0)
+
+    @staticmethod
+    def rolling_fn(df: pd.DataFrame, window: int, fn: Callable, window_below_year: bool = False) -> pd.DataFrame:
+        """
+        Calculate the rolling custom function.
+
+        Apply a function to time series DataFrame with the rolling window.
+        The window should be in months.
+        """
+        check_rolling_window(window=window, ror=df, window_below_year=window_below_year)
+        output = pd.DataFrame()
+        for start_date in df.index:
+            end_date = start_date + window
+            df_window = df.loc[start_date: end_date, :]
+            end_date = df_window.index[-1]
+            period_length = end_date - start_date
+            if period_length.n < window:
+                break
+            windows_result = fn(df_window).iloc[-1, :]
+            output = pd.concat([output, windows_result.to_frame().T], copy=False)
+        return output
