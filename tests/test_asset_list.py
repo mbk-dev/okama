@@ -341,8 +341,13 @@ class TestAssetList:
     def test_index_corr(self):
         assert self.asset_list.index_corr.iloc[-1, 0] == approx(-0.519, abs=1e-2)
 
-    def test_index_beta(self):
-        assert self.asset_list.index_beta.iloc[-1, 0] == approx(-0.5052, abs=1e-2)
+    @mark.parametrize(
+        "window,expected",
+        [(None, -0.3297), (12, -0.5339)],
+        ids=["None", "24 months"],
+    )
+    def test_index_beta(self, window, expected):
+        assert self.asset_list_lt.index_beta(rolling_window=window).iloc[-1, 0] == approx(expected, rel=1e-2)
 
     def test_skewness(self):
         assert self.asset_list.skewness["USDRUB.CBR"].iloc[-1] == approx(0.47897, abs=1e-2)

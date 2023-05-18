@@ -1151,6 +1151,12 @@ class AssetList(make_asset_list.ListMaker):
         Index (benchmark) should be in the first position of the symbols list in AssetList parameters.
         There should be at least 12 months of historical data.
 
+        Parameters
+        ----------
+        rolling_window : int or None, default None
+            Size of the moving window in months. Must be at least 12 months.
+            If None calculate expanding beta coefficient.
+
         Returns
         -------
         DataFrame
@@ -1172,6 +1178,11 @@ class AssetList(make_asset_list.ListMaker):
         'GC.COMM': 'Gold',
         'VNQ.US': 'Vanguard Real Estate Index Fund ETF Shares'}
         >>> sp.index_beta().plot()
+        >>> plt.show()
+
+        To calculate rolling beta set `rolling_window` to a number of months (moving window size):
+
+        >>> x.index_beta(rolling_window = 12 * 5).plot()  # 5 years moving window
         >>> plt.show()
         """
         if rolling_window:
