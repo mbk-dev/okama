@@ -1020,6 +1020,12 @@ class AssetList(make_asset_list.ListMaker):
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 
+        Parameters
+        ----------
+        rolling_window : int or None, default None
+            Size of the moving window in months. Must be at least 12 months.
+            If None calculate expanding tracking error.
+
         Returns
         -------
         DataFrame

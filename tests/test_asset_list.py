@@ -332,6 +332,11 @@ class TestAssetList:
             match="window size should be at least 1 year",
         ):
             self.asset_list.tracking_error(rolling_window=5)
+        with pytest.raises(
+            ValueError,
+            match="Tracking Error is not defined for time periods < 1 year",
+        ):
+            self.asset_list_st.tracking_error()
 
     def test_index_corr(self):
         assert self.asset_list.index_corr.iloc[-1, 0] == approx(-0.519, abs=1e-2)

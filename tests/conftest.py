@@ -65,6 +65,13 @@ def _init_asset_list(request, portfolio_short_history, portfolio_dividends, asse
         last_date="2020-01",
         inflation=True,
     )
+    request.cls.asset_list_st = ok.AssetList(
+        assets=assets_from_db,
+        ccy="RUB",
+        first_date="2019-01",
+        last_date="2019-05",
+        inflation=False,
+    )
     request.cls.asset_list_no_infl = ok.AssetList(
         assets=assets_from_db,
         ccy="RUB",

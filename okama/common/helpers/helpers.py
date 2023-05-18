@@ -495,6 +495,8 @@ class Index:
         """
         if ror.shape[1] < 2:
             raise ValueError("At least 2 symbols should be provided to calculate Tracking Error.")
+        if ror.shape[0] < 12:
+            raise ValueError("Tracking Error is not defined for time periods < 1 year")
         cumsum = ror.subtract(ror.iloc[:, 0], axis=0).pow(2, axis=0).cumsum()
         cumsum.drop(cumsum.columns[0], axis=1, inplace=True)  # drop the first column (stock index data)
         tracking_error = cumsum.divide((1.0 + np.arange(ror.shape[0])), axis=0).pow(0.5, axis=0)
