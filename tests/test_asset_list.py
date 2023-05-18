@@ -316,9 +316,22 @@ class TestAssetList:
     def test_tracking_difference_annual(self):
         assert self.asset_list.tracking_difference_annual.iloc[0, 0] == approx(0.4966, abs=1e-2)
 
-    @mark.xfail
-    def test_tracking_error(self):
-        assert self.asset_list.tracking_error.iloc[-1, 0] == approx(0.19399, abs=1e-2)
+    @mark.parametrize(
+        "window,expected",
+        [(None, 0.3115), (24, 0.1929)],
+        ids=["None", "24 months"],
+    )
+    def test_tracking_error(self, window, expected):
+        assert self.asset_list_lt.tracking_error(rolling_window=window).iloc[-1, 0] == approx(
+            expected, abs=1e-2
+        )
+
+    def test_tracking_error_failing(self):
+        with pytest.raises(
+            ValueError,
+            match="window size should be at least 1 year",
+        ):
+            self.asset_list.tracking_error(rolling_window=5)
 
     def test_index_corr(self):
         assert self.asset_list.index_corr.iloc[-1, 0] == approx(-0.519, abs=1e-2)
