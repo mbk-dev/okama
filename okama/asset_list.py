@@ -992,11 +992,11 @@ class AssetList(make_asset_list.ListMaker):
         --------
         >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
-        >>> x.tracking_difference_annualized.plot()
+        >>> x.tracking_difference_annualized().plot()
 
         To calculate rolling annualized tracking difference set `rolling_window` to a number of months (moving window size):
 
-        >>> x.tracking_difference_annualized.plot(rolling_window = 12)
+        >>> x.tracking_difference_annualized(rolling_window = 12*5).plot()
         >>> plt.show()
         """
         if rolling_window:
@@ -1019,12 +1019,6 @@ class AssetList(make_asset_list.ListMaker):
         and ETFs replicating it (could be mutual funds, or other types of assets).
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
-
-        Parameters
-        ----------
-        rolling_window : int or None, default None
-            Size of the moving window in months. Must be at least 12 months.
-            If None calculate expanding tracking error.
 
         Returns
         -------
@@ -1055,6 +1049,12 @@ class AssetList(make_asset_list.ListMaker):
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 
+        Parameters
+        ----------
+        rolling_window : int or None, default None
+            Size of the moving window in months. Must be at least 12 months.
+            If None calculate expanding tracking error.
+
         Returns
         -------
         DataFrame
@@ -1064,7 +1064,12 @@ class AssetList(make_asset_list.ListMaker):
         --------
         >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
-        >>> x.tracking_error.plot()
+        >>> x.tracking_error().plot()
+        >>> plt.show()
+
+        To calculate rolling tracking error set `rolling_window` to a number of months (moving window size):
+
+        >>> x.tracking_error(rolling_window = 12*5).plot()
         >>> plt.show()
         """
         if rolling_window:
