@@ -541,6 +541,10 @@ class Index:
         Index (or benchmark) should be in the first position (first column).
         The period should be at least 12 months.
         """
+        if ror.shape[1] < 2:
+            raise ValueError("At least 2 symbols should be provided to calculate beta coefficient.")
+        if ror.shape[0] < 12:
+            raise ValueError("Beta coefficient is not defined for time periods < 1 year")
         cov = Index.cov_cor(ror, fn="cov")
         benchmark_var = ror.loc[:, ror.columns[0]].expanding().var()
         benchmark_var = benchmark_var.iloc[settings._MONTHS_PER_YEAR :]

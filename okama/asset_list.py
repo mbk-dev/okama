@@ -1058,7 +1058,7 @@ class AssetList(make_asset_list.ListMaker):
         Returns
         -------
         DataFrame
-            Tracking error time series for each asset.
+            rolling or expanding tracking error time series for each asset.
 
         Examples
         --------
@@ -1077,7 +1077,7 @@ class AssetList(make_asset_list.ListMaker):
                 df=self.assets_ror,
                 window=rolling_window,
                 fn=helpers.Index.tracking_error,
-                window_below_year=False,  # small windows below 12 months are not allowed (CAGR is not defined)
+                window_below_year=False,  # small windows below 12 months are not allowed
             )
         else:
             return helpers.Index.tracking_error(self.assets_ror)
@@ -1139,8 +1139,7 @@ class AssetList(make_asset_list.ListMaker):
         """
         return helpers.Index.rolling_cov_cor(self.assets_ror, window=window, fn="corr")
 
-    @property
-    def index_beta(self) -> pd.DataFrame:
+    def index_beta(self, rolling_window: Optional[int] = None) -> pd.DataFrame:
         """
         Compute beta coefficient time series for the assets.
 
@@ -1155,7 +1154,7 @@ class AssetList(make_asset_list.ListMaker):
         Returns
         -------
         DataFrame
-            Beta coefficient time series for each asset.
+            rollinf or expanding beta coefficient time series for each asset.
 
         See Also
         --------
@@ -1172,9 +1171,16 @@ class AssetList(make_asset_list.ListMaker):
         'VBMFX.US': 'VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES',
         'GC.COMM': 'Gold',
         'VNQ.US': 'Vanguard Real Estate Index Fund ETF Shares'}
-        >>> sp.index_beta.plot()
+        >>> sp.index_beta().plot()
         >>> plt.show()
         """
+        if rolling_window:
+            return helpers.Index.rolling_fn(
+                df=self.assets_ror,
+                window=rolling_window,
+                fn=helpers.Index.beta,
+                window_below_year=False,  # small windows below 12 months are not allowed
+            )
         return helpers.Index.beta(self.assets_ror)
 
     # distributions
