@@ -1109,12 +1109,12 @@ class AssetList(make_asset_list.ListMaker):
         {'SP500TR.INDX': 'S&P 500 (TR)',
         'VBMFX.US': 'VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES',
         'GC.COMM': 'Gold'}
-        >>> sp.index_corr.plot()  # expanding correlation with S&P 500
+        >>> sp.index_corr().plot()  # expanding correlation with S&P 500
         >>> plt.show()
 
         To calculate rolling correlation with S&P 500 set `rolling_window` to a number of months (moving window size):
 
-        >>> sp.index_rolling_corr(rolling_window=24).plot()
+        >>> sp.index_corr(rolling_window=24).plot()
         >>> plt.show()
         """
         if rolling_window:
@@ -1164,7 +1164,7 @@ class AssetList(make_asset_list.ListMaker):
 
         To calculate rolling beta set `rolling_window` to a number of months (moving window size):
 
-        >>> x.index_beta(rolling_window = 12 * 5).plot()  # 5 years moving window
+        >>> sp.index_beta(rolling_window = 12 * 5).plot()  # 5 years moving window
         >>> plt.show()
         """
         if rolling_window:
