@@ -503,9 +503,9 @@ class Index:
         return tracking_error * np.sqrt(12)
 
     @staticmethod
-    def cov_cor(ror: pd.DataFrame, fn: str) -> pd.DataFrame:
+    def expanding_cov_cor(ror: pd.DataFrame, fn: str) -> pd.DataFrame:
         """
-        Returns the accumulated correlation or covariance time series.
+        Returns the accumulated expanding correlation or covariance time series.
         The period should be at least 12 months.
         """
         if ror.shape[1] < 2:
@@ -527,7 +527,7 @@ class Index:
             raise ValueError("At least 2 symbols should be provided.")
         if fn not in ["cov", "corr"]:
             raise ValueError("fn should be corr or cov")
-        check_rolling_window(window, ror)
+        check_rolling_window(window=window, ror=ror, window_below_year=False)
         cov_matrix_ts = getattr(ror.rolling(window=window), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
         cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
@@ -545,7 +545,7 @@ class Index:
             raise ValueError("At least 2 symbols should be provided to calculate beta coefficient.")
         if ror.shape[0] < 12:
             raise ValueError("Beta coefficient is not defined for time periods < 1 year")
-        cov = Index.cov_cor(ror, fn="cov")
+        cov = Index.expanding_cov_cor(ror, fn="cov")
         benchmark_var = ror.loc[:, ror.columns[0]].expanding().var()
         benchmark_var = benchmark_var.iloc[settings._MONTHS_PER_YEAR :]
         return cov.divide(benchmark_var, axis=0)

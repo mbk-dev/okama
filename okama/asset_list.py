@@ -1082,49 +1082,24 @@ class AssetList(make_asset_list.ListMaker):
         else:
             return helpers.Index.tracking_error(self.assets_ror)
 
-    @property
-    def index_corr(self) -> pd.DataFrame:
+    def index_corr(self, rolling_window: Optional[int] = None) -> pd.DataFrame:
         """
-        Compute expanding correlation with the index (or benchmark) time series for the assets.
-
-        Benchmark should be in the first position of the symbols list in AssetList parameters.
-        There should be at least 12 months of historical data.
-
-        Returns
-        -------
-        DataFrame
-            Expanding correlation with the index (or benchmark) time series for each asset.
-
-        Examples
-        --------
-        >>> import matplotlib.pyplot as plt
-        >>> sp = ok.AssetList(['SP500TR.INDX', 'VBMFX.US', 'GC.COMM', 'VNQ.US'])
-        >>> sp.names
-        {'SP500TR.INDX': 'S&P 500 (TR)',
-        'VBMFX.US': 'VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES',
-        'GC.COMM': 'Gold',
-        'VNQ.US': 'Vanguard Real Estate Index Fund ETF Shares'}
-        >>> sp.index_corr.plot()
-        >>> plt.show()
-        """
-        return helpers.Index.cov_cor(self.assets_ror, fn="corr")
-
-    def index_rolling_corr(self, window: int = 60) -> pd.DataFrame:
-        """
-        Compute rolling correlation with the index (or benchmark) time series for the assets.
+        Compute correlation with the index (or benchmark) time series for the assets. Expanding or rolling correlation
+        is available.
 
         Index (benchmark) should be in the first position of the symbols list in AssetList parameters.
         There should be at least 12 months of historical data.
 
         Parameters
         ----------
-        window : int, default 60
-            Rolling window size in months. This is the number of observations used for calculating the statistic.
+        rolling_window : int or None, default None
+            Size of the moving window in months. Must be at least 12 months.
+            If None calculate expanding correlation with index.
 
         Returns
         -------
         DataFrame
-            Rolling correlation with the index (or benchmark) time series for each asset.
+            Rolling or expanding correlation with the index (or benchmark) time series for each asset.
 
         Examples
         --------
@@ -1134,10 +1109,17 @@ class AssetList(make_asset_list.ListMaker):
         {'SP500TR.INDX': 'S&P 500 (TR)',
         'VBMFX.US': 'VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES',
         'GC.COMM': 'Gold'}
-        >>> sp.index_rolling_corr(window=24).plot()
+        >>> sp.index_corr.plot()  # expanding correlation with S&P 500
+        >>> plt.show()
+
+        To calculate rolling correlation with S&P 500 set `rolling_window` to a number of months (moving window size):
+
+        >>> sp.index_rolling_corr(rolling_window=24).plot()
         >>> plt.show()
         """
-        return helpers.Index.rolling_cov_cor(self.assets_ror, window=window, fn="corr")
+        if rolling_window:
+            return helpers.Index.rolling_cov_cor(self.assets_ror, window=rolling_window, fn="corr")
+        return helpers.Index.expanding_cov_cor(self.assets_ror, fn="corr")
 
     def index_beta(self, rolling_window: Optional[int] = None) -> pd.DataFrame:
         """
