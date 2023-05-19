@@ -46,7 +46,7 @@ def test_repr(init_efficient_frontier):
 def test_gmv(init_efficient_frontier):
     assert_allclose(
         init_efficient_frontier.gmv_weights,
-        np.array([0., 1.]),
+        np.array([0.0, 1.0]),
         rtol=1e-2,
         atol=1e-2,
     )
@@ -112,8 +112,8 @@ def test_ef_points(init_efficient_frontier):
 
 
 test_tangency_data = [
-    (False, [0., 1.], 0.1603),  # cagr = False
-    (True, [0., 1.], 0.15959),  # cagr = True
+    (False, [0.0, 1.0], 0.1603),  # cagr = False
+    (True, [0.0, 1.0], 0.15959),  # cagr = True
 ]
 
 
@@ -167,12 +167,12 @@ def test_get_monte_carlo(init_efficient_frontier, kind, risk, ror, weight):
 def test_get_most_diversified_portfolio(init_efficient_frontier):
     dic = init_efficient_frontier.get_most_diversified_portfolio(target_return=None, monthly_return=False)
     dic_expected = {
-        'MCFTR.INDX': 0.24685485079051503,
-        'RGBITR.INDX': 0.7531451492094849,
-        'Mean return': 0.17399861419206641,
-        'CAGR': 0.17212886556386264,
-        'Risk': 0.06828213021534972,
-        'Diversification ratio': 1.0506119093449553
+        "MCFTR.INDX": 0.24685485079051503,
+        "RGBITR.INDX": 0.7531451492094849,
+        "Mean return": 0.17399861419206641,
+        "CAGR": 0.17212886556386264,
+        "Risk": 0.06828213021534972,
+        "Diversification ratio": 1.0506119093449553,
     }
     df = pd.Series(dic)
     df_expected = pd.Series(dic_expected)

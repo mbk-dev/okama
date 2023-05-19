@@ -109,7 +109,9 @@ class TestAssetList:
     def test_get_var_historic(self):
         assert self.asset_list.get_var_historic(time_frame=1, level=5)["USDRUB.CBR"] == approx(0.0398, abs=1e-2)
         assert self.asset_list.get_var_historic(time_frame=5, level=1)["MCFTR.INDX"] == approx(-0.1048, abs=1e-2)
-        assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)["USDRUB.CBR"] == approx(0.04975, abs=1e-2)
+        assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)["USDRUB.CBR"] == approx(
+            0.04975, abs=1e-2
+        )
         assert self.asset_list_no_infl.get_var_historic(time_frame=1, level=1)["MCFTR.INDX"] == approx(
             0.01229, abs=1e-2
         )
@@ -322,9 +324,7 @@ class TestAssetList:
         ids=["None", "24 months"],
     )
     def test_tracking_error(self, window, expected):
-        assert self.asset_list_lt.tracking_error(rolling_window=window).iloc[-1, 0] == approx(
-            expected, abs=1e-2
-        )
+        assert self.asset_list_lt.tracking_error(rolling_window=window).iloc[-1, 0] == approx(expected, abs=1e-2)
 
     def test_tracking_error_failing(self):
         with pytest.raises(

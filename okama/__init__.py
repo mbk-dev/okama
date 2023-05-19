@@ -32,14 +32,16 @@ from okama.api.search import search
 from okama.api.api_methods import API
 import okama.api.namespaces
 
+
 def __getattr__(name):
-    if name == 'namespaces':
+    if name == "namespaces":
         return okama.api.namespaces.get_namespaces()
-    elif name == 'assets_namespaces':
+    elif name == "assets_namespaces":
         return okama.api.namespaces.get_assets_namespaces()
-    elif name == 'macro_namespaces':
+    elif name == "macro_namespaces":
         return okama.api.namespaces.get_macro_namespaces()
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 from okama.common.helpers.helpers import Float, Frame, Rebalance, Date
 import okama.settings

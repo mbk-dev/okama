@@ -227,5 +227,5 @@ def init_efficient_frontier_reb():
         n_points=3,
         verbose=False,
         full_frontier=True,
-        inflation=True
+        inflation=True,
     )

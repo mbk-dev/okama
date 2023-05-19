@@ -562,7 +562,7 @@ class Index:
         output = pd.DataFrame()
         for start_date in df.index:
             end_date = start_date + window
-            df_window = df.loc[start_date: end_date, :]
+            df_window = df.loc[start_date:end_date, :]
             end_date = df_window.index[-1]
             period_length = end_date - start_date
             if period_length.n < window:

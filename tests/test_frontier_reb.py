@@ -37,7 +37,7 @@ def test_repr(init_efficient_frontier_reb):
 def test_gmv_annual_weights(init_efficient_frontier_reb):
     assert_allclose(
         init_efficient_frontier_reb.gmv_annual_weights,
-        np.array([.384194, 0.615806]),
+        np.array([0.384194, 0.615806]),
         rtol=1e-2,
         atol=1e-2,
     )
