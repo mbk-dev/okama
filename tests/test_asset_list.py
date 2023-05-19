@@ -338,13 +338,18 @@ class TestAssetList:
         ):
             self.asset_list_st.tracking_error()
 
-    def test_index_corr(self):
-        assert self.asset_list.index_corr.iloc[-1, 0] == approx(-0.519, abs=1e-2)
+    @mark.parametrize(
+        "window,expected",
+        [(None, -0.1960), (24, -0.4370)],
+        ids=["None", "24 months"],
+    )
+    def test_index_corr(self, window, expected):
+        assert self.asset_list_lt.index_corr(rolling_window=window).iloc[-1, 0] == approx(expected, abs=1e-2)
 
     @mark.parametrize(
         "window,expected",
         [(None, -0.3297), (12, -0.5339)],
-        ids=["None", "24 months"],
+        ids=["None", "12 months"],
     )
     def test_index_beta(self, window, expected):
         assert self.asset_list_lt.index_beta(rolling_window=window).iloc[-1, 0] == approx(expected, rel=1e-2)
