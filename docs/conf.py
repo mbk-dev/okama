@@ -111,7 +111,11 @@ html_use_modindex = False
 # -- Options for autodoc    ------------------------------------------------
 
 autodoc_default_flags = ["members"]
-autodoc_default_options = {"undoc-members": False, "exclude-members": "__init__"}
+autodoc_default_options = {"undoc-members": False,
+                           "exclude-members": "__init__",
+                           "inherited-members": True,
+                           "show-inheritance": True}
+# autodoc_inherit_docstrings = True
 autodoc_typehints = "none"
 autodoc_member_order = "bysource"
 autoclass_content = "class"  # to not insert __init__ docstrings
