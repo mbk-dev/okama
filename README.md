@@ -153,7 +153,7 @@ ax.plot(points.Risk, points.CAGR)
 ### 4. Get a Transition Map for allocations
 ```python
 ls = ['SPY.US', 'GLD.US', 'BND.US']
-map = ok.EfficientFrontier(ls, ccy='USD').plot_transition_map(cagr=False)
+map = ok.EfficientFrontier(ls, ccy='USD').plot_transition_map(x_axe='risk')
 ```
 ![](../images/images/readmi08.jpg?v23-11-2020,raw=true "Transition map")  
 
