@@ -5,7 +5,6 @@ import numpy as np
 
 from okama import settings
 from okama.api import data_queries, namespaces
-from okama.common.helpers import helpers
 
 
 class Asset:
