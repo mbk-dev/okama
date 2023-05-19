@@ -912,7 +912,7 @@ class EfficientFrontier(asset_list.AssetList):
             bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
             from 0 to 50%. The second asset has no limitations.
 
-        x_axe : 'risk' or 'cagr', default 'risk'
+        x_axe : {'risk', 'cagr'}, default 'risk'
             Show the relation between weights and CAGR (if 'cagr') or between weights and Risk (if 'risk').
             CAGR or Risk are displayed on the x-axis.
 
