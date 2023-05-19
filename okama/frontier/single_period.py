@@ -72,7 +72,7 @@ class EfficientFrontier(asset_list.AssetList):
         last_date: Optional[str] = None,
         ccy: str = "USD",
         bounds: Optional[Tuple[Tuple[float, ...], ...]] = None,
-        inflation: bool = True,
+        inflation: bool = False,
         full_frontier: bool = True,
         n_points: int = 20,
         ticker_names: bool = True,
@@ -1010,7 +1010,7 @@ class EfficientFrontier(asset_list.AssetList):
         if len(self.symbols) < 3:
             raise ValueError("The number of symbols cannot be less than 3")
         # self._verify_axes()
-        bool_inflation = bool(self.inflation)
+        bool_inflation = hasattr(self, "inflation")
         fig, ax = plt.subplots(figsize=figsize)
         for i in itertools.combinations(self.symbols, 2):
             sym_pair = list(i)
@@ -1041,6 +1041,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Parameters
         ----------
+        TODO: add y_axe parameter (arithmetic_mean or cagr)
         rf_return : float, default 0
             Risk-free rate of return.
 

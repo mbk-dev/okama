@@ -73,7 +73,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         first_date: Optional[str] = None,
         last_date: Optional[str] = None,
         ccy: str = "USD",
-        inflation: bool = True,
+        inflation: bool = False,
         full_frontier: bool = True,
         rebalancing_period: str = "year",
         n_points: int = 20,

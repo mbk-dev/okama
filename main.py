@@ -1,6 +1,9 @@
+import matplotlib.pyplot as plt
 import okama as ok
 
-pf = ok.Portfolio()
+al = ok.AssetList(["SP500TR.INDX", "SPY.US", "VOO.US"])
 
-sc = pf.percentile_inverse_cagr(score=0, distr='hist')
-print(sc)
+# al.tracking_error(rolling_window=12).plot()
+# al.index_beta(rolling_window=12 * 5).plot()
+al.index_corr(rolling_window=12 * 5).plot()
+plt.show()

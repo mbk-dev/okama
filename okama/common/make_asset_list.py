@@ -91,12 +91,18 @@ class ListMaker(ABC):
         self._dividend_yield: pd.DataFrame = pd.DataFrame(dtype=float)
         self._assets_dividends_ts: pd.DataFrame = pd.DataFrame(dtype=float)
 
+    def __iter__(self):
+        return iter(self.asset_obj_dict.values())
+
     @abstractmethod
     def __repr__(self):
         pass
 
     def __len__(self):
         return len(self.symbols)
+
+    def __getitem__(self, item):
+        return list(self.asset_obj_dict.values())[item]
 
     def _make_list(self, ls: list, first_date, last_date) -> dict:
         """
@@ -261,7 +267,7 @@ class ListMaker(ABC):
         if asset.currency != self.currency:
             s = self._adjust_price_to_currency_monthly(s, asset.currency)
         if remove_forecast:
-            s = s[: pd.Period.now(freq="M")]
+            s = s[: pd.Period.now(freq="M")]  # Period.now() must be without arguments to be compatible with pandas 2.0
         # Create time series with zeros to pad the empty spaces in dividends time series
         index = pd.date_range(start=self.first_date, end=self.last_date, freq="MS")  # 'MS' to include the last period
         period = index.to_period("M")

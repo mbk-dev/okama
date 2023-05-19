@@ -19,6 +19,11 @@ def init_asset_eurusd():
 
 
 @pytest.fixture(scope="module")
+def init_asset_berkshire():
+    return ok.Asset(symbol="BRK.A.US")
+
+
+@pytest.fixture(scope="module")
 def init_asset_pif():
     return ok.Asset(symbol="0165-70287767.PIF")
 
@@ -31,7 +36,7 @@ def init_asset_usdrub():
 # Asset List
 @pytest.fixture(scope="class")
 def assets_from_db():
-    return ["RUB.FX", "MCFTR.INDX"]
+    return ["USDRUB.CBR", "MCFTR.INDX"]
 
 
 @pytest.fixture(scope="class")
@@ -59,6 +64,13 @@ def _init_asset_list(request, portfolio_short_history, portfolio_dividends, asse
         first_date="2003-03",
         last_date="2020-01",
         inflation=True,
+    )
+    request.cls.asset_list_st = ok.AssetList(
+        assets=assets_from_db,
+        ccy="RUB",
+        first_date="2019-01",
+        last_date="2019-05",
+        inflation=False,
     )
     request.cls.asset_list_no_infl = ok.AssetList(
         assets=assets_from_db,
@@ -89,7 +101,7 @@ def _init_asset_list(request, portfolio_short_history, portfolio_dividends, asse
 @pytest.fixture(scope="package")
 def init_portfolio_values():
     return dict(
-        assets=["RUB.FX", "MCFTR.INDX"],
+        assets=["RGBITR.INDX", "MCFTR.INDX"],
         ccy="RUB",
         first_date="2015-01",
         last_date="2020-01",
@@ -165,7 +177,7 @@ def _init_indicator(request):
 @pytest.fixture(scope="module")
 def init_efficient_frontier_values1():
     return dict(
-        assets=["SPY.US", "SBMX.MOEX"],
+        assets=["MCFTR.INDX", "RGBITR.INDX"],
         ccy="RUB",
         first_date="2018-11",
         last_date="2020-02",
@@ -177,8 +189,8 @@ def init_efficient_frontier_values1():
 @pytest.fixture(scope="module")
 def init_efficient_frontier_values2():
     return dict(
-        assets=["RUB.FX", "EUR.FX", "MCFTR.INDX"],
-        ccy="RUB",
+        assets=["SPY.US", "AGG.US", "GLD.US"],
+        ccy="USD",
         first_date="2010-01",
         last_date="2020-01",
         inflation=True,
@@ -209,10 +221,11 @@ def init_efficient_frontier_reb():
     ls = ["SPY.US", "GLD.US"]
     return ok.EfficientFrontierReb(
         assets=ls,
-        ccy="RUB",
+        ccy="USD",
         first_date="2019-01",
         last_date="2020-02",
         n_points=3,
         verbose=False,
         full_frontier=True,
+        inflation=True,
     )

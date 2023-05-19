@@ -365,7 +365,7 @@ class Rebalance:
         """
         Calculate wealth index time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
-        For not rebalanced portfolio set Period to 'none'
+        For not rebalanced portfolio set Period to 'none'.
         """
         # Frame.weights_sum_is_one(weights)
         initial_inv = 1000
@@ -416,16 +416,6 @@ class Rebalance:
     def assets_weights_ts(weights: list, ror: pd.DataFrame, *, period: str = "year") -> pd.DataFrame:
         """
         Calculate assets weights monthly time series for rebalanced portfolio.
-
-        Parameters
-        ----------
-        weights
-        ror
-        period
-
-        Returns
-        -------
-
         """
         assets_wealth_indexes = Rebalance.assets_wealth_ts(weights=weights, ror=ror, period=period)
         portfolio_wealth_index = Rebalance.wealth_ts(weights=weights, ror=ror, period=period)
@@ -505,15 +495,17 @@ class Index:
         """
         if ror.shape[1] < 2:
             raise ValueError("At least 2 symbols should be provided to calculate Tracking Error.")
+        if ror.shape[0] < 12:
+            raise ValueError("Tracking Error is not defined for time periods < 1 year")
         cumsum = ror.subtract(ror.iloc[:, 0], axis=0).pow(2, axis=0).cumsum()
         cumsum.drop(cumsum.columns[0], axis=1, inplace=True)  # drop the first column (stock index data)
         tracking_error = cumsum.divide((1.0 + np.arange(ror.shape[0])), axis=0).pow(0.5, axis=0)
         return tracking_error * np.sqrt(12)
 
     @staticmethod
-    def cov_cor(ror: pd.DataFrame, fn: str) -> pd.DataFrame:
+    def expanding_cov_cor(ror: pd.DataFrame, fn: str) -> pd.DataFrame:
         """
-        Returns the accumulated correlation or covariance time series.
+        Returns the accumulated expanding correlation or covariance time series.
         The period should be at least 12 months.
         """
         if ror.shape[1] < 2:
@@ -535,7 +527,7 @@ class Index:
             raise ValueError("At least 2 symbols should be provided.")
         if fn not in ["cov", "corr"]:
             raise ValueError("fn should be corr or cov")
-        check_rolling_window(window, ror)
+        check_rolling_window(window=window, ror=ror, window_below_year=False)
         cov_matrix_ts = getattr(ror.rolling(window=window), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
         cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
@@ -549,7 +541,32 @@ class Index:
         Index (or benchmark) should be in the first position (first column).
         The period should be at least 12 months.
         """
-        cov = Index.cov_cor(ror, fn="cov")
-        var = ror.expanding().var().drop(columns=ror.columns[0])
-        var = var[settings._MONTHS_PER_YEAR :]
-        return cov / var
+        if ror.shape[1] < 2:
+            raise ValueError("At least 2 symbols should be provided to calculate beta coefficient.")
+        if ror.shape[0] < 12:
+            raise ValueError("Beta coefficient is not defined for time periods < 1 year")
+        cov = Index.expanding_cov_cor(ror, fn="cov")
+        benchmark_var = ror.loc[:, ror.columns[0]].expanding().var()
+        benchmark_var = benchmark_var.iloc[settings._MONTHS_PER_YEAR :]
+        return cov.divide(benchmark_var, axis=0)
+
+    @staticmethod
+    def rolling_fn(df: pd.DataFrame, window: int, fn: Callable, window_below_year: bool = False) -> pd.DataFrame:
+        """
+        Calculate the rolling custom function.
+
+        Apply a function to time series DataFrame with the rolling window.
+        The window should be in months.
+        """
+        check_rolling_window(window=window, ror=df, window_below_year=window_below_year)
+        output = pd.DataFrame()
+        for start_date in df.index:
+            end_date = start_date + window
+            df_window = df.loc[start_date:end_date, :]
+            end_date = df_window.index[-1]
+            period_length = end_date - start_date
+            if period_length.n < window:
+                break
+            windows_result = fn(df_window).iloc[-1, :]
+            output = pd.concat([output, windows_result.to_frame().T], copy=False)
+        return output

@@ -30,13 +30,21 @@ from okama.frontier.single_period import EfficientFrontier
 from okama.api.data_queries import QueryData
 from okama.api.search import search
 from okama.api.api_methods import API
-from okama.api.namespaces import (
-    namespaces,
-    assets_namespaces,
-    macro_namespaces,
-    symbols_in_namespace,
-)
+import okama.api.namespaces
+
+
+def __getattr__(name):
+    if name == "namespaces":
+        return okama.api.namespaces.get_namespaces()
+    elif name == "assets_namespaces":
+        return okama.api.namespaces.get_assets_namespaces()
+    elif name == "macro_namespaces":
+        return okama.api.namespaces.get_macro_namespaces()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
 from okama.common.helpers.helpers import Float, Frame, Rebalance, Date
 import okama.settings
+
 
 __version__ = version("okama")

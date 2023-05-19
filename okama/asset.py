@@ -5,7 +5,6 @@ import numpy as np
 
 from okama import settings
 from okama.api import data_queries, namespaces
-from okama.common.helpers import helpers
 
 
 class Asset:
@@ -49,7 +48,7 @@ class Asset:
         return repr(pd.Series(dic))
 
     def _check_namespace(self):
-        namespace = self._symbol.split(".", 1)[-1]
+        namespace = self._symbol.split(".")[-1]
         allowed_namespaces = namespaces.get_assets_namespaces()
         if namespace not in allowed_namespaces:
             raise ValueError(f"{namespace} is not in allowed assets namespaces: {allowed_namespaces}")
@@ -122,7 +121,7 @@ class Asset:
         >>> x.close_monthly.plot()
         >>> plt.show()
         """
-        return helpers.Frame.change_period_to_month(self.close_daily)
+        return data_queries.QueryData.get_close(self.symbol, period="M")
 
     @property
     def adj_close(self):
