@@ -195,7 +195,7 @@ def test_plot_cml(init_efficient_frontier):
 
 @mark.frontier
 def test_plot_transition_map(init_efficient_frontier_three_assets):
-    axes_data = np.array(init_efficient_frontier_three_assets.plot_transition_map(cagr=False).lines[0].get_data())
+    axes_data = np.array(init_efficient_frontier_three_assets.plot_transition_map(x_axe='risk').lines[0].get_data())
     values = np.genfromtxt(conftest.data_folder / "test_transition_map.csv", delimiter=",")
     assert axes_data.shape == values.shape
     assert axes_data[0, 0] == approx(values[0, 0], abs=1e-1)

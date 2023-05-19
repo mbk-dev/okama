@@ -912,9 +912,8 @@ class EfficientFrontier(asset_list.AssetList):
             bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
             from 0 to 50%. The second asset has no limitations.
 
-        cagr : bool, default True
-            Show the relation between weights and CAGR (if True) or between weights and Risk (if False).
-            of - sets X axe to CAGR (if true) or to risk (if false).
+        x_axe : 'risk' or 'cagr', default 'risk'
+            Show the relation between weights and CAGR (if 'cagr') or between weights and Risk (if 'risk').
             CAGR or Risk are displayed on the x-axis.
 
         figsize: (float, float), optional
@@ -928,15 +927,22 @@ class EfficientFrontier(asset_list.AssetList):
         >>> x.plot_transition_map()
         >>> plt.show()
 
-        Transition Map with default setting show the relation between Return (CAGR) and assets weights for optimized portfolios.
-        The same relation for Risk can be shown setting cagr=False.
+        Transition Map with default setting show the relation between Risk (stanrd deviation) and assets weights for optimized portfolios.
+        The same relation for CAGR can be shown setting x_axe='cagr'.
 
-        >>> x.plot_transition_map(cagr=False)
+        >>> x.plot_transition_map(x_axe='cagr')
         >>> plt.show()
         """
         ef = self.ef_points
         linestyle = itertools.cycle(("-", "--", ":", "-."))
-        x_axe = "CAGR" if x_axe else "Risk"
+        if x_axe.lower() == 'cagr':
+            xlabel = "CAGR (Compound Annual Growth Rate)"
+            x_axe = "CAGR"
+        elif x_axe.lower() == 'risk':
+            xlabel = "Risk (volatility)"
+            x_axe = "Risk"
+        else:
+            raise ValueError("x_axe parameter must be 'cagr' or 'risk'.")
         fig, ax = plt.subplots(figsize=figsize)
         for i in ef:
             if i not in (
@@ -946,10 +952,7 @@ class EfficientFrontier(asset_list.AssetList):
             ):  # select only columns with tickers
                 ax.plot(ef[x_axe], ef.loc[:, i], linestyle=next(linestyle), label=i)
         ax.set_xlim(ef[x_axe].min(), ef[x_axe].max())
-        if x_axe:
-            ax.set_xlabel("CAGR (Compound Annual Growth Rate)")
-        else:
-            ax.set_xlabel("Risk (volatility)")
+        ax.set_xlabel(xlabel)
         ax.set_ylabel("Weights of assets")
         ax.legend(loc="upper left", frameon=False)
         fig.tight_layout()
