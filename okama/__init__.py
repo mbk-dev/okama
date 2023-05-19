@@ -44,4 +44,5 @@ def __getattr__(name):
         return okama.api.namespaces.get_macro_namespaces()
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
+
 __version__ = version("okama")

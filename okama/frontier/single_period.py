@@ -927,7 +927,8 @@ class EfficientFrontier(asset_list.AssetList):
         >>> x.plot_transition_map()
         >>> plt.show()
 
-        Transition Map with default setting show the relation between Risk (stanrd deviation) and assets weights for optimized portfolios.
+        Transition Map with default setting show the relation between Risk (stanrd deviation) and assets weights for
+        optimized portfolios.
         The same relation for CAGR can be shown setting x_axe='cagr'.
 
         >>> x.plot_transition_map(x_axe='cagr')
