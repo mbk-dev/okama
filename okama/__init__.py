@@ -31,6 +31,7 @@ from okama.api.data_queries import QueryData
 from okama.api.search import search
 from okama.api.api_methods import API
 import okama.api.namespaces
+from okama.api.namespaces import symbols_in_namespace
 from okama.common.helpers.helpers import Float, Frame, Rebalance, Date
 import okama.settings
 
@@ -42,6 +43,8 @@ def __getattr__(name):
         return okama.api.namespaces.get_assets_namespaces()
     elif name == "macro_namespaces":
         return okama.api.namespaces.get_macro_namespaces()
+    elif name == "no_dividends_namespaces":
+        return okama.api.namespaces.no_dividends_namespaces()
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
