@@ -38,7 +38,7 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
 - Monte Carlo Simulations for financial assets and investment portfolios
 - Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
 - Different financial ratios: Sharpe ratio, Sortino ratio, Diversification ratio 
-- Forecasting models according to normal and lognormal distribution
+- Forecasting models according to normal, lognormal and other popular distributions
 - Testing distribution on historical data
 - Dividend yield and other dividend indicators for stocks
 - Backtesting and comparing historical performance of broad range of assets and indexes in multiple currencies
