@@ -191,7 +191,7 @@ As contributors and maintainers to this project, you are expected to abide by ok
 ## Communication
 
 For basic usage questions (e.g., "_Is XXX currency supported by okama?_") and for sharing ideas please use [GitHub Discussions](https://github.com/mbk-dev/okama/discussions/3).
-Russian language community is available at [okama.io forums](https://community.okama.io/c/python-okama).
+Russian language community is available at [okama.io forums](https://community.okama.io).
 
 ## License
 
