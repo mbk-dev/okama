@@ -251,7 +251,7 @@ class EfficientFrontier(asset_list.AssetList):
             helpers.Float.annualize_return(self.gmv_monthly[1]),
         )
 
-    def get_tangency_portfolio(self, cagr: bool = False, rf_return: float = 0) -> dict:
+    def get_tangency_portfolio(self, rf_return: float = 0, rate_of_return: str = "cagr") -> dict:
         """
         Calculate asset weights, risk and return values for tangency portfolio within given bounds.
 
@@ -265,8 +265,8 @@ class EfficientFrontier(asset_list.AssetList):
 
         Parameters
         ----------
-        cagr : bool, default False
-            Use CAGR (Compound annual growth rate) or geometric mean to calculate Sharpe Ratio.
+        rate_of_return : {cagr, mean_return}, default cagr
+            Use CAGR (Compound annual growth rate) or arithmetic mean of return to calculate Sharpe Ratio.
 
         rf_return : float, default 0
             Risk-free rate of return.
@@ -285,7 +285,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         To calculate tangency portfolio parameters for CAGR (geometric mean) set cagr=True:
 
-        >>> ef.get_tangency_portfolio(cagr=True, rf_return=0.03)
+        >>> ef.get_tangency_portfolio(rate_of_return="mean_return", rf_return=0.03)
         {'Weights': array([2.95364739e-01, 1.08420217e-17, 7.04635261e-01]), 'Mean_return': 0.10654206521088283, 'Risk': 0.048279725208422115}
         """
         assets_ror = self.assets_ror
@@ -310,7 +310,12 @@ class EfficientFrontier(asset_list.AssetList):
             of_geometric_mean.risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
             return -(of_geometric_mean.rate_of_return - rf_return) / of_geometric_mean.risk
 
-        objective_function = of_geometric_mean if cagr else of_arithmetic_mean
+        if rate_of_return.lower() in {"cagr", "mean_return"}:
+            rate_of_return = rate_of_return.lower()
+        else:
+            raise ValueError("rate_of_return must be 'cagr or 'mean_return'")
+
+        objective_function = of_geometric_mean if rate_of_return == "cagr" else of_arithmetic_mean
         # construct the constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         weights = minimize(
@@ -906,7 +911,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Parameters
         ----------
-        bounds: tuple of ((float, float),...)
+        bounds : tuple of ((float, float),...)
             Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
             If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
             bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
@@ -916,7 +921,7 @@ class EfficientFrontier(asset_list.AssetList):
             Show the relation between weights and CAGR (if 'cagr') or between weights and Risk (if 'risk').
             CAGR or Risk are displayed on the x-axis.
 
-        figsize: (float, float), optional
+        figsize : (float, float), optional
             Figure size: width, height in inches.
             If None default matplotlib size is taken: [6.4, 4.8]
 
@@ -1034,7 +1039,7 @@ class EfficientFrontier(asset_list.AssetList):
         self.plot_assets(kind="mean", tickers=tickers)
         return ax
 
-    def plot_cml(self, rf_return: float = 0, figsize: Optional[tuple] = None):
+    def plot_cml(self, rf_return: float = 0, y_axe: str = "cagr", figsize: Optional[tuple] = None):
         """
         Plot Capital Market Line (CML).
 
@@ -1045,11 +1050,15 @@ class EfficientFrontier(asset_list.AssetList):
 
         Parameters
         ----------
-        TODO: add y_axe parameter (arithmetic_mean or cagr)
         rf_return : float, default 0
             Risk-free rate of return.
 
-        figsize: (float, float), optional
+        y_axe : {'cagr', 'mean_return'}, default 'cagr'
+            Show the relation between Risk and CAGR (if 'cagr') or
+            between Risk and Mean rate of return (if 'mean_return').
+            CAGR or Mean Rate of Return are displayed on the y-axis.
+
+        figsize : (float, float), optional
             Figure size: width, height in inches.
             If None default matplotlib size is taken: [6.4, 4.8]
 
@@ -1062,13 +1071,19 @@ class EfficientFrontier(asset_list.AssetList):
         >>> import matplotlib.pyplot as plt
         >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
         >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', full_frontier=True)
-        >>> ef.plot_cml(rf_return=0.05)  # Risk-Free return is 5%
+        >>> ef.plot_cml(rf_return=0.05, y_axe="cagr")  # Risk-Free return is 5%
         >>> plt.show
         """
+        if y_axe.lower() not in {"cagr", "mean_return"}:
+            raise ValueError("rate_of_return must be 'cagr' or 'mean_return'")
+        y_axe = y_axe.lower()
+        y_axe_annotation = "CAGR" if y_axe == "cagr" else "Mean return"
+
         ef = self.ef_points
-        tg = self.get_tangency_portfolio(rf_return)
+        tg = self.get_tangency_portfolio(rf_return=rf_return, rate_of_return=y_axe)
         fig, ax = plt.subplots(figsize=figsize)
-        ax.plot(ef.Risk, ef["Mean return"], color="black")
+
+        ax.plot(ef.Risk, ef[y_axe_annotation], color="black")
         ax.scatter(tg["Risk"], tg["Rate_of_return"], linewidth=0, color="green", zorder=10)
         ax.annotate(
             "MSR",
@@ -1088,5 +1103,5 @@ class EfficientFrontier(asset_list.AssetList):
         ax.set_ylim(0, max(returns) * 1.1)  # height is 10% more than max return
         ax.set_xlim(0, max(risks) * 1.1)  # width is 10% more than max risk
         # plot the assets
-        self.plot_assets(kind="mean")
+        self.plot_assets(kind="mean" if y_axe == "mean_return" else "cagr")
         return ax

@@ -112,18 +112,19 @@ def test_ef_points(init_efficient_frontier):
 
 
 test_tangency_data = [
-    (False, [0.0, 1.0], 0.1603),  # cagr = False
-    (True, [0.0, 1.0], 0.15959),  # cagr = True
+    ("mean_return", [0.0, 1.0], 0.1603),  # rate_of_return = 'mean_return'
+    ("cagr", [0.0, 1.0], 0.15959),  # rate_of_return = 'cagr'
 ]
 
 
 @pytest.mark.parametrize(
-    "cagr, expected_weights, expected_return", test_tangency_data, ids=["MSR Arithmetic mean", "MSR geometric mean"]
+    "rate_of_return, expected_weights, expected_return", test_tangency_data, ids=["MSR Arithmetic mean", "MSR geometric mean"]
 )
 @mark.frontier
-def test_get_tangency_portfolio(init_efficient_frontier, cagr, expected_weights, expected_return):
+def test_get_tangency_portfolio(init_efficient_frontier, rate_of_return, expected_weights, expected_return):
     rf_rate = 0.05
-    dic = init_efficient_frontier.get_tangency_portfolio(cagr=cagr, rf_return=rf_rate)
+
+    dic = init_efficient_frontier.get_tangency_portfolio(rate_of_return='cagr', rf_return=rf_rate)
     assert_allclose(dic["Weights"], expected_weights, atol=1e-2)
     assert dic["Rate_of_return"] == approx(expected_return, rel=1e-2)
 
@@ -188,7 +189,7 @@ def test_mdp_points(init_efficient_frontier_three_assets):
 @mark.frontier
 def test_plot_cml(init_efficient_frontier):
     rf_rate = 0.02
-    axes_data = np.array(init_efficient_frontier.plot_cml(rf_return=rf_rate).lines[1].get_data())
+    axes_data = np.array(init_efficient_frontier.plot_cml(rf_return=rf_rate, y_axe="mean_return").lines[1].get_data())
     expected = np.array([[0, 0.042512], [0.02, 0.159596]])
     assert_allclose(axes_data, expected, atol=1e-2)
 

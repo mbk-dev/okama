@@ -925,7 +925,8 @@ class AssetList(make_asset_list.ListMaker):
         Return tracking difference for the rate of return of assets.
 
         Tracking difference is calculated by measuring the accumulated difference between the returns of a benchmark
-        and those of the ETF replicating it (could be mutual funds, or other types of assets).
+        and those of the ETF replicating it (could be mutual funds, or other types of assets). Tracking difference is
+        measured in percents.
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 
@@ -969,7 +970,8 @@ class AssetList(make_asset_list.ListMaker):
         Calculate annualized tracking difference time series for the rate of return of assets.
 
         Tracking difference is calculated by measuring the accumulated difference between the returns of a benchmark
-        and ETFs replicating it (could be mutual funds, or other types of assets).
+        and ETFs replicating it (could be mutual funds, or other types of assets). Tracking difference is
+        measured in percents.
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 
@@ -1016,7 +1018,8 @@ class AssetList(make_asset_list.ListMaker):
         Calculate tracking difference for each calendar year.
 
         Tracking difference is calculated by measuring the accumulated difference between the returns of a benchmark
-        and ETFs replicating it (could be mutual funds, or other types of assets).
+        and ETFs replicating it (could be mutual funds, or other types of assets). Tracking difference is
+        measured in percents.
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 
@@ -1045,7 +1048,7 @@ class AssetList(make_asset_list.ListMaker):
         Calculate tracking error time series for the rate of return of assets.
 
         Tracking error is defined as the standard deviation of the difference between the returns of the asset
-        and the returns of the benchmark.
+        and the returns of the benchmark. Tracking error is measured in percents.
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 

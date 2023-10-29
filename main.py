@@ -1,9 +1,7 @@
 import matplotlib.pyplot as plt
 import okama as ok
 
-al = ok.AssetList(["SP500TR.INDX", "SPY.US", "VOO.US"])
-
-# al.tracking_error(rolling_window=12).plot()
-# al.index_beta(rolling_window=12 * 5).plot()
-al.index_corr(rolling_window=12 * 5).plot()
+indexes = ["RGBITR.INDX", "MCFTR.INDX", "GC.COMM"]
+ef = ok.EfficientFrontier(indexes, ccy="RUB", full_frontier=True, inflation=False, n_points=50)
+ef.plot_cml(rf_return=0.15, y_axe="cagr")
 plt.show()

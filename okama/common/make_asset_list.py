@@ -473,6 +473,7 @@ class ListMaker(ABC):
         ...               )
         >>> plt.show()
         """
+        # TODO: rename tickers to labels or annotations
         risk_monthly = self.assets_ror.std()
         mean_return_monthly = self.assets_ror.mean()
         risks = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
