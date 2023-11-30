@@ -273,7 +273,7 @@ class AssetList(make_asset_list.ListMaker):
         time_frame : int, default 12
             Time period size in months
         level : int, default 1
-            Confidence level in percents to calculate the VaR. Default value is 5%.
+            Confidence level in percents to calculate the VaR. Default value is 1% (1% quantile).
 
         Returns
         -------

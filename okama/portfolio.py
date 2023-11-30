@@ -9,6 +9,8 @@ from matplotlib import pyplot as plt
 from okama import settings
 from okama.common import make_asset_list, validators
 from okama.common.helpers import helpers, ratios
+from okama.common.helpers.helpers import Rebalance
+
 
 
 class Portfolio(make_asset_list.ListMaker):
@@ -202,10 +204,10 @@ class Portfolio(make_asset_list.ListMaker):
 
     @rebalancing_period.setter
     def rebalancing_period(self, rebalancing_period: str):
-        if rebalancing_period in {"none", "month", "year"}:
+        if rebalancing_period in Rebalance.frequency_mapping.keys():
             self._rebalancing_period = rebalancing_period
         else:
-            raise ValueError('rebalancing_period must be "year", "month" or "none"')
+            raise ValueError(f'rebalancing_period must be in {Rebalance.frequency_mapping.keys()}')
 
     @property
     def symbol(self) -> str:
@@ -303,7 +305,7 @@ class Portfolio(make_asset_list.ListMaker):
         if self.rebalancing_period == "month":
             s = helpers.Frame.get_portfolio_return_ts(self.weights, self.assets_ror)
         else:
-            s = helpers.Rebalance.return_ts(self.weights, self.assets_ror, period=self.rebalancing_period)
+            s = helpers.Rebalance(period=self.rebalancing_period).return_ts(self.weights, self.assets_ror)
         return s.rename(self.symbol, inplace=True)
 
     @property
@@ -974,7 +976,9 @@ class Portfolio(make_asset_list.ListMaker):
         Parameters
         ----------
         time_frame : int, default 12 (12 months)
-        level : int, default 1 (1% quantile)
+            Time period size in months
+        level : int, default 1
+            Confidence level in percents to calculate the VaR. Default value is 1% (1% quantile).
 
         Returns
         -------
