@@ -359,25 +359,17 @@ class Rebalance:
     """
     Methods for rebalancing portfolio.
     """
-    # From Pandas resamples alias: https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
-    frequency_mapping = {
-        "none": "none",
-        "annually": "Y",
-        "semi-annually": "2Q",
-        "quarterly": "Q",
-        "monthly": "M"
-    }
 
-    def __init__(self,
-                 period: str = "annually",
-                 abs_deviation: Optional[float] = None,
-                 rel_deviation: Optional[float] = None):
+    # From Pandas resamples alias: https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
+    frequency_mapping = {"none": "none", "year": "Y", "half-year": "2Q", "quarter": "Q", "month": "M"}
+
+    def __init__(
+        self, period: str = "year", abs_deviation: Optional[float] = None, rel_deviation: Optional[float] = None
+    ):
         self.period = period
         self.abs_deviation = abs_deviation
         self.rel_deviation = rel_deviation
         self.pandas_frequency = self.frequency_mapping.get(self.period)
-
-
 
     def wealth_ts(self, weights: list, ror: pd.DataFrame) -> pd.Series:
         """

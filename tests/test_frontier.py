@@ -118,13 +118,15 @@ test_tangency_data = [
 
 
 @pytest.mark.parametrize(
-    "rate_of_return, expected_weights, expected_return", test_tangency_data, ids=["MSR Arithmetic mean", "MSR geometric mean"]
+    "rate_of_return, expected_weights, expected_return",
+    test_tangency_data,
+    ids=["MSR Arithmetic mean", "MSR geometric mean"],
 )
 @mark.frontier
 def test_get_tangency_portfolio(init_efficient_frontier, rate_of_return, expected_weights, expected_return):
     rf_rate = 0.05
 
-    dic = init_efficient_frontier.get_tangency_portfolio(rate_of_return='cagr', rf_return=rf_rate)
+    dic = init_efficient_frontier.get_tangency_portfolio(rate_of_return="cagr", rf_return=rf_rate)
     assert_allclose(dic["Weights"], expected_weights, atol=1e-2)
     assert dic["Rate_of_return"] == approx(expected_return, rel=1e-2)
 
@@ -196,7 +198,7 @@ def test_plot_cml(init_efficient_frontier):
 
 @mark.frontier
 def test_plot_transition_map(init_efficient_frontier_three_assets):
-    axes_data = np.array(init_efficient_frontier_three_assets.plot_transition_map(x_axe='risk').lines[0].get_data())
+    axes_data = np.array(init_efficient_frontier_three_assets.plot_transition_map(x_axe="risk").lines[0].get_data())
     values = np.genfromtxt(conftest.data_folder / "test_transition_map.csv", delimiter=",")
     assert axes_data.shape == values.shape
     assert axes_data[0, 0] == approx(values[0, 0], abs=1e-1)

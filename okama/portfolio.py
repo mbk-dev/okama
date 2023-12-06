@@ -12,7 +12,6 @@ from okama.common.helpers import helpers, ratios
 from okama.common.helpers.helpers import Rebalance
 
 
-
 class Portfolio(make_asset_list.ListMaker):
     """
     Implementation of investment portfolio.
@@ -56,7 +55,7 @@ class Portfolio(make_asset_list.ListMaker):
         The weight of an asset is the percent of an investment portfolio that corresponds to the asset.
         If weights = None an equally weighted portfolio is created (all weights are equal).
 
-    rebalancing_period : {'month', 'year', 'none'}, default 'month'
+    rebalancing_period : {'none', 'month', 'quarter', 'half-year', 'year'}, default 'month'
         Rebalancing period (rebalancing frequency) is predetermined time intervals when
         the investor rebalances the portfolio. If 'none' assets weights are not rebalanced.
 
@@ -176,9 +175,8 @@ class Portfolio(make_asset_list.ListMaker):
         >>> plt.show()
         """
         if self.rebalancing_period != "month":
-            return helpers.Rebalance.assets_weights_ts(
+            return helpers.Rebalance(period=self.rebalancing_period).assets_weights_ts(
                 ror=self.assets_ror,
-                period=self.rebalancing_period,
                 weights=self.weights,
             )
         values = np.tile(self.weights, (self.ror.shape[0], 1))
@@ -207,7 +205,7 @@ class Portfolio(make_asset_list.ListMaker):
         if rebalancing_period in Rebalance.frequency_mapping.keys():
             self._rebalancing_period = rebalancing_period
         else:
-            raise ValueError(f'rebalancing_period must be in {Rebalance.frequency_mapping.keys()}')
+            raise ValueError(f"rebalancing_period must be in {Rebalance.frequency_mapping.keys()}")
 
     @property
     def symbol(self) -> str:

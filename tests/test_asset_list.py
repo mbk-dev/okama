@@ -67,7 +67,7 @@ class TestAssetList:
             "asset list": "USD",
         }
         assert self.currencies.names == {
-            "RUBUSD.FX": "Russian Rouble/US Dollar FX Cross Rate",
+            "RUBUSD.FX": "Central Bank of Russia rate for RUBUSD (US Dollar)",
             "EURUSD.FX": "EURUSD",
             "CNYUSD.FX": "Chinese Renminbi/US Dollar FX Cross Rate",
         }
