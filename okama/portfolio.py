@@ -716,7 +716,7 @@ class Portfolio(make_asset_list.ListMaker):
         """
         Calculate the number of securities monthly time series for the portfolio assets.
 
-        Number of securities in the Portfolio is changing over time as the dividends are reinvested.
+        The number of securities in the Portfolio is changing over time as the dividends are reinvested.
         Portfolio rebalancing also affects the number of securities.
 
         Initial number of securities depends on the portfolio size in base currency (1000 units).

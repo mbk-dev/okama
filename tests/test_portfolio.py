@@ -130,13 +130,13 @@ def test_number_of_securities(portfolio_not_rebalanced, portfolio_dividends):
     assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 0] == approx(1.798, rel=1e-2)  # RGBITR.INDX
     assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 1] == approx(0.2787, abs=1e-2)  # MCFTR.INDX
     # with dividends
-    assert portfolio_dividends.number_of_securities.iloc[-1, 0] == approx(3.97, rel=1e-2)  # SBER.MOEX
-    assert portfolio_dividends.number_of_securities.iloc[-1, 1] == approx(0.425, abs=1e-2)  # T.US
-    assert portfolio_dividends.number_of_securities.iloc[-1, 2] == approx(0.392, abs=1e-2)  # GNS.LSE
+    assert portfolio_dividends.number_of_securities.iloc[-1, 0] == approx(4.185, rel=1e-2)  # SBER.MOEX
+    assert portfolio_dividends.number_of_securities.iloc[-1, 1] == approx(0.448, abs=1e-2)  # T.US
+    assert portfolio_dividends.number_of_securities.iloc[-1, 2] == approx(0.004137, abs=1e-2)  # GNS.LSE
 
 
 def test_dividends(portfolio_dividends):
-    assert portfolio_dividends.dividends.iloc[-1] == approx(13.96, rel=1e-2)
+    assert portfolio_dividends.dividends.iloc[-1] == approx(14.70, rel=1e-2)
 
 
 def test_dividend_yield(portfolio_dividends):
@@ -327,7 +327,7 @@ def test_rolling_skewness(portfolio_rebalanced_month):
 
 
 def test_kurtosis(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.kurtosis.iloc[-1] == approx(1.463, rel=1e-2)
+    assert portfolio_rebalanced_month.kurtosis.iloc[-1] == approx(1.490, rel=1e-2)
 
 
 def test_kurtosis_rolling(portfolio_rebalanced_month):

@@ -10,9 +10,8 @@ import okama as ok
 # pf.wealth_index_with_assets.plot()
 # plt.show()
 
-i = ok.Inflation("RUB.INFL")
+i = ok.Inflation(symbol="RUB.INFL", last_date="2001-01")
 
-i.set_values_monthly(date="2023-12", value=0.0122)
-
-print(i.values_monthly)
-print(i)
+print(
+    i.describe(years=[5])
+)
