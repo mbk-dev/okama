@@ -45,10 +45,10 @@ pytest-xdist = "^3.5.0"
 flake8 = "^6.1.0"
 
 [tool.poetry.group.docs]
-optional = true
+optional = false
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^5.0.0"
+sphinx = "^7.0.0"
 sphinx-rtd-theme = "^1.0.0"
 numpydoc = "^1.2.1"
 nbsphinx = "^0.8.8"
