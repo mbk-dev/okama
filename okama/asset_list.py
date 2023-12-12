@@ -994,7 +994,7 @@ class AssetList(make_asset_list.ListMaker):
             df = pd.concat([df, s2], axis=1, copy="false")
         return df
 
-    def get_dividend_mean_growth_rate(self, period: int=5) -> pd.Series:
+    def get_dividend_mean_growth_rate(self, period: int = 5) -> pd.Series:
         """
         Calculate geometric mean of annual dividends growth rate time series for a given trailing period.
 
@@ -1069,7 +1069,6 @@ class AssetList(make_asset_list.ListMaker):
         LKOH.MOEX     0.086743
         dtype: float64
         """
-
 
         self._validate_period(period)
         dt0 = self.last_date

@@ -98,7 +98,7 @@ class MacroABC(ABC):
         or corrected data.
         """
         okama.common.validators.validate_real("value", value)
-        self._values_monthly[pd.Period(date, freq='M')] = value
+        self._values_monthly[pd.Period(date, freq="M")] = value
         self._set_first_last_dates()
 
     def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:

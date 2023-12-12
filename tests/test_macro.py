@@ -70,17 +70,19 @@ class TestInflation:
 
     error_case_ids = ["invalid_date_format", "nonexistent_date", "invalid_value_type"]
 
-    @pytest.mark.parametrize("date, value",
-                             [("2022-06", 100.0), ("2025-01", 200.0), (pd.Timestamp.now().strftime('%Y-%m'), 150.0),
-                              ("2024-02", 300.0)])
+    @pytest.mark.parametrize(
+        "date, value",
+        [("2022-06", 100.0), ("2025-01", 200.0), (pd.Timestamp.now().strftime("%Y-%m"), 150.0), ("2024-02", 300.0)],
+    )
     def test_set_values_monthly_happy_path(self, date, value):  # Arrange instance = MyClass()
         self.infl_rub.set_values_monthly(date, value)
-        assert self.infl_rub.values_monthly[pd.Period(date, freq='M')] == value
+        assert self.infl_rub.values_monthly[pd.Period(date, freq="M")] == value
 
-    @pytest.mark.parametrize("date, value, expected_exception",
-                             [("12,2023", 100.0, ValueError), ("2023-13", 100.0, ValueError),
-                              ("2023-12", "one hundred", TypeError)],
-                             ids=error_case_ids)
+    @pytest.mark.parametrize(
+        "date, value, expected_exception",
+        [("12,2023", 100.0, ValueError), ("2023-13", 100.0, ValueError), ("2023-12", "one hundred", TypeError)],
+        ids=error_case_ids,
+    )
     def test_set_values_monthly_error_cases(self, date, value, expected_exception):
         with pytest.raises(expected_exception):
             self.infl_rub.set_values_monthly(date, value)
