@@ -10,6 +10,8 @@ import okama as ok
 # pf.wealth_index_with_assets.plot()
 # plt.show()
 
-al = ok.AssetList(["SBERP.MOEX", "LKOH.MOEX"], ccy='RUB')
+# al = ok.AssetList(["SBERP.MOEX", "LKOH.MOEX"], ccy='RUB')
 
-print(al.get_mean_dividend_yield())
+# print(al.get_mean_dividend_yield())
+
+print(ok.Portfolio().dividend_yield)

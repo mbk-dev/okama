@@ -267,7 +267,7 @@ class ListMaker(ABC):
         if asset.currency != self.currency:
             s = self._adjust_price_to_currency_monthly(s, asset.currency)
         if remove_forecast:
-            s = s[: pd.Period.now(freq="M")]  # Period.now() must be without arguments to be compatible with pandas 2.0
+            s = s[: pd.Period.now("M")]  # Period.now() must be without arguments to be compatible with pandas 2.0
         # Create time series with zeros to pad the empty spaces in dividends time series
         index = pd.date_range(start=self.first_date, end=self.last_date, freq="MS")  # 'MS' to include the last period
         period = index.to_period("M")
