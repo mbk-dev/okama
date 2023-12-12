@@ -93,7 +93,9 @@ class MacroABC(ABC):
         """
         Set monthly value for the past or future date.
 
-        The date should be in month period format ("2023-12").
+        The date should be in month period format ("2023-12"). T
+        The result stored only in the class instance. It can be used to analyze inflation with forecast
+        or corrected data.
         """
         okama.common.validators.validate_real("value", value)
         self._values_monthly[pd.Period(date, freq='M')] = value

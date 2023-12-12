@@ -301,38 +301,7 @@ class ListMaker(ABC):
         return df
 
     @property
-    def assets_dividend_yield(self) -> pd.DataFrame:
-        """
-        Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
-
-        LTM dividend yield is the sum trailing twelve months of common dividends per share divided by
-        the current price per share.
-
-        All yields are calculated in the asset list base currency after adjusting the dividends and price time series.
-        Forecasted (future) dividends are removed.
-        Zero value time series are created for assets without dividends.
-
-        Returns
-        -------
-        DataFrame
-            Time series of LTM dividend yield for each asset.
-
-        Examples
-        --------
-        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
-        >>> x.assets_dividend_yield
-                   T.US    XOM.US
-        1984-01  0.000000  0.000000
-        1984-02  0.000000  0.002597
-        1984-03  0.002038  0.002589
-        1984-04  0.001961  0.002346
-                   ...       ...
-        1994-09  0.018165  0.012522
-        1994-10  0.018651  0.011451
-        1994-11  0.018876  0.012050
-        1994-12  0.019344  0.011975
-        [132 rows x 2 columns]
-        """
+    def _assets_dividend_yield(self) -> pd.DataFrame:
         if self._dividend_yield.empty:
             frame = {}
             df = self._get_assets_dividends(remove_forecast=True)

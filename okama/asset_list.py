@@ -703,7 +703,7 @@ class AssetList(make_asset_list.ListMaker):
             row.update(period=self._pl_txt, property="CAGR")
             description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
             # Dividend Yield
-            row = self.assets_dividend_yield.iloc[-1].to_dict()
+            row = self._assets_dividend_yield.iloc[-1].to_dict()
             row.update(period="LTM", property="Dividend yield")
             description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # risk for full period
@@ -814,6 +814,50 @@ class AssetList(make_asset_list.ListMaker):
         return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
 
     @property
+    def dividend_yield(self):
+        """
+        Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
+
+        LTM dividend yield is the sum trailing twelve months of common dividends per share divided by
+        the current price per share.
+
+        All yields are calculated in the asset list base currency after adjusting the dividends and price time series.
+        Forecasted (future) dividends are removed.
+        Zero value time series are created for assets without dividends.
+
+        Returns
+        -------
+        DataFrame
+            Time series of LTM dividend yield for each asset.
+
+        See Also
+        --------
+        dividend_yield_annual : Calendar year dividend yield time series.
+        dividends_annual : Calendar year dividends time series.
+        dividend_paying_years : Number of years of consecutive dividend payments.
+        dividend_growing_years : Number of years when the annual dividend was growing.
+        get_dividend_mean_yield : Arithmetic mean for annual dividend yield.
+        get_dividend_mean_growth_rate : Geometric mean of annual dividends growth rate.
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
+        >>> x.dividend_yield
+                   T.US    XOM.US
+        1984-01  0.000000  0.000000
+        1984-02  0.000000  0.002597
+        1984-03  0.002038  0.002589
+        1984-04  0.001961  0.002346
+                   ...       ...
+        1994-09  0.018165  0.012522
+        1994-10  0.018651  0.011451
+        1994-11  0.018876  0.012050
+        1994-12  0.019344  0.011975
+        [132 rows x 2 columns]
+        """
+        return super()._assets_dividend_yield
+
+    @property
     def dividends_annual(self) -> pd.DataFrame:
         """
         Return calendar year dividends sum time series for each asset.
@@ -822,6 +866,15 @@ class AssetList(make_asset_list.ListMaker):
         -------
         DataFrame
             Annual dividends time series for each asset.
+
+        See Also
+        --------
+        dividend_yield : Dividend yield time series.
+        dividend_yield_annual : Calendar year dividend yield time series.
+        dividend_paying_years : Number of years of consecutive dividend payments.
+        dividend_growing_years : Number of years when the annual dividend was growing.
+        get_dividend_mean_yield : Arithmetic mean for annual dividend yield.
+        get_dividend_mean_growth_rate : Geometric mean of annual dividends growth rate.
 
         Examples
         --------
@@ -841,6 +894,15 @@ class AssetList(make_asset_list.ListMaker):
         -------
         DataFrame
             Dividend growth length periods time series for each asset.
+
+        See Also
+        --------
+        dividend_yield : Dividend yield time series.
+        dividend_yield_annual : Calendar year dividend yield time series.
+        dividends_annual : Calendar year dividends.
+        dividend_paying_years : Number of years of consecutive dividend payments.
+        get_dividend_mean_yield : Arithmetic mean for annual dividend yield.
+        get_dividend_mean_growth_rate : Geometric mean of annual dividends growth rate.
 
         Examples
         --------
@@ -869,6 +931,15 @@ class AssetList(make_asset_list.ListMaker):
         DataFrame
             Dividend payment period length time series for each asset.
 
+        See Also
+        --------
+        dividend_yield : Dividend yield time series.
+        dividend_yield_annual : Calendar year dividend yield time series.
+        dividends_annual : Calendar year dividends.
+        dividend_growing_years : Number of years when the annual dividend was growing.
+        get_dividend_mean_yield : Arithmetic mean for annual dividend yield.
+        get_dividend_mean_growth_rate : Geometric mean of annual dividends growth rate.
+
         Examples
         --------
         >>> import matplotlib.pyplot as plt
@@ -887,7 +958,7 @@ class AssetList(make_asset_list.ListMaker):
             df = pd.concat([df, s2], axis=1, copy="false")
         return df
 
-    def get_dividend_mean_growth_rate(self, period=5) -> pd.Series:
+    def get_dividend_mean_growth_rate(self, period: int=5) -> pd.Series:
         """
         Calculate geometric mean of annual dividends growth rate time series for a given trailing period.
 
@@ -902,7 +973,16 @@ class AssetList(make_asset_list.ListMaker):
         Returns
         -------
         Series
-            Dividend growth geometric mean values for each asset.
+            Dividend growth geometric mean value for each asset.
+
+        See Also
+        --------
+        dividend_yield : Dividend yield time series.
+        dividend_yield_annual : Calendar year dividend yield time series.
+        dividends_annual : Calendar year dividends.
+        dividend_paying_years : Number of years of consecutive dividend payments.
+        dividend_growing_years : Number of years when the annual dividend was growing.
+        get_dividend_mean_yield : Arithmetic mean for annual dividend yield.
 
         Examples
         --------

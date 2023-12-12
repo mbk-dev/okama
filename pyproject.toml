@@ -57,7 +57,7 @@ recommonmark = "^0.7.1"
 Jinja2 = "3.0.3"
 
 [tool.poetry.group.jupyter]
-optional = true
+optional = false
 
 [tool.poetry.group.jupyter.dependencies]
 jupyter = "^1.0.0"

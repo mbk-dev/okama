@@ -10,8 +10,6 @@ import okama as ok
 # pf.wealth_index_with_assets.plot()
 # plt.show()
 
-i = ok.Inflation(symbol="RUB.INFL", last_date="2001-01")
+al = ok.AssetList(["SBERP.MOEX", "LKOH.MOEX"], ccy='RUB')
 
-print(
-    i.describe(years=[5])
-)
+print(al.get_mean_dividend_yield())
