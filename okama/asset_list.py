@@ -886,6 +886,21 @@ class AssetList(make_asset_list.ListMaker):
         return self._get_assets_dividends().resample("Y").sum()
 
     @property
+    def dividend_yield_annual(self):
+        """
+
+        See Also
+        --------
+        dividend_yield : Dividend yield time series.
+        dividends_annual : Calendar year dividends time series.
+        dividend_paying_years : Number of years of consecutive dividend payments.
+        dividend_growing_years : Number of years when the annual dividend was growing.
+        get_dividend_mean_yield : Arithmetic mean for annual dividend yield.
+        get_dividend_mean_growth_rate : Geometric mean of annual dividends growth rate.
+        """
+        return self._assets_dividend_yield.resample(rule="Y").last()
+
+    @property
     def dividend_growing_years(self) -> pd.DataFrame:
         """
         Return the number of years when the annual dividend was growing for each asset.
