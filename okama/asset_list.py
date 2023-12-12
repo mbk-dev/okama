@@ -1014,6 +1014,47 @@ class AssetList(make_asset_list.ListMaker):
         dt = helpers.Date.subtract_years(dt0, period)
         return ((growth_ts[dt:] + 1.0).prod()) ** (1 / period) - 1.0
 
+    def get_dividend_mean_yield(self, period: int = 5) -> pd.Series:
+        """
+        Calculate the arithmetic mean for annual dividend yield over a specified period.
+
+        Dividend yield is taken for full calendar annual dividends.
+
+        Parameters
+        ----------
+        period : int, default 5
+            Mean dividend yield trailing period in years. Period should be a positive integer
+            and not exceed the available data period_length.
+
+        Returns
+        -------
+        Series
+            Mean dividend yield value for each asset.
+
+        See Also
+        --------
+        dividend_yield : Dividend yield time series.
+        dividend_yield_annual : Calendar year dividend yield time series.
+        dividends_annual : Calendar year dividends.
+        get_dividend_mean_growth_rate : Geometric mean of annual dividends growth rate.
+        dividend_paying_years : Number of years of consecutive dividend payments.
+        dividend_growing_years : Number of years when the annual dividend was growing.
+
+        Examples
+        --------
+        >>> al = ok.AssetList(["SBERP.MOEX", "LKOH.MOEX"], ccy='RUB', first_date='2005-01', last_date='2023-12')
+        >>> x.get_dividend_mean_growth_rate(period=3)
+        SBERP.MOEX    0.050497
+        LKOH.MOEX     0.086743
+        dtype: float64
+        """
+
+
+        self._validate_period(period)
+        dt0 = self.last_date
+        dt = helpers.Date.subtract_years(dt0, period)
+        return self.dividend_yield_annual[dt:].mean()
+
     # index methods
     def tracking_difference(self, rolling_window=None) -> pd.DataFrame:
         """
