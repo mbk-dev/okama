@@ -269,6 +269,9 @@ class TestAssetList:
         assert self.asset_list.dividend_yield.iloc[:, 0].sum() == 0
         assert self.asset_list_with_portfolio_dividends.dividend_yield.iloc[-1, 0] == approx(0.0394, abs=1e-2)
 
+    def test_dividend_yield_annual(self):
+        assert self.spy.dividend_yield_annual.iloc[0, 0] == approx(0.01144, abs=1e-3)
+
     def test_dividends_annual(self):
         assert self.spy.dividends_annual.iloc[-2, 0] == approx(1.4194999999999998, rel=1e-2)
         assert self.asset_list.dividends_annual.iloc[:, 0].sum() == 0
@@ -288,6 +291,9 @@ class TestAssetList:
             match="'period' \\(3\\) is beyond historical data range \\(2.0\\)",
         ):
             self.spy.get_dividend_mean_growth_rate(period=3)
+
+    def test_get_dividend_mean_yield(self):
+        assert self.spy.get_dividend_mean_yield(period=2).iloc[-1] == approx(0.01213, abs=1e-2)
 
     def test_tracking_difference_failing(self):
         with pytest.raises(
