@@ -38,7 +38,7 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
 - Monte Carlo Simulations for financial assets and investment portfolios
 - Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
 - Different financial ratios: Sharpe ratio, Sortino ratio, Diversification ratio 
-- Forecasting models according to normal and lognormal distribution
+- Forecasting models according to normal, lognormal and other popular distributions
 - Testing distribution on historical data
 - Dividend yield and other dividend indicators for stocks
 - Backtesting and comparing historical performance of broad range of assets and indexes in multiple currencies
@@ -191,7 +191,7 @@ As contributors and maintainers to this project, you are expected to abide by ok
 ## Communication
 
 For basic usage questions (e.g., "_Is XXX currency supported by okama?_") and for sharing ideas please use [GitHub Discussions](https://github.com/mbk-dev/okama/discussions/3).
-Russian language community is available at [okama.io forums](https://community.okama.io/c/python-okama).
+Russian language community is available at [okama.io forums](https://community.okama.io).
 
 ## License
 
