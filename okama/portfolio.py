@@ -821,6 +821,50 @@ class Portfolio(make_asset_list.ListMaker):
         return div_yield_series
 
     @property
+    def assets_dividend_yield(self):
+        """
+        Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
+
+        LTM dividend yield is the sum trailing twelve months of common dividends per share divided by
+        the current price per share.
+
+        All yields are calculated in the asset list base currency after adjusting the dividends and price time series.
+        Forecasted (future) dividends are removed.
+        Zero value time series are created for assets without dividends.
+
+        Returns
+        -------
+        DataFrame
+            Monthly time series of LTM dividend yield for each asset.
+
+        See Also
+        --------
+        dividend_yield_annual : Calendar year dividend yield time series.
+        dividends_annual : Calendar year dividends time series.
+        dividend_paying_years : Number of years of consecutive dividend payments.
+        dividend_growing_years : Number of years when the annual dividend was growing.
+        get_dividend_mean_yield : Arithmetic mean for annual dividend yield.
+        get_dividend_mean_growth_rate : Geometric mean of annual dividends growth rate.
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
+        >>> x.dividend_yield
+                   T.US    XOM.US
+        1984-01  0.000000  0.000000
+        1984-02  0.000000  0.002597
+        1984-03  0.002038  0.002589
+        1984-04  0.001961  0.002346
+                   ...       ...
+        1994-09  0.018165  0.012522
+        1994-10  0.018651  0.011451
+        1994-11  0.018876  0.012050
+        1994-12  0.019344  0.011975
+        [132 rows x 2 columns]
+        """
+        return super()._assets_dividend_yield
+
+    @property
     def real_mean_return(self) -> float:
         """
         Calculate annualized real mean return (arithmetic mean) for the rate of return time series.
