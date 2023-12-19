@@ -823,6 +823,25 @@ class Portfolio(make_asset_list.ListMaker):
         return div_yield_series
 
     @property
+    def dividends_annual(self) -> pd.DataFrame:
+        """
+        Return calendar year dividends sum time series for each asset.
+
+        Returns
+        -------
+        DataFrame
+            Annual dividends time series for each asset.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
+        >>> pf.dividends_annual.plot(kind='bar')
+        >>> plt.show()
+        """
+        return self._get_assets_dividends().resample("Y").sum()
+
+    @property
     def real_mean_return(self) -> float:
         """
         Calculate annualized real mean return (arithmetic mean) for the rate of return time series.

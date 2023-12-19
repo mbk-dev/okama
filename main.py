@@ -6,6 +6,12 @@ import okama as ok
 # ef.plot_cml(rf_return=0.15, y_axe="cagr")
 # plt.show()
 
-pf = ok.Portfolio(["SPY.US", "BND.US"], weights=[.5, .5], rebalancing_period="monthly")
-pf.wealth_index_with_assets.plot()
+#pf = ok.Portfolio(["SPY.US", "BND.US"], weights=[.5, .5], rebalancing_period="monthly")
+#pf.wealth_index_with_assets.plot()
+#plt.show()
+
+
+import matplotlib.pyplot as plt
+pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021', rebalancing_period="monthly")
+pf.dividends_annual.plot(kind='bar')
 plt.show()
