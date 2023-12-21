@@ -106,7 +106,7 @@ def init_portfolio_values():
         first_date="2015-01",
         last_date="2020-01",
         inflation=True,
-        rebalancing_period="year",
+        rebalancing_period="annually",
         symbol="pf1.PF",
     )
 
