@@ -153,7 +153,7 @@ def portfolio_dividends(init_portfolio_values):
 
 
 # Macro
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="function")
 def _init_inflation(request):
     request.cls.infl_rub = ok.Inflation(symbol="RUB.INFL", last_date="2001-01")
     request.cls.infl_usd = ok.Inflation(symbol="USD.INFL", last_date="1923-01")

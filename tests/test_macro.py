@@ -68,6 +68,25 @@ class TestInflation:
         assert self.infl_usd.values_monthly[-1] == approx(-0.0059, abs=1e-4)
         assert self.infl_rub.values_monthly[-1] == approx(0.0276, abs=1e-4)
 
+    error_case_ids = ["invalid_date_format", "nonexistent_date", "invalid_value_type"]
+
+    @pytest.mark.parametrize(
+        "date, value",
+        [("2022-06", 100.0), ("2025-01", 200.0), (pd.Timestamp.now().strftime("%Y-%m"), 150.0), ("2024-02", 300.0)],
+    )
+    def test_set_values_monthly_happy_path(self, date, value):  # Arrange instance = MyClass()
+        self.infl_rub.set_values_monthly(date, value)
+        assert self.infl_rub.values_monthly[pd.Period(date, freq="M")] == value
+
+    @pytest.mark.parametrize(
+        "date, value, expected_exception",
+        [("12,2023", 100.0, ValueError), ("2023-13", 100.0, ValueError), ("2023-12", "one hundred", TypeError)],
+        ids=error_case_ids,
+    )
+    def test_set_values_monthly_error_cases(self, date, value, expected_exception):
+        with pytest.raises(expected_exception):
+            self.infl_rub.set_values_monthly(date, value)
+
     def test_describe(self):
         description = self.infl_rub.describe(years=[5])
         assert list(description.columns) == [

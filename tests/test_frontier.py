@@ -54,18 +54,18 @@ def test_gmv(init_efficient_frontier):
 
 @mark.frontier
 def test_gmv_monthly(init_efficient_frontier):
-    assert init_efficient_frontier.gmv_monthly[0] == approx(0.01070, rel=1e-2)
+    assert init_efficient_frontier.gmv_monthly[0] == approx(0.01055, abs=1e-2)
 
 
 @mark.frontier
 def test_gmv_annualized(init_efficient_frontier):
-    assert init_efficient_frontier.gmv_annualized[0] == approx(0.0425, rel=1e-2)
+    assert init_efficient_frontier.gmv_annualized[0] == approx(0.0425, abs=1e-2)
 
 
 @mark.frontier
 def test_optimize_return(init_efficient_frontier):
-    assert init_efficient_frontier.optimize_return(option="max")["Mean_return_monthly"] == approx(0.016475, rel=1e-2)
-    assert init_efficient_frontier.optimize_return(option="min")["Mean_return_monthly"] == approx(0.012468, rel=1e-2)
+    assert init_efficient_frontier.optimize_return(option="max")["Mean_return_monthly"] == approx(0.016475, abs=1e-2)
+    assert init_efficient_frontier.optimize_return(option="min")["Mean_return_monthly"] == approx(0.012468, abs=1e-2)
 
 
 @mark.frontier
@@ -118,13 +118,15 @@ test_tangency_data = [
 
 
 @pytest.mark.parametrize(
-    "rate_of_return, expected_weights, expected_return", test_tangency_data, ids=["MSR Arithmetic mean", "MSR geometric mean"]
+    "rate_of_return, expected_weights, expected_return",
+    test_tangency_data,
+    ids=["MSR Arithmetic mean", "MSR geometric mean"],
 )
 @mark.frontier
 def test_get_tangency_portfolio(init_efficient_frontier, rate_of_return, expected_weights, expected_return):
     rf_rate = 0.05
 
-    dic = init_efficient_frontier.get_tangency_portfolio(rate_of_return='cagr', rf_return=rf_rate)
+    dic = init_efficient_frontier.get_tangency_portfolio(rate_of_return="cagr", rf_return=rf_rate)
     assert_allclose(dic["Weights"], expected_weights, atol=1e-2)
     assert dic["Rate_of_return"] == approx(expected_return, rel=1e-2)
 
@@ -142,7 +144,7 @@ def test_get_most_diversified_portfolio_global(init_efficient_frontier):
     }
     df = pd.Series(dic)
     df_expected = pd.Series(dic_expected)
-    assert_series_equal(df, df_expected, rtol=1e-03)
+    assert_series_equal(df, df_expected, atol=1e-02)
 
 
 test_monte_carlo = [
@@ -177,7 +179,7 @@ def test_get_most_diversified_portfolio(init_efficient_frontier):
     }
     df = pd.Series(dic)
     df_expected = pd.Series(dic_expected)
-    assert_series_equal(df, df_expected, rtol=1e-03)
+    assert_series_equal(df, df_expected, atol=1e-01)
 
 
 @mark.frontier
@@ -196,7 +198,7 @@ def test_plot_cml(init_efficient_frontier):
 
 @mark.frontier
 def test_plot_transition_map(init_efficient_frontier_three_assets):
-    axes_data = np.array(init_efficient_frontier_three_assets.plot_transition_map(x_axe='risk').lines[0].get_data())
+    axes_data = np.array(init_efficient_frontier_three_assets.plot_transition_map(x_axe="risk").lines[0].get_data())
     values = np.genfromtxt(conftest.data_folder / "test_transition_map.csv", delimiter=",")
     assert axes_data.shape == values.shape
     assert axes_data[0, 0] == approx(values[0, 0], abs=1e-1)

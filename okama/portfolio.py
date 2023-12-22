@@ -12,7 +12,6 @@ from okama.common.helpers import helpers, ratios
 from okama.common.helpers.helpers import Rebalance
 
 
-
 class Portfolio(make_asset_list.ListMaker):
     """
     Implementation of investment portfolio.
@@ -56,7 +55,7 @@ class Portfolio(make_asset_list.ListMaker):
         The weight of an asset is the percent of an investment portfolio that corresponds to the asset.
         If weights = None an equally weighted portfolio is created (all weights are equal).
 
-    rebalancing_period : {'month', 'year', 'none'}, default 'month'
+    rebalancing_period : {'none', 'month', 'quarter', 'half-year', 'year'}, default 'month'
         Rebalancing period (rebalancing frequency) is predetermined time intervals when
         the investor rebalances the portfolio. If 'none' assets weights are not rebalanced.
 
@@ -176,9 +175,8 @@ class Portfolio(make_asset_list.ListMaker):
         >>> plt.show()
         """
         if self.rebalancing_period != "month":
-            return helpers.Rebalance.assets_weights_ts(
+            return helpers.Rebalance(period=self.rebalancing_period).assets_weights_ts(
                 ror=self.assets_ror,
-                period=self.rebalancing_period,
                 weights=self.weights,
             )
         values = np.tile(self.weights, (self.ror.shape[0], 1))
@@ -207,7 +205,7 @@ class Portfolio(make_asset_list.ListMaker):
         if rebalancing_period in Rebalance.frequency_mapping.keys():
             self._rebalancing_period = rebalancing_period
         else:
-            raise ValueError(f'rebalancing_period must be in {Rebalance.frequency_mapping.keys()}')
+            raise ValueError(f"rebalancing_period must be in {Rebalance.frequency_mapping.keys()}")
 
     @property
     def symbol(self) -> str:
@@ -718,7 +716,7 @@ class Portfolio(make_asset_list.ListMaker):
         """
         Calculate the number of securities monthly time series for the portfolio assets.
 
-        Number of securities in the Portfolio is changing over time as the dividends are reinvested.
+        The number of securities in the Portfolio is changing over time as the dividends are reinvested.
         Portfolio rebalancing also affects the number of securities.
 
         Initial number of securities depends on the portfolio size in base currency (1000 units).
@@ -817,7 +815,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.dividend_yield.plot()
         >>> plt.show()
         """
-        df = self.assets_dividend_yield @ self.weights_ts.T
+        df = self._assets_dividend_yield @ self.weights_ts.T
         div_yield_series = pd.Series(np.diag(df), index=df.index)  # faster than df1.mul(df2).sum(axis=1)
         div_yield_series.rename(self.symbol, inplace=True)
         return div_yield_series
@@ -840,6 +838,50 @@ class Portfolio(make_asset_list.ListMaker):
         >>> plt.show()
         """
         return self._get_assets_dividends().resample("Y").sum()
+
+    @property
+    def assets_dividend_yield(self):
+        """
+        Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
+
+        LTM dividend yield is the sum trailing twelve months of common dividends per share divided by
+        the current price per share.
+
+        All yields are calculated in the asset list base currency after adjusting the dividends and price time series.
+        Forecasted (future) dividends are removed.
+        Zero value time series are created for assets without dividends.
+
+        Returns
+        -------
+        DataFrame
+            Monthly time series of LTM dividend yield for each asset.
+
+        See Also
+        --------
+        dividend_yield_annual : Calendar year dividend yield time series.
+        dividends_annual : Calendar year dividends time series.
+        dividend_paying_years : Number of years of consecutive dividend payments.
+        dividend_growing_years : Number of years when the annual dividend was growing.
+        get_dividend_mean_yield : Arithmetic mean for annual dividend yield.
+        get_dividend_mean_growth_rate : Geometric mean of annual dividends growth rate.
+
+        Examples
+        --------
+        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
+        >>> x.dividend_yield
+                   T.US    XOM.US
+        1984-01  0.000000  0.000000
+        1984-02  0.000000  0.002597
+        1984-03  0.002038  0.002589
+        1984-04  0.001961  0.002346
+                   ...       ...
+        1994-09  0.018165  0.012522
+        1994-10  0.018651  0.011451
+        1994-11  0.018876  0.012050
+        1994-12  0.019344  0.011975
+        [132 rows x 2 columns]
+        """
+        return super()._assets_dividend_yield
 
     @property
     def real_mean_return(self) -> float:

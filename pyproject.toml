@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "okama"
-version = "1.3.1"
+version = "1.3.2"
 description = "Investment portfolio analyzing & optimization tools"
 authors = ["Sergey Kikevich <chilango74@gmail.com>"]
 license = "MIT"
@@ -28,25 +28,27 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8, <4.0.0"
-pandas = ">=1.4.0, <=1.6.0"
+python = ">=3.9,<4.0.0"
+pandas = "^2.0.0"
 scipy = "^1.9.0"
 matplotlib = "^3.5.1"
 requests = "<=2.31.0"   # Windows has an issue with 2.32.0
 joblib = "^1.1.0"
 
 [tool.poetry.group.test]
-optional = true
+optional = false
 
 [tool.poetry.group.test.dependencies]
 pytest = "^6.0.0"
-black = "^22.3.0"
+black = {extras = ["jupyter"], version = "^23.12.0"}
+pytest-xdist = "^3.5.0"
+flake8 = "^6.1.0"
 
 [tool.poetry.group.docs]
-optional = true
+optional = false
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^5.0.0"
+sphinx = "^7.0.0"
 sphinx-rtd-theme = "^1.0.0"
 numpydoc = "^1.2.1"
 nbsphinx = "^0.8.8"
@@ -56,13 +58,14 @@ recommonmark = "^0.7.1"
 Jinja2 = "3.0.3"
 
 [tool.poetry.group.jupyter]
-optional = true
+optional = false
 
 [tool.poetry.group.jupyter.dependencies]
 jupyter = "^1.0.0"
 ipykernel = "^6.15.0"
 ipython = "^8.0.0"
 nbmake = "^1.2"  # test jupyter notebooks
+zmq = "^0.0.0"  # required to run pytest
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

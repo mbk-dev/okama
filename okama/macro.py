@@ -4,6 +4,7 @@ from typing import Union, Tuple
 import numpy as np
 import pandas as pd
 
+import okama.common.validators
 from okama import settings
 from okama.api import data_queries, namespaces
 from okama.common.helpers import helpers
@@ -36,12 +37,9 @@ class MacroABC(ABC):
         self._get_symbol_data(symbol)
         self._first_date = first_date
         self._last_date = last_date
-        self.first_date: pd.Timestamp = self.values_monthly.index[0].to_timestamp()
-        self.last_date: pd.Timestamp = self.values_monthly.index[-1].to_timestamp()
-        self.pl = settings.PeriodLength(
-            self.values_monthly.shape[0] // settings._MONTHS_PER_YEAR,
-            self.values_monthly.shape[0] % settings._MONTHS_PER_YEAR,
-        )
+        self._values_monthly = self._get_values_monthly()
+        self._set_first_last_dates()
+
         self._pl_txt = f"{self.pl.years} years, {self.pl.months} months"
 
     def __repr__(self):
@@ -59,6 +57,17 @@ class MacroABC(ABC):
 
     def _check_namespace(self):
         pass
+
+    def _set_first_last_dates(self):
+        self.first_date: pd.Timestamp = self.values_monthly.index[0].to_timestamp()
+        self.last_date: pd.Timestamp = self.values_monthly.index[-1].to_timestamp()
+        self.pl = settings.PeriodLength(
+            self.values_monthly.shape[0] // settings._MONTHS_PER_YEAR,
+            self.values_monthly.shape[0] % settings._MONTHS_PER_YEAR,
+        )
+
+    def _get_values_monthly(self) -> pd.Series:
+        return data_queries.QueryData.get_macro_ts(self.symbol, self._first_date, self._last_date, period="M")
 
     def _get_symbol_data(self, symbol) -> None:
         x = data_queries.QueryData.get_symbol_info(symbol)
@@ -78,7 +87,19 @@ class MacroABC(ABC):
         Series
             Time series of values historical data (monthly).
         """
-        return data_queries.QueryData.get_macro_ts(self.symbol, self._first_date, self._last_date, period="M")
+        return self._values_monthly
+
+    def set_values_monthly(self, date: str, value: float):
+        """
+        Set monthly value for the past or future date.
+
+        The date should be in month period format ("2023-12"). T
+        The result stored only in the class instance. It can be used to analyze inflation with forecast
+        or corrected data.
+        """
+        okama.common.validators.validate_real("value", value)
+        self._values_monthly[pd.Period(date, freq="M")] = value
+        self._set_first_last_dates()
 
     def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
         """
