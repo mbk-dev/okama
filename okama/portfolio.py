@@ -338,8 +338,8 @@ class Portfolio(make_asset_list.ListMaker):
         # TODO: cache property value (heavy calculations)
         df = self._add_inflation()
         df = helpers.Frame.get_wealth_indexes_with_cashflow(
-            ror=df, 
-            portfolio_symbol=self.symbol, 
+            ror=df,
+            portfolio_symbol=self.symbol,
             inflation_symbol=self.inflation,
             discount_rate=self.get_cagr().loc[self.inflation],
             initial_amount=self.initial_amount_pv,
@@ -858,6 +858,25 @@ class Portfolio(make_asset_list.ListMaker):
         div_yield_series = pd.Series(np.diag(df), index=df.index)  # faster than df1.mul(df2).sum(axis=1)
         div_yield_series.rename(self.symbol, inplace=True)
         return div_yield_series
+
+    @property
+    def dividends_annual(self) -> pd.DataFrame:
+        """
+        Return calendar year dividends sum time series for each asset.
+
+        Returns
+        -------
+        DataFrame
+            Annual dividends time series for each asset.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
+        >>> pf.dividends_annual.plot(kind='bar')
+        >>> plt.show()
+        """
+        return self._get_assets_dividends().resample("Y").sum()
 
     @property
     def assets_dividend_yield(self):
