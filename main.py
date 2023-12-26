@@ -10,8 +10,7 @@ import okama as ok
 #pf.wealth_index_with_assets.plot()
 #plt.show()
 
-
 import matplotlib.pyplot as plt
-pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021', rebalancing_period="monthly")
-pf.dividends_annual.plot(kind='bar')
+pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
+pf.dividend_yield_annual.plot(kind='bar')
 plt.show()

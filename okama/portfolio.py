@@ -840,6 +840,42 @@ class Portfolio(make_asset_list.ListMaker):
         return self._get_assets_dividends().resample("Y").sum()
 
     @property
+    def dividend_yield_annual(self):
+        """
+        Calculate last twelve months (LTM) dividend yield annual time series.
+
+        Time series is based on the dividend yield for the end of calendar year.
+
+        LTM dividend yield is the sum trailing twelve months of common dividends per share divided by
+        the current price per share.
+
+        All yields are calculated in the asset list base currency after adjusting the dividends and price time series.
+        Forecasted (future) dividends are removed.
+
+        Returns
+        -------
+        DataFrame
+            Time series of LTM dividend yield for each asset.
+
+        See Also
+        --------
+        dividend_yield : Dividend yield time series.
+        dividends_annual : Calendar year dividends time series.
+        dividend_paying_years : Number of years of consecutive dividend payments.
+        dividend_growing_years : Number of years when the annual dividend was growing.
+        get_dividend_mean_yield : Arithmetic mean for annual dividend yield.
+        get_dividend_mean_growth_rate : Geometric mean of annual dividends growth rate.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
+        >>> pf.dividend_yield_annual.plot(kind='bar')
+        >>> plt.show()
+        """
+        return self._assets_dividend_yield.resample(rule="Y").last()
+
+    @property
     def assets_dividend_yield(self):
         """
         Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.

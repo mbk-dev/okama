@@ -916,7 +916,7 @@ class AssetList(make_asset_list.ListMaker):
         --------
         >>> import matplotlib.pyplot as plt
         >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='2010-01', last_date='2020-12')
-        >>> x.dividends_annual.plot(kind='bar')
+        >>> x.dividend_yield_annual.plot(kind='bar')
         >>> plt.show()
         """
         return self._assets_dividend_yield.resample(rule="Y").last()
