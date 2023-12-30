@@ -298,7 +298,7 @@ class TestAssetList:
     def test_tracking_difference_failing(self):
         with pytest.raises(
             ValueError,
-            match="At least 2 symbols should be provided to calculate Tracking Difference.",
+            match="At least 2 symbols must be provided to calculate Tracking Difference.",
         ):
             self.spy.tracking_difference()
 
