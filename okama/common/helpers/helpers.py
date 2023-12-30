@@ -10,7 +10,7 @@ from okama import settings
 
 def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame], window_below_year: bool = False):
     if not window_below_year and window < settings._MONTHS_PER_YEAR:
-        raise ValueError("window size should be at least 1 year")
+        raise ValueError("window size must be at least 1 year")
     if window > ror.shape[0]:
         raise ValueError("window size is more than data history depth")
 
@@ -18,7 +18,7 @@ def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame], windo
 class Float:
     """
     Group of methods using float values inputs.
-    Some of them can take DataFrame also.
+    Some of them can take DataFrame.
     """
 
     @staticmethod
@@ -102,7 +102,7 @@ class Frame:
         """
         Returns the mean return time series given portfolio weights and the DataFrame of assets mean returns.
         """
-        cls.weights_sum_is_one(weights)
+        # cls.weights_sum_is_one(weights)
         if isinstance(ror, pd.Series):  # required for a single asset portfolio
             return ror
         return ror @ weights
@@ -125,7 +125,7 @@ class Frame:
         Return Compound Annual Rate of Return (CAGR) for each asset given returns time series DataFrame.
         """
         if ror.shape[0] < 12:
-            return pd.Series({x: None for x in ror.columns})  # CAGR is not defined for time periods < 1 year
+            return pd.Series({x: None for x in ror.columns})  # CAGR is not defined for periods < 1 year
         return ((ror + 1.0).prod()) ** (settings._MONTHS_PER_YEAR / ror.shape[0]) - 1.0
 
     @staticmethod
@@ -245,7 +245,7 @@ class Frame:
         """
         Places selected_columns on the first position (position='first') or last position (position='last').
         """
-        cols = list(df.columns.values)  # Make a list of all of the columns in the df
+        cols = list(df.columns.values)  # Make a list of all columns in the df
 
         def condition(y):
             return y in selected_columns
@@ -265,7 +265,7 @@ class Frame:
         The shape of time series should be at least 12. In the opposite case empty time series is returned.
         """
         sk = ror.expanding(min_periods=1).skew()
-        return sk.iloc[settings._MONTHS_PER_YEAR :]
+        return sk.iloc[settings._MONTHS_PER_YEAR:]
 
     @staticmethod
     def skewness_rolling(ror: Union[pd.DataFrame, pd.Series], window: int = 60) -> Union[pd.Series, float]:
@@ -285,7 +285,7 @@ class Frame:
         Kurtosis should be close to zero for normal distribution.
         """
         kt = ror.expanding(min_periods=1).kurt()
-        return kt.iloc[settings._MONTHS_PER_YEAR :]
+        return kt.iloc[settings._MONTHS_PER_YEAR:]
 
     @staticmethod
     def kurtosis_rolling(ror: Union[pd.Series, pd.DataFrame], window: int = 60):
@@ -391,6 +391,10 @@ class Rebalance:
                 assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
                 wealth_index_local = assets_wealth_indexes.sum(axis=1)
                 wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=False)
+                # TODO: FutureWarning: The behavior of array concatenation with empty entries is deprecated.
+                #  In a future version, this will no longer exclude empty items when determining the result dtype.
+                #  To retain the old behavior, exclude the empty entries before the concat operation.
+
                 initial_inv = wealth_index.iloc[-1]
         return wealth_index
 
@@ -491,7 +495,7 @@ class Index:
         y = abs(tracking_diff)
         diff = (y + 1.0).pow(pwr, axis=0) - 1.0
         diff = np.sign(tracking_diff) * diff
-        return diff.iloc[settings._MONTHS_PER_YEAR - 1 :]  # returns for the first 11 months can't be annualized
+        return diff.iloc[settings._MONTHS_PER_YEAR - 1:]  # returns for the first 11 months can't be annualized
 
     @staticmethod
     def tracking_error(ror: pd.DataFrame) -> pd.DataFrame:
@@ -522,7 +526,7 @@ class Index:
         cov_matrix_ts = getattr(ror.expanding(), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
         cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
-        return cov_matrix_ts.iloc[settings._MONTHS_PER_YEAR :]
+        return cov_matrix_ts.iloc[settings._MONTHS_PER_YEAR:]
 
     @staticmethod
     def rolling_cov_cor(ror: pd.DataFrame, window: int = 60, fn: str = "corr") -> pd.DataFrame:
@@ -554,7 +558,7 @@ class Index:
             raise ValueError("Beta coefficient is not defined for time periods < 1 year")
         cov = Index.expanding_cov_cor(ror, fn="cov")
         benchmark_var = ror.loc[:, ror.columns[0]].expanding().var()
-        benchmark_var = benchmark_var.iloc[settings._MONTHS_PER_YEAR :]
+        benchmark_var = benchmark_var.iloc[settings._MONTHS_PER_YEAR:]
         return cov.divide(benchmark_var, axis=0)
 
     @staticmethod
