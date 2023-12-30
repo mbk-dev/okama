@@ -1,11 +1,6 @@
 import matplotlib.pyplot as plt
 import okama as ok
 
-indexes = ["RGBITR.INDX", "RUCBTRNS.INDX", "MCFTR.INDX", "GC.COMM"]
-bounds = [(0, 0.7), (0, 0.7), (0, 1), (0, 0.19)]
-ef = ok.EfficientFrontier(indexes, ccy="RUB", full_frontier=False, bounds=bounds, inflation=False)
-tg = ef.get_tangency_portfolio(rf_return=0.08)
-s = tg["Weights"].sum()
-print(s)
-## TODO: replace ValueError: Weights sum is not equal to one. with custom error mesage
-
+weights = [0.32, 0.31,  0.18, .19]
+portf = ok.Portfolio(['RGBITR.INDX', 'RUCBTRNS.INDX', 'MCFTR.INDX', 'GC.COMM'], ccy="RUB", weights=weights, inflation=True, symbol="portf.PF", rebalancing_period='year')
+portf.describe()

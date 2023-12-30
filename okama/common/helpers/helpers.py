@@ -390,11 +390,7 @@ class Rebalance:
                 inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
                 assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
                 wealth_index_local = assets_wealth_indexes.sum(axis=1)
-                wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=False)
-                # TODO: FutureWarning: The behavior of array concatenation with empty entries is deprecated.
-                #  In a future version, this will no longer exclude empty items when determining the result dtype.
-                #  To retain the old behavior, exclude the empty entries before the concat operation.
-
+                wealth_index = pd.concat([None if wealth_index.empty else wealth_index, wealth_index_local], sort=False)
                 initial_inv = wealth_index.iloc[-1]
         return wealth_index
 
@@ -421,7 +417,7 @@ class Rebalance:
                     sort=False,
                 )
                 wealth_index_local = assets_wealth_indexes_local.sum(axis=1)
-                wealth_index = pd.concat([wealth_index, wealth_index_local], verify_integrity=True, sort=False)
+                wealth_index = pd.concat([None if wealth_index.empty else wealth_index, wealth_index_local], sort=False)
                 initial_inv = wealth_index.iloc[-1]
         return assets_wealth_indexes
 
