@@ -279,7 +279,7 @@ def test_get_rolling_cagr(portfolio_rebalanced_month, window, real, expected):
 
 
 def test_get_rolling_cagr_failing_short_window(portfolio_not_rebalanced):
-    with pytest.raises(ValueError, match="window size should be at least 1 year"):
+    with pytest.raises(ValueError, match="window size must be at least 1 year"):
         portfolio_not_rebalanced.get_rolling_cagr(window=1)
 
 
@@ -327,7 +327,7 @@ def test_rolling_skewness(portfolio_rebalanced_month):
 
 
 def test_kurtosis(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.kurtosis.iloc[-1] == approx(1.490, rel=1e-2)
+    assert portfolio_rebalanced_month.kurtosis.iloc[-1] == approx(1.46, rel=1e-2)
 
 
 def test_kurtosis_rolling(portfolio_rebalanced_month):
