@@ -821,6 +821,34 @@ class Portfolio(make_asset_list.ListMaker):
         return div_yield_series
 
     @property
+    def dividends_annual(self) -> pd.DataFrame:
+        """
+        Return calendar year dividends sum time series for each asset.
+
+        Returns
+        -------
+        DataFrame
+            Annual dividends time series for each asset.
+
+        See Also
+        --------
+        dividend_yield : Dividend yield time series.
+        dividend_yield_annual : Calendar year dividend yield time series.
+        dividend_paying_years : Number of years of consecutive dividend payments.
+        dividend_growing_years : Number of years when the annual dividend was growing.
+        get_dividend_mean_yield : Arithmetic mean for annual dividend yield.
+        get_dividend_mean_growth_rate : Geometric mean of annual dividends growth rate.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='2010-01', last_date='2020-12')
+        >>> x.dividends_annual.plot(kind='bar')
+        >>> plt.show()
+        """
+        return self._get_assets_dividends().resample("Y").sum()
+
+    @property
     def assets_dividend_yield(self):
         """
         Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
