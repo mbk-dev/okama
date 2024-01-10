@@ -11,6 +11,14 @@ import okama as ok
 from tests import conftest
 
 
+def test_dividend_yield(init_portfolio_values):
+    return ok.Portfolio(**init_portfolio_values).assets_dividend_yield
+
+
+def test_dividends_annual(init_portfolio_values):
+    return ok.Portfolio(**init_portfolio_values).dividends_annual
+
+
 def test_initialization_failing():
     with pytest.raises(
         ValueError,
