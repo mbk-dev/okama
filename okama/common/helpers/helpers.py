@@ -162,19 +162,65 @@ class Frame:
         if isinstance(ts, pd.Series):
             ts.rename(ror_monthly.name, inplace=True)
         return ts
-
+    
     @staticmethod
     def get_wealth_indexes(
-        ror: Union[pd.Series, pd.DataFrame], first_value: float = 1000.0
+        ror: Union[pd.Series, pd.DataFrame], 
+        initial_amount: int = 1000
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Returns wealth indexes for a list of assets (or for portfolio).
         Works also with pd.Series inputs.
+
+        The values of the wealth index correspond to the begin of the month.
         """
-        initial_investments = first_value
+        initial_investments = initial_amount
         first_date = ror.index[0]
-        wealth_index = initial_investments * (ror + 1).cumprod()
+        wealth_index = initial_investments * (ror + 1).cumprod().shift(1)
         wealth_index.loc[first_date] = initial_investments  # replaces NaN with the first period return
+        wealth_index.sort_index(ascending=True, inplace=True)
+        return wealth_index
+
+    @staticmethod
+    def get_wealth_indexes_with_cashflow(
+        ror: Union[pd.Series, pd.DataFrame], 
+        portfolio_symbol: Optional[str],
+        inflation_symbol: Optional[str],
+        discount_rate: float,
+        initial_amount: float = 1000,
+        cashflow: int = 0,
+    ) -> Union[pd.Series, pd.DataFrame]:
+        """
+        Returns wealth indexes for a list of assets (or for portfolio).
+        Works also with pd.Series inputs.
+
+        The values of the wealth index correspond to the beginning of the month.
+        """
+        # first_date = ror.index[0]
+        if not cashflow:
+            wealth_index = Frame.get_wealth_indexes(ror, initial_amount)
+        else:
+            value = initial_amount
+            if isinstance(ror, pd.DataFrame):
+                portfolio_position = ror.columns.get_loc(portfolio_symbol)
+            else:
+                # for Series
+                portfolio_position = 0
+                ror = ror.to_frame()
+            s = pd.Series(dtype=float, name=portfolio_symbol)
+            for n, row in enumerate(ror.itertuples()):
+                r = row[portfolio_position + 1]
+                value = value * (r + 1) + cashflow * (1 + discount_rate / settings._MONTHS_PER_YEAR) ** n
+                date = row[0]
+                s[date] = value
+            s = s.shift(1)  # The values of the wealth index correspond to the beginning of the month.
+            s.iloc[0] = initial_amount  # replaces NaN with the first period return
+            if inflation_symbol:
+                cum_inflation = Frame.get_wealth_indexes(ror=ror.loc[:, inflation_symbol], initial_amount=initial_amount)
+                wealth_index = pd.concat([s, cum_inflation], axis="columns")
+                # wealth_index.loc[first_date, portfolio_symbol] = initial_amount  # replaces NaN with the first period return
+            else:
+                wealth_index = s
         wealth_index.sort_index(ascending=True, inplace=True)
         return wealth_index
 
@@ -437,7 +483,7 @@ class Rebalance:
         """
         # define data of the first period
         first_date = ror.index[0]
-        return_first_period = ror.iloc[0] @ weights
+        return_first_period = ror.iloc[0] @ weights / ror.shape[0]
 
         wealth_index = self.wealth_ts(weights, ror)
         ror = wealth_index.pct_change()

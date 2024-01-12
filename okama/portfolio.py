@@ -75,6 +75,8 @@ class Portfolio(make_asset_list.ListMaker):
         inflation: bool = True,
         weights: Optional[List[float]] = None,
         rebalancing_period: str = "month",
+        initial_amount: float = 1000.,
+        cashflow: int = 0,
         symbol: str = None,
     ):
         super().__init__(
@@ -89,6 +91,8 @@ class Portfolio(make_asset_list.ListMaker):
         self.assets_weights = dict(zip(self.symbols, self.weights))
         self._rebalancing_period = None
         self.rebalancing_period = rebalancing_period
+        self.cashflow = cashflow
+        self.initial_amount = initial_amount
         self._symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
 
     def __repr__(self):
@@ -318,6 +322,8 @@ class Portfolio(make_asset_list.ListMaker):
         That is: 1000 * (Acc_Return + 1)
         Initial investments are taken as 1000 units of the Portfolio base currency.
 
+        The values of the wealth index correspond to the beginning of the month.
+
         Returns
         -------
             Time series of wealth index values for portfolio and accumulated inflation.
@@ -329,10 +335,32 @@ class Portfolio(make_asset_list.ListMaker):
         >>> x.wealth_index.plot()
         >>> plt.show()
         """
+        # TODO: cache property value (heavy calculations)
         df = self._add_inflation()
-        df = helpers.Frame.get_wealth_indexes(df)
+        df = helpers.Frame.get_wealth_indexes_with_cashflow(
+            ror=df, 
+            portfolio_symbol=self.symbol, 
+            inflation_symbol=self.inflation,
+            discount_rate=self.get_cagr().loc[self.inflation],
+            initial_amount=self.initial_amount_pv,
+            cashflow=self.cashflow_pv
+            )
         df = self._make_df_if_series(df)
+        # condition = df[self.symbol] <= 0
+        # try:
+        #     survival_date = df[condition].index[0]
+        # except IndexError:
+        #     survival_date = df.index[-1]
+        # df = df.loc[: survival_date, :]
         return df
+
+    @property
+    def survival_date(self) -> pd.Timestamp:
+        return self.wealth_index.index[-1].to_timestamp()
+
+    @property
+    def survival_period(self) -> float:
+        return round((self.survival_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1)
 
     def _make_df_if_series(self, ts):
         if isinstance(ts, pd.Series):  # should always return a DataFrame
@@ -644,6 +672,16 @@ class Portfolio(make_asset_list.ListMaker):
             fn=helpers.Frame.get_cumulative_return,
             window_below_year=True,
         )
+
+    @property
+    def initial_amount_pv(self) -> Optional[int]:
+        pv = self.initial_amount / (1. + self.get_cagr().loc[self.inflation]) ** self.period_length
+        return int(pv)
+
+    @property
+    def cashflow_pv(self) -> Optional[int]:
+        pv = self.cashflow / (1. + self.get_cagr().loc[self.inflation]) ** self.period_length
+        return int(pv)
 
     @property
     def assets_close_monthly(self) -> pd.DataFrame:
@@ -1467,9 +1505,13 @@ class Portfolio(make_asset_list.ListMaker):
             raise ValueError('"distr" must be "norm" (default) or "lognorm".')
         return pd.DataFrame(data=random_returns, index=ts_index)
 
-    def _monte_carlo_wealth(self, distr: str = "norm", years: int = 1, n: int = 100) -> pd.DataFrame:
+    def _monte_carlo_wealth(self,
+                            first_value: float,
+                            distr: str = "norm",
+                            years: int = 1,
+                            n: int = 100) -> pd.DataFrame:
         """
-        Generate portfolio wealth index with Monte Carlo simulation.
+        Generate portfolio wealth indexes with Monte Carlo simulation.
 
         Monte Carlo simulation generates n random monthly time series.
         Each wealth index is calculated with rate of return time series of a given distribution.
@@ -1511,8 +1553,19 @@ class Portfolio(make_asset_list.ListMaker):
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
         return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
-        first_value = self.wealth_index[self.symbol].values[-1]
-        return helpers.Frame.get_wealth_indexes(return_ts, first_value)
+        df = pd.DataFrame(dtype=float)
+        # TODO: Replace for by apply
+        for s in return_ts:
+            wts = helpers.Frame.get_wealth_indexes_with_cashflow(
+                ror=return_ts[s],
+                portfolio_symbol=None,
+                inflation_symbol=None,
+                discount_rate=self.get_cagr().loc[self.inflation],
+                initial_amount=first_value,
+                cashflow=self.cashflow
+            )
+            df = pd.concat([df, wts], axis="columns")
+        return df
 
     def _get_cagr_distribution(
         self,
@@ -1639,6 +1692,7 @@ class Portfolio(make_asset_list.ListMaker):
         {10: 1228.3741255659957, 50: 1491.7857161011104, 90: 1745.1130920663286}
         Percentiles values for the wealth index 5 years forecast if the initial value is 1000.
         """
+        # TODO: check "today value"
         if distr == "hist":
             results = self.percentile_wealth_history(years=years, percentiles=percentiles).iloc[-1].to_dict()
         elif distr in ["norm", "lognorm"]:
@@ -2125,6 +2179,7 @@ class Portfolio(make_asset_list.ListMaker):
         self,
         distr: str = "norm",
         years: int = 1,
+        backtest: bool = True,
         n: int = 20,
         figsize: Optional[tuple] = None,
     ) -> None:
@@ -2158,8 +2213,19 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.plot_forecast_monte_carlo(years=5, distr='lognorm', n=100)
         >>> plt.show()
         """
-        s1 = self.wealth_index
-        s2 = self._monte_carlo_wealth(distr=distr, years=years, n=n)
-        s1[self.symbol].plot(legend=None, figsize=figsize)
-        for n in s2:
-            s2[n].plot(legend=None)
+        def plot_monte_carlo_wealth(first_value: float):
+            s2 = self._monte_carlo_wealth(first_value=first_value, distr=distr, years=years, n=n)
+            s2.plot(legend=None)
+            # for s in s2:
+            #     s2[s].plot(legend=None)
+
+        if backtest:
+            s1 = self.wealth_index
+            s1[self.symbol].plot(legend=None, figsize=figsize)
+            last_backtest_value = self.wealth_index[self.symbol].values[-1]
+            if last_backtest_value > 0:
+                plot_monte_carlo_wealth(first_value=last_backtest_value)
+        else:
+            plot_monte_carlo_wealth(first_value=self.initial_amount)
+
+

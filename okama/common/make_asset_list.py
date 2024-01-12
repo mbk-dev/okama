@@ -47,7 +47,7 @@ class ListMaker(ABC):
         ccy: str = "USD",
         inflation: bool = True,
     ):
-        self._assets = assets
+        self._assets = list(dict.fromkeys(assets))  # remove duplicates but keep the order
         self._currency = asset.Asset(symbol=f"{ccy}.FX")
         (
             self.asset_obj_dict,
@@ -67,7 +67,7 @@ class ListMaker(ABC):
         ).values()
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
-        self.assets_ror = self.assets_ror[self.first_date :]
+        self.assets_ror = self.assets_ror[self.first_date:]
         if last_date:
             self.last_date = min(self.last_date, pd.to_datetime(last_date))
         if inflation:
