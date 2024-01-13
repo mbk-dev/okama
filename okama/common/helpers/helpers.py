@@ -224,6 +224,19 @@ class Frame:
         wealth_index.sort_index(ascending=True, inplace=True)
         return wealth_index
 
+    @staticmethod
+    def get_survival_date_series(wealth_series: pd.Series) -> pd.Timestamp:
+        condition = wealth_series <= 0
+        try:
+            survival_date = wealth_series[condition].index[0]
+        except IndexError:
+            survival_date = wealth_series.index[-1]
+        return survival_date.to_timestamp()
+
+    @staticmethod
+    def get_survival_date_dataframe(wealth: pd.DataFrame):
+        return wealth.apply(func=Frame.get_survival_date_series, axis=0)
+
     # Risk metrics
 
     @classmethod
@@ -509,6 +522,10 @@ class Date:
     @staticmethod
     def get_difference_in_months(last_day: pd.Timestamp, first_day: pd.Timestamp):
         return last_day.to_period("M") - first_day.to_period("M")
+
+    @staticmethod
+    def get_period_length(last_date: pd.Timestamp, first_date: pd.Timestamp) -> float:
+        return round((last_date - first_date) / np.timedelta64(365, "D"), ndigits=1)
 
 
 class Index:

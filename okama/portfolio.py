@@ -356,11 +356,12 @@ class Portfolio(make_asset_list.ListMaker):
 
     @property
     def survival_date(self) -> pd.Timestamp:
-        return self.wealth_index.index[-1].to_timestamp()
+        return helpers.Frame.get_survival_date_series(self.wealth_index.loc[:, self.symbol])
 
     @property
     def survival_period(self) -> float:
-        return round((self.survival_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1)
+        # round((self.survival_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1)
+        return helpers.Date.get_period_length(last_date=self.survival_date, first_date=self.first_date)
 
     def _make_df_if_series(self, ts):
         if isinstance(ts, pd.Series):  # should always return a DataFrame
@@ -1285,11 +1286,11 @@ class Portfolio(make_asset_list.ListMaker):
             )
         if not isinstance(years, int) or years == 0:
             raise ValueError("years must be an integer number (not equal to zero).")
-        if years > max_period_years:
-            raise ValueError(
-                f"Forecast period {years} years is not credible. "
-                f"It should not exceed 1/2 of portfolio history period length {self.period_length / 2} years"
-            )
+        # if years > max_period_years:
+        #     raise ValueError(
+        #         f"Forecast period {years} years is not credible. "
+        #         f"It should not exceed 1/2 of portfolio history period length {self.period_length / 2} years"
+        #     )
 
     def percentile_inverse_cagr(
         self,
@@ -1553,7 +1554,7 @@ class Portfolio(make_asset_list.ListMaker):
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
         return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
-        df = pd.DataFrame(dtype=float)
+        df = pd.DataFrame(dtype=float, index=return_ts.index)
         # TODO: Replace for by apply
         for s in return_ts:
             wts = helpers.Frame.get_wealth_indexes_with_cashflow(
@@ -1564,6 +1565,7 @@ class Portfolio(make_asset_list.ListMaker):
                 initial_amount=first_value,
                 cashflow=self.cashflow
             )
+            wts.rename(s, inplace=True)
             df = pd.concat([df, wts], axis="columns")
         return df
 
@@ -2215,17 +2217,34 @@ class Portfolio(make_asset_list.ListMaker):
         """
         def plot_monte_carlo_wealth(first_value: float):
             s2 = self._monte_carlo_wealth(first_value=first_value, distr=distr, years=years, n=n)
-            s2.plot(legend=None)
-            # for s in s2:
-            #     s2[s].plot(legend=None)
+            for s in s2:
+                s2[s].plot(legend=None)
 
         if backtest:
-            s1 = self.wealth_index
-            s1[self.symbol].plot(legend=None, figsize=figsize)
-            last_backtest_value = self.wealth_index[self.symbol].values[-1]
+            s1 = self.wealth_index[self.symbol]
+            s1.plot(legend=None, figsize=figsize)
+            last_backtest_value = s1.iloc[-1]
             if last_backtest_value > 0:
                 plot_monte_carlo_wealth(first_value=last_backtest_value)
         else:
             plot_monte_carlo_wealth(first_value=self.initial_amount)
 
+    def get_survival_period_monte_carlo(
+            self,
+            distr: str = "norm",
+            years: int = 1,
+            n: int = 20,
+    ) -> pd.Series:
+        """
+
+        """
+        s2 = self._monte_carlo_wealth(
+            first_value=self.initial_amount,
+            distr=distr,
+            years=years,
+            n=n
+        )
+        dates: pd.Series = helpers.Frame.get_survival_date_dataframe(s2)
+
+        return dates.apply(helpers.Date.get_period_length, args=(self.last_date,))
 
