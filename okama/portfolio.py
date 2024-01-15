@@ -1554,19 +1554,25 @@ class Portfolio(make_asset_list.ListMaker):
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
         return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
-        df = pd.DataFrame(dtype=float, index=return_ts.index)
-        # TODO: Replace for by apply
-        for s in return_ts:
-            wts = helpers.Frame.get_wealth_indexes_with_cashflow(
-                ror=return_ts[s],
-                portfolio_symbol=None,
-                inflation_symbol=None,
-                discount_rate=self.get_cagr().loc[self.inflation],
-                initial_amount=first_value,
-                cashflow=self.cashflow
-            )
-            wts.rename(s, inplace=True)
-            df = pd.concat([df, wts], axis="columns")
+        d_rate = self.get_cagr().loc[self.inflation]
+        df = return_ts.apply(
+            helpers.Frame.get_wealth_indexes_with_cashflow,
+            axis=0,
+            args=(None, None, d_rate, first_value, self.cashflow)
+        )
+        def remove_negative_values(s):
+            condition = s <= 0
+            try:
+                survival_date = s[condition].index[0]
+                s[survival_date] = 0
+                s[s.index > survival_date] = np.NAN
+            except IndexError:
+                pass
+            return s
+
+        df = df.apply(remove_negative_values, axis=0)
+        all_cells_are_nan = df.isna().all(axis=1)
+        df = df[~all_cells_are_nan]
         return df
 
     def _get_cagr_distribution(
@@ -2215,21 +2221,19 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.plot_forecast_monte_carlo(years=5, distr='lognorm', n=100)
         >>> plt.show()
         """
-        def plot_monte_carlo_wealth(first_value: float):
-            s2 = self._monte_carlo_wealth(first_value=first_value, distr=distr, years=years, n=n)
-            for s in s2:
-                s2[s].plot(legend=None)
-
         if backtest:
             s1 = self.wealth_index[self.symbol]
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
             if last_backtest_value > 0:
-                plot_monte_carlo_wealth(first_value=last_backtest_value)
+                s2 = self._monte_carlo_wealth(first_value=last_backtest_value, distr=distr, years=years, n=n)
+                for s in s2:
+                    s2[s].plot(legend=None)
         else:
-            plot_monte_carlo_wealth(first_value=self.initial_amount)
+            s2 = self._monte_carlo_wealth(first_value=self.initial_amount, distr=distr, years=years, n=n)
+            s2.plot(legend=None)
 
-    def get_survival_period_monte_carlo(
+    def monte_carlo_survival_period(
             self,
             distr: str = "norm",
             years: int = 1,

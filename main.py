@@ -9,7 +9,7 @@ portf = ok.Portfolio(['RGBITR.INDX', 'RUCBTRNS.INDX', 'MCFTR.INDX', 'GC.COMM'],
                      inflation=True,
                      symbol="retirement_portf.PF",
                      rebalancing_period='year',
-                     cashflow=-100_000,
+                     cashflow=-400_000,
                      initial_amount=39_000_000
                      )
 # print(portf)
@@ -19,10 +19,13 @@ portf = ok.Portfolio(['RGBITR.INDX', 'RUCBTRNS.INDX', 'MCFTR.INDX', 'GC.COMM'],
 # print(f"{portf.survival_date=}")
 # portf.wealth_index.plot()
 
-portf.plot_forecast_monte_carlo(distr="norm", years=30, backtest=False, n=10)
+# portf.plot_forecast_monte_carlo(distr="norm", years=30, backtest=False, n=1000)
 
-plt.show()
+# plt.show()
 
-s_periods = portf.get_survival_period_monte_carlo(distr="norm", years=25, n=10)
-print(s_periods.quantile(50 / 100))
-print(s_periods.mean())
+s_periods = portf.monte_carlo_survival_period(distr="lognorm", years=25, n=1000)
+print(f"медиана {s_periods.quantile(50 / 100)}")
+print(f"первый порцентиль {s_periods.quantile(1 / 100)}")
+print(f"99й порцентиль {s_periods.quantile(99 / 100)}")
+print(f"минимум {s_periods.min()}")
+print(f"среднее {s_periods.mean()}")

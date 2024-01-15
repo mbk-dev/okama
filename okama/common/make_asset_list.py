@@ -397,6 +397,7 @@ class ListMaker(ABC):
         kind: str = "mean",
         tickers: Union[str, list] = "tickers",
         pct_values: bool = False,
+        xy_text: tuple = (0, 10)
     ) -> plt.axes:
         """
         Plot the assets points on the risk-return chart with annotations.
@@ -424,6 +425,9 @@ class ListMaker(ABC):
             Risk and return values in the axes:
             Algebraic annotation (False)
             Percents (True)
+
+        xy_text : tuple, default (0, 10)
+            The shift of the annotation text (x, y) from the point. 
 
         Examples
         --------
@@ -479,7 +483,7 @@ class ListMaker(ABC):
                 label,  # this is the text
                 (x * m, y * m),  # this is the point to label
                 textcoords="offset points",  # how to position the text
-                xytext=(0, 10),  # distance from text to points (x,y)
+                xytext=(xy_text),  # distance from text to points (x,y)
                 ha="center",  # horizontal alignment can be left, right or center
             )
         return ax
