@@ -142,11 +142,14 @@ def test_dividends(portfolio_dividends):
 def test_dividend_yield(portfolio_dividends):
     assert portfolio_dividends.dividend_yield.iloc[-1] == approx(0.0396, abs=1e-2)
 
+
 def test_dividends_annual(portfolio_dividends):
     assert portfolio_dividends.dividends_annual.iloc[-1].sum() == approx(32.778668, rel=1e-3)
 
+
 def test_dividend_yield_annual(portfolio_dividends):
     assert portfolio_dividends.dividend_yield_annual.iloc[0, 0] == approx(0.004444, abs=1e-3)
+
 
 def test_risk(portfolio_rebalanced_month):
     assert portfolio_rebalanced_month.risk_monthly == approx(0.02233, rel=1e-1)

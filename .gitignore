@@ -6,4 +6,4 @@ dist/
 __pycache__
 *.pyc
 poetry.lock
-
+/.idea_backup
