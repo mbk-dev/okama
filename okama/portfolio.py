@@ -984,7 +984,7 @@ class Portfolio(make_asset_list.ListMaker):
         return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
 
     @property
-    def risk_monthly(self) -> float:
+    def risk_monthly(self) -> pd.Series:
         """
         Calculate monthly risk (standard deviation of return) for Portfolio.
 
@@ -1011,7 +1011,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.risk_monthly
         0.09415483565833212
         """
-        return self.ror.std()
+        return self.ror.expanding().std()
 
     @property
     def risk_annual(self) -> pd.Series:
@@ -1560,7 +1560,7 @@ class Portfolio(make_asset_list.ListMaker):
         period_months, ts_index = self._forecast_preparation(years)
         # random returns
         if distr == "norm":
-            random_returns = np.random.normal(self.mean_return_monthly, self.risk_monthly, (period_months, n))
+            random_returns = np.random.normal(self.mean_return_monthly, self.risk_monthly.iloc[-1], (period_months, n))
         elif distr == "lognorm":
             std, loc, scale = scipy.stats.lognorm.fit(self.ror)
             random_returns = scipy.stats.lognorm(std, loc=loc, scale=scale).rvs(size=[period_months, n])
