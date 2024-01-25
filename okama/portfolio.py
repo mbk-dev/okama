@@ -986,15 +986,15 @@ class Portfolio(make_asset_list.ListMaker):
     @property
     def risk_monthly(self) -> pd.Series:
         """
-        Calculate monthly risk (standard deviation of return) for Portfolio.
+        Calculate monthly risk expanding time series for Portfolio.
 
         Monthly risk of portfolio is a standard deviation of the rate of return time series.
         Standard deviation (sigma σ) is normalized by N-1.
 
         Returns
         -------
-        float
-            Standard deviation value of the monthly return time series.
+        Series
+            Standard deviation of the monthly return expanding time series.
 
         See Also
         --------
@@ -1009,34 +1009,55 @@ class Portfolio(make_asset_list.ListMaker):
         --------
         >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
         >>> pf.risk_monthly
-        0.09415483565833212
+        date
+        1986-05    0.020117
+        1986-06    0.122032
+        1986-07    0.130113
+        1986-08    0.116642
+                     ...
+        2023-08    0.092875
+        2023-09    0.092861
+        2023-10    0.092759
+        2023-11    0.092763
+        2023-12    0.092665
+        Freq: M, Name: portfolio_1094.PF, Length: 453, dtype: float64
         """
-        return self.ror.expanding().std()
+        return self.ror.expanding().std().iloc[1:]
 
     @property
     def risk_annual(self) -> pd.Series:
         """
         Calculate annualized risk expanding time series for portfolio.
 
-        Risk in this case is a standard deviation of return.
+        Risk is a standard deviation of the rate of return.
 
         Annualized risk is calculated for rate of retirun time series for the sample from 'first_date' to
         'last_date'.
 
         Returns
         -------
-        float
-            Annualized standard deviation value of the monthly return time series.
+        Series
+            Annualized standard deviation of the monthly return expanding time series.
 
         Examples
         --------
         >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
         >>> pf.risk_annual
-        0.4374591902169046
+        date
+        1986-05    0.285175
+        1986-06    0.890909
+        1986-07    0.616876
+        1986-08    0.632270
+        1986-09    0.509642
+                     ...
+        2023-08    0.428297
+        2023-09    0.427350
+        2023-10    0.426961
+        2023-11    0.427930
         """
         risk_ts = self.ror.expanding().std()
         mean_return_ts = self.ror.expanding().mean()
-        return helpers.Float.annualize_risk(risk_ts, mean_return_ts).dropna()
+        return helpers.Float.annualize_risk(risk_ts, mean_return_ts).iloc[1:]
 
     @property
     def semideviation_monthly(self) -> float:

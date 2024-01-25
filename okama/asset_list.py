@@ -77,7 +77,7 @@ class AssetList(make_asset_list.ListMaker):
         return helpers.Frame.get_wealth_indexes(df)
 
     @property
-    def risk_monthly(self) -> pd.Series:
+    def risk_monthly(self) -> pd.DataFrame:
         """
         Calculate monthly risk expanding time series for each asset.
 
@@ -89,12 +89,12 @@ class AssetList(make_asset_list.ListMaker):
 
         Returns
         -------
-        Series
-            Monthly risk (standard deviation) values for each asset in form of Series.
+        DataFrame
+            Monthly risk (standard deviation) expanding time series for each asset in form of Series.
 
         See Also
         --------
-        risk_annual : Calculate annualized risks.
+        risk_annual : Calculate annualized risks expanding time series.
         semideviation_monthly : Calculate semideviation monthly values.
         semideviation_annual : Calculate semideviation annualized values.
         get_var_historic : Calculate historic Value at Risk (VaR).
@@ -105,11 +105,17 @@ class AssetList(make_asset_list.ListMaker):
         --------
         >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
         >>> al.risk_monthly
-        GC.COMM    0.050864
-        SHV.US     0.001419
-        dtype: float64
+        Symbols   GC.COMM    SHV.US
+        date
+        2007-03  0.025668  0.000141
+        2007-04  0.020872  0.000153
+        2007-05  0.027513  0.000451
+        2007-06  0.025988  0.000406
+                   ...       ...
+        2020-09  0.051006  0.001380
+        2020-10  0.050861  0.001377
         """
-        return self.assets_ror.expanding().std()
+        return self.assets_ror.expanding().std().iloc[1:]
 
     @property
     def risk_annual(self) -> pd.DataFrame:
@@ -123,12 +129,12 @@ class AssetList(make_asset_list.ListMaker):
 
         Returns
         -------
-        Series
-            Annualized risk (standard deviation) values for each asset in form of Series.
+        DataFrame
+            Annualized risk (standard deviation) expanding time series for each asset.
 
         See Also
         --------
-        risk_monthly : Calculate montly risk for each asset.
+        risk_monthly : Calculate montly risk expanding time series for each asset.
         risk_annual : Calculate annualized risks.
         semideviation_monthly : Calculate semideviation monthly values.
         semideviation_annual : Calculate semideviation annualized values.
@@ -152,7 +158,7 @@ class AssetList(make_asset_list.ListMaker):
         """
         risk_ts = self.assets_ror.expanding().std()
         mean_return_ts = self.assets_ror.expanding().mean()
-        return helpers.Float.annualize_risk(risk_ts, mean_return_ts).dropna()
+        return helpers.Float.annualize_risk(risk_ts, mean_return_ts).iloc[1:]
 
     @property
     def semideviation_monthly(self) -> pd.Series:
