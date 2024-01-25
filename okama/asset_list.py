@@ -79,12 +79,12 @@ class AssetList(make_asset_list.ListMaker):
     @property
     def risk_monthly(self) -> pd.Series:
         """
-        Calculate monthly risk (standard deviation of return) for each asset.
+        Calculate monthly risk expanding time series for each asset.
 
         Monthly risk of the asset is a standard deviation of the rate of return time series.
         Standard deviation (sigma σ) is normalized by N-1.
 
-        Monthly risk is calculated for rate of retirun time series for the sample from 'first_date' to
+        Monthly risk is calculated for the rate of retirun time series for the sample from 'first_date' to
         'last_date'.
 
         Returns
@@ -109,14 +109,14 @@ class AssetList(make_asset_list.ListMaker):
         SHV.US     0.001419
         dtype: float64
         """
-        return self.assets_ror.std()
+        return self.assets_ror.expanding().std()
 
     @property
     def risk_annual(self) -> pd.DataFrame:
         """
         Calculate annualized risk expanding time series for each asset.
 
-        Risk in this case is a standard deviation of return.
+        Risk is a standard deviation of the rate of return.
 
         Annualized risk is calculated for rate of retirun time series for the sample from 'first_date' to
         'last_date'.
