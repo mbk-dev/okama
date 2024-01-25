@@ -1014,9 +1014,14 @@ class Portfolio(make_asset_list.ListMaker):
         return self.ror.std()
 
     @property
-    def risk_annual(self) -> float:
+    def risk_annual(self) -> pd.Series:
         """
-        Calculate annualized risk (return standard deviation) for portfolio.
+        Calculate annualized risk expanding time series for portfolio.
+
+        Risk in this case is a standard deviation of return.
+
+        Annualized risk is calculated for rate of retirun time series for the sample from 'first_date' to
+        'last_date'.
 
         Returns
         -------
@@ -1029,7 +1034,9 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.risk_annual
         0.4374591902169046
         """
-        return helpers.Float.annualize_risk(self.risk_monthly, self.mean_return_monthly)
+        risk_ts = self.ror.expanding().std()
+        mean_return_ts = self.ror.expanding().mean()
+        return helpers.Float.annualize_risk(risk_ts, mean_return_ts).dropna()
 
     @property
     def semideviation_monthly(self) -> float:
@@ -1273,7 +1280,7 @@ class Portfolio(make_asset_list.ListMaker):
             )
             description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # risk (standard deviation)
-        row = {self.symbol: self.risk_annual}
+        row = {self.symbol: self.risk_annual.iloc[-1]}
         row.update(period=self._pl_txt, property="Risk")
         description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # CVAR
@@ -2026,7 +2033,7 @@ class Portfolio(make_asset_list.ListMaker):
         return ratios.get_sharpe_ratio(
             pf_return=self.mean_return_annual,
             rf_return=rf_return,
-            std_deviation=self.risk_annual,
+            std_deviation=self.risk_annual.iloc[-1],
         )
 
     def get_sortino_ratio(self, t_return: float = 0) -> float:
@@ -2082,7 +2089,7 @@ class Portfolio(make_asset_list.ListMaker):
         assets_annualized_risk = helpers.Float.annualize_risk(assets_risk, assets_mean_return)
         weights = np.asarray(self.weights)
         sigma_weighted_sum = weights.T @ assets_annualized_risk
-        return sigma_weighted_sum / self.risk_annual
+        return sigma_weighted_sum / self.risk_annual.iloc[-1]
 
     def plot_percentiles_fit(self, distr: str = "norm", figsize: Optional[tuple] = None) -> None:
         """

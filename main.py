@@ -33,9 +33,13 @@ import okama as ok
 
 # Rolling / Expanding Risk
 al = ok.AssetList(['SPY.US',
-                   # 'BND.US'
+                   'BND.US'
                    ])
 # al.risk_annual.plot()
 #
 # plt.show()
-print(type(al.risk_annual))
+
+pf = ok.Portfolio(['SPY.US',
+                   'BND.US'
+                   ])
+print(pf.describe())

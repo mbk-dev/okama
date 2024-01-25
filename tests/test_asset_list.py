@@ -95,8 +95,8 @@ class TestAssetList:
     def test_risk(self):
         assert self.asset_list.risk_monthly["USDRUB.CBR"] == approx(0.0258, rel=1e-2)
         assert self.asset_list.risk_monthly["MCFTR.INDX"] == approx(0.0264, rel=1e-2)
-        assert self.asset_list.risk_annual["USDRUB.CBR"] == approx(0.0825, rel=1e-2)
-        assert self.asset_list.risk_annual["MCFTR.INDX"] == approx(0.1222, rel=1e-2)
+        assert self.asset_list.risk_annual.iloc[-1]["USDRUB.CBR"] == approx(0.0825, rel=1e-2)
+        assert self.asset_list.risk_annual.iloc[-1]["MCFTR.INDX"] == approx(0.1222, rel=1e-2)
 
     def test_semideviation_monthly(self):
         assert self.asset_list.semideviation_monthly[0] == approx(0.01930, abs=1e-3)

@@ -153,7 +153,7 @@ def test_dividend_yield_annual(portfolio_dividends):
 
 def test_risk(portfolio_rebalanced_month):
     assert portfolio_rebalanced_month.risk_monthly == approx(0.02233, rel=1e-1)
-    assert portfolio_rebalanced_month.risk_annual == approx(0.091634, rel=1e-1)
+    assert portfolio_rebalanced_month.risk_annual.iloc[-1] == approx(0.091634, rel=1e-1)
 
 
 def test_semideviation(portfolio_rebalanced_month):
