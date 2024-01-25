@@ -112,9 +112,11 @@ class AssetList(make_asset_list.ListMaker):
         return self.assets_ror.std()
 
     @property
-    def risk_annual(self) -> pd.Series:
+    def risk_annual(self) -> pd.DataFrame:
         """
-        Calculate annualized risks (standard deviation) for each asset.
+        Calculate annualized risk expanding time series for each asset.
+
+        Risk in this case is a standard deviation of return.
 
         Annualized risk is calculated for rate of retirun time series for the sample from 'first_date' to
         'last_date'.
@@ -148,9 +150,9 @@ class AssetList(make_asset_list.ListMaker):
         SHV.US     0.004960
         dtype: float64
         """
-        risk = self.assets_ror.std()
-        mean_return = self.assets_ror.mean()
-        return helpers.Float.annualize_risk(risk, mean_return)
+        risk_ts = self.assets_ror.expanding().std()
+        mean_return_ts = self.assets_ror.expanding().mean()
+        return helpers.Float.annualize_risk(risk_ts, mean_return_ts).dropna()
 
     @property
     def semideviation_monthly(self) -> pd.Series:
@@ -707,7 +709,7 @@ class AssetList(make_asset_list.ListMaker):
             row.update(period="LTM", property="Dividend yield")
             description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # risk for full period
-        row = self.risk_annual.to_dict()
+        row = self.risk_annual.iloc[-1, :].to_dict()
         row.update(period=self._pl_txt, property="Risk")
         description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # CVAR
@@ -1588,7 +1590,8 @@ class AssetList(make_asset_list.ListMaker):
         dtype: float64
         """
         mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
-        return ratios.get_sharpe_ratio(pf_return=mean_return, rf_return=rf_return, std_deviation=self.risk_annual)
+        risk = self.risk_annual.iloc[-1, :]
+        return ratios.get_sharpe_ratio(pf_return=mean_return, rf_return=rf_return, std_deviation=risk)
 
     def get_sortino_ratio(self, t_return: float = 0) -> pd.Series:
         """

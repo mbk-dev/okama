@@ -321,6 +321,7 @@ class ListMaker(ABC):
                 div_yield = pd.Series(dtype=float)
                 div_monthly.index = div_monthly.index.to_timestamp()
                 for date in price_monthly_ts.index.to_timestamp(how="End"):
+                    # TODO: FutureWarning: last is deprecated and will be removed in a future version. Please create a mask and filter using `.loc` instead
                     ltm_div = div_monthly[:date].last("12M").sum()
                     last_price = price_monthly_ts.loc[:date].iloc[-1]
                     value = ltm_div / last_price

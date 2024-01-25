@@ -40,7 +40,10 @@ class Float:
         return (rate_of_return + 1.0) ** periods_per_year - 1.0
 
     @staticmethod
-    def annualize_risk(risk: Union[float, pd.Series], mean_return: Union[float, pd.Series]) -> Union[float, pd.Series]:
+    def annualize_risk(
+            risk: Union[float, pd.Series, pd.DataFrame],
+            mean_return: Union[float, pd.Series, pd.DataFrame]
+    ) -> Union[float, pd.Series, pd.DataFrame]:
         """
         Annualizes Risk.
         Annualization from month to year (from standard deviation) is by default. Monthly mean return is also required.

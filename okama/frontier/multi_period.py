@@ -545,7 +545,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         cagr = helpers.Frame.get_cagr(self.assets_ror)
         global_max_cagr_is_not_asset = (cagr < self.global_max_return_portfolio["CAGR"] * (1 - tolerance)).all()
         if global_max_cagr_is_not_asset:
-            condition = self.risk_annual.values > self.global_max_return_portfolio["Risk"]
+            condition = self.risk_annual.iloc[-1, :].values > self.global_max_return_portfolio["Risk"]
             ror_selected = self.assets_ror.loc[:, condition]
             if not ror_selected.empty:
                 cagr_selected = helpers.Frame.get_cagr(ror_selected)
@@ -562,8 +562,8 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         Find an asset with max annual risk.
         """
-        max_risk = self.risk_annual.max()
-        ticker_with_largest_risk = self.risk_annual.nlargest(1, keep="first").index.values[0]
+        max_risk = self.risk_annual.iloc[-1, :].max()
+        ticker_with_largest_risk = self.risk_annual.iloc[-1, :].nlargest(1, keep="first").index.values[0]
         return {
             "max_annual_risk": max_risk,
             "ticker_with_largest_risk": ticker_with_largest_risk,
