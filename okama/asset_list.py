@@ -124,8 +124,8 @@ class AssetList(make_asset_list.ListMaker):
 
         Risk is a standard deviation of the rate of return.
 
-        Annualized risk is calculated for rate of retirun time series for the sample from 'first_date' to
-        'last_date'.
+        Annualized risk time series is calculated for the rate of return from 'first_date' to
+        'last_date' (expanding).
 
         Returns
         -------
@@ -135,12 +135,12 @@ class AssetList(make_asset_list.ListMaker):
         See Also
         --------
         risk_monthly : Calculate montly risk expanding time series for each asset.
-        risk_annual : Calculate annualized risks.
+        get_rolling_risk_annual : Calculate annualized risk rolling time series.
         semideviation_monthly : Calculate semideviation monthly values.
         semideviation_annual : Calculate semideviation annualized values.
         get_var_historic : Calculate historic Value at Risk (VaR).
         get_cvar_historic : Calculate historic Conditional Value at Risk (CVaR).
-        drawdowns : Calculate drawdowns.
+        drawdowns : Calculate assets drawdowns.
 
         Notes
         -----
@@ -159,6 +159,54 @@ class AssetList(make_asset_list.ListMaker):
         risk_ts = self.assets_ror.expanding().std()
         mean_return_ts = self.assets_ror.expanding().mean()
         return helpers.Float.annualize_risk(risk_ts, mean_return_ts).iloc[1:]
+
+    def get_rolling_risk_annual(self, window: int = 12):
+        """
+        Calculate annualized risk rolling time series for each asset.
+
+        Risk is a standard deviation of the rate of return.
+
+        Annualized risk time series is calculated for the rate of return values limited by moving window.
+
+        Parameters
+        ----------
+        window : int, default 12
+            Size of the moving window in months. Window size should be at least 12 months.
+
+        Returns
+        -------
+        DataFrame
+            Annualized risk (standard deviation) rolling time series for each asset.
+
+        See Also
+        --------
+        risk_monthly : Calculate montly risk expanding time series for each asset.
+        risk_annual : Calculate annualized risks.
+        semideviation_monthly : Calculate semideviation monthly values.
+        semideviation_annual : Calculate semideviation annualized values.
+        get_var_historic : Calculate historic Value at Risk (VaR).
+        get_cvar_historic : Calculate historic Conditional Value at Risk (CVaR).
+        drawdowns : Calculate assets drawdowns.
+
+        Notes
+        -----
+        CAGR is not defined for periods less than 1 year (NaN values are returned).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.AssetList(['DXET.XFRA', 'DBXN.XFRA'], ccy='EUR', inflation=True)
+        >>> x.get_rolling_cagr(window=5*12).plot()
+        >>> plt.show()
+
+        For inflation adjusted rolling CAGR add 'real=True' option:
+
+        >>> x.get_rolling_cagr(window=5*12, real=True).plot()
+        >>> plt.show()
+        """
+        risk_ts = self.assets_ror.rolling(window).std()
+        mean_return_ts = self.assets_ror.rolling(window).mean()
+        return helpers.Float.annualize_risk(risk_ts, mean_return_ts).dropna()
 
     @property
     def semideviation_monthly(self) -> pd.Series:

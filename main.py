@@ -32,14 +32,15 @@ import okama as ok
 # print(f"среднее {s_periods.mean()}")
 
 # Rolling / Expanding Risk
-al = ok.AssetList(['SPY.US',
+al = ok.AssetList(['DJI.INDX',
                    # 'BND.US'
                    ])
-# al.risk_annual.plot()
-#
-# plt.show()
+print(al)
+al.get_rolling_risk_annual(window=12*20).plot()
+al.get_rolling_cagr(window=12*20, real=True).plot()
+
+plt.show()
 
 # pf = ok.Portfolio(['SPY.US',
 #                    'BND.US'
 #                    ])
-print(type(al.risk_monthly))
