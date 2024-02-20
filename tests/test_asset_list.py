@@ -98,6 +98,25 @@ class TestAssetList:
         assert self.asset_list.risk_annual.iloc[-1]["USDRUB.CBR"] == approx(0.0825, rel=1e-2)
         assert self.asset_list.risk_annual.iloc[-1]["MCFTR.INDX"] == approx(0.1222, rel=1e-2)
 
+    @mark.parametrize("window, expected", [
+        pytest.param(12, 0.1874, id="12-months"),
+        pytest.param(6, 0.2205, id="6-months"),
+    ])
+    def test_get_rolling_risk_annual(self, window, expected):
+        result = self.asset_list.get_rolling_risk_annual(window).iloc[-1]
+        assert result.sum() == approx(expected, abs=1e-2)
+
+    @pytest.mark.parametrize("window, exception", [
+        pytest.param(0, ValueError, id="error-0-months"),
+        pytest.param(-1, ValueError, id="error-negative-months"),
+        pytest.param(34, ValueError, id="error - window period is too long"),
+        pytest.param("twelve", TypeError, id="error-string-input"),
+        pytest.param(None, TypeError, id="error-none-input"),
+    ])
+    def test_get_rolling_risk_annual_error_cases(self, window, exception):
+        with pytest.raises(exception):
+            self.spy.get_rolling_risk_annual(window)
+
     def test_semideviation_monthly(self):
         assert self.asset_list.semideviation_monthly[0] == approx(0.01930, abs=1e-3)
         assert self.asset_list.semideviation_monthly[1] == approx(0.01109, abs=1e-3)
