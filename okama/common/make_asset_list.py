@@ -47,7 +47,7 @@ class ListMaker(ABC):
         ccy: str = "USD",
         inflation: bool = True,
     ):
-        self._assets = list(dict.fromkeys(assets))  # remove duplicates but keep the order
+        self._assets = list(dict.fromkeys(assets)) if assets else [settings.default_ticker]
         self._currency = asset.Asset(symbol=f"{ccy}.FX")
         (
             self.asset_obj_dict,
@@ -340,7 +340,7 @@ class ListMaker(ABC):
         -------
         list
         """
-        assets = self._assets or [settings.default_ticker]
+        assets = self._assets
         if not isinstance(assets, list):
             raise ValueError("Assets must be a list.")
         return assets
