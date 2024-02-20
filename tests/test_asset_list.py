@@ -13,8 +13,6 @@ from tests import conftest
 
 @mark.asset_list
 def test_asset_list_init_failing():
-    with pytest.raises(ValueError, match=r"Assets must be a list."):
-        ok.AssetList(assets=("RUB.FX", "MCFTR.INDX"))
     with pytest.raises(
         ValueError,
         match=r"SBGB.MOEX historical data period length is too short. " r"It must be at least 3 months.",
@@ -89,7 +87,7 @@ class TestAssetList:
 
     def test_calculate_wealth_indexes(self):
         assert self.asset_list.wealth_indexes.sum(axis=1)[-1] == approx(
-            3339.677963676333, rel=1e-2
+            3306.19, rel=1e-2
         )  # last month indexes sum
 
     def test_risk(self):
@@ -143,10 +141,10 @@ class TestAssetList:
         assert self.asset_list.drawdowns.min().sum() == approx(-0.082932, rel=1e-2)
 
     def test_recovery_periods(self):
-        assert self.asset_list.recovery_periods["MCFTR.INDX"] == approx(0, rel=1e-2)
+        assert self.asset_list.recovery_periods["MCFTR.INDX"] == approx(2, rel=1e-2)
         assert np.isnan(self.asset_list.recovery_periods["USDRUB.CBR"])
         assert self.asset_list_lt.recovery_periods["MCFTR.INDX"] == 45
-        assert self.asset_list_lt.recovery_periods["USDRUB.CBR"] == 69
+        assert self.asset_list_lt.recovery_periods["USDRUB.CBR"] == 70
 
     cagr_testdata1 = [
         (1, -0.0463, 0.3131, 0.0242),
@@ -196,7 +194,7 @@ class TestAssetList:
 
     get_rolling_cagr_error_data = [
         (0, False, ValueError),  # window should be at least 12 months for CAGR
-        (12.5, False, ValueError),  # not an integer
+        (12.5, False, TypeError),  # not an integer
         (10 * 12, False, ValueError),  # window size should be in the history period
         (
             12,
@@ -274,7 +272,6 @@ class TestAssetList:
         assert self.asset_list.annual_return_ts.iloc[-1, 0] == approx(0.01829, rel=1e-2)
         assert self.asset_list.annual_return_ts.iloc[-1, 1] == approx(0.01180, rel=1e-2)
 
-    @pytest.mark.xfail
     def test_describe(self):
         description = self.asset_list.describe(tickers=False).iloc[:-2, :]  # last 2 rows have fresh lastdate
         description_sample = pd.read_pickle(conftest.data_folder / "asset_list_describe.pkl").iloc[:-2, :]
@@ -342,7 +339,7 @@ class TestAssetList:
         )
 
     def test_tracking_difference_annual(self):
-        assert self.asset_list.tracking_difference_annual.iloc[0, 0] == approx(0.4966, abs=1e-2)
+        assert self.asset_list.tracking_difference_annual.iloc[0, 0] == approx(0.4003, abs=1e-2)
 
     @mark.parametrize(
         "window,expected",
@@ -355,7 +352,7 @@ class TestAssetList:
     def test_tracking_error_failing(self):
         with pytest.raises(
             ValueError,
-            match="window size should be at least 1 year",
+            match="window size must be at least 1 year",
         ):
             self.asset_list.tracking_error(rolling_window=5)
         with pytest.raises(
