@@ -542,7 +542,7 @@ class Index:
         Index should be in the first position (first column).
         """
         if accumulated_return.shape[1] < 2:
-            raise ValueError("At least 2 symbols should be provided to calculate Tracking Difference.")
+            raise ValueError("At least 2 symbols must be provided to calculate Tracking Difference.")
         initial_value = accumulated_return.iloc[0]
         difference = accumulated_return.subtract(accumulated_return.iloc[:, 0], axis=0) / initial_value
         difference.drop(difference.columns[0], axis=1, inplace=True)  # drop the first column (stock index data)
