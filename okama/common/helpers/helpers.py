@@ -5,10 +5,12 @@ import pandas as pd
 import numpy as np
 import scipy.stats
 
+from okama.common.validators import validate_integer
 from okama import settings
 
 
 def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame], window_below_year: bool = False):
+    validate_integer(arg_name="window", arg_value=window, min_value=0, inclusive=False)
     if not window_below_year and window < settings._MONTHS_PER_YEAR:
         raise ValueError("window size must be at least 1 year")
     if window > ror.shape[0]:
