@@ -3,6 +3,7 @@ from typing import Optional, Union, Tuple
 import numpy as np
 import pandas as pd
 
+from okama.common.helpers.helpers import check_rolling_window
 import okama.common.helpers.ratios as ratios
 from okama.common.helpers import helpers
 from okama.common import make_asset_list
@@ -188,10 +189,6 @@ class AssetList(make_asset_list.ListMaker):
         get_cvar_historic : Calculate historic Conditional Value at Risk (CVaR).
         drawdowns : Calculate assets drawdowns.
 
-        Notes
-        -----
-        CAGR is not defined for periods less than 1 year (NaN values are returned).
-
         Examples
         --------
         >>> import matplotlib.pyplot as plt
@@ -204,6 +201,7 @@ class AssetList(make_asset_list.ListMaker):
         >>> x.get_rolling_cagr(window=5*12, real=True).plot()
         >>> plt.show()
         """
+        check_rolling_window(window=window, ror=self.assets_ror, window_below_year=True)
         risk_ts = self.assets_ror.rolling(window).std()
         mean_return_ts = self.assets_ror.rolling(window).mean()
         return helpers.Float.annualize_risk(risk_ts, mean_return_ts).dropna()
