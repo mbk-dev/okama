@@ -172,7 +172,7 @@ class AssetList(make_asset_list.ListMaker):
         Parameters
         ----------
         window : int, default 12
-            Size of the moving window in months. Window size should be at least 12 months.
+            Size of the moving window in months.
 
         Returns
         -------
@@ -192,13 +192,8 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['DXET.XFRA', 'DBXN.XFRA'], ccy='EUR', inflation=True)
-        >>> x.get_rolling_cagr(window=5*12).plot()
-        >>> plt.show()
-
-        For inflation adjusted rolling CAGR add 'real=True' option:
-
-        >>> x.get_rolling_cagr(window=5*12, real=True).plot()
+        >>> x = ok.AssetList(['SPY.US', 'AGG.US'], ccy='USD', inflation=True)
+        >>> x.get_rolling_risk_annual(window=5*12).plot()
         >>> plt.show()
         """
         check_rolling_window(window=window, ror=self.assets_ror, window_below_year=True)
@@ -531,7 +526,7 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['DXET.XFRA', 'DBXN.XFRA'], ccy='EUR', inflation=True)
+        >>> x = ok.AssetList(['SPY.US', 'AGG.US'], ccy='USD', inflation=True)
         >>> x.get_rolling_cagr(window=5*12).plot()
         >>> plt.show()
 
@@ -637,7 +632,7 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['DXET.XFRA', 'DBXN.XFRA'], ccy='EUR', inflation=True)
+        >>> x = ok.AssetList(['SPY.US', 'AGG.US'], ccy='USD', inflation=True)
         >>> x.get_rolling_cumulative_return(window=5*12).plot()
         >>> plt.show()
 
