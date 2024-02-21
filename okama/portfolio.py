@@ -17,11 +17,20 @@ class Portfolio(make_asset_list.ListMaker):
     Implementation of investment portfolio.
 
     Investments portfolio is a type of financial asset (same as stocks, ETF, mutual funds, currencies etc.).
-    Arguments are similar to AssetList but additionally Portfolio has:
+    Arguments are similar to AssetList, however Portfolio additionally has:
 
     - weights
     - rebalancing_period
+    - initial_amount
+    - cashflow
     - symbol
+
+    Portfolio is defined by the investment strategy, which includes:
+    - asset allocation (financial assets and their proportions in the portfolio)
+    - the initial investment (`initial_amount` parameter)
+    - cash flows or withdrawals/contributions (`cashflow` parameter)
+    - discount rate (`discount_rate` parameter)
+    - the rebalancing strategy (`rebalancing_period` parameter)
 
     The rebalancing is the action of bringing the portfolio that has deviated away
     from original target asset allocation back into line. After rebalancing the portfolio assets
@@ -59,6 +68,17 @@ class Portfolio(make_asset_list.ListMaker):
         Rebalancing period (rebalancing frequency) is predetermined time intervals when
         the investor rebalances the portfolio. If 'none' assets weights are not rebalanced.
 
+    initial_amount : float, default 1000
+        Portfolio initial investment FV (at last_date).
+
+    cashflow : float, default 0
+        Portfolio monthly cash flow FV (at last_date). Negative value corresponds to withdrawals.
+        Positive value corresponds to contributions. Cash flow value is indexed each month by inflation.
+
+    discount_rate : float or None, default None
+        Cash flow discount rate required to calculate PV values. If not provided geometric mean of inflation is taken.
+        For portfolios without inflation the default value from settings is used.
+
     symbol : str, default None
         Text symbol of portfolio. It is similar to tickers but have a namespace information.
         Portfolio symbol must end with .PF (all_weather_portfolio.PF).
@@ -76,7 +96,8 @@ class Portfolio(make_asset_list.ListMaker):
         weights: Optional[List[float]] = None,
         rebalancing_period: str = "month",
         initial_amount: float = 1000.,
-        cashflow: int = 0,
+        cashflow: float = 0,
+        discount_rate: Optional[float] = None,
         symbol: str = None,
     ):
         super().__init__(
@@ -94,6 +115,9 @@ class Portfolio(make_asset_list.ListMaker):
         self.cashflow = cashflow
         self.initial_amount = initial_amount
         self._symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
+        self._discount_rate = None
+        self.discount_rate = discount_rate
+        self._wealth_index = pd.DataFrame(dtype=float)
 
     def __repr__(self):
         dic = {
@@ -254,6 +278,28 @@ class Portfolio(make_asset_list.ListMaker):
             raise ValueError('portfolio symbol must be a string ending with ".PF" namespace.')
 
     @property
+    def discount_rate(self) -> float:
+        """
+        Return portfolio cash flow discount rate.
+
+        Returns
+        -------
+        float
+            Cash flow discount rate.
+        """
+        return self._discount_rate
+
+    @discount_rate.setter
+    def discount_rate(self, discount_rate: Optional[float]):
+        if discount_rate is None and hasattr(self, "inflation"):
+            self._discount_rate = self.get_cagr().loc[self.inflation]
+        elif discount_rate is None and not hasattr(self, "inflation"):
+            self._discount_rate = settings.DEFAULT_DISCOUNT_RATE
+        else:
+            validators.validate_real("discount rate", discount_rate)
+            self._discount_rate = discount_rate
+
+    @property
     def name(self) -> str:
         """
         Return text name of portfolio.
@@ -316,13 +362,16 @@ class Portfolio(make_asset_list.ListMaker):
         Calculate wealth index time series for the portfolio and accumulated inflation.
 
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
-        historical time period. Accumulated inflation time series is added if `inflation=True` in the Portfolio.
+        historical time period considering cash flows.
 
-        Wealth index is obtained from the accumulated return multiplicated by the initial investments.
-        That is: 1000 * (Acc_Return + 1)
-        Initial investments are taken as 1000 units of the Portfolio base currency.
+        Accumulated inflation time series is added if `inflation=True` in the Portfolio.
 
-        The values of the wealth index correspond to the beginning of the month.
+        If there is no cashflows Wealth index is obtained from the accumulated return multiplicated
+        by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
+
+        initial_amount_pv is the discounted value of the initial investments (initial_amount).
+
+        Values of the wealth index correspond to the beginning of the month.
 
         Returns
         -------
@@ -373,13 +422,15 @@ class Portfolio(make_asset_list.ListMaker):
     def wealth_index_with_assets(self) -> pd.DataFrame:
         """
         Calculate wealth index time series for the portfolio, all assets and accumulated inflation.
+        Сash flows are not taken into account.
 
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
         historical time period. Accumulated inflation time series is added if `inflation=True` in the Portfolio.
 
         Wealth index is obtained from the accumulated return multiplicated by the initial investments.
-        That is: 1000 * (Acc_Return + 1)
-        Initial investments are taken as 1000 units of the Portfolio base currency.
+        initial_amount_pv * (Acc_Return + 1)
+
+        initial_amount_pv is the discounted value of the initial investments (initial_amount).
 
         Returns
         -------
@@ -1590,23 +1641,25 @@ class Portfolio(make_asset_list.ListMaker):
         return pd.DataFrame(data=random_returns, index=ts_index)
 
     def _monte_carlo_wealth(self,
-                            first_value: float,
+                            first_value: float = 1000.,
                             distr: str = "norm",
                             years: int = 1,
                             n: int = 100) -> pd.DataFrame:
         """
-        Generate portfolio wealth indexes with Monte Carlo simulation.
+        Generate portfolio wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
 
         Monte Carlo simulation generates n random monthly time series.
         Each wealth index is calculated with rate of return time series of a given distribution.
 
-        Forecast period should not exceed 1/2 of portfolio history period length.
         First date of forecasted returns is portfolio last_date.
         First value for the forecasted wealth indexes is the last historical portfolio index value. It is useful
         for a chart with historical wealth index and forecasted values.
 
         Parameters
         ----------
+        first_value : float, default 1000,
+            Portfolio initial investment.
+
         distr : {'norm', 'lognorm'}, default 'norm'
             Distribution type for the rate of return of portfolio.
 
@@ -1637,12 +1690,12 @@ class Portfolio(make_asset_list.ListMaker):
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
         return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
-        d_rate = self.get_cagr().loc[self.inflation]
         df = return_ts.apply(
             helpers.Frame.get_wealth_indexes_with_cashflow,
             axis=0,
-            args=(None, None, d_rate, first_value, self.cashflow)
+            args=(None, None, self.discount_rate, first_value, self.cashflow)
         )
+
         def remove_negative_values(s):
             condition = s <= 0
             try:
@@ -1655,8 +1708,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         df = df.apply(remove_negative_values, axis=0)
         all_cells_are_nan = df.isna().all(axis=1)
-        df = df[~all_cells_are_nan]
-        return df
+        return df[~all_cells_are_nan]
 
     def _get_cagr_distribution(
         self,
@@ -2277,7 +2329,12 @@ class Portfolio(make_asset_list.ListMaker):
         """
         Plot Monte Carlo simulation for portfolio wealth indexes together with historical wealth index.
 
+        Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
+        time period considering cash flows (portfolio withdrawals/contributions).
+
         Random wealth indexes are generated according to a given distribution.
+
+        Wealth indexes
 
         Parameters
         ----------
@@ -2290,6 +2347,9 @@ class Portfolio(make_asset_list.ListMaker):
             Investment period length for new wealth indexes
             It should not exceed 1/2 of the portfolio history period length 'period_length'.
 
+        backtest : bool, default 'True'
+            Include historical wealth index if 'True'.
+
         n : int, default 20
             Number of random wealth indexes to generate with Monte Carlo simulation.
 
@@ -2300,8 +2360,14 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
-        >>> pf.plot_forecast_monte_carlo(years=5, distr='lognorm', n=100)
+        >>> pf = ok.Portfolio(
+        ['SPY.US', 'AGG.US', 'GLD.US'],
+        weights=[.60, .35, .05],
+        rebalancing_period='year',
+        initial_amount=300_000,
+        cashflow=-1_000
+        )
+        >>> pf.plot_forecast_monte_carlo(years=20, backtest=True, distr='lognorm', n=100)
         >>> plt.show()
         """
         if backtest:
@@ -2331,7 +2397,6 @@ class Portfolio(make_asset_list.ListMaker):
             years=years,
             n=n
         )
-        dates: pd.Series = helpers.Frame.get_survival_date_dataframe(s2)
+        dates: pd.Series = helpers.Frame.get_survival_date(s2)
 
         return dates.apply(helpers.Date.get_period_length, args=(self.last_date,))
-
