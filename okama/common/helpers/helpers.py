@@ -1,5 +1,6 @@
 import math
 from typing import Union, Callable, Optional
+from functools import singledispatchmethod
 
 import pandas as pd
 import numpy as np
@@ -171,7 +172,7 @@ class Frame:
     @staticmethod
     def get_wealth_indexes(
         ror: Union[pd.Series, pd.DataFrame], 
-        initial_amount: int = 1000
+        initial_amount: float = 1000.
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Returns wealth indexes for a list of assets (or for portfolio).
@@ -192,14 +193,13 @@ class Frame:
         portfolio_symbol: Optional[str],
         inflation_symbol: Optional[str],
         discount_rate: float,
-        initial_amount: float = 1000,
+        initial_amount: float = 1000.,
         cashflow: int = 0,
     ) -> Union[pd.Series, pd.DataFrame]:
         """
-        Returns wealth indexes for a list of assets (or for portfolio).
-        Works also with pd.Series inputs.
+        Returns wealth index for a serie of returns with cash flows (withdrawals/contributions).
 
-        The values of the wealth index correspond to the beginning of the month.
+        Values of the wealth index correspond to the beginning of the month.
         """
         # first_date = ror.index[0]
         if not cashflow:
@@ -218,19 +218,26 @@ class Frame:
                 value = value * (r + 1) + cashflow * (1 + discount_rate / settings._MONTHS_PER_YEAR) ** n
                 date = row[0]
                 s[date] = value
-            s = s.shift(1)  # The values of the wealth index correspond to the beginning of the month.
+            s = s.shift(1)  # values of the wealth index correspond to the beginning of the month.
             s.iloc[0] = initial_amount  # replaces NaN with the first period return
             if inflation_symbol:
-                cum_inflation = Frame.get_wealth_indexes(ror=ror.loc[:, inflation_symbol], initial_amount=initial_amount)
+                cum_inflation = Frame.get_wealth_indexes(
+                    ror=ror.loc[:, inflation_symbol],
+                    initial_amount=initial_amount
+                )
                 wealth_index = pd.concat([s, cum_inflation], axis="columns")
-                # wealth_index.loc[first_date, portfolio_symbol] = initial_amount  # replaces NaN with the first period return
             else:
                 wealth_index = s
         wealth_index.sort_index(ascending=True, inplace=True)
         return wealth_index
 
+    @singledispatchmethod
     @staticmethod
-    def get_survival_date_series(wealth_series: pd.Series) -> pd.Timestamp:
+    def get_survival_date(wealth_series):
+        raise TypeError("wealth_series must be a pd.Series or pd.DataFrame")
+
+    @get_survival_date.register
+    def _(wealth_series: pd.Series) -> pd.Timestamp:
         condition = wealth_series <= 0
         try:
             survival_date = wealth_series[condition].index[0]
@@ -238,9 +245,9 @@ class Frame:
             survival_date = wealth_series.index[-1]
         return survival_date.to_timestamp()
 
-    @staticmethod
-    def get_survival_date_dataframe(wealth: pd.DataFrame):
-        return wealth.apply(func=Frame.get_survival_date_series, axis=0)
+    @get_survival_date.register
+    def _(wealth: pd.DataFrame) -> pd.Timestamp:
+        return wealth.apply(func=Frame.get_survival_date, axis=0)
 
     # Risk metrics
 
