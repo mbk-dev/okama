@@ -384,24 +384,19 @@ class Portfolio(make_asset_list.ListMaker):
         >>> x.wealth_index.plot()
         >>> plt.show()
         """
-        # TODO: cache property value (heavy calculations)
-        df = self._add_inflation()
-        df = helpers.Frame.get_wealth_indexes_with_cashflow(
-            ror=df,
-            portfolio_symbol=self.symbol,
-            inflation_symbol=self.inflation,
-            discount_rate=self.get_cagr().loc[self.inflation],
-            initial_amount=self.initial_amount_pv,
-            cashflow=self.cashflow_pv
-            )
-        df = self._make_df_if_series(df)
-        # condition = df[self.symbol] <= 0
-        # try:
-        #     survival_date = df[condition].index[0]
-        # except IndexError:
-        #     survival_date = df.index[-1]
-        # df = df.loc[: survival_date, :]
-        return df
+        if self._wealth_index.empty:
+            df = self._add_inflation()
+            infl = self.inflation if hasattr(self, "inflation") else None
+            df = helpers.Frame.get_wealth_indexes_with_cashflow(
+                ror=df,
+                portfolio_symbol=self.symbol,
+                inflation_symbol=infl,
+                discount_rate=self.discount_rate,
+                initial_amount=self.initial_amount_pv,
+                cashflow=self.cashflow_pv
+                )
+            self._wealth_index = self._make_df_if_series(df)
+        return self._wealth_index
 
     @property
     def survival_date(self) -> pd.Timestamp:
