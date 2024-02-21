@@ -194,14 +194,13 @@ class Frame:
         inflation_symbol: Optional[str],
         discount_rate: float,
         initial_amount: float = 1000.,
-        cashflow: int = 0,
+        cashflow: float = 0,
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Returns wealth index for a serie of returns with cash flows (withdrawals/contributions).
 
         Values of the wealth index correspond to the beginning of the month.
         """
-        # first_date = ror.index[0]
         if not cashflow:
             wealth_index = Frame.get_wealth_indexes(ror, initial_amount)
         else:
@@ -215,6 +214,7 @@ class Frame:
             s = pd.Series(dtype=float, name=portfolio_symbol)
             for n, row in enumerate(ror.itertuples()):
                 r = row[portfolio_position + 1]
+                # TODO: consider using monthly inflation for cashflow indexing
                 value = value * (r + 1) + cashflow * (1 + discount_rate / settings._MONTHS_PER_YEAR) ** n
                 date = row[0]
                 s[date] = value
