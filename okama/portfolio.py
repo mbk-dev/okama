@@ -400,11 +400,60 @@ class Portfolio(make_asset_list.ListMaker):
 
     @property
     def survival_date(self) -> pd.Timestamp:
-        return helpers.Frame.get_survival_date_series(self.wealth_index.loc[:, self.symbol])
+        """
+        Get the date when the portfolio balance become negative considering withdrawals on the historical data.
+
+        The portfolio survival date (longevity date) depends on the investment strategy: asset allocation,
+        rebalancing, withdrawals rate etc.
+
+        The withdrawals are defined by the `cashflow` parameter of the portfolio.
+
+        Returns
+        -------
+        pd.Timestamp
+            The portfolio survival date (longevity period) in years.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(
+        ['SPY.US', 'AGG.US'],
+        ccy='USD',
+        first_date='2010-01',
+        initial_amount=100_000,
+        cashflow=-1_000
+        )
+        >>> pf.survival_date
+        Timestamp('2021-08-01 00:00:00')
+        """
+        return helpers.Frame.get_survival_date(self.wealth_index.loc[:, self.symbol])
 
     @property
     def survival_period(self) -> float:
-        # round((self.survival_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1)
+        """
+        Calculate the period when the portfolio has positive balance considering withdrawals on the historical data.
+
+        The portfolio survival period (longevity period) depends on the investment strategy: asset allocation,
+        rebalancing, withdrawals rate etc.
+
+        The withdrawals are defined by the `cashflow` parameter of the portfolio.
+
+        Returns
+        -------
+        float
+            The portfolio survival period (longevity period) in years.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(
+        ['SPY.US', 'AGG.US'],
+        ccy='USD',
+        first_date='2010-01',
+        initial_amount=100_000,
+        cashflow=-1_000
+        )
+        >>> pf.survival_period
+        11.6
+        """
         return helpers.Date.get_period_length(last_date=self.survival_date, first_date=self.first_date)
 
     def _make_df_if_series(self, ts):
@@ -721,14 +770,46 @@ class Portfolio(make_asset_list.ListMaker):
         )
 
     @property
-    def initial_amount_pv(self) -> Optional[int]:
-        pv = self.initial_amount / (1. + self.get_cagr().loc[self.inflation]) ** self.period_length
-        return int(pv)
+    def initial_amount_pv(self) -> Optional[float]:
+        """
+        Calculate the discounted value (PV) of the initial investments at the historical first date.
+
+        The future value (FV) is defined by `initial_amount` parameter.
+        The discount rate is the average annual inflation.
+
+        Returns
+        -------
+        float
+            The discounted value (PV) of the initial investments at the historical first date.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB', initial_amount=100_000)
+        >>> pf.initial_amount_pv
+        73650
+        """
+        return self.initial_amount / (1. + self.discount_rate) ** self.period_length
 
     @property
-    def cashflow_pv(self) -> Optional[int]:
-        pv = self.cashflow / (1. + self.get_cagr().loc[self.inflation]) ** self.period_length
-        return int(pv)
+    def cashflow_pv(self) -> Optional[float]:
+        """
+        Calculate the discounted value (PV) of the cash flow amount at the historical first date.
+
+        The future value (FV) is defined by `cashflow` parameter.
+        The discount rate is the average annual inflation.
+
+        Returns
+        -------
+        float
+            The discounted value (PV) of the cash flow amount at the historical first date.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD', initial_amount=100_000, cashflow=-5_000)
+        >>> pf.cashflow_pv
+        -3004
+        """
+        return self.cashflow / (1. + self.discount_rate) ** self.period_length
 
     @property
     def assets_close_monthly(self) -> pd.DataFrame:
