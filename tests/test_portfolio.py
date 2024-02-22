@@ -176,7 +176,7 @@ def test_drawdowns(portfolio_not_rebalanced):
 
 
 def test_recovery_period(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.recovery_period == 6
+    assert portfolio_not_rebalanced.recovery_period.max() == 6
 
 
 def test_get_cagr(portfolio_rebalanced_month, portfolio_no_inflation):
