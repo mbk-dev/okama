@@ -353,7 +353,7 @@ class Portfolio(make_asset_list.ListMaker):
         if self.rebalancing_period == "month":
             s = helpers.Frame.get_portfolio_return_ts(self.weights, self.assets_ror)
         else:
-            s = helpers.Rebalance(period=self.rebalancing_period).return_ts(self.weights, self.assets_ror)
+            s = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(self.weights, self.assets_ror)
         return s.rename(self.symbol, inplace=True)
 
     @property

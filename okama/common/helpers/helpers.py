@@ -500,7 +500,7 @@ class Rebalance:
         portfolio_wealth_index = self.wealth_ts(weights=weights, ror=ror)
         return assets_wealth_indexes.divide(portfolio_wealth_index, axis=0)
 
-    def return_ts(self, weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
+    def return_ror_ts(self, weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
         """
         Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)

@@ -228,7 +228,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         # Set the objective function
         def objective_function(w):
-            risk = helpers.Rebalance(period=period).return_ts(w, ror).std()
+            risk = helpers.Rebalance(period=period).return_ror_ts(w, ror).std()
             return risk
 
         # construct the constraints
@@ -272,7 +272,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         # Set the objective function
         def objective_function(w):
-            ts = helpers.Rebalance(period=period).return_ts(w, ror)
+            ts = helpers.Rebalance(period=period).return_ror_ts(w, ror)
             mean_return = ts.mean()
             risk = ts.std()
             return helpers.Float.annualize_risk(risk=risk, mean_return=mean_return)
@@ -297,13 +297,13 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         return (
             helpers.Rebalance(period=self.rebalancing_period)
-            .return_ts(
+            .return_ror_ts(
                 self.gmv_monthly_weights,
                 self.assets_ror,
             )
             .std(),
             helpers.Rebalance(period=self.rebalancing_period)
-            .return_ts(
+            .return_ror_ts(
                 self.gmv_monthly_weights,
                 self.assets_ror,
             )
@@ -332,7 +332,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         >>> frontier.gmv_annual_values
         (0.03695845106087943, 0.04418318557516887)
         """
-        returns = helpers.Rebalance(period=self.rebalancing_period).return_ts(self.gmv_annual_weights, self.assets_ror)
+        returns = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(self.gmv_annual_weights, self.assets_ror)
         return (
             helpers.Float.annualize_risk(returns.std(), returns.mean()),
             (returns + 1.0).prod() ** (settings._MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
@@ -369,7 +369,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         # Set the objective function
         def objective_function(w):
             # Accumulated return for rebalanced portfolio time series
-            objective_function.returns = helpers.Rebalance(period=period).return_ts(w, ror)
+            objective_function.returns = helpers.Rebalance(period=period).return_ror_ts(w, ror)
             accumulated_return = (objective_function.returns + 1.0).prod() - 1.0
             return -accumulated_return
 
@@ -395,7 +395,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         return point
 
     def _get_cagr(self, weights):
-        ts = helpers.Rebalance(period=self.rebalancing_period).return_ts(weights, self.assets_ror)
+        ts = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(weights, self.assets_ror)
         acc_return = (ts + 1.0).prod() - 1.0
         return (1.0 + acc_return) ** (settings._MONTHS_PER_YEAR / ts.shape[0]) - 1.0
 
@@ -426,7 +426,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         def objective_function(w):
             # annual risk
-            ts = helpers.Rebalance(period=self.rebalancing_period).return_ts(w, self.assets_ror)
+            ts = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(w, self.assets_ror)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             return helpers.Float.annualize_risk(risk_monthly, mean_return)
@@ -482,7 +482,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         def objective_function(w):
             # annual risk
-            ts = helpers.Rebalance(period=self.rebalancing_period).return_ts(w, self.assets_ror)
+            ts = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(w, self.assets_ror)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             result = -helpers.Float.annualize_risk(risk_monthly, mean_return)
@@ -799,7 +799,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         # Portfolio risk and cagr for each set of weights
         portfolios_ror = weights_df.aggregate(
-            helpers.Rebalance(period=self.rebalancing_period).return_ts,
+            helpers.Rebalance(period=self.rebalancing_period).return_ror_ts,
             ror=self.assets_ror,
         )
         random_portfolios = pd.DataFrame()
