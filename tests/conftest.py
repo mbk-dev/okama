@@ -108,6 +108,9 @@ def init_portfolio_values():
         inflation=True,
         rebalancing_period="year",
         symbol="pf1.PF",
+        cashflow=0,
+        initial_amount=1_000,
+        discount_rate=None,
     )
 
 
@@ -152,6 +155,35 @@ def portfolio_dividends(init_portfolio_values):
     return ok.Portfolio(**_portfolio_dividends)
 
 
+# DCF Scenarios
+@pytest.fixture(scope="package")
+def portfolio_cashflows_inflation(init_portfolio_values):
+    _portfolio_cashflows_inflation = deepcopy(init_portfolio_values)
+    _portfolio_cashflows_inflation["cashflow"] = -100
+    _portfolio_cashflows_inflation["initial_amount"] = 100_000
+    return ok.Portfolio(**_portfolio_cashflows_inflation)
+
+
+@pytest.fixture(scope="package")
+def portfolio_cashflows_NO_inflation(init_portfolio_values):
+    _portfolio_cashflows_NO_inflation = deepcopy(init_portfolio_values)
+    _portfolio_cashflows_NO_inflation["cashflow"] = -100.
+    _portfolio_cashflows_NO_inflation["initial_amount"] = 100_000.
+    _portfolio_cashflows_NO_inflation["inflation"] = False
+    _portfolio_cashflows_NO_inflation["discount_rate"] = 0.09
+    return ok.Portfolio(**_portfolio_cashflows_NO_inflation)
+
+
+@pytest.fixture(scope="package")
+def portfolio_cashflows_NO_inflation_NO_discount_rate(init_portfolio_values):
+    _portfolio_cashflows_NO_inflation_NO_discount_rate = deepcopy(init_portfolio_values)
+    _portfolio_cashflows_NO_inflation_NO_discount_rate["cashflow"] = -100.
+    _portfolio_cashflows_NO_inflation_NO_discount_rate["initial_amount"] = 100_000.
+    _portfolio_cashflows_NO_inflation_NO_discount_rate["inflation"] = False
+    _portfolio_cashflows_NO_inflation_NO_discount_rate["discount_rate"] = None
+    return ok.Portfolio(**_portfolio_cashflows_NO_inflation_NO_discount_rate)
+
+
 # Macro
 @pytest.fixture(scope="function")
 def _init_inflation(request):
@@ -172,6 +204,12 @@ def _init_rates(request):
 def _init_indicator(request):
     request.cls.cape10_usd = ok.Indicator(symbol="USA_CAPE10.RATIO", first_date="2021-01", last_date="2022-02")
 
+
+@pytest.fixture(scope="package")
+def portfolio_short_history(init_portfolio_values):
+    _portfolio_short_history = deepcopy(init_portfolio_values)
+    _portfolio_short_history["first_date"] = "2019-02"
+    return ok.Portfolio(**_portfolio_short_history)
 
 # Efficient Frontier Single Period
 @pytest.fixture(scope="module")

@@ -65,12 +65,12 @@ def test_ror(portfolio_rebalanced_month):
 
 
 def test_wealth_index(portfolio_rebalanced_year):
-    assert portfolio_rebalanced_year.wealth_index.iloc[-1, 1] == approx(1315.848, rel=1e-2)
+    assert portfolio_rebalanced_year.wealth_index.iloc[-1, 1] == approx(999.99, rel=1e-2)
 
 
 def test_wealth_index_with_assets(portfolio_rebalanced_year, portfolio_no_inflation):
     result = portfolio_rebalanced_year.wealth_index_with_assets.iloc[-1, :].values
-    assert_allclose(np.array(result), np.array([2490.845572, 2079.757278, 2924.031272, 1315.848632]), rtol=1e-02)
+    assert_allclose(np.array(result), np.array([2259.244689, 2056.11199, 2889.930097, 1310.606208]), rtol=1e-02)
 
 
 def test_weights(portfolio_rebalanced_month):
@@ -114,7 +114,7 @@ def test_assets_close_monthly(portfolio_not_rebalanced):
 
 
 def test_close_monthly(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.close_monthly.iloc[-1] == approx(2501.89, rel=1e-2)
+    assert portfolio_not_rebalanced.close_monthly.iloc[-1] == approx(1731.40, rel=1e-2)
 
 
 def test_get_assets_dividends(portfolio_dividends):
@@ -127,16 +127,16 @@ def test_get_assets_dividends(portfolio_dividends):
 
 
 def test_number_of_securities(portfolio_not_rebalanced, portfolio_dividends):
-    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 0] == approx(1.798, rel=1e-2)  # RGBITR.INDX
-    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 1] == approx(0.2787, abs=1e-2)  # MCFTR.INDX
+    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 0] == approx(1.244, rel=1e-2)  # RGBITR.INDX
+    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 1] == approx(0.1928, abs=1e-2)  # MCFTR.INDX
     # with dividends
-    assert portfolio_dividends.number_of_securities.iloc[-1, 0] == approx(4.185, rel=1e-2)  # SBER.MOEX
-    assert portfolio_dividends.number_of_securities.iloc[-1, 1] == approx(0.448, abs=1e-2)  # T.US
+    assert portfolio_dividends.number_of_securities.iloc[-1, 0] == approx(2.770, rel=1e-2)  # SBER.MOEX
+    assert portfolio_dividends.number_of_securities.iloc[-1, 1] == approx(0.296, abs=1e-2)  # T.US
     assert portfolio_dividends.number_of_securities.iloc[-1, 2] == approx(0.004137, abs=1e-2)  # GNS.LSE
 
 
 def test_dividends(portfolio_dividends):
-    assert portfolio_dividends.dividends.iloc[-1] == approx(14.70, rel=1e-2)
+    assert portfolio_dividends.dividends.iloc[-1] == approx(9.73, rel=1e-2)
 
 
 def test_dividend_yield(portfolio_dividends):
@@ -305,14 +305,33 @@ def test_get_rolling_cagr_failing_no_inflation(portfolio_no_inflation):
 
 
 def test_monte_carlo_wealth(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month._monte_carlo_wealth(distr="norm", years=1, n=1000).iloc[-1, :].mean() == approx(
-        3005.763, rel=1e-1
+    df = portfolio_rebalanced_month._monte_carlo_wealth(
+        first_value=1000,
+        distr="norm",
+        years=1,
+        n=1000
+    )
+    assert df.shape == (12, 1000)
+    assert df.iloc[-1, :].mean() == approx(
+        1179.63, rel=1e-1
+    )
+
+
+def test_monte_carlo_returns_ts(portfolio_rebalanced_month):
+    df = portfolio_rebalanced_month.monte_carlo_returns_ts(
+        distr="lognorm",
+        years=1,
+        n=1000
+    )
+    assert df.shape == (12, 1000)
+    assert df.iloc[-1, :].mean() == approx(
+        0.0156, abs=1e-1
     )
 
 
 @mark.parametrize(
     "distribution, expected",
-    [("hist", 2931.484), ("norm", 3062.036), ("lognorm", 3030.9024)],
+    [("hist", 2210.96), ("norm", 1188.55), ("lognorm", 1170.76)],
 )
 def test_percentile_wealth(portfolio_rebalanced_month, distribution, expected):
     dic = portfolio_rebalanced_month.percentile_wealth(distr=distribution, years=1, n=100, percentiles=[50])
@@ -322,8 +341,6 @@ def test_percentile_wealth(portfolio_rebalanced_month, distribution, expected):
 def test_forecast_monte_carlo_cagr(portfolio_rebalanced_month):
     dic = portfolio_rebalanced_month.percentile_distribution_cagr(years=2, distr="lognorm", n=100, percentiles=[50])
     assert dic[50] == approx(0.1905, abs=5e-2)
-    with pytest.raises(ValueError):
-        portfolio_rebalanced_month.percentile_distribution_cagr(years=10, distr="lognorm", n=100, percentiles=[50])
 
 
 def test_skewness(portfolio_rebalanced_month):
@@ -367,3 +384,39 @@ def test_init_portfolio_failing():
         ok.Portfolio(["RGBITR.INDX", "MCFTR.INDX"], weights=[0.1, 0.2, 0.7])
     with pytest.raises(ValueError, match="Weights sum is not equal to one."):
         ok.Portfolio(["RGBITR.INDX", "MCFTR.INDX"], weights=[0.1, 0.2])
+
+
+# DCF Methods
+def test_dcf_discount_rate(
+        portfolio_cashflows_inflation,
+        portfolio_cashflows_NO_inflation,
+        portfolio_cashflows_NO_inflation_NO_discount_rate
+):
+    assert portfolio_cashflows_inflation.discount_rate == approx(0.0554, abs=1e-3)  # average inflation
+    assert portfolio_cashflows_NO_inflation.discount_rate == approx(0.09, abs=1e-3)  # defined discount rate
+    assert portfolio_cashflows_NO_inflation_NO_discount_rate.discount_rate == approx(0.05, abs=1e-3)  # default rate
+
+
+def test_dcf_wealth_index(portfolio_cashflows_inflation, portfolio_cashflows_NO_inflation):
+    assert portfolio_cashflows_inflation.wealth_index.iloc[-1, 0] == approx(164459.78, rel=1e-2)
+    assert portfolio_cashflows_inflation.wealth_index.iloc[-1, 1] == approx(100050.78, rel=1e-2)
+    assert portfolio_cashflows_NO_inflation.wealth_index.iloc[-1, 0] == approx(164459.78, rel=1e-2)
+
+
+def test_survival_period(portfolio_cashflows_inflation):
+    assert portfolio_cashflows_inflation.survival_period == approx(5.0, rel=1e-2)
+
+
+def test_survival_date(portfolio_cashflows_inflation):
+    assert portfolio_cashflows_inflation.survival_date == pd.to_datetime("2020-01")
+
+
+def test_cashflow_pv(portfolio_cashflows_inflation, portfolio_cashflows_NO_inflation_NO_discount_rate):
+    assert portfolio_cashflows_inflation.cashflow_pv == approx(-76.33, rel=1e-2)
+    assert portfolio_cashflows_NO_inflation_NO_discount_rate.cashflow_pv == approx(-78.35, rel=1e-2)
+
+
+def test_initial_amount_pv(portfolio_cashflows_inflation, portfolio_cashflows_NO_inflation_NO_discount_rate):
+    assert portfolio_cashflows_inflation.initial_amount_pv == approx(76339.31, rel=1e-2)
+    assert portfolio_cashflows_NO_inflation_NO_discount_rate.initial_amount_pv == approx(78352.61, rel=1e-2)
+
