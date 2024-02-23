@@ -262,7 +262,7 @@ def init_efficient_frontier_reb():
         ccy="USD",
         first_date="2019-01",
         last_date="2020-02",
-        n_points=3,
+        n_points=4,
         verbose=False,
         full_frontier=True,
         inflation=True,

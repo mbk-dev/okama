@@ -117,7 +117,7 @@ class Portfolio(make_asset_list.ListMaker):
         self._symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
         self._discount_rate = None
         self.discount_rate = discount_rate
-        self._wealth_index = pd.DataFrame(dtype=float)
+        self.dcf = PortfolioDCF(self)
 
     def __repr__(self):
         dic = {
@@ -362,16 +362,11 @@ class Portfolio(make_asset_list.ListMaker):
         Calculate wealth index time series for the portfolio and accumulated inflation.
 
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
-        historical time period considering cash flows.
+        historical time period. Accumulated inflation time series is added if `inflation=True` in the Portfolio.
 
-        Accumulated inflation time series is added if `inflation=True` in the Portfolio.
-
-        If there is no cashflows Wealth index is obtained from the accumulated return multiplicated
-        by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
-
-        initial_amount_pv is the discounted value of the initial investments (initial_amount).
-
-        Values of the wealth index correspond to the beginning of the month.
+        Wealth index is obtained from the accumulated return multiplicated by the initial investments.
+        That is: 1000 * (Acc_Return + 1)
+        Initial investments are taken as 1000 units of the Portfolio base currency.
 
         Returns
         -------
@@ -384,77 +379,10 @@ class Portfolio(make_asset_list.ListMaker):
         >>> x.wealth_index.plot()
         >>> plt.show()
         """
-        if self._wealth_index.empty:
-            df = self._add_inflation()
-            infl = self.inflation if hasattr(self, "inflation") else None
-            df = helpers.Frame.get_wealth_indexes_with_cashflow(
-                ror=df,
-                portfolio_symbol=self.symbol,
-                inflation_symbol=infl,
-                discount_rate=self.discount_rate,
-                initial_amount=self.initial_amount_pv,
-                cashflow=self.cashflow_pv
-                )
-            self._wealth_index = self._make_df_if_series(df)
-        return self._wealth_index
-
-    @property
-    def survival_date(self) -> pd.Timestamp:
-        """
-        Get the date when the portfolio balance become negative considering withdrawals on the historical data.
-
-        The portfolio survival date (longevity date) depends on the investment strategy: asset allocation,
-        rebalancing, withdrawals rate etc.
-
-        The withdrawals are defined by the `cashflow` parameter of the portfolio.
-
-        Returns
-        -------
-        pd.Timestamp
-            The portfolio survival date (longevity period) in years.
-
-        Examples
-        --------
-        >>> pf = ok.Portfolio(
-        ['SPY.US', 'AGG.US'],
-        ccy='USD',
-        first_date='2010-01',
-        initial_amount=100_000,
-        cashflow=-1_000
-        )
-        >>> pf.survival_date
-        Timestamp('2021-08-01 00:00:00')
-        """
-        return helpers.Frame.get_survival_date(self.wealth_index.loc[:, self.symbol])
-
-    @property
-    def survival_period(self) -> float:
-        """
-        Calculate the period when the portfolio has positive balance considering withdrawals on the historical data.
-
-        The portfolio survival period (longevity period) depends on the investment strategy: asset allocation,
-        rebalancing, withdrawals rate etc.
-
-        The withdrawals are defined by the `cashflow` parameter of the portfolio.
-
-        Returns
-        -------
-        float
-            The portfolio survival period (longevity period) in years.
-
-        Examples
-        --------
-        >>> pf = ok.Portfolio(
-        ['SPY.US', 'AGG.US'],
-        ccy='USD',
-        first_date='2010-01',
-        initial_amount=100_000,
-        cashflow=-1_000
-        )
-        >>> pf.survival_period
-        11.6
-        """
-        return helpers.Date.get_period_length(last_date=self.survival_date, first_date=self.first_date)
+        df = self._add_inflation()
+        df = helpers.Frame.get_wealth_indexes(df)
+        df = self._make_df_if_series(df)
+        return df
 
     def _make_df_if_series(self, ts):
         if isinstance(ts, pd.Series):  # should always return a DataFrame
@@ -768,48 +696,6 @@ class Portfolio(make_asset_list.ListMaker):
             fn=helpers.Frame.get_cumulative_return,
             window_below_year=True,
         )
-
-    @property
-    def initial_amount_pv(self) -> Optional[float]:
-        """
-        Calculate the discounted value (PV) of the initial investments at the historical first date.
-
-        The future value (FV) is defined by `initial_amount` parameter.
-        The discount rate is the average annual inflation.
-
-        Returns
-        -------
-        float
-            The discounted value (PV) of the initial investments at the historical first date.
-
-        Examples
-        --------
-        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB', initial_amount=100_000)
-        >>> pf.initial_amount_pv
-        73650
-        """
-        return self.initial_amount / (1. + self.discount_rate) ** self.period_length
-
-    @property
-    def cashflow_pv(self) -> Optional[float]:
-        """
-        Calculate the discounted value (PV) of the cash flow amount at the historical first date.
-
-        The future value (FV) is defined by `cashflow` parameter.
-        The discount rate is the average annual inflation.
-
-        Returns
-        -------
-        float
-            The discounted value (PV) of the cash flow amount at the historical first date.
-
-        Examples
-        --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD', initial_amount=100_000, cashflow=-5_000)
-        >>> pf.cashflow_pv
-        -3004
-        """
-        return self.cashflow / (1. + self.discount_rate) ** self.period_length
 
     @property
     def assets_close_monthly(self) -> pd.DataFrame:
@@ -1713,26 +1599,20 @@ class Portfolio(make_asset_list.ListMaker):
             raise ValueError('"distr" must be "norm" (default) or "lognorm".')
         return pd.DataFrame(data=random_returns, index=ts_index)
 
-    def _monte_carlo_wealth(self,
-                            first_value: float = 1000.,
-                            distr: str = "norm",
-                            years: int = 1,
-                            n: int = 100) -> pd.DataFrame:
+    def _monte_carlo_wealth(self, distr: str = "norm", years: int = 1, n: int = 100) -> pd.DataFrame:
         """
-        Generate portfolio wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
+        Generate portfolio wealth index with Monte Carlo simulation.
 
         Monte Carlo simulation generates n random monthly time series.
         Each wealth index is calculated with rate of return time series of a given distribution.
 
+        Forecast period should not exceed 1/2 of portfolio history period length.
         First date of forecasted returns is portfolio last_date.
         First value for the forecasted wealth indexes is the last historical portfolio index value. It is useful
         for a chart with historical wealth index and forecasted values.
 
         Parameters
         ----------
-        first_value : float, default 1000,
-            Portfolio initial investment.
-
         distr : {'norm', 'lognorm'}, default 'norm'
             Distribution type for the rate of return of portfolio.
 
@@ -1763,25 +1643,8 @@ class Portfolio(make_asset_list.ListMaker):
         if distr not in ["norm", "lognorm"]:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
         return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
-        df = return_ts.apply(
-            helpers.Frame.get_wealth_indexes_with_cashflow,
-            axis=0,
-            args=(None, None, self.discount_rate, first_value, self.cashflow)
-        )
-
-        def remove_negative_values(s):
-            condition = s <= 0
-            try:
-                survival_date = s[condition].index[0]
-                s[survival_date] = 0
-                s[s.index > survival_date] = np.NAN
-            except IndexError:
-                pass
-            return s
-
-        df = df.apply(remove_negative_values, axis=0)
-        all_cells_are_nan = df.isna().all(axis=1)
-        return df[~all_cells_are_nan]
+        first_value = self.wealth_index[self.symbol].values[-1]
+        return helpers.Frame.get_wealth_indexes(return_ts, first_value)
 
     def _get_cagr_distribution(
         self,
@@ -2392,22 +2255,16 @@ class Portfolio(make_asset_list.ListMaker):
         return ax
 
     def plot_forecast_monte_carlo(
-        self,
-        distr: str = "norm",
-        years: int = 1,
-        backtest: bool = True,
-        n: int = 20,
-        figsize: Optional[tuple] = None,
+            self,
+            distr: str = "norm",
+            years: int = 1,
+            n: int = 20,
+            figsize: Optional[tuple] = None,
     ) -> None:
         """
         Plot Monte Carlo simulation for portfolio wealth indexes together with historical wealth index.
 
-        Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
-        time period considering cash flows (portfolio withdrawals/contributions).
-
         Random wealth indexes are generated according to a given distribution.
-
-        Wealth indexes
 
         Parameters
         ----------
@@ -2420,9 +2277,6 @@ class Portfolio(make_asset_list.ListMaker):
             Investment period length for new wealth indexes
             It should not exceed 1/2 of the portfolio history period length 'period_length'.
 
-        backtest : bool, default 'True'
-            Include historical wealth index if 'True'.
-
         n : int, default 20
             Number of random wealth indexes to generate with Monte Carlo simulation.
 
@@ -2433,18 +2287,289 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf.plot_forecast_monte_carlo(years=5, distr='lognorm', n=100)
+        >>> plt.show()
+        """
+        s1 = self.wealth_index
+        s2 = self._monte_carlo_wealth(distr=distr, years=years, n=n)
+        s1[self.symbol].plot(legend=None, figsize=figsize)
+        for n in s2:
+            s2[n].plot(legend=None)
+
+
+class PortfolioDCF:
+    def __init__(self, parent: Portfolio):
+        self.parent = parent
+        self._wealth_index = pd.DataFrame(dtype=float)
+
+    @property
+    def wealth_index(self) -> pd.DataFrame:
+        """
+        Calculate wealth index time series for the portfolio and accumulated inflation.
+
+        Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
+        historical time period considering cash flows.
+
+        Accumulated inflation time series is added if `inflation=True` in the Portfolio.
+
+        If there is no cashflows Wealth index is obtained from the accumulated return multiplicated
+        by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
+
+        initial_amount_pv is the discounted value of the initial investments (initial_amount).
+
+        Values of the wealth index correspond to the beginning of the month.
+
+        Returns
+        -------
+            Time series of wealth index values for portfolio and accumulated inflation.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.Portfolio(['SPY.US', 'BND.US'])
+        >>> x.dcf.wealth_index.plot()
+        >>> plt.show()
+        """
+        if self._wealth_index.empty:
+            df = self.parent._add_inflation()
+            infl = self.parent.inflation if hasattr(self.parent, "inflation") else None
+            df = helpers.Frame.get_wealth_indexes_with_cashflow(
+                ror=df,
+                portfolio_symbol=self.parent.symbol,
+                inflation_symbol=infl,
+                discount_rate=self.parent.discount_rate,
+                initial_amount=self.initial_amount_pv,
+                cashflow=self.cashflow_pv,
+            )
+            self._wealth_index = self.parent._make_df_if_series(df)
+        return self._wealth_index
+
+    @property
+    def survival_period(self) -> float:
+        """
+        Calculate the period when the portfolio has positive balance considering withdrawals on the historical data.
+
+        The portfolio survival period (longevity period) depends on the investment strategy: asset allocation,
+        rebalancing, withdrawals rate etc.
+
+        The withdrawals are defined by the `cashflow` parameter of the portfolio.
+
+        Returns
+        -------
+        float
+            The portfolio survival period (longevity period) in years.
+
+        Examples
+        --------
         >>> pf = ok.Portfolio(
-        ['SPY.US', 'AGG.US', 'GLD.US'],
-        weights=[.60, .35, .05],
-        rebalancing_period='year',
-        initial_amount=300_000,
-        cashflow=-1_000
+            ['SPY.US', 'AGG.US'],
+            ccy='USD',
+            first_date='2010-01',
+            initial_amount=100_000,
+            cashflow=-1_000
         )
-        >>> pf.plot_forecast_monte_carlo(years=20, backtest=True, distr='lognorm', n=100)
+        >>> pf.dcf.survival_period
+        11.6
+        """
+        return helpers.Date.get_period_length(last_date=self.survival_date, first_date=self.parent.first_date)
+
+    @property
+    def survival_date(self) -> pd.Timestamp:
+        """
+        Get the date when the portfolio balance become negative considering withdrawals on the historical data.
+
+        The portfolio survival date (longevity date) depends on the investment strategy: asset allocation,
+        rebalancing, withdrawals rate etc.
+
+        The withdrawals are defined by the `cashflow` parameter of the portfolio.
+
+        Returns
+        -------
+        pd.Timestamp
+            The portfolio survival date (longevity period) in years.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(
+            ['SPY.US', 'AGG.US'],
+            ccy='USD',
+            first_date='2010-01',
+            initial_amount=100_000,
+            cashflow=-1_000
+        )
+        >>> pf.dcf.survival_date
+        Timestamp('2021-08-01 00:00:00')
+        """
+        return helpers.Frame.get_survival_date(self.wealth_index.loc[:, self.parent.symbol])
+
+    @property
+    def cashflow_pv(self) -> Optional[float]:
+        """
+        Calculate the discounted value (PV) of the cash flow amount at the historical first date.
+
+        The future value (FV) is defined by `cashflow` parameter.
+        The discount rate is the average annual inflation.
+
+        Returns
+        -------
+        float
+            The discounted value (PV) of the cash flow amount at the historical first date.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD', initial_amount=100_000, cashflow=-5_000)
+        >>> pf.dcf.cashflow_pv
+        -3004
+        """
+        return self.parent.cashflow / (1. + self.parent.discount_rate) ** self.parent.period_length
+
+    @property
+    def initial_amount_pv(self) -> Optional[float]:
+        """
+        Calculate the discounted value (PV) of the initial investments at the historical first date.
+
+        The future value (FV) is defined by `initial_amount` parameter.
+        The discount rate is the average annual inflation.
+
+        Returns
+        -------
+        float
+            The discounted value (PV) of the initial investments at the historical first date.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB', initial_amount=100_000)
+        >>> pf.dcf.initial_amount_pv
+        73650
+        """
+        return self.parent.initial_amount / (1. + self.parent.discount_rate) ** self.parent.period_length
+
+    def _monte_carlo_wealth(self,
+                            first_value: float = 1000.,
+                            distr: str = "norm",
+                            years: int = 1,
+                            n: int = 100) -> pd.DataFrame:
+        """
+        Generate portfolio wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
+
+        Monte Carlo simulation generates n random monthly time series.
+        Each wealth index is calculated with rate of return time series of a given distribution.
+
+        First date of forecasted returns is portfolio last_date.
+        First value for the forecasted wealth indexes is the last historical portfolio index value. It is useful
+        for a chart with historical wealth index and forecasted values.
+
+        Parameters
+        ----------
+        first_value : float, default 1000,
+            Portfolio initial investment.
+
+        distr : {'norm', 'lognorm'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
+
+        years : int, default 1
+            Forecast period for portfolio wealth index time series.
+            It should not exceed 1/2 of the portfolio history period length 'period_length'.
+
+        n : int, default 100
+            Number of random wealth indexes to generate with Monte Carlo simulation.
+
+        Returns
+        -------
+        DataFrame
+            Table with n random wealth indexes monthly time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
+        >>> pf.dcf._monte_carlo_wealth(distr='lognorm', years=5, n=1000)
+                         0            1    ...          998          999
+        2021-07  3895.377293  3895.377293  ...  3895.377293  3895.377293
+        2021-08  3869.854680  4004.814981  ...  3874.455244  3935.913516
+        2021-09  3811.125717  3993.783034  ...  3648.925159  3974.103856
+        2021-10  4053.024519  4232.141143  ...  3870.099003  4082.189688
+        2021-11  4179.544897  4156.839698  ...  3899.249696  4097.003962
+        2021-12  4237.030690  4351.305114  ...  3916.639721  4042.011774
+        """
+        if distr not in ["norm", "lognorm"]:
+            raise ValueError('distr should be "norm" (default) or "lognorm".')
+        return_ts = self.parent.monte_carlo_returns_ts(distr=distr, years=years, n=n)
+        df = return_ts.apply(
+            helpers.Frame.get_wealth_indexes_with_cashflow,
+            axis=0,
+            args=(None, None, self.parent.discount_rate, first_value, self.parent.cashflow)
+        )
+
+        def remove_negative_values(s):
+            condition = s <= 0
+            try:
+                survival_date = s[condition].index[0]
+                s[survival_date] = 0
+                s[s.index > survival_date] = np.NAN
+            except IndexError:
+                pass
+            return s
+
+        df = df.apply(remove_negative_values, axis=0)
+        all_cells_are_nan = df.isna().all(axis=1)
+        return df[~all_cells_are_nan]
+
+    def plot_forecast_monte_carlo(
+        self,
+        distr: str = "norm",
+        years: int = 1,
+        backtest: bool = True,
+        n: int = 20,
+        figsize: Optional[tuple] = None,
+    ) -> None:
+        """
+        Plot Monte Carlo simulation for portfolio wealth indexes optionally together with historical wealth index.
+
+        Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
+        time period considering cash flows (portfolio withdrawals/contributions).
+
+        Random wealth indexes are generated according to a given distribution.
+
+        Parameters
+        ----------
+        distr : {'norm', 'lognorm'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+
+        years : int, default 1
+            Investment period length for new wealth indexes
+
+        backtest : bool, default 'True'
+            Include historical wealth index if 'True'.
+
+        n : int, default 20
+            Number of random wealth indexes to generate with Monte Carlo simulation.
+
+        figsize : (float, float), optional
+            Width, height in inches.
+            If None default matplotlib figsize value is used.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(
+            ['SPY.US', 'AGG.US', 'GLD.US'],
+            weights=[.60, .35, .05],
+            rebalancing_period='year',
+            initial_amount=300_000,
+            cashflow=-1_000
+        )
+        >>> pf.dcf.plot_forecast_monte_carlo(years=20, backtest=True, distr='lognorm', n=100)
         >>> plt.show()
         """
         if backtest:
-            s1 = self.wealth_index[self.symbol]
+            s1 = self.wealth_index[self.parent.symbol]
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
             if last_backtest_value > 0:
@@ -2452,7 +2577,7 @@ class Portfolio(make_asset_list.ListMaker):
                 for s in s2:
                     s2[s].plot(legend=None)
         else:
-            s2 = self._monte_carlo_wealth(first_value=self.initial_amount, distr=distr, years=years, n=n)
+            s2 = self._monte_carlo_wealth(first_value=self.parent.initial_amount, distr=distr, years=years, n=n)
             s2.plot(legend=None)
 
     def monte_carlo_survival_period(
@@ -2462,14 +2587,56 @@ class Portfolio(make_asset_list.ListMaker):
             n: int = 20,
     ) -> pd.Series:
         """
+        Generate a survival period distribution for a portfolio with cash flows by Monte Carlo simulation.
 
+        It's possible to analyze the distribution finding "min", "max" and percentiles to see for how long will last
+        the investment strategy - possible longevity period.
+
+        Parameters
+        ----------
+        distr : {'norm', 'lognorm'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
+
+        years : int, default 1
+            Forecast period for portfolio wealth index time series.
+
+        n : int, default 100
+            Number of random wealth indexes to generate with Monte Carlo simulation.
+
+        Returns
+        -------
+        Series
+            Survival period distribution for a portfolio with cash flows.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(
+            ['SPY.US', 'AGG.US', 'GLD.US'],
+            weights=[.60, .35, .05],
+            rebalancing_period='year',
+            initial_amount=300_000,
+            cashflow=-10_000
+        )
+        >>> s = pf.dcf.monte_carlo_survival_period(
+            distr="norm",
+            years=10,
+            n=100,
+        )
+        >>> s.min()
+        2.2
+        >>> s.max()
+        3.6
+        >> s.mean()
+        2.737
+        >> s.quantile(50 / 100)
+        2.7
         """
         s2 = self._monte_carlo_wealth(
-            first_value=self.initial_amount,
+            first_value=self.parent.initial_amount,
             distr=distr,
             years=years,
             n=n
         )
         dates: pd.Series = helpers.Frame.get_survival_date(s2)
 
-        return dates.apply(helpers.Date.get_period_length, args=(self.last_date,))
+        return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
