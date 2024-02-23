@@ -184,6 +184,14 @@ def portfolio_cashflows_NO_inflation_NO_discount_rate(init_portfolio_values):
     return ok.Portfolio(**_portfolio_cashflows_NO_inflation_NO_discount_rate)
 
 
+@pytest.fixture(scope="package")
+def portfolio_cashflows_inflation_large_cf(init_portfolio_values):
+    _portfolio_cashflows_inflation_large_cf = deepcopy(init_portfolio_values)
+    _portfolio_cashflows_inflation_large_cf["cashflow"] = -2000
+    _portfolio_cashflows_inflation_large_cf["initial_amount"] = 100_000
+    return ok.Portfolio(**_portfolio_cashflows_inflation_large_cf)
+
+
 # Macro
 @pytest.fixture(scope="function")
 def _init_inflation(request):

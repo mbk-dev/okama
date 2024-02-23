@@ -392,6 +392,16 @@ def test_survival_period(portfolio_cashflows_inflation):
     assert portfolio_cashflows_inflation.dcf.survival_period == approx(5.0, rel=1e-2)
 
 
+def test_monte_carlo_survival_period(portfolio_cashflows_inflation_large_cf):
+    result = portfolio_cashflows_inflation_large_cf.dcf.monte_carlo_survival_period(
+        distr="norm",
+        years=25,
+        n=100
+    )
+    assert result.min() == approx(4.5, rel=1e-1)
+    assert result.max() == approx(8.1, rel=1e-1)
+
+
 def test_survival_date(portfolio_cashflows_inflation):
     assert portfolio_cashflows_inflation.dcf.survival_date == pd.to_datetime("2020-01")
 
