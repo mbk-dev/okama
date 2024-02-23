@@ -44,8 +44,7 @@ class Float:
 
     @staticmethod
     def annualize_risk(
-            risk: Union[float, pd.Series, pd.DataFrame],
-            mean_return: Union[float, pd.Series, pd.DataFrame]
+        risk: Union[float, pd.Series, pd.DataFrame], mean_return: Union[float, pd.Series, pd.DataFrame]
     ) -> Union[float, pd.Series, pd.DataFrame]:
         """
         Annualizes Risk.
@@ -168,11 +167,10 @@ class Frame:
         if isinstance(ts, pd.Series):
             ts.rename(ror_monthly.name, inplace=True)
         return ts
-    
+
     @staticmethod
     def get_wealth_indexes(
-        ror: Union[pd.Series, pd.DataFrame], 
-        initial_amount: float = 1000.
+        ror: Union[pd.Series, pd.DataFrame], initial_amount: float = 1000.0
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Returns wealth indexes for a list of assets (or for portfolio).
@@ -189,11 +187,11 @@ class Frame:
 
     @staticmethod
     def get_wealth_indexes_with_cashflow(
-        ror: Union[pd.Series, pd.DataFrame], 
+        ror: Union[pd.Series, pd.DataFrame],
         portfolio_symbol: Optional[str],
         inflation_symbol: Optional[str],
         discount_rate: float,
-        initial_amount: float = 1000.,
+        initial_amount: float = 1000.0,
         cashflow: float = 0,
     ) -> Union[pd.Series, pd.DataFrame]:
         """
@@ -222,8 +220,7 @@ class Frame:
             s.iloc[0] = initial_amount  # replaces NaN with the first period return
             if inflation_symbol:
                 cum_inflation = Frame.get_wealth_indexes(
-                    ror=ror.loc[:, inflation_symbol],
-                    initial_amount=initial_amount
+                    ror=ror.loc[:, inflation_symbol], initial_amount=initial_amount
                 )
                 wealth_index = pd.concat([s, cum_inflation], axis="columns")
             else:
@@ -336,7 +333,7 @@ class Frame:
         The shape of time series should be at least 12. In the opposite case empty time series is returned.
         """
         sk = ror.expanding(min_periods=1).skew()
-        return sk.iloc[settings._MONTHS_PER_YEAR:]
+        return sk.iloc[settings._MONTHS_PER_YEAR :]
 
     @staticmethod
     def skewness_rolling(ror: Union[pd.DataFrame, pd.Series], window: int = 60) -> Union[pd.Series, float]:
@@ -356,7 +353,7 @@ class Frame:
         Kurtosis should be close to zero for normal distribution.
         """
         kt = ror.expanding(min_periods=1).kurt()
-        return kt.iloc[settings._MONTHS_PER_YEAR:]
+        return kt.iloc[settings._MONTHS_PER_YEAR :]
 
     @staticmethod
     def kurtosis_rolling(ror: Union[pd.Series, pd.DataFrame], window: int = 60):
@@ -566,7 +563,7 @@ class Index:
         y = abs(tracking_diff)
         diff = (y + 1.0).pow(pwr, axis=0) - 1.0
         diff = np.sign(tracking_diff) * diff
-        return diff.iloc[settings._MONTHS_PER_YEAR - 1:]  # returns for the first 11 months can't be annualized
+        return diff.iloc[settings._MONTHS_PER_YEAR - 1 :]  # returns for the first 11 months can't be annualized
 
     @staticmethod
     def tracking_error(ror: pd.DataFrame) -> pd.DataFrame:
@@ -597,7 +594,7 @@ class Index:
         cov_matrix_ts = getattr(ror.expanding(), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
         cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
-        return cov_matrix_ts.iloc[settings._MONTHS_PER_YEAR:]
+        return cov_matrix_ts.iloc[settings._MONTHS_PER_YEAR :]
 
     @staticmethod
     def rolling_cov_cor(ror: pd.DataFrame, window: int = 60, fn: str = "corr") -> pd.DataFrame:
@@ -629,7 +626,7 @@ class Index:
             raise ValueError("Beta coefficient is not defined for time periods < 1 year")
         cov = Index.expanding_cov_cor(ror, fn="cov")
         benchmark_var = ror.loc[:, ror.columns[0]].expanding().var()
-        benchmark_var = benchmark_var.iloc[settings._MONTHS_PER_YEAR:]
+        benchmark_var = benchmark_var.iloc[settings._MONTHS_PER_YEAR :]
         return cov.divide(benchmark_var, axis=0)
 
     @staticmethod

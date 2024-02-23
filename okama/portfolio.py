@@ -95,7 +95,7 @@ class Portfolio(make_asset_list.ListMaker):
         inflation: bool = True,
         weights: Optional[List[float]] = None,
         rebalancing_period: str = "month",
-        initial_amount: float = 1000.,
+        initial_amount: float = 1000.0,
         cashflow: float = 0,
         discount_rate: Optional[float] = None,
         symbol: str = None,
@@ -2255,11 +2255,11 @@ class Portfolio(make_asset_list.ListMaker):
         return ax
 
     def plot_forecast_monte_carlo(
-            self,
-            distr: str = "norm",
-            years: int = 1,
-            n: int = 20,
-            figsize: Optional[tuple] = None,
+        self,
+        distr: str = "norm",
+        years: int = 1,
+        n: int = 20,
+        figsize: Optional[tuple] = None,
     ) -> None:
         """
         Plot Monte Carlo simulation for portfolio wealth indexes together with historical wealth index.
@@ -2422,7 +2422,7 @@ class PortfolioDCF:
         >>> pf.dcf.cashflow_pv
         -3004
         """
-        return self.parent.cashflow / (1. + self.parent.discount_rate) ** self.parent.period_length
+        return self.parent.cashflow / (1.0 + self.parent.discount_rate) ** self.parent.period_length
 
     @property
     def initial_amount_pv(self) -> Optional[float]:
@@ -2443,13 +2443,11 @@ class PortfolioDCF:
         >>> pf.dcf.initial_amount_pv
         73650
         """
-        return self.parent.initial_amount / (1. + self.parent.discount_rate) ** self.parent.period_length
+        return self.parent.initial_amount / (1.0 + self.parent.discount_rate) ** self.parent.period_length
 
-    def _monte_carlo_wealth(self,
-                            first_value: float = 1000.,
-                            distr: str = "norm",
-                            years: int = 1,
-                            n: int = 100) -> pd.DataFrame:
+    def _monte_carlo_wealth(
+        self, first_value: float = 1000.0, distr: str = "norm", years: int = 1, n: int = 100
+    ) -> pd.DataFrame:
         """
         Generate portfolio wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
 
@@ -2498,7 +2496,7 @@ class PortfolioDCF:
         df = return_ts.apply(
             helpers.Frame.get_wealth_indexes_with_cashflow,
             axis=0,
-            args=(None, None, self.parent.discount_rate, first_value, self.parent.cashflow)
+            args=(None, None, self.parent.discount_rate, first_value, self.parent.cashflow),
         )
 
         def remove_negative_values(s):
@@ -2581,10 +2579,10 @@ class PortfolioDCF:
             s2.plot(legend=None)
 
     def monte_carlo_survival_period(
-            self,
-            distr: str = "norm",
-            years: int = 1,
-            n: int = 20,
+        self,
+        distr: str = "norm",
+        years: int = 1,
+        n: int = 20,
     ) -> pd.Series:
         """
         Generate a survival period distribution for a portfolio with cash flows by Monte Carlo simulation.
@@ -2631,12 +2629,7 @@ class PortfolioDCF:
         >> s.quantile(50 / 100)
         2.7
         """
-        s2 = self._monte_carlo_wealth(
-            first_value=self.parent.initial_amount,
-            distr=distr,
-            years=years,
-            n=n
-        )
+        s2 = self._monte_carlo_wealth(first_value=self.parent.initial_amount, distr=distr, years=years, n=n)
         dates: pd.Series = helpers.Frame.get_survival_date(s2)
 
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))

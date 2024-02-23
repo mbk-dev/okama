@@ -67,7 +67,7 @@ class ListMaker(ABC):
         ).values()
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
-        self.assets_ror = self.assets_ror[self.first_date:]
+        self.assets_ror = self.assets_ror[self.first_date :]
         if last_date:
             self.last_date = min(self.last_date, pd.to_datetime(last_date))
         if inflation:
@@ -81,7 +81,7 @@ class ListMaker(ABC):
             # Add inflation to the date range dict
             self.assets_first_dates.update({self.inflation: macro.Inflation(self.inflation).first_date})
             self.assets_last_dates.update({self.inflation: macro.Inflation(self.inflation).last_date})
-        self.assets_ror: pd.DataFrame = self.assets_ror[self.first_date: self.last_date]
+        self.assets_ror: pd.DataFrame = self.assets_ror[self.first_date : self.last_date]
         self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1)
         self.pl = settings.PeriodLength(
             self.assets_ror.shape[0] // settings._MONTHS_PER_YEAR,
@@ -398,7 +398,7 @@ class ListMaker(ABC):
         kind: str = "mean",
         tickers: Union[str, list] = "tickers",
         pct_values: bool = False,
-        xy_text: tuple = (0, 10)
+        xy_text: tuple = (0, 10),
     ) -> plt.axes:
         """
         Plot the assets points on the risk-return chart with annotations.
@@ -428,7 +428,7 @@ class ListMaker(ABC):
             Percents (True)
 
         xy_text : tuple, default (0, 10)
-            The shift of the annotation text (x, y) from the point. 
+            The shift of the annotation text (x, y) from the point.
 
         Examples
         --------

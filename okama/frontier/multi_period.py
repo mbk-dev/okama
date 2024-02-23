@@ -332,7 +332,9 @@ class EfficientFrontierReb(asset_list.AssetList):
         >>> frontier.gmv_annual_values
         (0.03695845106087943, 0.04418318557516887)
         """
-        returns = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(self.gmv_annual_weights, self.assets_ror)
+        returns = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(
+            self.gmv_annual_weights, self.assets_ror
+        )
         return (
             helpers.Float.annualize_risk(returns.std(), returns.mean()),
             (returns + 1.0).prod() ** (settings._MONTHS_PER_YEAR / returns.shape[0]) - 1.0,

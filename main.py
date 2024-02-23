@@ -1,18 +1,20 @@
 import matplotlib.pyplot as plt
 
 import okama as ok
+
 # Portfolio WithDrawls
-weights = [0.32, 0.31,  0.18, .19]
-portf = ok.Portfolio(['RGBITR.INDX', 'RUCBTRNS.INDX', 'MCFTR.INDX', 'GC.COMM'],
-                     ccy="RUB",
-                     weights=weights,
-                     inflation=True,
-                     symbol="retirement_portf.PF",
-                     rebalancing_period='year',
-                     cashflow=-200_000,
-                     initial_amount=39_000_000,
-                     discount_rate=None
-                     )
+weights = [0.32, 0.31, 0.18, 0.19]
+portf = ok.Portfolio(
+    ["RGBITR.INDX", "RUCBTRNS.INDX", "MCFTR.INDX", "GC.COMM"],
+    ccy="RUB",
+    weights=weights,
+    inflation=True,
+    symbol="retirement_portf.PF",
+    rebalancing_period="year",
+    cashflow=-200_000,
+    initial_amount=39_000_000,
+    discount_rate=None,
+)
 
 print(portf.discount_rate)
 print(portf)
@@ -33,10 +35,7 @@ print(f"max {s_periods.mean()}")
 
 # Rolling / Expanding Risk
 
-al = ok.AssetList(['DJI.INDX',
-                   'BND.US'
-                   ])
-al.get_rolling_risk_annual(window=12*20).plot()
+al = ok.AssetList(["DJI.INDX", "BND.US"])
+al.get_rolling_risk_annual(window=12 * 20).plot()
 
 plt.show()
-

@@ -167,8 +167,8 @@ def portfolio_cashflows_inflation(init_portfolio_values):
 @pytest.fixture(scope="package")
 def portfolio_cashflows_NO_inflation(init_portfolio_values):
     _portfolio_cashflows_NO_inflation = deepcopy(init_portfolio_values)
-    _portfolio_cashflows_NO_inflation["cashflow"] = -100.
-    _portfolio_cashflows_NO_inflation["initial_amount"] = 100_000.
+    _portfolio_cashflows_NO_inflation["cashflow"] = -100.0
+    _portfolio_cashflows_NO_inflation["initial_amount"] = 100_000.0
     _portfolio_cashflows_NO_inflation["inflation"] = False
     _portfolio_cashflows_NO_inflation["discount_rate"] = 0.09
     return ok.Portfolio(**_portfolio_cashflows_NO_inflation)
@@ -177,8 +177,8 @@ def portfolio_cashflows_NO_inflation(init_portfolio_values):
 @pytest.fixture(scope="package")
 def portfolio_cashflows_NO_inflation_NO_discount_rate(init_portfolio_values):
     _portfolio_cashflows_NO_inflation_NO_discount_rate = deepcopy(init_portfolio_values)
-    _portfolio_cashflows_NO_inflation_NO_discount_rate["cashflow"] = -100.
-    _portfolio_cashflows_NO_inflation_NO_discount_rate["initial_amount"] = 100_000.
+    _portfolio_cashflows_NO_inflation_NO_discount_rate["cashflow"] = -100.0
+    _portfolio_cashflows_NO_inflation_NO_discount_rate["initial_amount"] = 100_000.0
     _portfolio_cashflows_NO_inflation_NO_discount_rate["inflation"] = False
     _portfolio_cashflows_NO_inflation_NO_discount_rate["discount_rate"] = None
     return ok.Portfolio(**_portfolio_cashflows_NO_inflation_NO_discount_rate)
@@ -210,6 +210,7 @@ def portfolio_short_history(init_portfolio_values):
     _portfolio_short_history = deepcopy(init_portfolio_values)
     _portfolio_short_history["first_date"] = "2019-02"
     return ok.Portfolio(**_portfolio_short_history)
+
 
 # Efficient Frontier Single Period
 @pytest.fixture(scope="module")

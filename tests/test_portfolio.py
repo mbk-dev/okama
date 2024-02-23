@@ -305,27 +305,15 @@ def test_get_rolling_cagr_failing_no_inflation(portfolio_no_inflation):
 
 
 def test_monte_carlo_wealth(portfolio_rebalanced_month):
-    df = portfolio_rebalanced_month._monte_carlo_wealth(
-        distr="norm",
-        years=1,
-        n=1000
-    )
+    df = portfolio_rebalanced_month._monte_carlo_wealth(distr="norm", years=1, n=1000)
     assert df.shape == (12, 1000)
-    assert df.iloc[-1, :].mean() == approx(
-        2915.55, rel=1e-1
-    )
+    assert df.iloc[-1, :].mean() == approx(2915.55, rel=1e-1)
 
 
 def test_monte_carlo_returns_ts(portfolio_rebalanced_month):
-    df = portfolio_rebalanced_month.monte_carlo_returns_ts(
-        distr="lognorm",
-        years=1,
-        n=1000
-    )
+    df = portfolio_rebalanced_month.monte_carlo_returns_ts(distr="lognorm", years=1, n=1000)
     assert df.shape == (12, 1000)
-    assert df.iloc[-1, :].mean() == approx(
-        0.0156, abs=1e-1
-    )
+    assert df.iloc[-1, :].mean() == approx(0.0156, abs=1e-1)
 
 
 @mark.parametrize(
@@ -387,9 +375,7 @@ def test_init_portfolio_failing():
 
 # DCF Methods
 def test_dcf_discount_rate(
-        portfolio_cashflows_inflation,
-        portfolio_cashflows_NO_inflation,
-        portfolio_cashflows_NO_inflation_NO_discount_rate
+    portfolio_cashflows_inflation, portfolio_cashflows_NO_inflation, portfolio_cashflows_NO_inflation_NO_discount_rate
 ):
     assert portfolio_cashflows_inflation.discount_rate == approx(0.0554, abs=1e-3)  # average inflation
     assert portfolio_cashflows_NO_inflation.discount_rate == approx(0.09, abs=1e-3)  # defined discount rate
@@ -418,4 +404,3 @@ def test_cashflow_pv(portfolio_cashflows_inflation, portfolio_cashflows_NO_infla
 def test_initial_amount_pv(portfolio_cashflows_inflation, portfolio_cashflows_NO_inflation_NO_discount_rate):
     assert portfolio_cashflows_inflation.dcf.initial_amount_pv == approx(76339.31, rel=1e-2)
     assert portfolio_cashflows_NO_inflation_NO_discount_rate.dcf.initial_amount_pv == approx(78352.61, rel=1e-2)
-
