@@ -35,9 +35,10 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
 
 - Investment portfolio constrained Markowitz Mean-Variance Analysis (MVA) and optimization
 - Rebalanced portfolio optimization with constraints (multi-period Efficient Frontier)
+- Investment portfolios with contributions / withdrawals cash flows (DCF)
 - Monte Carlo Simulations for financial assets and investment portfolios
 - Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
-- Different financial ratios: Sharpe ratio, Sortino ratio, Diversification ratio 
+- Different financial ratios: CAPE10, Sharpe ratio, Sortino ratio, Diversification ratio 
 - Forecasting models according to normal, lognormal and other popular distributions
 - Testing distribution on historical data
 - Dividend yield and other dividend indicators for stocks
@@ -62,7 +63,7 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
 - Central bank exchange rates
 
 ### Macroeconomic indicators
-For many countries (USA, United Kingdom, European Union, Russia, Israel etc.):  
+For many countries (China, USA, United Kingdom, European Union, Russia, Israel etc.):  
 
 - Inflation
 - Central bank rates
@@ -78,8 +79,9 @@ For many countries (USA, United Kingdom, European Union, Russia, Israel etc.):
 `pip install okama`
 
 The latest development version can be installed directly from GitHub:
+`git clone https://github.com/mbk-dev/okama@dev`
 
-`pip install git+https://github.com/mbk-dev/okama@dev`
+`poetry install`
 
 
 ## Getting started
@@ -175,11 +177,12 @@ build with _okama_ package and [Dash (plotly)](https://github.com/plotly/dash) f
 The plan for _okama_ is to add more functions that will be useful to investors and asset managers.
 
 - Add Omega ratio to EfficientFrontier, EfficientFrontierReb and Portfolio classes.
-- Add withdrawals as an attribute of Portfolio class.
+- Make complex withdrawals / contributions strategies in Portfolio class.
+- Make complex portfolio rebalancing strategies.
 - Add Black-Litterman asset allocation 
 - Accelerate optimization for multi-period Efficient Frontier: minimize_risk and maximize_risk methods of EfficientFrontierReb class.
 - Make a single EfficientFrontier class for all optimizations: single-period or multu-period with rebalancing period as a parameter.
-- Add different utility functions for optimizers: semi-deviation, VaR, CVaR, drawdowns etc.
+- Add different utility functions for optimizers: IRR, portfolio survival period, semi-deviation, VaR, CVaR, drawdowns etc.
 - Add more functions based on suggestion of users.
 
 ## Contributing to okama
