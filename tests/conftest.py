@@ -213,13 +213,6 @@ def _init_indicator(request):
     request.cls.cape10_usd = ok.Indicator(symbol="USA_CAPE10.RATIO", first_date="2021-01", last_date="2022-02")
 
 
-@pytest.fixture(scope="package")
-def portfolio_short_history(init_portfolio_values):
-    _portfolio_short_history = deepcopy(init_portfolio_values)
-    _portfolio_short_history["first_date"] = "2019-02"
-    return ok.Portfolio(**_portfolio_short_history)
-
-
 # Efficient Frontier Single Period
 @pytest.fixture(scope="module")
 def init_efficient_frontier_values1():

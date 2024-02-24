@@ -46,7 +46,7 @@ def test_adj_close(init_asset_pif):
 
 
 def test_price(init_asset_spy):
-    assert type(init_asset_spy.price) == float
+    assert isinstance(init_asset_spy.price, float)
 
 
 def test_dividends(init_asset_spy):
