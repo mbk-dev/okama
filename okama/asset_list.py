@@ -679,7 +679,8 @@ class AssetList(make_asset_list.ListMaker):
         Statistics includes:
 
         - YTD (Year To date) compound return
-        - CAGR for a given list of periods
+        - CAGR for a given list of periods and full available period
+        - Annualized mean rate of return (full available period)
         - LTM Dividend yield - last twelve months dividend yield
 
         Risk metrics (full period):
@@ -750,6 +751,13 @@ class AssetList(make_asset_list.ListMaker):
             # CAGR for full period
             row = self.get_cagr(period=None).to_dict()
             row.update(period=self._pl_txt, property="CAGR")
+            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            # Mean rate of return (arithmetic mean)
+            row = self.mean_return.to_dict()
+            row.update(
+                period=self._pl_txt,
+                property="Annualized mean return",
+            )
             description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
             # Dividend Yield
             row = self._assets_dividend_yield.iloc[-1].to_dict()
@@ -826,11 +834,9 @@ class AssetList(make_asset_list.ListMaker):
         >>> x.mean_return
         MCFTR.INDX     0.209090
         RGBITR.INDX    0.100133
-        RUB.INFL       0.081363
         dtype: float64
         """
-        df = self._add_inflation()
-        mean = df.mean()
+        mean = self.assets_ror.mean()
         return helpers.Float.annualize_return(mean)
 
     @property

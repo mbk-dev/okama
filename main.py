@@ -35,7 +35,8 @@ print(f"max {s_periods.mean()}")
 
 # Rolling / Expanding Risk
 
-al = ok.AssetList(["DJI.INDX", "BND.US"])
+al = ok.AssetList(["DJI.INDX", "BND.US"], inflation=True)
+print(al.describe())
 al.get_rolling_risk_annual(window=12 * 20).plot()
 
 plt.show()

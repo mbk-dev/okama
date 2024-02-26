@@ -1233,7 +1233,8 @@ class Portfolio(make_asset_list.ListMaker):
         Statistics includes:
 
         - YTD (Year To date) compound return
-        - CAGR for a given list of periods
+        - CAGR for a given list of periods and full available period
+        - Annualized mean rate of return (full available period)
         - LTM Dividend yield - last twelve months dividend yield
 
         Risk metrics (full available period):
@@ -1300,6 +1301,14 @@ class Portfolio(make_asset_list.ListMaker):
             row.update(
                 period=self._pl_txt,
                 property="CAGR",
+            )
+            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            # Mean rate of return (arithmetic mean)
+            value = self.mean_return_annual
+            row = {self.symbol: value}
+            row.update(
+                period=self._pl_txt,
+                property="Annualized mean return",
             )
             description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
             # Dividend Yield
