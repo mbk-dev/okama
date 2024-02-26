@@ -2296,7 +2296,9 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'],
+        ...                    weights=[.60, .35, .05],
+        ...                    rebalancing_period='year')
         >>> pf.plot_forecast_monte_carlo(years=5, distr='lognorm', n=100)
         >>> plt.show()
         """
