@@ -54,7 +54,7 @@ add_module_names = False
 # ones.
 extensions = [
     # "sphinx.ext.napoleon",
-    "matplotlib.sphinxext.plot_directive",
+    "matplotlib.sphinxext.plot_directive",  # to plot matplotlib
     "numpydoc",  # handle NumPy documentation formatted docstrings instead of napoleon
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
