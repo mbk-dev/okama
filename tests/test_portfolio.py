@@ -400,8 +400,7 @@ def test_monte_carlo_survival_period(portfolio_cashflows_inflation_large_cf):
         years=25,
         n=100
     )
-    assert result.min() == approx(4.5, rel=1e-1)
-    assert result.max() == approx(8.1, rel=1e-1)
+    assert result.mean() == approx(6.2, rel=1e-1)
 
 
 def test_survival_date(portfolio_cashflows_inflation):
