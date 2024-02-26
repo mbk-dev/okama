@@ -1,9 +1,12 @@
 # Configuration file for the Sphinx documentation builder.
 #
 
+import warnings
 import os
-import sys
 from os import path
+import sys
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # -- Path setup --------------------------------------------------------------
 
