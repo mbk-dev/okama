@@ -2381,12 +2381,12 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(
-            ['SPY.US', 'AGG.US'],
-            ccy='USD',
-            first_date='2010-01',
-            initial_amount=100_000,
-            cashflow=-1_000
-        )
+        ...    ['SPY.US', 'AGG.US'],
+        ...    ccy='USD',
+        ...    first_date='2010-01',
+        ...    initial_amount=100_000,
+        ...    cashflow=-1_000
+        ...)
         >>> pf.dcf.survival_period
         11.6
         """
@@ -2410,12 +2410,12 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(
-            ['SPY.US', 'AGG.US'],
-            ccy='USD',
-            first_date='2010-01',
-            initial_amount=100_000,
-            cashflow=-1_000
-        )
+        ...    ['SPY.US', 'AGG.US'],
+        ...    ccy='USD',
+        ...    first_date='2010-01',
+        ...    initial_amount=100_000,
+        ...    cashflow=-1_000
+        ...)
         >>> pf.dcf.survival_date
         Timestamp('2021-08-01 00:00:00')
         """
