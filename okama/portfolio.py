@@ -2575,10 +2575,10 @@ class PortfolioDCF:
         --------
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(assets=['SPY.US', 'AGG.US', 'GLD.US'],
-                              weights=[.60, .35, .05],
-                              rebalancing_period='year',
-                              initial_amount=300_000,
-                              cashflow=-1_000)
+        ...                   weights=[.60, .35, .05],
+        ...                   rebalancing_period='year',
+        ...                   initial_amount=300_000,
+        ...                   cashflow=-1_000)
         >>> pf.dcf.plot_forecast_monte_carlo(years=20, backtest=True, distr='lognorm', n=100)
         >>> plt.show()
         """
