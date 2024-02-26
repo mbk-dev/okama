@@ -2308,6 +2308,15 @@ class Portfolio(make_asset_list.ListMaker):
 
 
 class PortfolioDCF:
+    """
+    Class to access discounted cash flow (DCF) methods of Portfolio.
+    All methods can be used in Portfolio instances trough construction:
+    ```
+    pf = Portfolio()
+    pf.dcf.weatlh_index
+    pf.dсf.cashflow_pv
+    ```
+    """
     def __init__(self, parent: Portfolio):
         self.parent = parent
         self._wealth_index = pd.DataFrame(dtype=float)

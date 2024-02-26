@@ -136,6 +136,7 @@ Assets & Portfolio
     okama.Asset
     okama.AssetList
     okama.Portfolio
+    okama.PortfolioDCF
 
 Efficient Frontier
 ==================

@@ -23,7 +23,7 @@ from importlib.metadata import version
 
 from okama.asset import Asset
 from okama.asset_list import AssetList
-from okama.portfolio import Portfolio
+from okama.portfolio import Portfolio, PortfolioDCF
 from okama.macro import Inflation, Rate, Indicator
 from okama.frontier.multi_period import EfficientFrontierReb
 from okama.frontier.single_period import EfficientFrontier
