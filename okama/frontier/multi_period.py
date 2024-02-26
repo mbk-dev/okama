@@ -662,6 +662,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         ...                             rebalancing_period='year',
         ...                             ticker_names=True,  # use tickers in DataFrame column names (can be set to False to show full assets names instead tickers)
         ...                             n_points=20,  # number of points in the Efficient Frontier
+        ...                             full_frontier=False,  # draw the frontier to the global CAGR max only
         ...                             verbose=False)  # verbose mode is False to skip the progress while the EF points are calcualted
         >>> df_reb_year = y.ef_points
         >>> df_reb_year.head(5)
