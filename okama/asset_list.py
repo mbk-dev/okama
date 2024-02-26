@@ -1642,7 +1642,7 @@ class AssetList(make_asset_list.ListMaker):
         BND.US    0.390814
         dtype: float64
         """
-        mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
+        mean_return = self.mean_return
         risk = self.risk_annual.iloc[-1, :]
         return ratios.get_sharpe_ratio(pf_return=mean_return, rf_return=rf_return, std_deviation=risk)
 
@@ -1671,6 +1671,6 @@ class AssetList(make_asset_list.ListMaker):
         BND.US    0.028969
         dtype: float64
         """
-        mean_return = self.mean_return.drop(self.inflation) if self.inflation else self.mean_return
+        mean_return = self.mean_return
         semideviation = helpers.Frame.get_below_target_semideviation(ror=self.assets_ror, t_return=t_return) * 12**0.5
         return ratios.get_sortino_ratio(pf_return=mean_return, t_return=t_return, semi_deviation=semideviation)
