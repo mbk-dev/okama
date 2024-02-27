@@ -12,8 +12,11 @@ Compare ETF, mutual funds to their indexes. See the _tracking difference_, _trac
 Learn about investment portfolio properties and to compare various portfolios with each other
 
 4. [investment portfolios wih DCF]()
+Investment strategies with cash flow - portfolio withdrawals / contributions. Backtest the portfolio and forecast 
+portfolio longevity with Monte Carlo simulation.
 
-5. [dividends]()
+5. [macroeconomics]()
+Analyze inflation, key rates and other macro indicators historical data with _okama_. 
    
 6. [efficient frontier single period](https://github.com/mbk-dev/okama/blob/master/examples/04%20efficient%20frontier%20single%20period.ipynb)
 EfficientFrontier class can be used for "classic" Markowitz frontiers where all portfolios are rebalanced monthly 
