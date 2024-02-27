@@ -240,7 +240,7 @@ class Frame:
             survival_date = wealth_series[condition].index[0]
         except IndexError:
             survival_date = wealth_series.index[-1]
-        return survival_date.to_timestamp()
+        return survival_date.to_timestamp(freq='M')
 
     @get_survival_date.register
     def _(wealth: pd.DataFrame) -> pd.Timestamp:
