@@ -89,13 +89,34 @@ class MacroABC(ABC):
         """
         return self._values_monthly
 
-    def set_values_monthly(self, date: str, value: float):
+    def set_values_monthly(self, date: str, value: float) -> None:
         """
         Set monthly value for the past or future date.
 
         The date should be in month period format ("2023-12"). T
         The result stored only in the class instance. It can be used to analyze inflation with forecast
         or corrected data.
+
+        Examples
+        --------
+        >>> infl = ok.Inflation('USD.INFL', last_date='2022-04')
+        >>> infl.values_monthly.tail()  # last 5 months statistics
+        date
+        2021-12    0.0031
+        2022-01    0.0084
+        2022-02    0.0091
+        2022-03    0.0134
+        2022-04    0.0056
+        Freq: M, Name: USD.INFL, dtype: float64
+        >>> infl.set_values_monthly(date='2024-05', value=0.09)  # set forecasted inflation value
+        >>> infl.values_monthly.tail()  # check the statistics again (May data is available now)
+        date
+        2022-01    0.0084
+        2022-02    0.0091
+        2022-03    0.0134
+        2022-04    0.0056
+        2024-05    0.0900
+        Freq: M, Name: USD.INFL, dtype: float64
         """
         okama.common.validators.validate_real("value", value)
         self._values_monthly[pd.Period(date, freq="M")] = value
