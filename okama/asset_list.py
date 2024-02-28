@@ -1092,7 +1092,7 @@ class AssetList(make_asset_list.ListMaker):
 
     def get_dividend_mean_yield(self, period: int = 5) -> pd.Series:
         """
-        Calculate the arithmetic mean for annual dividend yield over a specified period.
+        Calculate the arithmetic mean for annual dividend yield (LTM) over a specified period.
 
         Dividend yield is taken for full calendar annual dividends.
 
@@ -1119,9 +1119,9 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> al = ok.AssetList(["SBERP.MOEX", "LKOH.MOEX"], ccy='RUB', first_date='2005-01', last_date='2023-12')
-        >>> x.get_dividend_mean_growth_rate(period=3)
-        SBERP.MOEX    0.050497
-        LKOH.MOEX     0.086743
+        >>> al.get_dividend_mean_yield(period=3)
+        SBERP.MOEX    0.052987
+        LKOH.MOEX     0.156526
         dtype: float64
         """
 
