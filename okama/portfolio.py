@@ -23,6 +23,7 @@ class Portfolio(make_asset_list.ListMaker):
     - rebalancing_period
     - initial_amount
     - cashflow
+    - discount_rate
     - symbol
 
     Portfolio is defined by the investment strategy, which includes:
@@ -2326,7 +2327,8 @@ class PortfolioDCF:
     @property
     def wealth_index(self) -> pd.DataFrame:
         """
-        Calculate wealth index time series for the portfolio and accumulated inflation.
+        Calculate wealth index time series for the portfolio with contributions and
+        withdrawals.
 
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
         historical time period considering cash flows.
@@ -2542,7 +2544,7 @@ class PortfolioDCF:
         figsize: Optional[tuple] = None,
     ) -> None:
         """
-        Plot Monte Carlo simulation for portfolio wealth indexes optionally together with historical wealth index.
+        Plot Monte Carlo simulation for portfolio future wealth indexes optionally together with historical wealth index.
 
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
         time period considering cash flows (portfolio withdrawals/contributions).
