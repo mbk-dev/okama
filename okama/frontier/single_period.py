@@ -432,6 +432,7 @@ class EfficientFrontier(asset_list.AssetList):
             bounds=self.bounds,
         )
         if weights.success:
+            # TODO: Return weights as a numpy array (see Tangency portfolio)
             # CAGR calculation
             portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(weights.x, ror)
             cagr = helpers.Frame.get_cagr(portfolio_return_ts)

@@ -421,7 +421,7 @@ class AssetList(make_asset_list.ListMaker):
             s1_1 = s.where(s == 0).isnull().astype(int).cumsum()
             s2 = s1.groupby(s1_1).cumsum()
             # Max recovery period date should not be in the border (it's not recovered)
-            max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.NAN
+            max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.nan
             ser = pd.Series(max_period, index=[name])
             max_recovery_periods = pd.concat([max_recovery_periods, ser])
         return max_recovery_periods

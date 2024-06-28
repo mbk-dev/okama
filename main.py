@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 import okama as ok
 
-# Portfolio WithDrawls
+## Portfolio WithDrawls
 weights = [0.32, 0.31, 0.18, 0.19]
 portf = ok.Portfolio(
     ["RGBITR.INDX", "RUCBTRNS.INDX", "MCFTR.INDX", "GC.COMM"],
@@ -12,7 +12,7 @@ portf = ok.Portfolio(
     symbol="retirement_portf.PF",
     rebalancing_period="year",
     cashflow=-200_000,
-    initial_amount=39_000_000,
+    initial_amount=44_000_000,
     discount_rate=None,
 )
 
@@ -26,17 +26,19 @@ portf.dcf.wealth_index.plot()
 
 portf.dcf.plot_forecast_monte_carlo(distr="norm", years=30, backtest=True, n=100)
 
-s_periods = portf.dcf.monte_carlo_survival_period(distr="lognorm", years=25, n=10)
+s_periods = portf.dcf.monte_carlo_survival_period(distr="lognorm", years=25, n=100)
 print(f"median {s_periods.quantile(50 / 100)}")
 print(f"1st percentile {s_periods.quantile(1 / 100)}")
 print(f"99th percentile {s_periods.quantile(99 / 100)}")
 print(f"min {s_periods.min()}")
-print(f"max {s_periods.mean()}")
+print(f"max {s_periods.max()}")
+print(s_periods.describe(percentiles=[0.01, 0.5, 0.99]))
+print(s_periods.mode())
 
 # Rolling / Expanding Risk
 
-al = ok.AssetList(["DJI.INDX", "BND.US"], inflation=True)
-print(al.describe())
-al.get_rolling_risk_annual(window=12 * 20).plot()
+# al = ok.AssetList(["DJI.INDX", "BND.US"], inflation=True)
+# print(al.describe())
+# al.get_rolling_risk_annual(window=12 * 20).plot()
 
 plt.show()

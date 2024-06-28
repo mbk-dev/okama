@@ -74,7 +74,7 @@ class Portfolio(make_asset_list.ListMaker):
 
     cashflow : float, default 0
         Portfolio monthly cash flow FV (at last_date). Negative value corresponds to withdrawals.
-        Positive value corresponds to contributions. Cash flow value is indexed each month by inflation.
+        Positive value corresponds to contributions. Cash flow value is indexed each month by discount_rate.
 
     discount_rate : float or None, default None
         Cash flow discount rate required to calculate PV values. If not provided geometric mean of inflation is taken.
@@ -2526,7 +2526,7 @@ class PortfolioDCF:
             try:
                 survival_date = s[condition].index[0]
                 s[survival_date] = 0
-                s[s.index > survival_date] = np.NAN
+                s[s.index > survival_date] = np.nan
             except IndexError:
                 pass
             return s
