@@ -404,6 +404,7 @@ class Frame:
             kstest = scipy.stats.kstest(ror, distr, scipy.stats.norm.fit(ror))
         elif distr == "lognorm":
             kstest = scipy.stats.kstest(ror, distr, scipy.stats.lognorm.fit(ror))
+            # TODO: add Student's t distribution
         else:
             raise ValueError('distr should be "norm" (default) or "lognormal".')
         return {"statistic": kstest[0], "p-value": kstest[1]}
@@ -505,7 +506,7 @@ class Rebalance:
         """
         # define data of the first period
         first_date = ror.index[0]
-        return_first_period = ror.iloc[0] @ weights / ror.shape[0]
+        return_first_period = ror.iloc[0] @ weights
 
         wealth_index = self.wealth_ts(weights, ror)
         ror = wealth_index.pct_change()

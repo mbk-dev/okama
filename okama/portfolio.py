@@ -2175,6 +2175,7 @@ class Portfolio(make_asset_list.ListMaker):
             std, loc, scale = scipy.stats.lognorm.fit(data)
             mu = np.log(scale)
             p = scipy.stats.lognorm.pdf(x, std, loc, scale)
+            # TODO: add Student's t distribution
         else:
             raise ValueError('distr must be "norm" (default) or "lognorm".')
         plt.plot(x, p, "k", linewidth=2)
@@ -2335,7 +2336,7 @@ class PortfolioDCF:
 
         Accumulated inflation time series is added if `inflation=True` in the Portfolio.
 
-        If there is no cashflows Wealth index is obtained from the accumulated return multiplicated
+        If there are no cashflows, Wealth index is obtained from the accumulated return multiplicated
         by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
 
         initial_amount_pv is the discounted value of the initial investments (initial_amount).
@@ -2649,7 +2650,7 @@ class PortfolioDCF:
         >> s.quantile(50 / 100)
         2.7
         """
+        # TODO: self._monte_carlo_wealth should be cached
         s2 = self._monte_carlo_wealth(first_value=self.parent.initial_amount, distr=distr, years=years, n=n)
         dates: pd.Series = helpers.Frame.get_survival_date(s2)
-
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
