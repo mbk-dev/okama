@@ -2120,10 +2120,12 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm'}, default 'norm'
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
             The name of a distribution to fit.
             'norm' - for normal distribution.
             'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
+
 
         figsize : (float, float), optional
             Width and height of plot in inches.
@@ -2146,6 +2148,13 @@ class Portfolio(make_asset_list.ListMaker):
                 dist=distr,
                 plot=plt,
             )
+        elif distr == "t":
+            scipy.stats.probplot(
+                self.ror,
+                sparams=(scipy.stats.t.fit(self.ror)),
+                dist=scipy.stats.t,
+                plot=plt,
+            )
         else:
             raise ValueError('distr should be "norm" (default) or "lognorm".')
         plt.show()
@@ -2154,6 +2163,16 @@ class Portfolio(make_asset_list.ListMaker):
         """
         Plot historical distribution histogram for ptrtfolio monthly rate of return time series
         and theoretical PDF (Probability Distribution Function).
+
+        Can be used with Normal, Lognormal and Stident's T distributions.
+
+        Parameters
+        ----------
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
+            The name of a distribution to fit.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
 
         Examples
         --------
@@ -2175,7 +2194,9 @@ class Portfolio(make_asset_list.ListMaker):
             std, loc, scale = scipy.stats.lognorm.fit(data)
             mu = np.log(scale)
             p = scipy.stats.lognorm.pdf(x, std, loc, scale)
-            # TODO: add Student's t distribution
+        elif distr == "t":
+            df, loc, scale = scipy.stats.t.fit(data)
+            p = scipy.stats.t.pdf(x, loc=loc, scale=scale, df=df)
         else:
             raise ValueError('distr must be "norm" (default) or "lognorm".')
         plt.plot(x, p, "k", linewidth=2)
