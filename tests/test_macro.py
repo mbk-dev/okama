@@ -40,9 +40,9 @@ class TestInflation:
         assert self.infl_eur.type == "inflation"
 
     def test_cumulative_inflation(self):
-        assert self.infl_rub.cumulative_inflation[-1] == approx(19576.47386585591, rel=1e-4)
-        assert self.infl_eur.cumulative_inflation[-1] == approx(0.20267532488218776, abs=1e-4)
-        assert self.infl_usd.cumulative_inflation[-1] == approx(0.7145424753209466, abs=1e-4)
+        assert self.infl_rub.cumulative_inflation.iloc[-1] == approx(19576.47386585591, rel=1e-4)
+        assert self.infl_eur.cumulative_inflation.iloc[-1] == approx(0.20267532488218776, abs=1e-4)
+        assert self.infl_usd.cumulative_inflation.iloc[-1] == approx(0.7145424753209466, abs=1e-4)
 
     def test_purchasing_power_1000(self):
         assert self.infl_usd.purchasing_power_1000 == approx(583.2459763429362, rel=1e-4)
@@ -54,19 +54,19 @@ class TestInflation:
             self.infl_usd_less_year.rolling_inflation
 
     def test_rolling_inflation(self):
-        assert self.infl_eur.rolling_inflation[-1] == approx(0.02317927930197139, abs=1e-4)
-        assert self.infl_usd.rolling_inflation[-1] == approx(-0.0058137, abs=1e-4)
-        assert self.infl_rub.rolling_inflation[-1] == approx(0.2070533602100877, abs=1e-4)
+        assert self.infl_eur.rolling_inflation.iloc[-1] == approx(0.02317927930197139, abs=1e-4)
+        assert self.infl_usd.rolling_inflation.iloc[-1] == approx(-0.0058137, abs=1e-4)
+        assert self.infl_rub.rolling_inflation.iloc[-1] == approx(0.2070533602100877, abs=1e-4)
 
     def test_annual_inflation_ts(self):
         assert self.infl_rub.annual_inflation_ts.iloc[-1] == approx(0.0276, abs=1e-4)
-        assert self.infl_usd.annual_inflation_ts[-1] == approx(-0.0059, abs=1e-4)
-        assert self.infl_eur.annual_inflation_ts[-1] == approx(-0.002015, abs=1e-4)
+        assert self.infl_usd.annual_inflation_ts.iloc[-1] == approx(-0.0059, abs=1e-4)
+        assert self.infl_eur.annual_inflation_ts.iloc[-1] == approx(-0.002015, abs=1e-4)
 
     def test_values_monthly(self):
-        assert self.infl_eur.values_monthly[-1] == approx(0.003, abs=1e-4)
-        assert self.infl_usd.values_monthly[-1] == approx(-0.0059, abs=1e-4)
-        assert self.infl_rub.values_monthly[-1] == approx(0.0276, abs=1e-4)
+        assert self.infl_eur.values_monthly.iloc[-1] == approx(0.003, abs=1e-4)
+        assert self.infl_usd.values_monthly.iloc[-1] == approx(-0.0059, abs=1e-4)
+        assert self.infl_rub.values_monthly.iloc[-1] == approx(0.0276, abs=1e-4)
 
     error_case_ids = ["invalid_date_format", "nonexistent_date", "invalid_value_type"]
 
@@ -108,10 +108,10 @@ class TestRates:
         assert self.rates_rub.last_date == pd.to_datetime("2020-02")
 
     def test_values_monthly(self):
-        assert self.rates_rub.values_monthly[-1] == 0.0639
+        assert self.rates_rub.values_monthly.iloc[-1] == 0.0639
 
     def test_values_daily(self):
-        assert self.rates_ruonia.values_daily[-1] == 0.0605
+        assert self.rates_ruonia.values_daily.iloc[-1] == 0.0605
         assert self.rates_ruonia.values_daily.shape[0] == 1846
         assert self.rates_cbr_rate.values_daily.shape[0] == 62  # RUS_CBR.RATE has only monthly values
 
@@ -136,4 +136,4 @@ class TestIndicator:
         assert self.cape10_usd.last_date == pd.to_datetime("2022-02")
 
     def test_values_monthly(self):
-        assert self.cape10_usd.values_monthly[-1] == approx(34.93, rel=1e-4)
+        assert self.cape10_usd.values_monthly.iloc[-1] == approx(34.93, rel=1e-4)

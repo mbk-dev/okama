@@ -1609,7 +1609,7 @@ class Portfolio(make_asset_list.ListMaker):
             raise ValueError('"distr" must be "norm" (default), "lognorm" or "t".')
         return pd.DataFrame(data=random_returns, index=ts_index)
 
-    def _monte_carlo_wealth(self, distr: str = "norm", years: int = 1, n: int = 100) -> pd.DataFrame:
+    def monte_carlo_wealth(self, distr: str = "norm", years: int = 1, n: int = 100) -> pd.DataFrame:
         """
         Generate portfolio wealth index with Monte Carlo simulation.
 
@@ -1791,7 +1791,7 @@ class Portfolio(make_asset_list.ListMaker):
             results = self.percentile_wealth_history(years=years, percentiles=percentiles).iloc[-1].to_dict()
         elif distr in ["norm", "lognorm", "t"]:
             results = {}
-            wealth_indexes = self._monte_carlo_wealth(distr=distr, years=years, n=n)
+            wealth_indexes = self.monte_carlo_wealth(distr=distr, years=years, n=n)
             for percentile in percentiles:
                 value = wealth_indexes.iloc[-1, :].quantile(percentile / 100)
                 results.update({percentile: value})
@@ -2333,7 +2333,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> plt.show()
         """
         s1 = self.wealth_index
-        s2 = self._monte_carlo_wealth(distr=distr, years=years, n=n)
+        s2 = self.monte_carlo_wealth(distr=distr, years=years, n=n)
         s1[self.symbol].plot(legend=None, figsize=figsize)
         for n in s2:
             s2[n].plot(legend=None)

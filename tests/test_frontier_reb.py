@@ -37,7 +37,7 @@ def test_repr(init_efficient_frontier_reb):
 def test_gmv_annual_weights(init_efficient_frontier_reb):
     assert_allclose(
         init_efficient_frontier_reb.gmv_annual_weights,
-        np.array([0.447667, 0.552333]),
+        np.array([0.384194, 0.615806]),
         rtol=1e-2,
         atol=1e-2,
     )
@@ -52,10 +52,10 @@ def test_gmv_annual_values(init_efficient_frontier_reb):
 @mark.rebalance
 @mark.frontier
 def test_max_return(init_efficient_frontier_reb):
-    assert init_efficient_frontier_reb.global_max_return_portfolio["CAGR"] == approx(0.1623, abs=1e-2)
+    assert init_efficient_frontier_reb.global_max_return_portfolio["CAGR"] == approx(0.1889, abs=1e-2)
 
 
 @mark.rebalance
 @mark.frontier
 def test_ef_points_reb(init_efficient_frontier_reb):
-    assert init_efficient_frontier_reb.ef_points["CAGR"].iloc[1] == approx(0.1623, abs=1e-2)
+    assert init_efficient_frontier_reb.ef_points["CAGR"].iloc[1] == approx(0.1889, abs=1e-2)

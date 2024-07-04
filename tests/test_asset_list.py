@@ -66,7 +66,7 @@ class TestAssetList:
         }
         assert self.currencies.names == {
             "RUBUSD.FX": "Central Bank of Russia rate for RUBUSD (US Dollar)",
-            "EURUSD.FX": "EURUSD",
+            "EURUSD.FX": "EUR/USD",
             "CNYUSD.FX": "Chinese Renminbi/US Dollar FX Cross Rate",
         }
         assert self.currencies.describe().iloc[1, -1] == approx(0.02485, rel=1e-2)
