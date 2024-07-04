@@ -1,18 +1,19 @@
-import matplotlib.pyplot as plt
+import warnings
 
+import matplotlib.pyplot as plt
 import okama as ok
 
-weights = [0.30, 0.20, 0.50]
-portf = ok.Portfolio(
-    ["SPY.US", "BND.US", "GLD.US"],
-    ccy="RUB",
-    weights=weights,
-    inflation=False,
-    rebalancing_period="year",
-    first_date="2015-01",
-    last_date="2020-12"
+warnings.filterwarnings("ignore")
+
+pf = ok.Portfolio(
+    assets=['MCFTR.INDX', 'AGG.US', 'GLD.US'],
+    weights=[.60, .35, .05],
+    ccy='RUB',
+    rebalancing_period='year',
+    initial_amount=300_000,
+    cashflow=-2_000
 )
 
-portf.plot_percentiles_fit("t")
 
-plt.show()
+print(pf.describe())
+

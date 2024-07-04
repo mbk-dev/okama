@@ -1389,11 +1389,6 @@ class Portfolio(make_asset_list.ListMaker):
             )
         if not isinstance(years, int) or years == 0:
             raise ValueError("years must be an integer number (not equal to zero).")
-        # if years > max_period_years:
-        #     raise ValueError(
-        #         f"Forecast period {years} years is not credible. "
-        #         f"It should not exceed 1/2 of portfolio history period length {self.period_length / 2} years"
-        #     )
 
     def percentile_inverse_cagr(
         self,
@@ -1413,10 +1408,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        distr: {'norm', 'lognorm', 'hist'}, default 'norm'
+        distr: {'norm', 'lognorm', 't', 'hist'}, default 'norm'
             The rate of teturn distribution type.
             'norm' - for normal distribution.
             'lognorm' - for lognormal distribution.
+            't' - for Student's t distribution.
             'hist' - percentiles are taken from the historical data.
 
         years: int, default 1
@@ -1446,12 +1442,12 @@ class Portfolio(make_asset_list.ListMaker):
         """
         if distr == "hist":
             cagr_distr = self.get_rolling_cagr(years * settings._MONTHS_PER_YEAR).loc[:, [self.symbol]].squeeze()
-        elif distr in ["norm", "lognorm"]:
+        elif distr in ["norm", "lognorm", "t"]:
             if not n:
                 n = 1000
             cagr_distr = self._get_cagr_distribution(distr=distr, years=years, n=n)
         else:
-            raise ValueError('distr should be one of "norm", "lognorm", "hist".')
+            raise ValueError('distr should be one of "norm", "lognorm", "t" or "hist".')
         return scipy.stats.percentileofscore(cagr_distr, score, kind="rank")
 
     def percentile_history_cagr(self, years: int, percentiles: List[int] = [10, 50, 90]) -> pd.DataFrame:
@@ -1563,10 +1559,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm'}, default 'norm'
-            Distribution type for rate of return time series.
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
             'norm' - for normal distribution.
             'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
 
         years : int, default 1
             Forecast period for portfolio monthly rate of return time series.
@@ -1605,8 +1602,11 @@ class Portfolio(make_asset_list.ListMaker):
         elif distr == "lognorm":
             std, loc, scale = scipy.stats.lognorm.fit(self.ror)
             random_returns = scipy.stats.lognorm(std, loc=loc, scale=scale).rvs(size=[period_months, n])
+        elif distr == "t":
+            df, loc, scale = scipy.stats.t.fit(self.ror)
+            random_returns = scipy.stats.t(loc=loc, scale=scale, df=df).rvs(size=[period_months, n])
         else:
-            raise ValueError('"distr" must be "norm" (default) or "lognorm".')
+            raise ValueError('"distr" must be "norm" (default), "lognorm" or "t".')
         return pd.DataFrame(data=random_returns, index=ts_index)
 
     def _monte_carlo_wealth(self, distr: str = "norm", years: int = 1, n: int = 100) -> pd.DataFrame:
@@ -1623,8 +1623,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm'}, default 'norm'
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
             Distribution type for the rate of return of portfolio.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
 
         years : int, default 1
             Forecast period for portfolio wealth index time series.
@@ -1641,7 +1644,7 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
-        >>> pf._monte_carlo_wealth(distr='lognorm', years=5, n=1000)
+        >>> pf.monte_carlo_wealth(distr='lognorm', years=5, n=1000)
                          0            1    ...          998          999
         2021-07  3895.377293  3895.377293  ...  3895.377293  3895.377293
         2021-08  3869.854680  4004.814981  ...  3874.455244  3935.913516
@@ -1650,8 +1653,8 @@ class Portfolio(make_asset_list.ListMaker):
         2021-11  4179.544897  4156.839698  ...  3899.249696  4097.003962
         2021-12  4237.030690  4351.305114  ...  3916.639721  4042.011774
         """
-        if distr not in ["norm", "lognorm"]:
-            raise ValueError('distr should be "norm" (default) or "lognorm".')
+        if distr not in ["norm", "lognorm", "t"]:
+            raise ValueError('distr should be "norm" (default), "lognorm" or "t".')
         return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
         first_value = self.wealth_index[self.symbol].values[-1]
         return helpers.Frame.get_wealth_indexes(return_ts, first_value)
@@ -1667,8 +1670,8 @@ class Portfolio(make_asset_list.ListMaker):
 
         CAGR is calculated for each of n random returns time series.
         """
-        if distr not in ["norm", "lognorm"]:
-            raise ValueError('distr should be "norm" (default) or "lognorm".')
+        if distr not in ["norm", "lognorm", "t"]:
+            raise ValueError('distr should be "norm" (default), "lognorm" or "t".')
         return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
         return helpers.Frame.get_cagr(return_ts)
 
@@ -1689,10 +1692,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm'}, default 'norm'
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
             Distribution type for the rate of return of portfolio.
             'norm' - for normal distribution.
             'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
 
         years: int, default 1
             Time frame for portfolio CAGR.
@@ -1721,8 +1725,8 @@ class Portfolio(make_asset_list.ListMaker):
         {10: 0.030625112922274055, 50: 0.08346815557550402, 90: 0.13902575176654647}
         Forecast CAGR according to normal distribution within 5 year period.
         """
-        if distr not in ["norm", "lognorm"]:
-            raise ValueError('distr should be "norm" (default) or "lognorm".')
+        if distr not in ["norm", "lognorm", "t"]:
+            raise ValueError('distr should be "norm" (default), "lognorm" or "t".')
         cagr_distr = self._get_cagr_distribution(distr=distr, years=years, n=n)
         results = {}
         for percentile in percentiles:
@@ -1745,10 +1749,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        distr : {'hist', 'norm', 'lognorm'}, default 'norm'
+        distr : {'hist', 'norm', 'lognorm', 't'}, default 'norm'
             Distribution type for the rate of return of portfolio.
             'norm' - for normal distribution.
             'lognorm' - for lognormal distribution.
+            't' - for Student's t distribution.
             'hist' - percentiles are taken from the historical data.
 
         years : int, default 1
@@ -1784,14 +1789,14 @@ class Portfolio(make_asset_list.ListMaker):
         # TODO: check "today value"
         if distr == "hist":
             results = self.percentile_wealth_history(years=years, percentiles=percentiles).iloc[-1].to_dict()
-        elif distr in ["norm", "lognorm"]:
+        elif distr in ["norm", "lognorm", "t"]:
             results = {}
             wealth_indexes = self._monte_carlo_wealth(distr=distr, years=years, n=n)
             for percentile in percentiles:
                 value = wealth_indexes.iloc[-1, :].quantile(percentile / 100)
                 results.update({percentile: value})
         else:
-            raise ValueError('distr should be "norm", "lognorm" or "hist".')
+            raise ValueError('distr should be "norm", "lognorm", "t" or "hist".')
         if today_value:
             modifier = today_value / self.wealth_index[self.symbol].values[-1]
             results.update((x, y * modifier) for x, y in results.items())
@@ -2219,10 +2224,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        distr : {'hist', 'norm', 'lognorm'}, default 'norm'
+        distr : {'hist', 'norm', 'lognorm', 't'}, default 'norm'
             Distribution type for the rate of return of portfolio.
             'norm' - for normal distribution.
             'lognorm' - for lognormal distribution.
+            't' - for Student's t distribution.
             'hist' - percentiles are taken from the historical data.
 
         years : int, default 1
@@ -2300,10 +2306,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm'}, default 'norm'
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
             Distribution type for the rate of return of portfolio.
             'norm' - for normal distribution.
             'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
 
         years : int, default 1
             Investment period length for new wealth indexes
@@ -2489,7 +2496,7 @@ class PortfolioDCF:
         """
         return self.parent.initial_amount / (1.0 + self.parent.discount_rate) ** self.parent.period_length
 
-    def _monte_carlo_wealth(
+    def monte_carlo_wealth(
         self, first_value: float = 1000.0, distr: str = "norm", years: int = 1, n: int = 100
     ) -> pd.DataFrame:
         """
@@ -2507,8 +2514,11 @@ class PortfolioDCF:
         first_value : float, default 1000,
             Portfolio initial investment.
 
-        distr : {'norm', 'lognorm'}, default 'norm'
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
             Distribution type for the rate of return of portfolio.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
 
         years : int, default 1
             Forecast period for portfolio wealth index time series.
@@ -2525,7 +2535,7 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
-        >>> pf.dcf._monte_carlo_wealth(distr='lognorm', years=5, n=1000)
+        >>> pf.dcf.monte_carlo_wealth(distr='lognorm', years=5, n=1000)
                          0            1    ...          998          999
         2021-07  3895.377293  3895.377293  ...  3895.377293  3895.377293
         2021-08  3869.854680  4004.814981  ...  3874.455244  3935.913516
@@ -2534,8 +2544,8 @@ class PortfolioDCF:
         2021-11  4179.544897  4156.839698  ...  3899.249696  4097.003962
         2021-12  4237.030690  4351.305114  ...  3916.639721  4042.011774
         """
-        if distr not in ["norm", "lognorm"]:
-            raise ValueError('distr should be "norm" (default) or "lognorm".')
+        if distr not in ["norm", "lognorm", "t"]:
+            raise ValueError('distr should be "norm" (default), "lognorm" or "t".')
         return_ts = self.parent.monte_carlo_returns_ts(distr=distr, years=years, n=n)
         df = return_ts.apply(
             helpers.Frame.get_wealth_indexes_with_cashflow,
@@ -2575,10 +2585,11 @@ class PortfolioDCF:
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm'}, default 'norm'
-            Distribution type for the rate of return of portfolio.
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
+            The type of a distribution to generate random portfolios.
             'norm' - for normal distribution.
             'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
 
         years : int, default 1
             Investment period length for new wealth indexes
@@ -2613,11 +2624,11 @@ class PortfolioDCF:
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
             if last_backtest_value > 0:
-                s2 = self._monte_carlo_wealth(first_value=last_backtest_value, distr=distr, years=years, n=n)
+                s2 = self.monte_carlo_wealth(first_value=last_backtest_value, distr=distr, years=years, n=n)
                 for s in s2:
                     s2[s].plot(legend=None)
         else:
-            s2 = self._monte_carlo_wealth(first_value=self.parent.initial_amount, distr=distr, years=years, n=n)
+            s2 = self.monte_carlo_wealth(first_value=self.parent.initial_amount, distr=distr, years=years, n=n)
             s2.plot(legend=None)
 
     def monte_carlo_survival_period(
@@ -2634,8 +2645,11 @@ class PortfolioDCF:
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm'}, default 'norm'
-            Distribution type for the rate of return of portfolio.
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
+            The type of a distribution to generate random portfolios.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
 
         years : int, default 1
             Forecast period for portfolio wealth index time series.
@@ -2671,7 +2685,6 @@ class PortfolioDCF:
         >> s.quantile(50 / 100)
         2.7
         """
-        # TODO: self._monte_carlo_wealth should be cached
-        s2 = self._monte_carlo_wealth(first_value=self.parent.initial_amount, distr=distr, years=years, n=n)
+        s2 = self.monte_carlo_wealth(first_value=self.parent.initial_amount, distr=distr, years=years, n=n)
         dates: pd.Series = helpers.Frame.get_survival_date(s2)
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))

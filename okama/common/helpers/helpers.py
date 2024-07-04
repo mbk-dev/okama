@@ -212,7 +212,6 @@ class Frame:
             s = pd.Series(dtype=float, name=portfolio_symbol)
             for n, row in enumerate(ror.itertuples()):
                 r = row[portfolio_position + 1]
-                # TODO: consider using monthly inflation for cashflow indexing
                 value = value * (r + 1) + cashflow * (1 + discount_rate / settings._MONTHS_PER_YEAR) ** n
                 date = row[0]
                 s[date] = value
@@ -401,12 +400,13 @@ class Frame:
             {'statistics': The test statistic, 'p-value': The p-value for the hypothesis test}
         """
         if distr == "norm":
-            kstest = scipy.stats.kstest(ror, distr, scipy.stats.norm.fit(ror))
+            kstest = scipy.stats.kstest(ror, distr, args=scipy.stats.norm.fit(ror))
         elif distr == "lognorm":
-            kstest = scipy.stats.kstest(ror, distr, scipy.stats.lognorm.fit(ror))
-            # TODO: add Student's t distribution
+            kstest = scipy.stats.kstest(ror, distr, args=scipy.stats.lognorm.fit(ror))
+        elif distr == "t":
+            kstest = scipy.stats.kstest(ror, distr, args=scipy.stats.t.fit(ror))
         else:
-            raise ValueError('distr should be "norm" (default) or "lognormal".')
+            raise ValueError('distr should be "norm" (default), "lognormal" or "t".')
         return {"statistic": kstest[0], "p-value": kstest[1]}
 
     @staticmethod

@@ -1595,8 +1595,11 @@ class AssetList(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm'}, default 'norm'
-            Type of distributions. Can be 'norm' - for normal distribution or 'lognorm' - for lognormal distribtion.
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
 
         Returns
         -------
