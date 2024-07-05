@@ -263,7 +263,7 @@ def test_percentile_from_history(portfolio_rebalanced_month, portfolio_no_inflat
 
 @mark.parametrize(
     "distribution, expected",
-    [("hist", 0), ("norm", 0.9), ("lognorm", 0.7)],
+    [("hist", 0), ("norm", 0.9), ("lognorm", 0.7), ("t", 1.4)],
 )
 def test_percentile_inverse_cagr(portfolio_rebalanced_month, distribution, expected):
     assert portfolio_rebalanced_month.percentile_inverse_cagr(distr=distribution, years=1, score=0, n=5000) == approx(
@@ -320,7 +320,7 @@ def test_monte_carlo_returns_ts(portfolio_rebalanced_month):
 
 @mark.parametrize(
     "distribution, expected",
-    [("hist", 2897.72), ("norm", 2940.70), ("lognorm", 2932.56)],
+    [("hist", 2897.72), ("norm", 2940.70), ("lognorm", 2932.56), ("t", 2900)],
 )
 def test_percentile_wealth(portfolio_rebalanced_month, distribution, expected):
     dic = portfolio_rebalanced_month.percentile_wealth(distr=distribution, years=1, n=100, percentiles=[50])
@@ -390,28 +390,64 @@ def test_dcf_wealth_index(portfolio_cashflows_inflation, portfolio_cashflows_NO_
     assert portfolio_cashflows_NO_inflation.dcf.wealth_index.iloc[-1, 0] == approx(152642.54, rel=1e-2)
 
 
-def test_survival_period(portfolio_cashflows_inflation):
-    assert portfolio_cashflows_inflation.dcf.survival_period == approx(5.1, rel=1e-2)
-
-
-def test_monte_carlo_survival_period(portfolio_cashflows_inflation_large_cf):
-    result = portfolio_cashflows_inflation_large_cf.dcf.monte_carlo_survival_period(
-        distr="norm",
-        years=25,
-        n=100
-    )
-    assert result.mean() == approx(6.2, rel=1e-1)
-
-
-def test_survival_date(portfolio_cashflows_inflation):
+def test_dcf_survival_date(portfolio_cashflows_inflation):
     assert portfolio_cashflows_inflation.dcf.survival_date == pd.to_datetime("2020-01-31")
 
 
-def test_cashflow_pv(portfolio_cashflows_inflation, portfolio_cashflows_NO_inflation_NO_discount_rate):
+def test_dcf_cashflow_pv(portfolio_cashflows_inflation, portfolio_cashflows_NO_inflation_NO_discount_rate):
     assert portfolio_cashflows_inflation.dcf.cashflow_pv == approx(-76.33, rel=1e-2)
     assert portfolio_cashflows_NO_inflation_NO_discount_rate.dcf.cashflow_pv == approx(-78.35, rel=1e-2)
 
 
-def test_initial_amount_pv(portfolio_cashflows_inflation, portfolio_cashflows_NO_inflation_NO_discount_rate):
+def test_dcf_initial_amount_pv(portfolio_cashflows_inflation, portfolio_cashflows_NO_inflation_NO_discount_rate):
     assert portfolio_cashflows_inflation.dcf.initial_amount_pv == approx(76339.31, rel=1e-2)
     assert portfolio_cashflows_NO_inflation_NO_discount_rate.dcf.initial_amount_pv == approx(78352.61, rel=1e-2)
+
+
+def test_dcf_survival_period(portfolio_cashflows_inflation):
+    assert portfolio_cashflows_inflation.dcf.survival_period == approx(5.1, rel=1e-2)
+
+
+@mark.parametrize(
+    "distribution, expected",
+    [("norm", 93899.64), ("lognorm", 92155.15), ("t", 93123.36)],
+)
+def test_dcf_monte_carlo_wealth(portfolio_cashflows_inflation_large_cf, distribution, expected):
+    result = portfolio_cashflows_inflation_large_cf.dcf.monte_carlo_wealth(
+        first_value=100_000,
+        distr=distribution,
+        years=1,
+        n=100
+    )
+    assert result.iloc[-1].mean() == approx(expected, rel=1e-1)
+
+
+@mark.parametrize(
+    "distribution, expected",
+    [("norm", 6.2), ("lognorm", 6.2), ("t", 5.9)],
+)
+def test_dcf_monte_carlo_survival_period(portfolio_cashflows_inflation_large_cf, distribution, expected):
+    result = portfolio_cashflows_inflation_large_cf.dcf.monte_carlo_survival_period(
+        distr=distribution,
+        years=25,
+        n=100
+    )
+    assert result.mean() == approx(expected, rel=1e-1)
+
+
+def test_dcf_plot_forecast_monte_carlo(portfolio_cashflows_inflation_large_cf):
+    axes_data = np.array(portfolio_cashflows_inflation_large_cf.dcf.plot_forecast_monte_carlo(
+        distr="norm",
+        years=1,
+        backtest=True,
+        n=2,
+        figsiz=None
+    ))
+    assert len(axes_data) = 2
+    assert axes_data.lines[0].get_data().shape[0] == 12
+    assert axes_data.lines[0].get_data()[0] == approx(portfolio_cashflows_inflation_large_cf.initial_amount, abs=1e-1)
+
+
+
+
+

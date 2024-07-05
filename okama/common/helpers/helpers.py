@@ -7,15 +7,16 @@ import numpy as np
 import scipy.stats
 
 from okama.common.validators import validate_integer
+from okama.common.error import LongRollingWindowLengthError, RollingWindowLengthBelowOneYearError, ShortPeriodLengthError
 from okama import settings
 
 
 def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame], window_below_year: bool = False):
     validate_integer(arg_name="window", arg_value=window, min_value=0, inclusive=False)
     if not window_below_year and window < settings._MONTHS_PER_YEAR:
-        raise ValueError("window size must be at least 1 year")
+        raise RollingWindowLengthBelowOneYearError("window size must be at least 1 year")
     if window > ror.shape[0]:
-        raise ValueError("window size is more than data history depth")
+        raise LongRollingWindowLengthError(f"window size is more than data history depth: 13 months")
 
 
 class Float:
@@ -576,7 +577,7 @@ class Index:
         if ror.shape[1] < 2:
             raise ValueError("At least 2 symbols should be provided to calculate Tracking Error.")
         if ror.shape[0] < 12:
-            raise ValueError("Tracking Error is not defined for time periods < 1 year")
+            raise ShortPeriodLengthError("Tracking Error is not defined for time periods < 1 year")
         cumsum = ror.subtract(ror.iloc[:, 0], axis=0).pow(2, axis=0).cumsum()
         cumsum.drop(cumsum.columns[0], axis=1, inplace=True)  # drop the first column (stock index data)
         tracking_error = cumsum.divide((1.0 + np.arange(ror.shape[0])), axis=0).pow(0.5, axis=0)
@@ -624,7 +625,7 @@ class Index:
         if ror.shape[1] < 2:
             raise ValueError("At least 2 symbols should be provided to calculate beta coefficient.")
         if ror.shape[0] < 12:
-            raise ValueError("Beta coefficient is not defined for time periods < 1 year")
+            raise ShortPeriodLengthError("Beta coefficient is not defined for time periods < 1 year")
         cov = Index.expanding_cov_cor(ror, fn="cov")
         benchmark_var = ror.loc[:, ror.columns[0]].expanding().var()
         benchmark_var = benchmark_var.iloc[settings._MONTHS_PER_YEAR :]

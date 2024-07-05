@@ -7,6 +7,7 @@ from pytest import approx
 from pytest import mark
 
 import okama as ok
+from okama.common.error import ShortPeriodLengthError, LongRollingWindowLengthError, RollingWindowLengthBelowOneYearError
 
 from tests import conftest
 
@@ -14,7 +15,7 @@ from tests import conftest
 @mark.asset_list
 def test_asset_list_init_failing():
     with pytest.raises(
-        ValueError,
+        ShortPeriodLengthError,
         match=r"SBGB.MOEX historical data period length is too short. " r"It must be at least 3 months.",
     ):
         ok.AssetList(assets=["SBGB.MOEX"], last_date="2019-02", inflation=True)
@@ -110,7 +111,7 @@ class TestAssetList:
         [
             pytest.param(0, ValueError, id="error-0-months"),
             pytest.param(-1, ValueError, id="error-negative-months"),
-            pytest.param(34, ValueError, id="error - window period is too long"),
+            pytest.param(34, LongRollingWindowLengthError, id="error - window period is too long"),
             pytest.param("twelve", TypeError, id="error-string-input"),
             pytest.param(None, TypeError, id="error-none-input"),
         ],
@@ -199,7 +200,7 @@ class TestAssetList:
     get_rolling_cagr_error_data = [
         (0, False, ValueError),  # window should be at least 12 months for CAGR
         (12.5, False, TypeError),  # not an integer
-        (10 * 12, False, ValueError),  # window size should be in the history period
+        (10 * 12, False, LongRollingWindowLengthError),  # window size should be in the history period
         (
             12,
             True,
@@ -355,12 +356,12 @@ class TestAssetList:
 
     def test_tracking_error_failing(self):
         with pytest.raises(
-            ValueError,
-            match="window size must be at least 1 year",
+            RollingWindowLengthBelowOneYearError,
+            match=r"window size must be at least 1 year",
         ):
             self.asset_list.tracking_error(rolling_window=5)
         with pytest.raises(
-            ValueError,
+            ShortPeriodLengthError,
             match="Tracking Error is not defined for time periods < 1 year",
         ):
             self.asset_list_st.tracking_error()
@@ -386,8 +387,10 @@ class TestAssetList:
         assert self.asset_list.skewness["MCFTR.INDX"].iloc[-1] == approx(0.24876, abs=1e-2)
 
     def test_rolling_skewness_failing(self):
-        with pytest.raises(ValueError, match=r"window size is more than data history depth"):
+        with pytest.raises(LongRollingWindowLengthError, match=r"window size is more than data history depth: 13 months"):
             self.asset_list.skewness_rolling(window=24)
+        with pytest.raises(RollingWindowLengthBelowOneYearError, match=r"window size must be at least 1 year"):
+            self.asset_list.skewness_rolling(window=5)
 
     def test_kurtosis(self):
         assert self.asset_list.kurtosis["USDRUB.CBR"].iloc[-1] == approx(0.7073, abs=1e-2)

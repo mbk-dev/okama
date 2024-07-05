@@ -15,5 +15,5 @@ pf = ok.Portfolio(
 )
 
 
-print(pf.describe())
+print(pf.percentile_inverse_cagr(distr='t', score=0, years=1, n=5000))
 

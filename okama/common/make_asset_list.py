@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from okama import macro, asset, settings
 from okama.common import validators
 from okama.common.helpers import helpers
+from okama.common.error import ShortPeriodLengthError
 
 
 class ListMaker(ABC):
@@ -128,7 +129,7 @@ class ListMaker(ABC):
             asset_own_first_date = asset_item.first_date
             asset_own_last_date = asset_item.last_date
             if asset_item.pl.years == 0 and asset_item.pl.months <= 2:
-                raise ValueError(
+                raise ShortPeriodLengthError(
                     f"{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months."
                 )
             if i == 0:  # required to use pd.concat below (df should not be empty).
@@ -145,7 +146,7 @@ class ListMaker(ABC):
             fd_max = max(x for x in fd if x is not None)
             ld_min = min(x for x in ld if x is not None)
             if helpers.Date.get_difference_in_months(ld_min, fd_max).n < 2:
-                raise ValueError(
+                raise ShortPeriodLengthError(
                     f"{asset_item.symbol} historical data period length is too short. " f"It must be at least 3 months."
                 )
             # append data to dictionaries

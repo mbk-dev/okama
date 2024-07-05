@@ -8,6 +8,7 @@ import okama.common.validators
 from okama import settings
 from okama.api import data_queries, namespaces
 from okama.common.helpers import helpers
+from okama.common.error import LongRollingWindowLengthError
 
 
 class MacroABC(ABC):
@@ -344,7 +345,7 @@ class Inflation(MacroABC):
         if self.symbol.split(".", 1)[-1] != "INFL":
             raise ValueError("cumulative_inflation is defined for inflation only")
         if self.values_monthly.shape[0] < 12:
-            raise ValueError("data history depth is less than rolling window size (12 months)")
+            raise LongRollingWindowLengthError("data history depth is less than rolling window size (12 months)")
         x = (self.values_monthly + 1.0).rolling(settings._MONTHS_PER_YEAR).apply(np.prod, raw=True) - 1.0
         x.dropna(inplace=True)
         return x

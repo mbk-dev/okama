@@ -4,6 +4,7 @@ from pytest import mark
 from pytest import approx
 
 import okama as ok
+from okama.common.error import LongRollingWindowLengthError
 
 
 def test_macro_init_failing():
@@ -50,7 +51,10 @@ class TestInflation:
         assert self.infl_rub.purchasing_power_1000 == approx(0.05107911300773333, abs=1e-4)
 
     def test_rolling_inflation_fails(self):
-        with pytest.raises(ValueError, match=r"data history depth is less than rolling window size \(12 months\)"):
+        with pytest.raises(
+                LongRollingWindowLengthError,
+                match=r"data history depth is less than rolling window size \(12 months\)"
+        ):
             self.infl_usd_less_year.rolling_inflation
 
     def test_rolling_inflation(self):
