@@ -2497,7 +2497,7 @@ class PortfolioDCF:
         return self.parent.initial_amount / (1.0 + self.parent.discount_rate) ** self.parent.period_length
 
     def monte_carlo_wealth(
-        self, first_value: float = 1000.0, distr: str = "norm", years: int = 1, n: int = 100
+        self, first_value: Optional[float] = None, distr: str = "norm", years: int = 1, n: int = 100
     ) -> pd.DataFrame:
         """
         Generate portfolio wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
@@ -2511,8 +2511,8 @@ class PortfolioDCF:
 
         Parameters
         ----------
-        first_value : float, default 1000,
-            Portfolio initial investment.
+        first_value : float, optional,
+            Portfolio initial investment. If None initial_amount of Portfolio is used.
 
         distr : {'norm', 'lognorm', 't'}, default 'norm'
             Distribution type for the rate of return of portfolio.
@@ -2546,11 +2546,12 @@ class PortfolioDCF:
         """
         if distr not in ["norm", "lognorm", "t"]:
             raise ValueError('distr should be "norm" (default), "lognorm" or "t".')
+        fv = self.parent.initial_amount if not first_value else first_value
         return_ts = self.parent.monte_carlo_returns_ts(distr=distr, years=years, n=n)
         df = return_ts.apply(
             helpers.Frame.get_wealth_indexes_with_cashflow,
             axis=0,
-            args=(None, None, self.parent.discount_rate, first_value, self.parent.cashflow),
+            args=(None, None, self.parent.discount_rate, fv, self.parent.cashflow),
         )
 
         def remove_negative_values(s):
