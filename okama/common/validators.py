@@ -1,4 +1,5 @@
 """Various validators"""
+
 import numbers
 import operator
 from typing import Optional, Any

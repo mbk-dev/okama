@@ -2349,6 +2349,7 @@ class PortfolioDCF:
     pf.dсf.cashflow_pv
     ```
     """
+
     def __init__(self, parent: Portfolio):
         self.parent = parent
         self._wealth_index = pd.DataFrame(dtype=float)

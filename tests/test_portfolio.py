@@ -414,10 +414,7 @@ def test_dcf_survival_period(portfolio_cashflows_inflation):
 )
 def test_dcf_monte_carlo_wealth(portfolio_cashflows_inflation_large_cf, distribution, expected):
     result = portfolio_cashflows_inflation_large_cf.dcf.monte_carlo_wealth(
-        first_value=100_000,
-        distr=distribution,
-        years=1,
-        n=100
+        first_value=100_000, distr=distribution, years=1, n=100
     )
     assert result.iloc[-1].mean() == approx(expected, rel=1e-1)
 
@@ -427,15 +424,5 @@ def test_dcf_monte_carlo_wealth(portfolio_cashflows_inflation_large_cf, distribu
     [("norm", 6.2), ("lognorm", 6.2), ("t", 5.9)],
 )
 def test_dcf_monte_carlo_survival_period(portfolio_cashflows_inflation_large_cf, distribution, expected):
-    result = portfolio_cashflows_inflation_large_cf.dcf.monte_carlo_survival_period(
-        distr=distribution,
-        years=25,
-        n=100
-    )
+    result = portfolio_cashflows_inflation_large_cf.dcf.monte_carlo_survival_period(distr=distribution, years=25, n=100)
     assert result.mean() == approx(expected, rel=1e-1)
-
-
-
-
-
-

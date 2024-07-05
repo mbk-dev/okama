@@ -19,6 +19,7 @@ Main features:
 - Matplotlib visualization scripts for the Efficient Frontier, Transition map and assets risk / return performance
 
 """
+
 from importlib.metadata import version
 
 from okama.asset import Asset

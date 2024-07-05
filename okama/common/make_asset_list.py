@@ -323,7 +323,7 @@ class ListMaker(ABC):
                 div_monthly.index = div_monthly.index.to_timestamp()
                 for date in price_monthly_ts.index.to_timestamp(how="End"):
                     date0 = date - pd.DateOffset(months=12)  # last 12 months
-                    ltm_div = div_monthly[date0: date].sum()
+                    ltm_div = div_monthly[date0:date].sum()
                     last_price = price_monthly_ts.loc[:date].iloc[-1]
                     value = ltm_div / last_price
                     div_yield.at[date] = value

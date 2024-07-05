@@ -7,7 +7,11 @@ from pytest import approx
 from pytest import mark
 
 import okama as ok
-from okama.common.error import ShortPeriodLengthError, LongRollingWindowLengthError, RollingWindowLengthBelowOneYearError
+from okama.common.error import (
+    ShortPeriodLengthError,
+    LongRollingWindowLengthError,
+    RollingWindowLengthBelowOneYearError,
+)
 
 from tests import conftest
 
@@ -387,7 +391,9 @@ class TestAssetList:
         assert self.asset_list.skewness["MCFTR.INDX"].iloc[-1] == approx(0.24876, abs=1e-2)
 
     def test_rolling_skewness_failing(self):
-        with pytest.raises(LongRollingWindowLengthError, match=r"window size is more than data history depth: 13 months"):
+        with pytest.raises(
+            LongRollingWindowLengthError, match=r"window size is more than data history depth: 13 months"
+        ):
             self.asset_list.skewness_rolling(window=24)
         with pytest.raises(RollingWindowLengthBelowOneYearError, match=r"window size must be at least 1 year"):
             self.asset_list.skewness_rolling(window=5)

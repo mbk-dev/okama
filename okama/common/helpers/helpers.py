@@ -7,7 +7,11 @@ import numpy as np
 import scipy.stats
 
 from okama.common.validators import validate_integer
-from okama.common.error import LongRollingWindowLengthError, RollingWindowLengthBelowOneYearError, ShortPeriodLengthError
+from okama.common.error import (
+    LongRollingWindowLengthError,
+    RollingWindowLengthBelowOneYearError,
+    ShortPeriodLengthError,
+)
 from okama import settings
 
 
@@ -16,7 +20,7 @@ def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame], windo
     if not window_below_year and window < settings._MONTHS_PER_YEAR:
         raise RollingWindowLengthBelowOneYearError("window size must be at least 1 year")
     if window > ror.shape[0]:
-        raise LongRollingWindowLengthError(f"window size is more than data history depth: 13 months")
+        raise LongRollingWindowLengthError("window size is more than data history depth: 13 months")
 
 
 class Float:
@@ -240,7 +244,7 @@ class Frame:
             survival_date = wealth_series[condition].index[0]
         except IndexError:
             survival_date = wealth_series.index[-1]
-        return survival_date.to_timestamp(freq='M')
+        return survival_date.to_timestamp(freq="M")
 
     @get_survival_date.register
     def _(wealth: pd.DataFrame) -> pd.Timestamp:

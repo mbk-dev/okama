@@ -52,8 +52,7 @@ class TestInflation:
 
     def test_rolling_inflation_fails(self):
         with pytest.raises(
-                LongRollingWindowLengthError,
-                match=r"data history depth is less than rolling window size \(12 months\)"
+            LongRollingWindowLengthError, match=r"data history depth is less than rolling window size \(12 months\)"
         ):
             self.infl_usd_less_year.rolling_inflation
 

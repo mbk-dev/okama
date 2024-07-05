@@ -1,6 +1,7 @@
 """
 Tests the search
 """
+
 import json
 
 import pytest
