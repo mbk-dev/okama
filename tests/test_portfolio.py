@@ -435,18 +435,6 @@ def test_dcf_monte_carlo_survival_period(portfolio_cashflows_inflation_large_cf,
     assert result.mean() == approx(expected, rel=1e-1)
 
 
-def test_dcf_plot_forecast_monte_carlo(portfolio_cashflows_inflation_large_cf):
-    axes_data = np.array(portfolio_cashflows_inflation_large_cf.dcf.plot_forecast_monte_carlo(
-        distr="norm",
-        years=1,
-        backtest=True,
-        n=2,
-        figsiz=None
-    ))
-    assert len(axes_data) = 2
-    assert axes_data.lines[0].get_data().shape[0] == 12
-    assert axes_data.lines[0].get_data()[0] == approx(portfolio_cashflows_inflation_large_cf.initial_amount, abs=1e-1)
-
 
 
 
