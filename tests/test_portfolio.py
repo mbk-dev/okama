@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal, assert_allclose
 from pandas.testing import assert_series_equal, assert_frame_equal
 
 import okama as ok
-from okama.common.error import LongRollingWindowLengthError
+from okama.common.error import LongRollingWindowLengthError, RollingWindowLengthBelowOneYearError
 
 from tests import conftest
 
