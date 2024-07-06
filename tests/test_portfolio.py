@@ -7,6 +7,7 @@ from numpy.testing import assert_array_equal, assert_allclose
 from pandas.testing import assert_series_equal, assert_frame_equal
 
 import okama as ok
+from okama.common.error import LongRollingWindowLengthError
 
 from tests import conftest
 
@@ -289,12 +290,12 @@ def test_get_rolling_cagr(portfolio_rebalanced_month, window, real, expected):
 
 
 def test_get_rolling_cagr_failing_short_window(portfolio_not_rebalanced):
-    with pytest.raises(ValueError, match="window size must be at least 1 year"):
+    with pytest.raises(RollingWindowLengthBelowOneYearError, match="window size must be at least 1 year"):
         portfolio_not_rebalanced.get_rolling_cagr(window=1)
 
 
 def test_get_rolling_cagr_failing_long_window(portfolio_not_rebalanced):
-    with pytest.raises(ValueError, match="window size is more than data history depth"):
+    with pytest.raises(LongRollingWindowLengthError, match="window size is more than data history depth"):
         portfolio_not_rebalanced.get_rolling_cagr(window=100)
 
 
