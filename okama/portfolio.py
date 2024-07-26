@@ -140,6 +140,8 @@ class Portfolio(make_asset_list.ListMaker):
         else:
             return self.ror
 
+    # TODO: make cashflow & initial_amountfloat & discount_rate setters
+
     @property
     def weights(self) -> Union[list, tuple]:
         """
@@ -1653,8 +1655,7 @@ class Portfolio(make_asset_list.ListMaker):
         2021-11  4179.544897  4156.839698  ...  3899.249696  4097.003962
         2021-12  4237.030690  4351.305114  ...  3916.639721  4042.011774
         """
-        if distr not in ["norm", "lognorm", "t"]:
-            raise ValueError('distr should be "norm" (default), "lognorm" or "t".')
+        validators.validate_distribution(distr)
         return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
         first_value = self.wealth_index[self.symbol].values[-1]
         return helpers.Frame.get_wealth_indexes(return_ts, first_value)
@@ -1670,8 +1671,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         CAGR is calculated for each of n random returns time series.
         """
-        if distr not in ["norm", "lognorm", "t"]:
-            raise ValueError('distr should be "norm" (default), "lognorm" or "t".')
+        validators.validate_distribution(distr)
         return_ts = self.monte_carlo_returns_ts(distr=distr, years=years, n=n)
         return helpers.Frame.get_cagr(return_ts)
 
@@ -1725,8 +1725,7 @@ class Portfolio(make_asset_list.ListMaker):
         {10: 0.030625112922274055, 50: 0.08346815557550402, 90: 0.13902575176654647}
         Forecast CAGR according to normal distribution within 5 year period.
         """
-        if distr not in ["norm", "lognorm", "t"]:
-            raise ValueError('distr should be "norm" (default), "lognorm" or "t".')
+        validators.validate_distribution(distr)
         cagr_distr = self._get_cagr_distribution(distr=distr, years=years, n=n)
         results = {}
         for percentile in percentiles:
@@ -2353,6 +2352,45 @@ class PortfolioDCF:
     def __init__(self, parent: Portfolio):
         self.parent = parent
         self._wealth_index = pd.DataFrame(dtype=float)
+        self._distribution: str = "normal"
+        self._period: int = 25
+        self._mc_number: int = 100
+        self._monte_carlo_wealth = pd.DataFrame()
+
+    @property
+    def distribution(self):
+        return self._distribution
+
+    @distribution.setter
+    def distribution(self, distribution):
+        validators.validate_distribution(distribution)
+        self._monte_carlo_wealth = pd.DataFrame()
+        self._distribution = distribution
+
+    @property
+    def period(self):
+        return self._period
+
+    @period.setter
+    def period(self, period):
+        validators.validate_integer("period" ,period)
+        self._monte_carlo_wealth = pd.DataFrame()
+        self._period = period
+
+    @property
+    def mc_number(self):
+        return self._mc_number
+
+    @mc_number.setter
+    def mc_number(self, mc_number):
+        validators.validate_integer("mc_number", mc_number)
+        self._monte_carlo_wealth = pd.DataFrame()
+        self._mc_number = mc_number
+
+    def set_mc_parameters(self, distribution: str, period: int, mc_number: int):
+        self.distribution = distribution
+        self.period = period
+        self.mc_number = mc_number
 
     @property
     def wealth_index(self) -> pd.DataFrame:
@@ -2398,7 +2436,7 @@ class PortfolioDCF:
         return self._wealth_index
 
     @property
-    def survival_period(self) -> float:
+    def survival_period_hist(self) -> float:
         """
         Calculate the period when the portfolio has positive balance considering withdrawals on the historical data.
 
@@ -2421,13 +2459,13 @@ class PortfolioDCF:
         ...    initial_amount=100_000,
         ...    cashflow=-1_000
         ...)
-        >>> pf.dcf.survival_period
+        >>> pf.dcf.survival_period_hist
         11.6
         """
-        return helpers.Date.get_period_length(last_date=self.survival_date, first_date=self.parent.first_date)
+        return helpers.Date.get_period_length(last_date=self.survival_date_hist, first_date=self.parent.first_date)
 
     @property
-    def survival_date(self) -> pd.Timestamp:
+    def survival_date_hist(self) -> pd.Timestamp:
         """
         Get the date when the portfolio balance become negative considering withdrawals on the historical data.
 
@@ -2450,7 +2488,7 @@ class PortfolioDCF:
         ...    initial_amount=100_000,
         ...    cashflow=-1_000
         ...)
-        >>> pf.dcf.survival_date
+        >>> pf.dcf.survival_date_hist
         Timestamp('2021-08-01 00:00:00')
         """
         return helpers.Frame.get_survival_date(self.wealth_index.loc[:, self.parent.symbol])
@@ -2497,9 +2535,8 @@ class PortfolioDCF:
         """
         return self.parent.initial_amount / (1.0 + self.parent.discount_rate) ** self.parent.period_length
 
-    def monte_carlo_wealth(
-        self, first_value: Optional[float] = None, distr: str = "norm", years: int = 1, n: int = 100
-    ) -> pd.DataFrame:
+    @property
+    def monte_carlo_wealth(self) -> pd.DataFrame:
         """
         Generate portfolio wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
 
@@ -2545,36 +2582,34 @@ class PortfolioDCF:
         2021-11  4179.544897  4156.839698  ...  3899.249696  4097.003962
         2021-12  4237.030690  4351.305114  ...  3916.639721  4042.011774
         """
-        if distr not in ["norm", "lognorm", "t"]:
-            raise ValueError('distr should be "norm" (default), "lognorm" or "t".')
-        fv = self.parent.initial_amount if not first_value else first_value
-        return_ts = self.parent.monte_carlo_returns_ts(distr=distr, years=years, n=n)
-        df = return_ts.apply(
-            helpers.Frame.get_wealth_indexes_with_cashflow,
-            axis=0,
-            args=(None, None, self.parent.discount_rate, fv, self.parent.cashflow),
-        )
 
-        def remove_negative_values(s):
-            condition = s <= 0
-            try:
-                survival_date = s[condition].index[0]
-                s[survival_date] = 0
-                s[s.index > survival_date] = np.nan
-            except IndexError:
-                pass
-            return s
+        if self._monte_carlo_wealth.empty:
+            fv = self.parent.initial_amount
+            return_ts = self.parent.monte_carlo_returns_ts(distr=self.distribution, years=self.period, n=self.mc_number)
+            df = return_ts.apply(
+                helpers.Frame.get_wealth_indexes_with_cashflow,
+                axis=0,
+                args=(None, None, self.parent.discount_rate, fv, self.parent.cashflow),
+            )
 
-        df = df.apply(remove_negative_values, axis=0)
-        all_cells_are_nan = df.isna().all(axis=1)
-        return df[~all_cells_are_nan]
+            def remove_negative_values(s):
+                condition = s <= 0
+                try:
+                    survival_date = s[condition].index[0]
+                    s[survival_date] = 0
+                    s[s.index > survival_date] = np.nan
+                except IndexError:
+                    pass
+                return s
+
+            df = df.apply(remove_negative_values, axis=0)
+            all_cells_are_nan = df.isna().all(axis=1)
+            return df[~all_cells_are_nan]
+        return self._monte_carlo_wealth
 
     def plot_forecast_monte_carlo(
         self,
-        distr: str = "norm",
-        years: int = 1,
         backtest: bool = True,
-        n: int = 20,
         figsize: Optional[tuple] = None,
     ) -> None:
         """
@@ -2626,18 +2661,16 @@ class PortfolioDCF:
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
             if last_backtest_value > 0:
-                s2 = self.monte_carlo_wealth(first_value=last_backtest_value, distr=distr, years=years, n=n)
+                s2 = self.monte_carlo_wealth
                 for s in s2:
                     s2[s].plot(legend=None)
         else:
-            s2 = self.monte_carlo_wealth(first_value=self.parent.initial_amount, distr=distr, years=years, n=n)
+            s2 = self.monte_carlo_wealth
             s2.plot(legend=None)
 
+    @property
     def monte_carlo_survival_period(
         self,
-        distr: str = "norm",
-        years: int = 1,
-        n: int = 20,
     ) -> pd.Series:
         """
         Generate a survival period distribution for a portfolio with cash flows by Monte Carlo simulation.
@@ -2687,6 +2720,6 @@ class PortfolioDCF:
         >> s.quantile(50 / 100)
         2.7
         """
-        s2 = self.monte_carlo_wealth(first_value=self.parent.initial_amount, distr=distr, years=years, n=n)
+        s2 = self.monte_carlo_wealth
         dates: pd.Series = helpers.Frame.get_survival_date(s2)
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))

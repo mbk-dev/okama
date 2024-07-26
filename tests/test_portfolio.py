@@ -392,7 +392,7 @@ def test_dcf_wealth_index(portfolio_cashflows_inflation, portfolio_cashflows_NO_
 
 
 def test_dcf_survival_date(portfolio_cashflows_inflation):
-    assert portfolio_cashflows_inflation.dcf.survival_date == pd.to_datetime("2020-01-31")
+    assert portfolio_cashflows_inflation.dcf.survival_date_hist == pd.to_datetime("2020-01-31")
 
 
 def test_dcf_cashflow_pv(portfolio_cashflows_inflation, portfolio_cashflows_NO_inflation_NO_discount_rate):
@@ -406,7 +406,7 @@ def test_dcf_initial_amount_pv(portfolio_cashflows_inflation, portfolio_cashflow
 
 
 def test_dcf_survival_period(portfolio_cashflows_inflation):
-    assert portfolio_cashflows_inflation.dcf.survival_period == approx(5.1, rel=1e-2)
+    assert portfolio_cashflows_inflation.dcf.survival_period_hist == approx(5.1, rel=1e-2)
 
 
 @mark.parametrize(

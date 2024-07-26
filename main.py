@@ -13,5 +13,13 @@ pf = ok.Portfolio(
     cashflow=-2_000,
 )
 
+pf.dcf.set_mc_parameters(
+    distribution="t",
+    period=10,
+    mc_number=100
+)
 
-print(pf.percentile_inverse_cagr(distr="t", score=0, years=1, n=5000))
+print(pf.dcf.distribution)
+print(pf.dcf.mc_number)
+s = pf.dcf.monte_carlo_wealth
+print(s.iloc[-1].quantile(50/100))

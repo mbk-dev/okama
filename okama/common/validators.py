@@ -95,3 +95,11 @@ def validate_real(arg_name: str, arg_value: Any) -> None:
     """
     if not isinstance(arg_value, numbers.Real):
         raise TypeError(f"{arg_name} should be a Real number.")
+
+
+def validate_distribution(distribution: Any):
+    """
+    Validate that `distribution` has one of allowed values.
+    """
+    if distribution not in ["norm", "lognorm", "t"]:
+        raise ValueError('distribution must be "norm" (default), "lognorm" or "t".')

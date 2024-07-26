@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats
 
-from okama.common.validators import validate_integer
+from okama.common.validators import validate_integer, validate_distribution
 from okama.common.error import (
     LongRollingWindowLengthError,
     RollingWindowLengthBelowOneYearError,
@@ -422,6 +422,7 @@ class Frame:
         Returns:
             (The test statistic, The p-value for the hypothesis test)
         """
+        validate_distribution(distr)
         test_dict = {}
         for label, content in ror.items():
             test_values = Frame.kstest_series(content, distr=distr)
