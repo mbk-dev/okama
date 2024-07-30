@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from random import randint
 from typing import Optional, List, Dict, Union, Tuple
 
@@ -108,15 +109,12 @@ class Portfolio(make_asset_list.ListMaker):
             ccy=ccy,
             inflation=inflation,
         )
-        self._weights = None
         self.weights = weights
         self.assets_weights = dict(zip(self.symbols, self.weights))
-        self._rebalancing_period = None
         self.rebalancing_period = rebalancing_period
         self.cashflow = cashflow
         self.initial_amount = initial_amount
-        self._symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
-        self._discount_rate = None
+        self.symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
         self.discount_rate = discount_rate
         self.dcf = PortfolioDCF(self)
 
@@ -140,7 +138,7 @@ class Portfolio(make_asset_list.ListMaker):
         else:
             return self.ror
 
-    # TODO: make cashflow & initial_amountfloat & discount_rate setters
+    # TODO: make cashflow & initial_amountfloat setters
 
     @property
     def weights(self) -> Union[list, tuple]:
@@ -233,10 +231,10 @@ class Portfolio(make_asset_list.ListMaker):
 
     @rebalancing_period.setter
     def rebalancing_period(self, rebalancing_period: str):
-        if rebalancing_period in Rebalance.frequency_mapping.keys():
+        if rebalancing_period in settings.frequency_mapping.keys():
             self._rebalancing_period = rebalancing_period
         else:
-            raise ValueError(f"rebalancing_period must be in {Rebalance.frequency_mapping.keys()}")
+            raise ValueError(f"rebalancing_period must be in {settings.frequency_mapping.keys()}")
 
     @property
     def symbol(self) -> str:
@@ -2352,45 +2350,33 @@ class PortfolioDCF:
     def __init__(self, parent: Portfolio):
         self.parent = parent
         self._wealth_index = pd.DataFrame(dtype=float)
-        self._distribution: str = "normal"
-        self._period: int = 25
-        self._mc_number: int = 100
         self._monte_carlo_wealth = pd.DataFrame()
+        self.mc = MonteCarlo(self)
+        self.cashflow_parameters = CashFlow()
 
-    @property
-    def distribution(self):
-        return self._distribution
+    def set_mc_parameters(self,
+                          distribution: str,
+                          period: int,
+                          number: int):
+        self.mc.distribution = distribution
+        self.mc.period = period
+        self.mc.number = number
 
-    @distribution.setter
-    def distribution(self, distribution):
-        validators.validate_distribution(distribution)
-        self._monte_carlo_wealth = pd.DataFrame()
-        self._distribution = distribution
+    def set_cashflow_parameters(self,
+                                method: str,
+                                frequency: Optional[int] = None,
+                                amount: int = None,
+                                indexation: float = None,
+                                percentage: float = None,
+                                ):
+        self.cashflow_parameters.method = method
+        self.cashflow_parameters.frequency = frequency
+        # fixed amount
+        self.cashflow_parameters.amount = amount
+        self.cashflow_parameters.indexation = indexation
+        # fixed percentage
+        self.cashflow_parameters.percentage = percentage
 
-    @property
-    def period(self):
-        return self._period
-
-    @period.setter
-    def period(self, period):
-        validators.validate_integer("period" ,period)
-        self._monte_carlo_wealth = pd.DataFrame()
-        self._period = period
-
-    @property
-    def mc_number(self):
-        return self._mc_number
-
-    @mc_number.setter
-    def mc_number(self, mc_number):
-        validators.validate_integer("mc_number", mc_number)
-        self._monte_carlo_wealth = pd.DataFrame()
-        self._mc_number = mc_number
-
-    def set_mc_parameters(self, distribution: str, period: int, mc_number: int):
-        self.distribution = distribution
-        self.period = period
-        self.mc_number = mc_number
 
     @property
     def wealth_index(self) -> pd.DataFrame:
@@ -2428,9 +2414,9 @@ class PortfolioDCF:
                 ror=df,
                 portfolio_symbol=self.parent.symbol,
                 inflation_symbol=infl,
-                discount_rate=self.parent.discount_rate,
+                annual_indexation_rate=self.parent.discount_rate,
                 initial_amount=self.initial_amount_pv,
-                cashflow=self.cashflow_pv,
+                cashflow_amount=self.cashflow_pv,
             )
             self._wealth_index = self.parent._make_df_if_series(df)
         return self._wealth_index
@@ -2547,24 +2533,6 @@ class PortfolioDCF:
         First value for the forecasted wealth indexes is the last historical portfolio index value. It is useful
         for a chart with historical wealth index and forecasted values.
 
-        Parameters
-        ----------
-        first_value : float, optional,
-            Portfolio initial investment. If None initial_amount of Portfolio is used.
-
-        distr : {'norm', 'lognorm', 't'}, default 'norm'
-            Distribution type for the rate of return of portfolio.
-            'norm' - for normal distribution.
-            'lognorm' - for lognormal distribution.
-            't' - for Student's T distribution.
-
-        years : int, default 1
-            Forecast period for portfolio wealth index time series.
-            It should not exceed 1/2 of the portfolio history period length 'period_length'.
-
-        n : int, default 100
-            Number of random wealth indexes to generate with Monte Carlo simulation.
-
         Returns
         -------
         DataFrame
@@ -2573,7 +2541,7 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
-        >>> pf.dcf.monte_carlo_wealth(distr='lognorm', years=5, n=1000)
+        >>> pf.dcf.monte_carlo_wealth
                          0            1    ...          998          999
         2021-07  3895.377293  3895.377293  ...  3895.377293  3895.377293
         2021-08  3869.854680  4004.814981  ...  3874.455244  3935.913516
@@ -2584,12 +2552,21 @@ class PortfolioDCF:
         """
 
         if self._monte_carlo_wealth.empty:
-            fv = self.parent.initial_amount
-            return_ts = self.parent.monte_carlo_returns_ts(distr=self.distribution, years=self.period, n=self.mc_number)
+            return_ts = self.parent.monte_carlo_returns_ts(distr=self.mc.distribution,
+                                                           years=self.mc.period,
+                                                           n=self.mc.number)
             df = return_ts.apply(
                 helpers.Frame.get_wealth_indexes_with_cashflow,
                 axis=0,
-                args=(None, None, self.parent.discount_rate, fv, self.parent.cashflow),
+                args=(
+                    None,  # portfolio_symbol
+                    None,  #  inflation_symbol
+                    self.parent.initial_amount,
+                    self.cashflow_parameters.method,
+                    self.cashflow_parameters.frequency,
+                    self.cashflow_parameters.amount,
+                    self.cashflow_parameters.indexation,
+                ),
             )
 
             def remove_negative_values(s):
@@ -2604,7 +2581,7 @@ class PortfolioDCF:
 
             df = df.apply(remove_negative_values, axis=0)
             all_cells_are_nan = df.isna().all(axis=1)
-            return df[~all_cells_are_nan]
+            self._monte_carlo_wealth = df[~all_cells_are_nan]
         return self._monte_carlo_wealth
 
     def plot_forecast_monte_carlo(
@@ -2661,6 +2638,7 @@ class PortfolioDCF:
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
             if last_backtest_value > 0:
+                #TODO: Set new initial amount for mc wealth indexes (and reset old indexes)
                 s2 = self.monte_carlo_wealth
                 for s in s2:
                     s2[s].plot(legend=None)
