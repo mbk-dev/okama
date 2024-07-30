@@ -193,18 +193,20 @@ class Frame:
     @staticmethod
     def get_wealth_indexes_with_cashflow(
         ror: Union[pd.Series, pd.DataFrame],
-        portfolio_symbol: Optional[str],
-        inflation_symbol: Optional[str],
-        discount_rate: float,
+        portfolio_symbol: Optional[str] = None,
+        inflation_symbol: Optional[str] = None,
         initial_amount: float = 1000.0,
-        cashflow: float = 0,
+        cashflow_method: str = "fixed_amount",
+        cashflow_frequency: str = "quarter",
+        cashflow_amount: float = 0,
+        annual_indexation_rate: Optional[float] = None,
     ) -> Union[pd.Series, pd.DataFrame]:
         """
-        Returns wealth index for a serie of returns with cash flows (withdrawals/contributions).
+        Returns wealth index for a series of returns with cash flows (withdrawals/contributions).
 
         Values of the wealth index correspond to the beginning of the month.
         """
-        if not cashflow:
+        if cashflow_amount == 0:
             wealth_index = Frame.get_wealth_indexes(ror, initial_amount)
         else:
             value = initial_amount
@@ -214,12 +216,29 @@ class Frame:
                 # for Series
                 portfolio_position = 0
                 ror = ror.to_frame()
-            s = pd.Series(dtype=float, name=portfolio_symbol)
-            for n, row in enumerate(ror.itertuples()):
-                r = row[portfolio_position + 1]
-                value = value * (r + 1) + cashflow * (1 + discount_rate / settings._MONTHS_PER_YEAR) ** n
-                date = row[0]
-                s[date] = value
+
+            if cashflow_frequency == "month":
+                s = pd.Series(dtype=float, name=portfolio_symbol)
+                for n, row in enumerate(ror.itertuples()):
+                    r = row[portfolio_position + 1]
+                    value = value * (r + 1) + cashflow_amount * (1 + annual_indexation_rate / settings._MONTHS_PER_YEAR) ** n
+                    date = row[0]
+                    s[date] = value
+            else:
+                pandas_frequency = settings.frequency_mapping[cashflow_frequency]
+                periods_per_year = settings.frequency_periods_per_year[cashflow_frequency]
+                wealth_df = pd.DataFrame(dtype=float, columns=[portfolio_symbol])
+                for n, x in enumerate(ror.resample(rule=pandas_frequency, convention="start")):
+                    if n == 0:
+                        period_initial_amount = initial_amount
+                    df = x[1]  # select ror part of the grouped data
+                    period_wealth_index = period_initial_amount * (1 + df).cumprod()
+                    cashflow_value = cashflow_amount * (1 + annual_indexation_rate / periods_per_year) ** n
+                    period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
+                    period_wealth_index.iloc[-1] = period_final_balance
+                    period_initial_amount = period_final_balance
+                    wealth_df = pd.concat([None if wealth_df.empty else wealth_df, period_wealth_index], sort=False)
+                s = wealth_df.squeeze()
             s = s.shift(1)  # values of the wealth index correspond to the beginning of the month.
             s.iloc[0] = initial_amount  # replaces NaN with the first period return
             if inflation_symbol:
@@ -434,17 +453,13 @@ class Rebalance:
     """
     Methods for rebalancing portfolio.
     """
-
-    # From Pandas resamples alias: https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
-    frequency_mapping = {"none": "none", "year": "Y", "half-year": "2Q", "quarter": "Q", "month": "M"}
-
     def __init__(
         self, period: str = "year", abs_deviation: Optional[float] = None, rel_deviation: Optional[float] = None
     ):
         self.period = period
         self.abs_deviation = abs_deviation
         self.rel_deviation = rel_deviation
-        self.pandas_frequency = self.frequency_mapping.get(self.period)
+        self.pandas_frequency = settings.frequency_mapping.get(self.period)
 
     def wealth_ts(self, weights: list, ror: pd.DataFrame) -> pd.Series:
         """
