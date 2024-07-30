@@ -14,3 +14,7 @@ DEFAULT_DISCOUNT_RATE = 0.05
 
 _MONTHS_PER_YEAR = 12
 PeriodLength = namedtuple("PeriodLength", "years months")
+
+# From Pandas resamples alias: https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
+frequency_mapping = {"none": "none", "year": "Y", "half-year": "2Q", "quarter": "Q", "month": "M"}
+frequency_periods_per_year = {"none": 0, "year": 1, "half-year": 2, "quarter": 4, "month": 12}
