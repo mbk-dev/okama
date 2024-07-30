@@ -2701,3 +2701,78 @@ class PortfolioDCF:
         s2 = self.monte_carlo_wealth
         dates: pd.Series = helpers.Frame.get_survival_date(s2)
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
+
+
+class MonteCarlo:
+    """
+    Parameters
+        ----------
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
+            Distribution type for the rate of return of portfolio.
+            'norm' - for normal distribution.
+            'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution.
+
+        years : int, default 1
+            Forecast period for portfolio wealth index time series.
+            It should not exceed 1/2 of the portfolio history period length 'period_length'.
+
+        n : int, default 100
+            Number of random wealth indexes to generate with Monte Carlo simulation.
+    """
+    def __init__(self, parent: PortfolioDCF):
+        self.parent = parent
+        self._distribution: str = "normal"
+        self._period: int = 25
+        self._mc_number: int = 100
+
+    @property
+    def distribution(self):
+        return self._distribution
+
+    @distribution.setter
+    def distribution(self, distribution):
+        validators.validate_distribution(distribution)
+        self.parent._monte_carlo_wealth = pd.DataFrame()
+        self._distribution = distribution
+
+    @property
+    def period(self):
+        return self._period
+
+    @period.setter
+    def period(self, period):
+        validators.validate_integer("period", period)
+        self.parent._monte_carlo_wealth = pd.DataFrame()
+        self._period = period
+
+    @property
+    def number(self):
+        return self._mc_number
+
+    @number.setter
+    def number(self, mc_number):
+        validators.validate_integer("mc_number", mc_number)
+        self.parent._monte_carlo_wealth = pd.DataFrame()
+        self._mc_number = mc_number
+
+    def clear_wealth_data(self):
+        self.parent._monte_carlo_wealth = pd.DataFrame()
+
+
+class CashFlow:
+    def __init__(self):
+        self.method: str = "fixed_amount"
+        self.frequency: str = "quarter"
+        self.pandas_frequency = settings.frequency_mapping.get(self.frequency)
+        self.amount: Optional[int] = None
+        self.indexation: Optional[Union[float, str]] = None
+        self.percentage: Optional[float] = None
+        # predefined cashflow series
+        self.time_series: Optional[dict] = None
+
+    methods_list = ["fixed_amount", "fixed_percentage", "time_series"]
+
+    # def define_parameters(self, amount):
+    #     if self.method == "fixed_amount":
+    #         self.amount
