@@ -329,11 +329,14 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.ror.plot(kind='bar')
         >>> plt.show()
         """
-        if self.rebalancing_period == "month":
-            s = helpers.Frame.get_portfolio_return_ts(self.weights, self.assets_ror)
-        else:
-            s = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(self.weights, self.assets_ror)
-        return s.rename(self.symbol, inplace=True)
+        if self._ror.empty:
+            if self.rebalancing_period == "month":
+                s = helpers.Frame.get_portfolio_return_ts(self.weights, self.assets_ror)
+            else:
+                s = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(self.weights, self.assets_ror)
+            s.rename(self.symbol, inplace=True)
+            self._ror = s
+        return self._ror
 
     @property
     def wealth_index(self) -> pd.DataFrame:
