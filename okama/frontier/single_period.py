@@ -432,7 +432,6 @@ class EfficientFrontier(asset_list.AssetList):
             bounds=self.bounds,
         )
         if weights.success:
-            # TODO: Return weights as a numpy array (see Tangency portfolio)
             # CAGR calculation
             portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(weights.x, ror)
             cagr = helpers.Frame.get_cagr(portfolio_return_ts)
@@ -739,9 +738,9 @@ class EfficientFrontier(asset_list.AssetList):
     @property
     def mdp_points(self) -> pd.DataFrame:
         """
-        Generate Most diversified portfolios line.
+        Generate Most diversified portfolios frontier.
 
-        Each point on the Most diversified portfolios line is a portfolio with optimized
+        Each point on the Most diversified portfolios frontier is a portfolio with optimized
         Diversification ratio for a given return.
 
         The points are obtained through the constrained optimization process (optimization with bounds).
@@ -1106,3 +1105,4 @@ class EfficientFrontier(asset_list.AssetList):
         # plot the assets
         self.plot_assets(kind="mean" if y_axe == "mean_return" else "cagr")
         return ax
+

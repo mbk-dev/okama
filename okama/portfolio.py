@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from random import randint
 from typing import Optional, List, Dict, Union, Tuple
 
@@ -10,7 +9,6 @@ from matplotlib import pyplot as plt
 from okama import settings
 from okama.common import make_asset_list, validators
 from okama.common.helpers import helpers, ratios
-from okama.common.helpers.helpers import Rebalance
 
 
 class Portfolio(make_asset_list.ListMaker):
@@ -97,9 +95,6 @@ class Portfolio(make_asset_list.ListMaker):
         inflation: bool = True,
         weights: Optional[List[float]] = None,
         rebalancing_period: str = "month",
-        initial_amount: float = 1000.0,
-        cashflow: float = 0,
-        discount_rate: Optional[float] = None,
         symbol: str = None,
     ):
         super().__init__(
@@ -112,10 +107,8 @@ class Portfolio(make_asset_list.ListMaker):
         self.weights = weights
         self.assets_weights = dict(zip(self.symbols, self.weights))
         self.rebalancing_period = rebalancing_period
-        self.cashflow = cashflow
-        self.initial_amount = initial_amount
         self.symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
-        self.discount_rate = discount_rate
+        self._ror = pd.DataFrame(dtype=float)
         self.dcf = PortfolioDCF(self)
 
     def __repr__(self):
@@ -138,7 +131,6 @@ class Portfolio(make_asset_list.ListMaker):
         else:
             return self.ror
 
-    # TODO: make cashflow & initial_amountfloat setters
 
     @property
     def weights(self) -> Union[list, tuple]:
@@ -175,6 +167,10 @@ class Portfolio(make_asset_list.ListMaker):
                     f"Number of tickers ({len(set(self.symbols))}) should be equal "
                     f"to the weights number ({len(weights)})"
                 )
+        self._ror = pd.DataFrame(dtype=float)
+        #TODO: check why it's not working:
+        # self.dcf.mc._monte_carlo_wealth = pd.DataFrame()
+        # self.dcf._wealth_index = pd.DataFrame()
         self._weights = weights
 
     @property
@@ -232,6 +228,10 @@ class Portfolio(make_asset_list.ListMaker):
     @rebalancing_period.setter
     def rebalancing_period(self, rebalancing_period: str):
         if rebalancing_period in settings.frequency_mapping.keys():
+            self._ror = pd.DataFrame(dtype=float)
+            #TODO: check why it's not working:
+            # self.dcf._monte_carlo_wealth = pd.DataFrame()
+            # self.dcf._wealth_index = pd.DataFrame()
             self._rebalancing_period = rebalancing_period
         else:
             raise ValueError(f"rebalancing_period must be in {settings.frequency_mapping.keys()}")
@@ -277,28 +277,6 @@ class Portfolio(make_asset_list.ListMaker):
             self._symbol = text_symbol
         else:
             raise ValueError('portfolio symbol must be a string ending with ".PF" namespace.')
-
-    @property
-    def discount_rate(self) -> float:
-        """
-        Return portfolio cash flow discount rate.
-
-        Returns
-        -------
-        float
-            Cash flow discount rate.
-        """
-        return self._discount_rate
-
-    @discount_rate.setter
-    def discount_rate(self, discount_rate: Optional[float]):
-        if discount_rate is None and hasattr(self, "inflation"):
-            self._discount_rate = self.get_cagr().loc[self.inflation]
-        elif discount_rate is None and not hasattr(self, "inflation"):
-            self._discount_rate = settings.DEFAULT_DISCOUNT_RATE
-        else:
-            validators.validate_real("discount rate", discount_rate)
-            self._discount_rate = discount_rate
 
     @property
     def name(self) -> str:
@@ -2347,12 +2325,37 @@ class PortfolioDCF:
     ```
     """
 
-    def __init__(self, parent: Portfolio):
+    def __init__(self,
+                 parent: Portfolio,
+                 discount_rate: Optional[float] = None):
         self.parent = parent
+        self.discount_rate = discount_rate
         self._wealth_index = pd.DataFrame(dtype=float)
-        self._monte_carlo_wealth = pd.DataFrame()
+        self._monte_carlo_wealth = pd.DataFrame(dtype=float)
         self.mc = MonteCarlo(self)
-        self.cashflow_parameters = CashFlow()
+        self.cashflow_parameters = CashFlow(self)
+
+    @property
+    def discount_rate(self) -> float:
+        """
+        Portfolio cash flow discount rate.
+
+        Returns
+        -------
+        float
+            Cash flow discount rate.
+        """
+        return self._discount_rate
+
+    @discount_rate.setter
+    def discount_rate(self, discount_rate: Optional[float]):
+        if discount_rate is None and hasattr(self.parent, "inflation"):
+            self._discount_rate = self.parent.get_cagr().loc[self.parent.inflation]
+        elif discount_rate is None and not hasattr(self.parent, "inflation"):
+            self._discount_rate = settings.DEFAULT_DISCOUNT_RATE
+        else:
+            validators.validate_real("discount rate", discount_rate)
+            self._discount_rate = discount_rate
 
     def set_mc_parameters(self,
                           distribution: str,
@@ -2363,12 +2366,14 @@ class PortfolioDCF:
         self.mc.number = number
 
     def set_cashflow_parameters(self,
+                                initial_investment: float,
                                 method: str,
                                 frequency: Optional[int] = None,
                                 amount: int = None,
                                 indexation: float = None,
                                 percentage: float = None,
                                 ):
+        self.cashflow_parameters.initial_investment = initial_investment
         self.cashflow_parameters.method = method
         self.cashflow_parameters.frequency = frequency
         # fixed amount
@@ -2376,7 +2381,6 @@ class PortfolioDCF:
         self.cashflow_parameters.indexation = indexation
         # fixed percentage
         self.cashflow_parameters.percentage = percentage
-
 
     @property
     def wealth_index(self) -> pd.DataFrame:
@@ -2414,9 +2418,11 @@ class PortfolioDCF:
                 ror=df,
                 portfolio_symbol=self.parent.symbol,
                 inflation_symbol=infl,
-                annual_indexation_rate=self.parent.discount_rate,
-                initial_amount=self.initial_amount_pv,
-                cashflow_amount=self.cashflow_pv,
+                initial_investment=self.initial_investment_pv,
+                cashflow_method=self.cashflow_parameters.method,
+                cashflow_frequency=self.cashflow_parameters.frequency,
+                cashflow_amount=self.amount_pv,
+                annual_indexation_rate=self.cashflow_parameters.indexation,
             )
             self._wealth_index = self.parent._make_df_if_series(df)
         return self._wealth_index
@@ -2482,9 +2488,14 @@ class PortfolioDCF:
     @property
     def cashflow_pv(self) -> Optional[float]:
         """
-        Calculate the discounted value (PV) of the cash flow amount at the historical first date.
+        return self.cashflow_parameters.amount / (1.0 + self.discount_rate) ** self.parent.period_length
 
-        The future value (FV) is defined by `cashflow` parameter.
+    @property
+    def initial_investment_pv(self) -> Optional[float]:
+        """
+        Calculate the discounted value (PV) of the initial investments at the historical first date.
+
+        The future value (FV) is defined by `initial_amount` parameter.
         The discount rate is the average annual inflation.
 
         Returns
@@ -2630,7 +2641,7 @@ class PortfolioDCF:
         ...                   rebalancing_period='year',
         ...                   initial_amount=300_000,
         ...                   cashflow=-1_000)
-        >>> pf.dcf.plot_forecast_monte_carlo(years=20, backtest=True, distr='lognorm', n=100)
+        >>> pf.dcf.plot_forecast_monte_carlo(backtest=True)
         >>> plt.show()
         """
         if backtest:
@@ -2638,7 +2649,7 @@ class PortfolioDCF:
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
             if last_backtest_value > 0:
-                #TODO: Set new initial amount for mc wealth indexes (and reset old indexes)
+                self.cashflow_parameters.initial_investment = last_backtest_value
                 s2 = self.monte_carlo_wealth
                 for s in s2:
                     s2[s].plot(legend=None)
@@ -2722,7 +2733,7 @@ class MonteCarlo:
     """
     def __init__(self, parent: PortfolioDCF):
         self.parent = parent
-        self._distribution: str = "normal"
+        self._distribution: str = "norm"
         self._period: int = 25
         self._mc_number: int = 100
 
@@ -2773,6 +2784,53 @@ class CashFlow:
 
     methods_list = ["fixed_amount", "fixed_percentage", "time_series"]
 
-    # def define_parameters(self, amount):
-    #     if self.method == "fixed_amount":
-    #         self.amount
+    @property
+    def frequency(self):
+        return self._frequency
+
+    @frequency.setter
+    def frequency(self, frequency):
+        if frequency in settings.frequency_mapping.keys():
+            self.parent._monte_carlo_wealth = pd.DataFrame()
+            self.parent._wealth_index = pd.DataFrame()
+            self._frequency = frequency
+        else:
+            raise ValueError(f"frequency must be in {settings.frequency_mapping.keys()}")
+
+    @property
+    def amount(self):
+        return self._amount
+
+    @amount.setter
+    def amount(self, amount):
+        # validators.validate_real("amount", amount)
+        self.parent._monte_carlo_wealth = pd.DataFrame()
+        self.parent._wealth_index = pd.DataFrame()
+        if self.method == "fixed_amount":
+            self._amount = amount if amount else self.amount_default_value
+        else:
+            self._amount = None
+
+    @property
+    def indexation(self) -> float:
+        """
+        Portfolio cash flow indexation rate.
+
+        Returns
+        -------
+        float
+            Cash flow indexation rate.
+        """
+        return self._indexation
+
+    @indexation.setter
+    def indexation(self, indexation: Optional[float]):
+        if indexation in [None, "inflation"] and hasattr(self.parent.parent, "inflation"):
+            self._indexation = self.parent.parent.get_cagr().loc[self.parent.parent.inflation]
+        elif indexation == "inflation" and not hasattr(self.parent.parent, "inflation"):
+            raise ValueError("There is no information about historical inflation. Set inflation=True to calculate.")
+        elif indexation is None and not hasattr(self.parent.parent, "inflation"):
+            self._indexation = settings.DEFAULT_DISCOUNT_RATE
+        else:
+            validators.validate_real("indexation", indexation)
+            self._indexation = indexation
