@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "okama"
-version = "1.4.2"
+version = "1.4.3"
 description = "Investment portfolio analyzing & optimization tools"
 authors = ["Sergey Kikevich <chilango74@gmail.com>"]
 license = "MIT"
