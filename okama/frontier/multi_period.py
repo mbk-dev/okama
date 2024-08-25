@@ -1,3 +1,4 @@
+import copy
 import time
 from typing import List, Tuple, Dict, Optional
 
@@ -130,6 +131,7 @@ class EfficientFrontierReb(asset_list.AssetList):
     def n_points(self, n_points: int):
         if not isinstance(n_points, int):
             raise ValueError("n_points should be an integer")
+        self._ef_points = pd.DataFrame(dtype=float)  # renew EF points DataFrame
         self._n_points = n_points
 
     @property
@@ -814,3 +816,4 @@ class EfficientFrontierReb(asset_list.AssetList):
             row = {"Risk": risk, "CAGR": cagr}
             random_portfolios = pd.concat([random_portfolios, pd.DataFrame(row, index=[0])], ignore_index=True)
         return random_portfolios
+
