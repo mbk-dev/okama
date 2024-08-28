@@ -2519,18 +2519,18 @@ class PortfolioDCF:
         Returns
         -------
         float
-            The discounted value (PV) of the cash flow amount at the historical first date.
+            The discounted value (PV) of the initial investments at the historical first date.
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD', initial_amount=100_000, cashflow=-5_000)
-        >>> pf.dcf.cashflow_pv
-        -3004
+        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB', initial_amount=100_000)
+        >>> pf.dcf.initial_investment_pv
+        73650
         """
-        return self.parent.cashflow / (1.0 + self.parent.discount_rate) ** self.parent.period_length
+        return self.cashflow_parameters.initial_investment / (1.0 + self.discount_rate) ** self.parent.period_length
 
     @property
-    def initial_amount_pv(self) -> Optional[float]:
+    def initial_investment_fv(self) -> Optional[float]:
         """
         Calculate the discounted value (PV) of the initial investments at the historical first date.
 
@@ -2545,10 +2545,31 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB', initial_amount=100_000)
-        >>> pf.dcf.initial_amount_pv
+        >>> pf.dcf.initial_investment_pv
         73650
         """
-        return self.parent.initial_amount / (1.0 + self.parent.discount_rate) ** self.parent.period_length
+        return self.cashflow_parameters.initial_investment * (1.0 + self.discount_rate) ** self.mc.period
+
+    @property
+    def cashflow_pv(self) -> Optional[float]:
+        """
+        Calculate the discounted value (PV) of the cash flow amount at the historical first date.
+
+        The future value (FV) is defined by `cashflow` parameter.
+        The discount rate is the average annual inflation.
+
+        Returns
+        -------
+        float
+            The discounted value (PV) of the cash flow amount at the historical first date.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD', initial_amount=100_000, cashflow=-5_000)
+        >>> pf.dcf.cashflow_pv
+        -3004
+        """
+        return self.cashflow_parameters.amount / (1.0 + self.cashflow_parameters.indexation) ** self.parent.period_length
 
     @property
     def monte_carlo_wealth(self) -> pd.DataFrame:
