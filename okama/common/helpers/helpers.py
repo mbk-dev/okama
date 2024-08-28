@@ -12,6 +12,7 @@ from okama.common.error import (
     RollingWindowLengthBelowOneYearError,
     ShortPeriodLengthError,
 )
+from okama.portfolio import CashFlow
 from okama import settings
 
 
@@ -193,23 +194,19 @@ class Frame:
     @staticmethod
     def get_wealth_indexes_with_cashflow(
         ror: Union[pd.Series, pd.DataFrame],
-        portfolio_symbol: Optional[str] = None,
-        inflation_symbol: Optional[str] = None,
-        initial_amount: float = 1000.0,
-        cashflow_method: str = "fixed_amount",
-        cashflow_frequency: str = "quarter",
-        cashflow_amount: float = 0,
-        annual_indexation_rate: Optional[float] = None,
+        portfolio_symbol: Optional[str],
+        inflation_symbol: Optional[str],
+        cashflow_parameters: CashFlow,
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Returns wealth index for a series of returns with cash flows (withdrawals/contributions).
 
         Values of the wealth index correspond to the beginning of the month.
         """
-        if cashflow_amount == 0:
-            wealth_index = Frame.get_wealth_indexes(ror, initial_amount)
+        if cashflow_parameters.amount == 0:
+            wealth_index = Frame.get_wealth_indexes(ror, cashflow_parameters.initial_investment)
         else:
-            value = initial_amount
+            value = cashflow_parameters.initial_investment
             if isinstance(ror, pd.DataFrame):
                 portfolio_position = ror.columns.get_loc(portfolio_symbol)
             else:
@@ -217,33 +214,39 @@ class Frame:
                 portfolio_position = 0
                 ror = ror.to_frame()
 
-            if cashflow_frequency == "month":
+            if cashflow_parameters.frequency == "month":
                 s = pd.Series(dtype=float, name=portfolio_symbol)
                 for n, row in enumerate(ror.itertuples()):
                     r = row[portfolio_position + 1]
-                    value = value * (r + 1) + cashflow_amount * (1 + annual_indexation_rate / settings._MONTHS_PER_YEAR) ** n
+                    if cashflow_parameters.method == "fixed_amount":
+                        withdrawal = cashflow_parameters.amount * (1 + cashflow_parameters.indexation / settings._MONTHS_PER_YEAR) ** n
+                    elif cashflow_parameters.method == "fixed_percentage":
+                        withdrawal = cashflow_parameters.percentage * value
+                    else:
+                        raise ValueError("Wrong cashflow_method value.")
+                    value = value * (r + 1) + withdrawal
                     date = row[0]
                     s[date] = value
             else:
-                pandas_frequency = settings.frequency_mapping[cashflow_frequency]
-                periods_per_year = settings.frequency_periods_per_year[cashflow_frequency]
+                pandas_frequency = settings.frequency_mapping[cashflow_parameters.frequency]
+                periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
                 wealth_df = pd.DataFrame(dtype=float, columns=[portfolio_symbol])
                 for n, x in enumerate(ror.resample(rule=pandas_frequency, convention="start")):
                     if n == 0:
-                        period_initial_amount = initial_amount
+                        period_initial_amount = cashflow_parameters.initial_investment
                     df = x[1]  # select ror part of the grouped data
                     period_wealth_index = period_initial_amount * (1 + df).cumprod()
-                    cashflow_value = cashflow_amount * (1 + annual_indexation_rate / periods_per_year) ** n
+                    cashflow_value = cashflow_parameters.amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
                     period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
                     period_wealth_index.iloc[-1] = period_final_balance
                     period_initial_amount = period_final_balance
                     wealth_df = pd.concat([None if wealth_df.empty else wealth_df, period_wealth_index], sort=False)
                 s = wealth_df.squeeze()
             s = s.shift(1)  # values of the wealth index correspond to the beginning of the month.
-            s.iloc[0] = initial_amount  # replaces NaN with the first period return
+            s.iloc[0] = cashflow_parameters.initial_investment  # replaces NaN with the first period return
             if inflation_symbol:
                 cum_inflation = Frame.get_wealth_indexes(
-                    ror=ror.loc[:, inflation_symbol], initial_amount=initial_amount
+                    ror=ror.loc[:, inflation_symbol], initial_amount=cashflow_parameters.initial_investment
                 )
                 wealth_index = pd.concat([s, cum_inflation], axis="columns")
             else:
