@@ -2489,7 +2489,22 @@ class PortfolioDCF:
         return helpers.Frame.get_survival_date(self.wealth_index.loc[:, self.parent.symbol])
 
     @property
-    def cashflow_pv(self) -> Optional[float]:
+    def amount_pv(self) -> Optional[float]:
+        """
+        Calculate the discounted value (PV) of the contributions/withdrawals value at the historical first date.
+
+        The future value (FV) is defined by `amount` parameter.
+
+        Returns
+        -------
+        float
+            The discounted value (PV) of the contributions/withdrawals at the historical first date.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB')
+        >>> pf.dcf.amount
+        73650
         """
         return self.cashflow_parameters.amount / (1.0 + self.discount_rate) ** self.parent.period_length
 
