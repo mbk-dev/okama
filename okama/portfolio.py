@@ -2630,6 +2630,11 @@ class PortfolioDCF:
             self._monte_carlo_wealth = df[~all_cells_are_nan]
         return self._monte_carlo_wealth
 
+    @property
+    def monte_carlo_wealth_pv(self) -> pd.DataFrame:
+        #TODO: add method for discounted cashflow values
+        pass
+
     def plot_forecast_monte_carlo(
         self,
         backtest: bool = True,
