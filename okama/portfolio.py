@@ -2845,12 +2845,16 @@ class MonteCarlo:
 
 
 class CashFlow:
-    def __init__(self):
+    def __init__(self, parent: PortfolioDCF):
+        self.parent = parent
+        self.initial_investment: float = 1000.
         self.method: str = "fixed_amount"
         self.frequency: str = "quarter"
-        self.pandas_frequency = settings.frequency_mapping.get(self.frequency)
-        self.amount: Optional[int] = None
+        self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
+        # fixed amount
+        self.amount: Optional[float] = None
         self.indexation: Optional[Union[float, str]] = None
+        # fixed percentage
         self.percentage: Optional[float] = None
         # predefined cashflow series
         self.time_series: Optional[dict] = None
