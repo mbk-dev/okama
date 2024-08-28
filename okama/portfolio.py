@@ -2860,6 +2860,31 @@ class CashFlow:
         self.time_series: Optional[dict] = None
 
     methods_list = ["fixed_amount", "fixed_percentage", "time_series"]
+    amount_default_value = 0
+
+    @property
+    def initial_investment(self):
+        return self._initial_investment
+
+    @initial_investment.setter
+    def initial_investment(self, initial_investment):
+        validators.validate_real("initial_investment", initial_investment)
+        self.parent._monte_carlo_wealth = pd.DataFrame()
+        self.parent._wealth_index = pd.DataFrame()
+        self._initial_investment = initial_investment
+
+    @property
+    def method(self):
+        return self._method
+
+    @method.setter
+    def method(self, method):
+        if method in self.methods_list:
+            self.parent._monte_carlo_wealth = pd.DataFrame()
+            self.parent._wealth_index = pd.DataFrame()
+            self._method = method
+        else:
+            raise ValueError(f"method must be in {self.methods_list}")
 
     @property
     def frequency(self):
