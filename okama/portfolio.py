@@ -2753,6 +2753,39 @@ class PortfolioDCF:
         dates: pd.Series = helpers.Frame.get_survival_date(s2)
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
 
+    def find_the_largest_withdrawals_size(
+            self,
+            min_amount: float,
+            max_amount: float,
+            withdrawal_steps: int,
+            confidence_level: float,
+            goal: str,
+            target_survival_period: int = 25
+    ):
+        amount_range = np.linspace(min_amount, max_amount, withdrawal_steps)
+        saved_amount = self.cashflow_parameters.amount
+        max_withdrawal = 0
+        for a in amount_range:
+            # print("testing:", a)
+            self.cashflow_parameters.amount = a
+            sp_at_quantile = self.monte_carlo_survival_period.quantile(confidence_level)
+            if goal == "maintain_balance":
+                wealth_at_quantile = self.monte_carlo_wealth.iloc[-1, :].quantile(confidence_level)
+                # print(f"{wealth_at_quantile=}")
+                condition = (sp_at_quantile == self.mc.period) and (wealth_at_quantile >= self.initial_investment_fv)
+                if condition:
+                    max_withdrawal = a
+                    break
+            elif goal == "survival_period":
+                condition = sp_at_quantile >= target_survival_period
+                if condition:
+                    max_withdrawal = a
+                    break
+
+        self.cashflow_parameters.amount = saved_amount
+        # print(f"{max_withdrawal=}")
+        return max_withdrawal
+
 
 class MonteCarlo:
     """
