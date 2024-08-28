@@ -2611,11 +2611,7 @@ class PortfolioDCF:
                 args=(
                     None,  # portfolio_symbol
                     None,  #  inflation_symbol
-                    self.parent.initial_amount,
-                    self.cashflow_parameters.method,
-                    self.cashflow_parameters.frequency,
-                    self.cashflow_parameters.amount,
-                    self.cashflow_parameters.indexation,
+                    self.cashflow_parameters
                 ),
             )
 
