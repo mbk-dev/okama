@@ -1,5 +1,5 @@
 import itertools
-from typing import Optional, Tuple, Dict, List
+from typing import Optional, Tuple, Dict, List, Union, Type
 
 import pandas as pd
 import numpy as np
@@ -66,7 +66,7 @@ class EfficientFrontier(asset_list.AssetList):
 
     def __init__(
         self,
-        assets: Optional[List[str]] = None,
+        assets: Optional[List[Union[str, Type]]] = None,
         *,
         first_date: Optional[str] = None,
         last_date: Optional[str] = None,
@@ -1021,10 +1021,10 @@ class EfficientFrontier(asset_list.AssetList):
         # self._verify_axes()
         bool_inflation = hasattr(self, "inflation")
         fig, ax = plt.subplots(figsize=figsize)
-        for i in itertools.combinations(self.symbols, 2):
+        for i in itertools.combinations(self.asset_obj_dict.values(), 2):
             sym_pair = list(i)
-            index0 = self.symbols.index(sym_pair[0])
-            index1 = self.symbols.index(sym_pair[1])
+            index0 = self.symbols.index(sym_pair[0].symbol)
+            index1 = self.symbols.index(sym_pair[1].symbol)
             bounds_pair = (self.bounds[index0], self.bounds[index1])
             ef = EfficientFrontier(
                 assets=sym_pair,
