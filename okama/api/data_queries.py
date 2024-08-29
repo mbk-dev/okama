@@ -26,6 +26,8 @@ class QueryData:
             delimiter=",",
             index_col=0,
             parse_dates=[0],
+            dayfirst=False,
+            date_format="mixed",
             dtype={1: np.float64},
             engine="python",
         )
