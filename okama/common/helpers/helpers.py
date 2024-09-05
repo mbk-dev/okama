@@ -219,24 +219,28 @@ class Frame:
                 for n, row in enumerate(ror.itertuples()):
                     r = row[portfolio_position + 1]
                     if cashflow_parameters.method == "fixed_amount":
-                        withdrawal = cashflow_parameters.amount * (1 + cashflow_parameters.indexation / settings._MONTHS_PER_YEAR) ** n
+                        cashflow = cashflow_parameters.amount * (1 + cashflow_parameters.indexation / settings._MONTHS_PER_YEAR) ** n
                     elif cashflow_parameters.method == "fixed_percentage":
-                        withdrawal = cashflow_parameters.percentage * value
+                        cashflow = cashflow_parameters.percentage * value
                     else:
                         raise ValueError("Wrong cashflow_method value.")
-                    value = value * (r + 1) + withdrawal
+                    value = value * (r + 1) + cashflow
                     date = row[0]
                     s[date] = value
             else:
                 pandas_frequency = settings.frequency_mapping[cashflow_parameters.frequency]
                 periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
                 wealth_df = pd.DataFrame(dtype=float, columns=[portfolio_symbol])
+                period_initial_amount = cashflow_parameters.initial_investment
                 for n, x in enumerate(ror.resample(rule=pandas_frequency, convention="start")):
-                    if n == 0:
-                        period_initial_amount = cashflow_parameters.initial_investment
-                    df = x[1]  # select ror part of the grouped data
-                    period_wealth_index = period_initial_amount * (1 + df).cumprod()
-                    cashflow_value = cashflow_parameters.amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
+                    ror_df = x[1]  # select ror part of the grouped data
+                    period_wealth_index = period_initial_amount * (1 + ror_df).cumprod()
+                    if cashflow_parameters.method == "fixed_amount":
+                        cashflow_value = cashflow_parameters.amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
+                    elif cashflow_parameters.method == "fixed_percentage":
+                        cashflow_value = cashflow_parameters.percentage * period_initial_amount
+                    else:
+                        raise ValueError("Wrong cashflow_method value.")
                     period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
                     period_wealth_index.iloc[-1] = period_final_balance
                     period_initial_amount = period_final_balance
