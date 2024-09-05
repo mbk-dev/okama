@@ -2693,9 +2693,9 @@ class PortfolioDCF:
             s2 = self.monte_carlo_wealth
             s2.plot(legend=None)
 
-    @property
     def monte_carlo_survival_period(
         self,
+        threshold: float
     ) -> pd.Series:
         """
         Generate a survival period distribution for a portfolio with cash flows by Monte Carlo simulation.
@@ -2746,7 +2746,7 @@ class PortfolioDCF:
         2.7
         """
         s2 = self.monte_carlo_wealth
-        dates: pd.Series = helpers.Frame.get_survival_date(s2)
+        dates: pd.Series = helpers.Frame.get_survival_date(s2, self.discount_rate, threshold)
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
 
     def find_the_largest_withdrawals_size(

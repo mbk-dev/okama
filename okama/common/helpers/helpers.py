@@ -256,12 +256,19 @@ class Frame:
 
     @singledispatchmethod
     @staticmethod
-    def get_survival_date(wealth_series):
-        raise TypeError("wealth_series must be a pd.Series or pd.DataFrame")
+    def get_survival_date(wealth_series, discount_rate: float, threshold: float = 0):
+        raise TypeError("wealth_series must be a pd.Series or pd.DataFrame.")
 
     @get_survival_date.register
-    def _(wealth_series: pd.Series) -> pd.Timestamp:
-        condition = wealth_series <= 0
+    def _(wealth_series: pd.Series, discount_rate, threshold: float) -> pd.Timestamp:
+        if threshold > 1 or threshold < 0:
+            raise ValueError("threshold must be in range from 0 to 1.")
+        if threshold:
+            fv = wealth_series[0] * pd.Series(1.0 + discount_rate / 12, index=wealth_series.index).shift(1).cumprod()
+            fv[0] = wealth_series[0]
+            condition = wealth_series <= fv * threshold
+        else:
+            condition = wealth_series <= 0
         try:
             survival_date = wealth_series[condition].index[0]
         except IndexError:
@@ -269,8 +276,8 @@ class Frame:
         return survival_date.to_timestamp(freq="M")
 
     @get_survival_date.register
-    def _(wealth: pd.DataFrame) -> pd.Timestamp:
-        return wealth.apply(func=Frame.get_survival_date, axis=0)
+    def _(wealth: pd.DataFrame, discount_rate: float, threshold: float = 0) -> pd.Timestamp:
+        return wealth.apply(func=Frame.get_survival_date, axis=0, args=(discount_rate, threshold))
 
     # Risk metrics
 
