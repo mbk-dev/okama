@@ -2421,11 +2421,7 @@ class PortfolioDCF:
                 ror=df,
                 portfolio_symbol=self.parent.symbol,
                 inflation_symbol=infl,
-                initial_investment=self.initial_investment_pv,
-                cashflow_method=self.cashflow_parameters.method,
-                cashflow_frequency=self.cashflow_parameters.frequency,
-                cashflow_amount=self.amount_pv,
-                annual_indexation_rate=self.cashflow_parameters.indexation,
+                cashflow_parameters=self.cashflow_parameters
             )
             self._wealth_index = self.parent._make_df_if_series(df)
         return self._wealth_index
@@ -2905,7 +2901,6 @@ class CashFlow:
 
     @amount.setter
     def amount(self, amount):
-        # validators.validate_real("amount", amount)
         self.parent._monte_carlo_wealth = pd.DataFrame()
         self.parent._wealth_index = pd.DataFrame()
         if self.method == "fixed_amount":
