@@ -2854,6 +2854,7 @@ class CashFlow:
         self.percentage: Optional[float] = None
         # predefined cashflow series
         self.time_series: Optional[dict] = None
+        self._validate_method()
 
     methods_list = ["fixed_amount", "fixed_percentage", "time_series"]
     amount_default_value = 0
@@ -2931,3 +2932,11 @@ class CashFlow:
         else:
             validators.validate_real("indexation", indexation)
             self._indexation = indexation
+
+    def _validate_method(self):
+        if self.method == "fixed_percentage":
+            if self.percentage is None:
+                raise ValueError("percentage attribute must be set for 'fixed_percentage' strategy.")
+        if self.method == "fixed_amount":
+            if self.amount is None:
+                raise ValueError("amount attribute must be set for 'fixed_amount' strategy.")

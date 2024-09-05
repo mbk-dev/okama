@@ -21,7 +21,7 @@ pf = ok.Portfolio(
 # Set cashflow
 pf.dcf.set_cashflow_parameters(
     initial_investment=1000,   # 10_300_000
-    method="fixed_percentage",
+    method="fixed_percentage1",
     frequency="year",
     percentage=-0.15,
     # amount=-80_000,
