@@ -196,7 +196,7 @@ class Frame:
         ror: Union[pd.Series, pd.DataFrame],
         portfolio_symbol: Optional[str],
         inflation_symbol: Optional[str],
-        cashflow_parameters: CashFlow,
+        cashflow_parameters: type[CashFlow],
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Returns wealth index for a series of returns with cash flows (withdrawals/contributions).

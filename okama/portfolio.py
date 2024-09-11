@@ -2336,7 +2336,7 @@ class PortfolioDCF:
         self._wealth_index = pd.DataFrame(dtype=float)
         self._monte_carlo_wealth = pd.DataFrame(dtype=float)
         self.mc = MonteCarlo(self)
-        self.cashflow_parameters = CashFlow(self)
+        self.cashflow_parameters: Optional[type[CashFlow]] = None
 
     @property
     def discount_rate(self) -> float:
@@ -2367,23 +2367,6 @@ class PortfolioDCF:
         self.mc.distribution = distribution
         self.mc.period = period
         self.mc.number = number
-
-    def set_cashflow_parameters(self,
-                                initial_investment: float,
-                                method: str,
-                                frequency: Optional[int] = None,
-                                amount: int = None,
-                                indexation: float = None,
-                                percentage: float = None,
-                                ):
-        self.cashflow_parameters.initial_investment = initial_investment
-        self.cashflow_parameters.method = method
-        self.cashflow_parameters.frequency = frequency
-        # fixed amount
-        self.cashflow_parameters.amount = amount
-        self.cashflow_parameters.indexation = indexation
-        # fixed percentage
-        self.cashflow_parameters.percentage = percentage
 
     @property
     def wealth_index(self) -> pd.DataFrame:
@@ -2841,47 +2824,11 @@ class MonteCarlo:
 
 
 class CashFlow:
-    def __init__(self, parent: PortfolioDCF):
+    def __init__(self, parent: Portfolio):
         self.parent = parent
-        self.initial_investment: float = 1000.
-        self.method: str = "fixed_amount"
-        self.frequency: str = "quarter"
+        self.frequency: Optional[str] = None
+        self.initial_investment: Optional[float] = None
         self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
-        # fixed amount
-        self.amount: Optional[float] = None
-        self.indexation: Optional[Union[float, str]] = None
-        # fixed percentage
-        self.percentage: Optional[float] = None
-        # predefined cashflow series
-        self.time_series: Optional[dict] = None
-        self._validate_method()
-
-    methods_list = ["fixed_amount", "fixed_percentage", "time_series"]
-    amount_default_value = 0
-
-    @property
-    def initial_investment(self):
-        return self._initial_investment
-
-    @initial_investment.setter
-    def initial_investment(self, initial_investment):
-        validators.validate_real("initial_investment", initial_investment)
-        self.parent._monte_carlo_wealth = pd.DataFrame()
-        self.parent._wealth_index = pd.DataFrame()
-        self._initial_investment = initial_investment
-
-    @property
-    def method(self):
-        return self._method
-
-    @method.setter
-    def method(self, method):
-        if method in self.methods_list:
-            self.parent._monte_carlo_wealth = pd.DataFrame()
-            self.parent._wealth_index = pd.DataFrame()
-            self._method = method
-        else:
-            raise ValueError(f"method must be in {self.methods_list}")
 
     @property
     def frequency(self):
@@ -2889,12 +2836,38 @@ class CashFlow:
 
     @frequency.setter
     def frequency(self, frequency):
-        if frequency in settings.frequency_mapping.keys():
-            self.parent._monte_carlo_wealth = pd.DataFrame()
-            self.parent._wealth_index = pd.DataFrame()
+        if frequency in settings.frequency_mapping.keys() or frequency is None:
+            self._clear_cf_cache()
             self._frequency = frequency
         else:
             raise ValueError(f"frequency must be in {settings.frequency_mapping.keys()}")
+
+    @property
+    def initial_investment(self):
+        return self._initial_investment
+
+    @initial_investment.setter
+    def initial_investment(self, initial_investment):
+        if initial_investment is not None:
+            validators.validate_real("initial_investment", initial_investment)
+        self._clear_cf_cache()
+        self._initial_investment = initial_investment
+
+    def _clear_cf_cache(self):
+        self.parent.dcf._monte_carlo_wealth = pd.DataFrame()
+        self.parent.dcf._wealth_index = pd.DataFrame()
+
+
+class IndexationStrategy(CashFlow):
+    def __init__(
+            self,
+            parent: Portfolio,
+    ):
+        super().__init__(parent)
+        self.portfolio = self.parent
+        self.name = "fixed_amount"
+        self.amount = 0
+        self.indexation = "inflation"
 
     @property
     def amount(self):
@@ -2902,12 +2875,9 @@ class CashFlow:
 
     @amount.setter
     def amount(self, amount):
-        self.parent._monte_carlo_wealth = pd.DataFrame()
-        self.parent._wealth_index = pd.DataFrame()
-        if self.method == "fixed_amount":
-            self._amount = amount if amount else self.amount_default_value
-        else:
-            self._amount = None
+        self._clear_cf_cache()
+        validators.validate_real("amount", amount)
+        self._amount = amount
 
     @property
     def indexation(self) -> float:
@@ -2923,20 +2893,61 @@ class CashFlow:
 
     @indexation.setter
     def indexation(self, indexation: Optional[float]):
-        if indexation in [None, "inflation"] and hasattr(self.parent.parent, "inflation"):
-            self._indexation = self.parent.parent.get_cagr().loc[self.parent.parent.inflation]
-        elif indexation == "inflation" and not hasattr(self.parent.parent, "inflation"):
+        if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
+            self._indexation = self.portfolio.get_cagr().loc[self.portfolio.inflation]
+        elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
             raise ValueError("There is no information about historical inflation. Set inflation=True to calculate.")
-        elif indexation is None and not hasattr(self.parent.parent, "inflation"):
+        elif indexation is None and not hasattr(self.portfolio, "inflation"):
             self._indexation = settings.DEFAULT_DISCOUNT_RATE
         else:
             validators.validate_real("indexation", indexation)
             self._indexation = indexation
 
-    def _validate_method(self):
-        if self.method == "fixed_percentage":
-            if self.percentage is None:
-                raise ValueError("percentage attribute must be set for 'fixed_percentage' strategy.")
-        if self.method == "fixed_amount":
-            if self.amount is None:
-                raise ValueError("amount attribute must be set for 'fixed_amount' strategy.")
+
+class PercentageStrategy(CashFlow):
+    def __init__(
+            self,
+            parent: Portfolio,
+    ):
+        super().__init__(parent)
+        self.portfolio = self.parent
+        self.name = "fixed_percentage"
+        self.percentage = 0
+
+    @property
+    def percentage(self):
+        return self._percentage
+
+    @percentage.setter
+    def percentage(self, percentage):
+        self._clear_cf_cache()
+        validators.validate_real("percentage", percentage)
+        self._percentage = percentage
+
+
+class TimeSeriesStrategy(CashFlow):
+    def __init__(
+            self,
+            parent: Portfolio,
+    ):
+        super().__init__(parent)
+        self.portfolio = self.parent
+        self.name = "time_series"
+        self.time_series_dic = {}
+        self.time_series = pd.Series()
+
+    @property
+    def time_series_dic(self):
+        return self._time_series_dic
+
+    @time_series_dic.setter
+    def time_series_dic(self, time_series_dic):
+        self._clear_cf_cache()
+        if isinstance(time_series_dic, dict):
+            self._time_series_dic = time_series_dic
+        else:
+            raise TypeError("time_series_dic must be a dictionary.")
+        self.time_series = pd.Series(self._time_series_dic)
+        self.time_series.index = pd.to_datetime(self.time_series.index).to_period("M")
+        self.time_series.sort_index(inplace=True)
+
