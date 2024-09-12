@@ -203,7 +203,8 @@ class Frame:
 
         Values of the wealth index correspond to the beginning of the month.
         """
-        if cashflow_parameters.amount == 0:
+        amount = getattr(cashflow_parameters, "amount", None)
+        if amount == 0:
             wealth_index = Frame.get_wealth_indexes(ror, cashflow_parameters.initial_investment)
         else:
             value = cashflow_parameters.initial_investment
@@ -214,16 +215,22 @@ class Frame:
                 portfolio_position = 0
                 ror = ror.to_frame()
 
-            if cashflow_parameters.frequency == "month":
+            if cashflow_parameters.frequency == "month" or cashflow_parameters.name == "time_series":
                 s = pd.Series(dtype=float, name=portfolio_symbol)
                 for n, row in enumerate(ror.itertuples()):
+                    date = row[0]
                     r = row[portfolio_position + 1]
-                    if cashflow_parameters.method == "fixed_amount":
+                    if cashflow_parameters.name == "fixed_amount":
                         cashflow = cashflow_parameters.amount * (1 + cashflow_parameters.indexation / settings._MONTHS_PER_YEAR) ** n
-                    elif cashflow_parameters.method == "fixed_percentage":
+                    elif cashflow_parameters.name == "fixed_percentage":
                         cashflow = cashflow_parameters.percentage * value
+                    elif cashflow_parameters.name == "time_series":
+                        try:
+                            cashflow = cashflow_parameters.time_series[date]
+                        except KeyError:
+                            cashflow = 0
                     else:
-                        raise ValueError("Wrong cashflow_method value.")
+                        raise ValueError("Wrong cashflow strategy name value.")
                     value = value * (r + 1) + cashflow
                     date = row[0]
                     s[date] = value
@@ -233,11 +240,11 @@ class Frame:
                 wealth_df = pd.DataFrame(dtype=float, columns=[portfolio_symbol])
                 period_initial_amount = cashflow_parameters.initial_investment
                 for n, x in enumerate(ror.resample(rule=pandas_frequency, convention="start")):
-                    ror_df = x[1]  # select ror part of the grouped data
+                    ror_df = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
                     period_wealth_index = period_initial_amount * (1 + ror_df).cumprod()
-                    if cashflow_parameters.method == "fixed_amount":
+                    if cashflow_parameters.name == "fixed_amount":
                         cashflow_value = cashflow_parameters.amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
-                    elif cashflow_parameters.method == "fixed_percentage":
+                    elif cashflow_parameters.name == "fixed_percentage":
                         cashflow_value = cashflow_parameters.percentage * period_initial_amount
                     else:
                         raise ValueError("Wrong cashflow_method value.")

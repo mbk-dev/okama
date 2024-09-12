@@ -11,24 +11,30 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
 pf = ok.Portfolio(
-    assets=["SPY.US"],
-    weights=[1],
+    assets=["MCFTR.INDX", "RUCBTRNS.INDX"],
+    weights=[.3, .7],
     inflation=True,
-    ccy="USD",
+    first_date="2014-01",
+    ccy="RUB",
     rebalancing_period="year",
 )
 
-cf = ok.CashFlow(pf)
+pc = ok.PercentageStrategy(pf)
+pc.frequency = "year"
+pc.percentage = -0.08
 
-cf.initial_investment = 1000
-cf.frequency = "month"
+d = {
+    "2015-02": 1_000_000,
+    "2019-03": -2_000_000,
+}
 
-ind = ok.Indexation(cf)
+ts = ok.TimeSeriesStrategy(pf)
+ts.initial_investment = 1_000_000
+ts.time_series_dic = d
 
-ind.amount = -10
-ind.indexation = 0.07
+pf.dcf.cashflow_parameters = ts
 
-cf.set_strategy(ind)
+pf.dcf.wealth_index.plot()
 
 # Set cashflow
 # pf.dcf.set_cashflow_parameters(
@@ -43,11 +49,11 @@ cf.set_strategy(ind)
 
 
 # Set Monte Carlo
-pf.dcf.set_mc_parameters(
-    distribution="t",
-    period=50,
-    number=500
-)
+# pf.dcf.set_mc_parameters(
+#     distribution="t",
+#     period=50,
+#     number=500
+# )
 
 # w = pf.dcf.find_the_largest_withdrawals_size(
 #     min_amount=-100_000,
@@ -65,7 +71,8 @@ pf.dcf.set_mc_parameters(
 
 # pf.dcf.plot_forecast_monte_carlo(backtest=False)
 #
-# plt.show()
+plt.show()
+plt.savefig('time_series.png')
 
 # s = pf.dcf.monte_carlo_survival_period(threshold=.05)
 # print("survival period \n", s.describe())

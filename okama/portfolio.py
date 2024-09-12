@@ -2827,7 +2827,7 @@ class CashFlow:
     def __init__(self, parent: Portfolio):
         self.parent = parent
         self.frequency: Optional[str] = None
-        self.initial_investment: Optional[float] = None
+        self.initial_investment: float = 1000.
         self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
 
     @property
