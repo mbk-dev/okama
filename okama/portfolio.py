@@ -2362,6 +2362,8 @@ class PortfolioDCF:
 
     @discount_rate.setter
     def discount_rate(self, discount_rate: Optional[float]):
+        self._wealth_index = pd.DataFrame()
+        self._monte_carlo_wealth = pd.DataFrame()
         if discount_rate is None and hasattr(self.parent, "inflation"):
             self._discount_rate = self.parent.get_cagr().loc[self.parent.inflation]
         elif discount_rate is None and not hasattr(self.parent, "inflation"):
@@ -2369,6 +2371,16 @@ class PortfolioDCF:
         else:
             validators.validate_real("discount rate", discount_rate)
             self._discount_rate = discount_rate
+
+    @property
+    def use_discounted_values(self) -> bool:
+        return self._use_discounted_values
+
+    @use_discounted_values.setter
+    def use_discounted_values(self, use_discounted_values: bool):
+        self._wealth_index = pd.DataFrame()
+        self._monte_carlo_wealth = pd.DataFrame()
+        self._use_discounted_values = use_discounted_values
 
     def set_mc_parameters(self,
                           distribution: str,
@@ -2592,13 +2604,14 @@ class PortfolioDCF:
             return_ts = self.parent.monte_carlo_returns_ts(distr=self.mc.distribution,
                                                            years=self.mc.period,
                                                            n=self.mc.number)
-            df = return_ts.apply(
+            wealth_df = return_ts.apply(
                 helpers.Frame.get_wealth_indexes_with_cashflow,
                 axis=0,
                 args=(
                     None,  # portfolio_symbol
-                    None,  #  inflation_symbol
-                    self.cashflow_parameters
+                    None,  # inflation_symbol
+                    self.cashflow_parameters,
+                    self.use_discounted_values
                 ),
             )
 
@@ -2612,9 +2625,9 @@ class PortfolioDCF:
                     pass
                 return s
 
-            df = df.apply(remove_negative_values, axis=0)
-            all_cells_are_nan = df.isna().all(axis=1)
-            self._monte_carlo_wealth = df[~all_cells_are_nan]
+            wealth_df = wealth_df.apply(remove_negative_values, axis=0)
+            all_cells_are_nan = wealth_df.isna().all(axis=1)
+            self._monte_carlo_wealth = wealth_df[~all_cells_are_nan]
         return self._monte_carlo_wealth
 
     @property
