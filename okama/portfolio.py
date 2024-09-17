@@ -162,9 +162,11 @@ class Portfolio(make_asset_list.ListMaker):
                     f"to the weights number ({len(weights)})"
                 )
         self._ror = pd.DataFrame(dtype=float)
-        #TODO: check why it's not working:
-        # self.dcf.mc._monte_carlo_wealth = pd.DataFrame()
-        # self.dcf._wealth_index = pd.DataFrame()
+        try:
+            self.dcf.mc.clear_wealth_data()
+            self.dcf._wealth_index = pd.DataFrame()
+        except AttributeError:
+            pass
         self._weights = weights
 
     @property
