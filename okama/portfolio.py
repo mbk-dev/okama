@@ -21,8 +21,6 @@ class Portfolio(make_asset_list.ListMaker):
     - weights
     - rebalancing_period
     - initial_amount
-    - cashflow
-    - discount_rate
     - symbol
 
     Portfolio is defined by the investment strategy, which includes:
@@ -74,10 +72,6 @@ class Portfolio(make_asset_list.ListMaker):
     cashflow : float, default 0
         Portfolio monthly cash flow FV (at last_date). Negative value corresponds to withdrawals.
         Positive value corresponds to contributions. Cash flow value is indexed each month by discount_rate.
-
-    discount_rate : float or None, default None
-        Cash flow discount rate required to calculate PV values. If not provided geometric mean of inflation is taken.
-        For portfolios without inflation the default value from settings is used.
 
     symbol : str, default None
         Text symbol of portfolio. It is similar to tickers but have a namespace information.
@@ -362,7 +356,8 @@ class Portfolio(make_asset_list.ListMaker):
         >>> plt.show()
         """
         df = self._add_inflation()
-        df = helpers.Frame.get_wealth_indexes(df)
+        iv = settings.DEFAULT_INITIAL_INVESTMENT
+        df = helpers.Frame.get_wealth_indexes(ror=df, initial_amount=iv)
         df = self._make_df_if_series(df)
         return df
 
@@ -2326,17 +2321,32 @@ class PortfolioDCF:
     pf.dcf.weatlh_index
     pf.dсf.cashflow_pv
     ```
+    
+    Parameters
+    ----------
+    discount_rate: float or None, default None
+        Cash flow discount rate required to calculate Present value (PV) or Future (FV) of cashflow. If not provided geometric mean of inflation is taken.
+        For portfolios without inflation the default value from settings is used.
     """
 
-    def __init__(self,
-                 parent: Portfolio,
-                 discount_rate: Optional[float] = None):
+    def __init__(
+            self,
+            parent: Portfolio,
+            discount_rate: Optional[float] = None,
+            use_discounted_values: bool = False,
+    ):
         self.parent = parent
         self.discount_rate = discount_rate
         self._wealth_index = pd.DataFrame(dtype=float)
         self._monte_carlo_wealth = pd.DataFrame(dtype=float)
         self.mc = MonteCarlo(self)
         self.cashflow_parameters: Optional[type[CashFlow]] = None
+        self.use_discounted_values = use_discounted_values
+
+    def __repr__(self):
+        pf_repr = repr(self.parent)
+        # TODO: add MC, CashFlow, discount_rate, use_discounted_values
+        return pf_repr
 
     @property
     def discount_rate(self) -> float:
@@ -2404,7 +2414,8 @@ class PortfolioDCF:
                 ror=df,
                 portfolio_symbol=self.parent.symbol,
                 inflation_symbol=infl,
-                cashflow_parameters=self.cashflow_parameters
+                cashflow_parameters=self.cashflow_parameters,
+                use_discounted_values=self.use_discounted_values,
             )
             self._wealth_index = self.parent._make_df_if_series(df)
         return self._wealth_index
@@ -2430,8 +2441,6 @@ class PortfolioDCF:
         ...    ['SPY.US', 'AGG.US'],
         ...    ccy='USD',
         ...    first_date='2010-01',
-        ...    initial_amount=100_000,
-        ...    cashflow=-1_000
         ...)
         >>> pf.dcf.survival_period_hist
         11.6
@@ -2459,8 +2468,6 @@ class PortfolioDCF:
         ...    ['SPY.US', 'AGG.US'],
         ...    ccy='USD',
         ...    first_date='2010-01',
-        ...    initial_amount=100_000,
-        ...    cashflow=-1_000
         ...)
         >>> pf.dcf.survival_date_hist
         Timestamp('2021-08-01 00:00:00')
@@ -2511,6 +2518,7 @@ class PortfolioDCF:
     @property
     def initial_investment_fv(self) -> Optional[float]:
         """
+        # TODO: change the docstring
         Calculate the discounted value (PV) of the initial investments at the historical first date.
 
         The future value (FV) is defined by `initial_amount` parameter.
