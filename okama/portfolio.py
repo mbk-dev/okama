@@ -2429,7 +2429,6 @@ class PortfolioDCF:
                 portfolio_symbol=self.parent.symbol,
                 inflation_symbol=infl,
                 cashflow_parameters=self.cashflow_parameters,
-                use_discounted_values=self.use_discounted_values,
             )
             self._wealth_index = self.parent._make_df_if_series(df)
         return self._wealth_index
@@ -2613,7 +2612,6 @@ class PortfolioDCF:
                     None,  # portfolio_symbol
                     None,  # inflation_symbol
                     self.cashflow_parameters,
-                    self.use_discounted_values
                 ),
             )
 

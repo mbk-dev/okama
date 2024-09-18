@@ -198,24 +198,25 @@ class Frame:
         portfolio_symbol: Optional[str],
         inflation_symbol: Optional[str],
         cashflow_parameters: type[CashFlow],
-        use_discounted_values: bool,
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Returns wealth index for a series of returns with cash flows (withdrawals/contributions).
 
         Values of the wealth index correspond to the beginning of the month.
         """
+        pf_object = cashflow_parameters.parent
+        dcf_object = cashflow_parameters.parent.dcf
         amount = getattr(cashflow_parameters, "amount", None)
-        period_initial_amount = cashflow_parameters.parent.dcf.initial_investment_pv \
-            if use_discounted_values \
-            else cashflow_parameters.initial_investment
+        period_initial_amount = dcf_object.initial_investment_pv if dcf_object.use_discounted_values else cashflow_parameters.initial_investment
         period_initial_amount_cached = period_initial_amount
         if amount == 0:
             wealth_index = Frame.get_wealth_indexes(ror, period_initial_amount)
         else:
-            amount = cashflow_parameters.parent.dcf.amount_pv \
-                if use_discounted_values \
-                else cashflow_parameters.amount
+            try:
+                # amount is not defined in TimeSeriesStrategy
+                amount = dcf_object.amount_pv if dcf_object.use_discounted_values else cashflow_parameters.amount
+            except AttributeError:
+                pass
             if isinstance(ror, pd.DataFrame):
                 portfolio_position = ror.columns.get_loc(portfolio_symbol)
             else:
@@ -235,6 +236,12 @@ class Frame:
                     elif cashflow_parameters.name == "time_series":
                         try:
                             cashflow = cashflow_parameters.time_series[date]
+                            if dcf_object.use_discounted_values:
+                                last_date = pf_object.last_date
+                                first_date = date.to_timestamp(how="End")
+                                period_length = Date.get_period_length(last_date, first_date)
+                                rate = dcf_object.discount_rate
+                                cashflow = cashflow / (1 + rate) ** period_length
                         except KeyError:
                             cashflow = 0
                     else:

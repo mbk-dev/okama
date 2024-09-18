@@ -40,13 +40,14 @@ ts = ok.TimeSeriesStrategy(pf)
 ts.initial_investment = 1_000
 ts.time_series_dic = d
 
-pf.dcf.cashflow_parameters = ind
+# Assign a strategy
+pf.dcf.cashflow_parameters = ts
 pf.dcf.discount_rate = 0.10
 pf.dcf.use_discounted_values = True
 
 df = pf.dcf.wealth_index
 
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(20, 12))
 df.plot()
 # plt.savefig('time_series.png')
 plt.show()
