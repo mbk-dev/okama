@@ -2650,20 +2650,8 @@ class PortfolioDCF:
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm', 't'}, default 'norm'
-            The type of a distribution to generate random portfolios.
-            'norm' - for normal distribution.
-            'lognorm' - for lognormal distribution.
-            't' - for Student's T distribution.
-
-        years : int, default 1
-            Investment period length for new wealth indexes
-
         backtest : bool, default 'True'
             Include historical wealth index if 'True'.
-
-        n : int, default 20
-            Number of random wealth indexes to generate with Monte Carlo simulation.
 
         figsize : (float, float), optional
             Width, height in inches.
@@ -2685,6 +2673,9 @@ class PortfolioDCF:
         >>> plt.show()
         """
         if backtest:
+            backup_obj = self.cashflow_parameters
+            backup = self.use_discounted_values
+            self.use_discounted_values = False
             s1 = self.wealth_index[self.parent.symbol]
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
@@ -2693,6 +2684,9 @@ class PortfolioDCF:
                 s2 = self.monte_carlo_wealth
                 for s in s2:
                     s2[s].plot(legend=None)
+            self.cashflow_parameters = backup_obj
+            self.cashflow_parameters._clear_cf_cache()
+            self.use_discounted_values = backup
         else:
             s2 = self.monte_carlo_wealth
             s2.plot(legend=None)

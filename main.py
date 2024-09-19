@@ -14,7 +14,7 @@ pf = ok.Portfolio(
     assets=["MCFTR.INDX", "RUCBTRNS.INDX"],
     weights=[.3, .7],
     inflation=True,
-    first_date="2014-01",
+    # first_date="2014-01",
     ccy="RUB",
     rebalancing_period="year",
 )
@@ -32,8 +32,8 @@ ind.indexation = "inflation"
 
 # TimeSeries strategy
 d = {
-    "2015-02": 1_000,
-    "2019-03": -2_000,
+    "2025-02": 1_000,
+    "2029-03": -2_000,
 }
 
 ts = ok.TimeSeriesStrategy(pf)
@@ -41,36 +41,18 @@ ts.initial_investment = 1_000
 ts.time_series_dic = d
 
 # Assign a strategy
-pf.dcf.cashflow_parameters = ts
+pf.dcf.cashflow_parameters = ind
 pf.dcf.discount_rate = 0.10
 pf.dcf.use_discounted_values = True
 
-df = pf.dcf.wealth_index
-
-plt.figure(figsize=(20, 12))
-df.plot()
-# plt.savefig('time_series.png')
-plt.show()
-
-
-# Set cashflow
-# pf.dcf.set_cashflow_parameters(
-#     initial_investment=1000,   # 10_300_000
-#     method="fixed_percentage",
-#     frequency="month",
-#     percentage=-0.15 / 12,
-#     # amount=-80_000,
-#     # indexation=pf.dcf.discount_rate
-# )
-
-
+# df = pf.dcf.wealth_index
 
 # Set Monte Carlo
-# pf.dcf.set_mc_parameters(
-#     distribution="t",
-#     period=50,
-#     number=500
-# )
+pf.dcf.set_mc_parameters(
+    distribution="t",
+    period=50,
+    number=100
+)
 
 # w = pf.dcf.find_the_largest_withdrawals_size(
 #     min_amount=-100_000,
@@ -86,8 +68,8 @@ plt.show()
 # df = pf.dcf.monte_carlo_wealth
 # print("portfolio balance \n", df.iloc[-1, :].describe())
 
-# pf.dcf.plot_forecast_monte_carlo(backtest=False)
-#
+pf.dcf.plot_forecast_monte_carlo(backtest=True)
+
 
 
 # s = pf.dcf.monte_carlo_survival_period(threshold=.05)
@@ -99,3 +81,9 @@ plt.show()
 # print(pf.dcf.mc_number)
 # s = pf.dcf.monte_carlo_wealth
 # print(s.iloc[-1].quantile(50/100))
+
+# plt.figure(figsize=(20, 12))
+plt.yscale("log")  # log or linear
+# df.plot()
+# plt.savefig('time_series.png')
+plt.show()
