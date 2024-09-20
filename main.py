@@ -18,6 +18,8 @@ pf = ok.Portfolio(
     ccy="RUB",
     rebalancing_period="year",
 )
+
+link = pf.okamaio_link
 # Fixed Percentage strategy
 pc = ok.PercentageStrategy(pf)
 pc.frequency = "year"

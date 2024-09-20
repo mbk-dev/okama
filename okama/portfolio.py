@@ -137,6 +137,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Returns
         -------
+        list or tuple
             Values for the weights of assets in portfolio.
 
         Examples
@@ -225,9 +226,11 @@ class Portfolio(make_asset_list.ListMaker):
     def rebalancing_period(self, rebalancing_period: str):
         if rebalancing_period in settings.frequency_mapping.keys():
             self._ror = pd.DataFrame(dtype=float)
-            #TODO: check why it's not working:
-            # self.dcf._monte_carlo_wealth = pd.DataFrame()
-            # self.dcf._wealth_index = pd.DataFrame()
+            try:
+                self.dcf.mc.clear_wealth_data()
+                self.dcf._wealth_index = pd.DataFrame()
+            except AttributeError:
+                pass
             self._rebalancing_period = rebalancing_period
         else:
             raise ValueError(f"rebalancing_period must be in {settings.frequency_mapping.keys()}")
@@ -2312,6 +2315,38 @@ class Portfolio(make_asset_list.ListMaker):
         s1[self.symbol].plot(legend=None, figsize=figsize)
         for n in s2:
             s2[n].plot(legend=None)
+
+    @property
+    def okamaio_link(self) -> str:
+        """
+        URL link to portfolio at okama.io.
+
+        Portfolio with the same tickers, weights and other properties at okama.io financial widgets.
+
+        Returns
+        -------
+        str
+            URL link to portfolio at okama.io.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[.60, .40], rebalancing_period='year')
+        >>> pf.okamaio_link
+        'https://okama.io/portfolio?tickers=SPY.US,AGG.US&weights=60.0,40.0&ccy=USD&first_date=2003-10-01&last_date=2024-08-01&rebal=year&symbol=portfolio_6323.PF'
+        """
+        okamaio_url = "https://okama.io/"
+        new_url = okamaio_url + "portfolio?tickers="
+        tickers_str = ",".join(str(symbol) for symbol in self.symbols)
+        new_url += tickers_str
+        weights_percent = [w * 100 for w in self.weights]
+        weights_str = "&weights=" + ",".join(str(w) for w in weights_percent)
+        new_url += weights_str
+        new_url += f"&ccy={self.currency}"
+        new_url += f"&first_date={self.first_date.strftime('%Y-%m-%d')}"
+        new_url += f"&last_date={self.last_date.strftime('%Y-%m-%d')}"
+        new_url += f"&rebal={self.rebalancing_period}"
+        new_url += f"&symbol={self.symbol}"
+        return new_url
 
 
 class PortfolioDCF:
