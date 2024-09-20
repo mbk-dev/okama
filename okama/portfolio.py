@@ -2430,20 +2430,16 @@ class PortfolioDCF:
     @property
     def wealth_index(self) -> pd.DataFrame:
         """
-        Calculate wealth index time series for the portfolio with contributions and
-        withdrawals.
+        Calculate wealth index time series for the portfolio with cash flow (contributions and
+        withdrawals).
 
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
         historical time period considering cash flows.
 
         Accumulated inflation time series is added if `inflation=True` in the Portfolio.
 
-        If there are no cashflows, Wealth index is obtained from the accumulated return multiplicated
+        If there is no cash flow, Wealth index is obtained from the accumulated return multiplicated
         by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
-
-        initial_amount_pv is the discounted value of the initial investments (initial_amount).
-
-        Values of the wealth index correspond to the beginning of the month.
 
         Returns
         -------
@@ -2467,6 +2463,54 @@ class PortfolioDCF:
             )
             self._wealth_index = self.parent._make_df_if_series(df)
         return self._wealth_index
+
+    @property
+    def wealth_index_with_assets(self) -> pd.DataFrame:
+        """
+        Calculate wealth index time series for the portfolio and all assets considering cash flow (contributions and
+        withdrawals).
+
+        Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
+        historical time period. Accumulated inflation time series is added if `inflation=True` in the Portfolio.
+
+        Wealth index is obtained from the accumulated return multiplicated by the initial investments.
+        initial_amount_pv * (Acc_Return + 1)
+
+        If there is no cash flow, Wealth index is obtained from the accumulated return multiplicated
+        by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
+
+        Returns
+        -------
+        DataFrame
+            Time series of wealth index values for portfolio, each asset and accumulated inflation.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
+        >>> ind = ok.IndexationStrategy(pf)  # Set Cash Flow Strategy parameters
+        >>> ind.initial_investment = 100  # initial investments value
+        >>> ind.frequency = "year"  # withdrawals frequency
+        >>> ind.amount = -0.5 * 12  # initital withdrawals amount
+        >>> ind.indexation = "inflation"  # the idexation is equal to inflation
+        >>> pf.dcf.cashflow_parameters = ind  # assign the strategy to Portfolio
+        >>> pf.dcf.wealth_index_with_assets.plot()
+        >>> plt.show()
+        """
+        ls = [self.parent.ror, self.parent.assets_ror]
+        if hasattr(self.parent, "inflation"):
+            ls.append(self.parent.inflation_ts)
+        ror_df = pd.concat(ls, axis=1, join="inner", copy="false")
+        wealth_df = ror_df.apply(
+            helpers.Frame.get_wealth_indexes_with_cashflow,
+            axis=0,
+            args=(
+                None,  # symbol
+                None,  # inflation_symbol
+                self.cashflow_parameters,
+            ),
+        )
+        return wealth_df
 
     @property
     def survival_period_hist(self) -> float:

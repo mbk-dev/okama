@@ -19,7 +19,6 @@ pf = ok.Portfolio(
     rebalancing_period="year",
 )
 
-link = pf.okamaio_link
 # Fixed Percentage strategy
 pc = ok.PercentageStrategy(pf)
 pc.frequency = "year"
@@ -28,8 +27,8 @@ pc.percentage = -0.08
 # Fixed Amount strategy
 ind = ok.IndexationStrategy(pf)
 ind.initial_investment = 100
-ind.frequency = "month"
-ind.amount = -0.5
+ind.frequency = "year"
+ind.amount = -0.5 * 12
 ind.indexation = "inflation"
 
 # TimeSeries strategy
@@ -45,7 +44,7 @@ ts.time_series_dic = d
 # Assign a strategy
 pf.dcf.cashflow_parameters = ind
 pf.dcf.discount_rate = 0.10
-pf.dcf.use_discounted_values = True
+pf.dcf.use_discounted_values = False
 
 # df = pf.dcf.wealth_index
 
@@ -67,10 +66,11 @@ pf.dcf.set_mc_parameters(
 # print(w)
 
 
-# df = pf.dcf.monte_carlo_wealth
+df = pf.dcf.wealth_with_assets
+df.plot()
 # print("portfolio balance \n", df.iloc[-1, :].describe())
 
-pf.dcf.plot_forecast_monte_carlo(backtest=True)
+# pf.dcf.plot_forecast_monte_carlo(backtest=True)
 
 
 
