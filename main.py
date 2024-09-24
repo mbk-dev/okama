@@ -51,7 +51,7 @@ pf.dcf.use_discounted_values = False
 # Set Monte Carlo
 pf.dcf.set_mc_parameters(
     distribution="t",
-    period=50,
+    period=10,
     number=100
 )
 
@@ -66,11 +66,12 @@ pf.dcf.set_mc_parameters(
 # print(w)
 
 
-# df = pf.dcf.wealth_with_assets
-# df.plot()
+df = pf.dcf.monte_carlo_wealth_pv
+
+df.plot()
 # print("portfolio balance \n", df.iloc[-1, :].describe())
 
-pf.dcf.plot_forecast_monte_carlo(backtest=True)
+# pf.dcf.plot_forecast_monte_carlo(backtest=True)
 
 
 

@@ -2653,7 +2653,7 @@ class PortfolioDCF:
     @property
     def monte_carlo_wealth(self) -> pd.DataFrame:
         """
-        Generate portfolio wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
+        Portfolio random wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
 
         Monte Carlo simulation generates n random monthly time series.
         Each wealth index is calculated with rate of return time series of a given distribution.
@@ -2711,8 +2711,42 @@ class PortfolioDCF:
 
     @property
     def monte_carlo_wealth_pv(self) -> pd.DataFrame:
-        #TODO: add method for discounted cashflow values
-        pass
+        """
+        Portfolio discounted random wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
+
+        Random Monte Carlo simulation monthly time series are discounted using `discount_rate` parameter.
+        Each wealth index is calculated with rate of return time series of a given distribution.
+
+        `discount_rate` parameter can be set in Portfolio.dcf.discount_rate.
+
+        Monte Carlo parameters are defined by Portfolio.dcf.set_mc_parameters() method.
+
+        Returns
+        -------
+        DataFrame
+            Table with random discounted wealth indexes monthly time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
+        >>> pc = ok.PercentageStrategy(pf)  # Define withdrawals strategy with fixed percentage
+        >>> pc.frequency = "year"  # set withdrawals frequency
+        >>> pc.percentage = -0.08  # investor would take 8% every year
+        >>> pf.dcf.cashflow_parameters = pc  # Assign the strategy to Portfolio
+        >>> pf.dcf.discount_rate = 0.05  # set dicount rate value to 5%
+        >>> pf.dcf.set_mc_parameters(distribution="t", period=10, number=100)  # Set Monte Carlo parameters
+        >>> df = pf.dcf.monte_carlo_wealth_pv  # calculate discounted random wealth indexes
+        >>> df.plot()  # create a chart
+        >>> plt.legend("")  # no legend is required
+        >>> plt.show()
+        """
+        wealth_df = self.monte_carlo_wealth
+        wealth_df_pv = pd.DataFrame()
+        for n, row in enumerate(wealth_df.iterrows()):
+            w = row[1]
+            w /= (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** n
+            wealth_df_pv = pd.concat([wealth_df_pv, w.to_frame().T], sort=False)
+        return wealth_df_pv
 
     def plot_forecast_monte_carlo(
         self,
@@ -2745,9 +2779,7 @@ class PortfolioDCF:
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(assets=['SPY.US', 'AGG.US', 'GLD.US'],
         ...                   weights=[.60, .35, .05],
-        ...                   rebalancing_period='year',
-        ...                   initial_amount=300_000,
-        ...                   cashflow=-1_000)
+        ...                   rebalancing_period='year')
         >>> pf.dcf.plot_forecast_monte_carlo(backtest=True)
         >>> plt.show()
         """
