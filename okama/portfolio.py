@@ -2760,6 +2760,11 @@ class PortfolioDCF:
             last_backtest_value = s1.iloc[-1]
             if last_backtest_value > 0:
                 self.cashflow_parameters.initial_investment = last_backtest_value
+                if self.cashflow_parameters.name == "fixed_amount":
+                    months = helpers.Date.get_difference_in_months(self.parent.last_date, self.parent.first_date).n
+                    years = months / settings._MONTHS_PER_YEAR
+                    periods = years / settings.frequency_periods_per_year[self.cashflow_parameters.frequency]
+                    self.cashflow_parameters.amount *= (1.0 + self.cashflow_parameters.indexation) ** periods
                 s2 = self.monte_carlo_wealth
                 for s in s2:
                     s2[s].plot(legend=None)

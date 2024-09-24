@@ -66,11 +66,11 @@ pf.dcf.set_mc_parameters(
 # print(w)
 
 
-df = pf.dcf.wealth_with_assets
-df.plot()
+# df = pf.dcf.wealth_with_assets
+# df.plot()
 # print("portfolio balance \n", df.iloc[-1, :].describe())
 
-# pf.dcf.plot_forecast_monte_carlo(backtest=True)
+pf.dcf.plot_forecast_monte_carlo(backtest=True)
 
 
 

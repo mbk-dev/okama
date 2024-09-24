@@ -586,7 +586,7 @@ class Date:
         )
 
     @staticmethod
-    def get_difference_in_months(last_day: pd.Timestamp, first_day: pd.Timestamp):
+    def get_difference_in_months(last_day: pd.Timestamp, first_day: pd.Timestamp) -> pd.DateOffset:
         return last_day.to_period("M") - first_day.to_period("M")
 
     @staticmethod
