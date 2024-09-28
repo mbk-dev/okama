@@ -2812,6 +2812,7 @@ class PortfolioDCF:
         threshold: float
     ) -> pd.Series:
         """
+        # TODO: update docs
         Generate a survival period distribution for a portfolio with cash flows by Monte Carlo simulation.
 
         It's possible to analyze the distribution finding "min", "max" and percentiles to see for how long will last
@@ -2865,35 +2866,115 @@ class PortfolioDCF:
 
     def find_the_largest_withdrawals_size(
             self,
-            min_amount: float,
-            max_amount: float,
             withdrawal_steps: int,
             confidence_level: float,
             goal: str,
-            target_survival_period: int = 25
-    ):
-        amount_range = np.linspace(min_amount, max_amount, withdrawal_steps)
-        saved_amount = self.cashflow_parameters.amount
+            threshold: float,
+            target_survival_period: int
+    ) -> float:
+        """
+        Find the largest withdrawals size for Monte Carlo simulation according to Cashflow Strategy.
+
+        It's possible to find the largest withdrawl with 2 kind of goals:
+        — 'maintain_balance' to keep the purchasing power of the invesments after inflation
+            for the whole period defined in Monte Carlo parameteres.
+        — 'survival_period' to keep positive balance for a period defined by 'target_survival_period'.
+            The method works with IndexationStrategy and PercentageStrategy only.
+
+        The withdrawal size defined in cash flow strategy must be negative.
+
+        Returns
+        -------
+        float
+            the largest withdrawals size according to Cashflow Strategy.
+
+        Parameters
+        ----------
+        withdrawal_steps : int
+            Number of intermediate values for the withdrawal size.
+            The withdrawal size varies from 100% of the initial investment to zero.
+
+        confidence_level : float
+            Confidence level in percents (form 0 to 100).
+            Confidence level defines the percentile of Monte Carlo time series. 0.01 or 0.05 are the examples of "bad"
+            scenarios. 0.50 is mediane (50% percentile). 0.95 or 0.99 are optimiststic scenarios.
+
+        goal : {'maintain_balance', 'survival_period'}
+            'maintain_balance' - the goal is to keep the purchasing power of the invesments after inflation
+            for the whole period defined in Monte Carlo parameteres.
+            'survival_period' - the goal is to keep positive balance
+            for a period defined by 'target_survival_period'.
+
+        threshold : float
+            The percentage of inititial investments when the portfolio balance is considered voided.
+            Important for the "fixed_percentage" Cash flow strategy.
+
+        target_survival_period: int
+            The smallest acceptable survival period. It wokrs with the 'survival_period' goal only.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(
+            assets=["MCFTR.INDX", "RUCBTRNS.INDX"],
+            weights=[.3, .7],
+            inflation=True,
+            ccy="RUB",
+            rebalancing_period="year",
+        )
+        >>> # Fixed Percentage strategy
+        >>> pc = ok.PercentageStrategy(pf)
+        >>> pc.initial_investment = 10_000
+        >>> pc.frequency = "year"
+        >>> # Assign a strategy
+        >>> pf.dcf.cashflow_parameters = pc
+        >>> # Set Monte Carlo parameters
+        >>> pf.dcf.set_mc_parameters(
+            distribution="t",
+            period=50,
+            number=100
+        )
+        >>> pf.dcf.find_the_largest_withdrawals_size(
+            withdrawal_steps=30,
+            confidence_level=0.50,
+            goal="survival_period",
+            threshold=0.10,
+            target_survival_period=25
+        )
+        """
         max_withdrawal = 0
-        for a in amount_range:
-            # print("testing:", a)
-            self.cashflow_parameters.amount = a
-            sp_at_quantile = self.monte_carlo_survival_period.quantile(confidence_level)
+        if confidence_level > 1 or confidence_level < 0:
+            raise ValueError("confidence level must be between 0 and 1")
+        if threshold > 1 or threshold < 0:
+            raise ValueError("threshold must be between 0 and 1")
+        if self.cashflow_parameters.name == "fixed_amount":
+            saved_amount = self.cashflow_parameters.amount
+            size_range = np.linspace(-self.cashflow_parameters.initial_investment, 0, withdrawal_steps)
+        elif self.cashflow_parameters.name == "fixed_percentage":
+            size_range = np.linspace(-1, 0, withdrawal_steps)
+        else:
+            raise TypeError("find_the_largest_withdrawals_size works with 'fixed_amount' or 'fixed_percentag' only.")
+        for size in size_range:
+            if self.cashflow_parameters.name == "fixed_amount":
+                self.cashflow_parameters.amount = size
+            elif self.cashflow_parameters.name == "fixed_percentage":
+                self.cashflow_parameters.percentage = size
+
+            sp_at_quantile = self.monte_carlo_survival_period(threshold=threshold).quantile(confidence_level)
             if goal == "maintain_balance":
                 wealth_at_quantile = self.monte_carlo_wealth.iloc[-1, :].quantile(confidence_level)
-                # print(f"{wealth_at_quantile=}")
                 condition = (sp_at_quantile == self.mc.period) and (wealth_at_quantile >= self.initial_investment_fv)
                 if condition:
-                    max_withdrawal = a
+                    max_withdrawal = size
                     break
             elif goal == "survival_period":
                 condition = sp_at_quantile >= target_survival_period
                 if condition:
-                    max_withdrawal = a
+                    max_withdrawal = size
                     break
 
-        self.cashflow_parameters.amount = saved_amount
-        # print(f"{max_withdrawal=}")
+        if self.cashflow_parameters.name == "fixed_amount":
+            self.cashflow_parameters.amount = saved_amount
+        self.cashflow_parameters._clear_cf_cache()
         return max_withdrawal
 
 
