@@ -310,7 +310,7 @@ class Inflation(MacroABC):
     @property
     def purchasing_power_1000(self) -> float:
         """
-        Calculate purchasing power of 1000 (in the currency of inflation) after period from first_date to last_date.
+        Purchasing power of 1000 (in the currency of inflation) after period from first_date to last_date.
 
         Returns
         -------

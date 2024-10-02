@@ -20,14 +20,10 @@ class Portfolio(make_asset_list.ListMaker):
 
     - weights
     - rebalancing_period
-    - initial_amount
     - symbol
 
     Portfolio is defined by the investment strategy, which includes:
     - asset allocation (financial assets and their proportions in the portfolio)
-    - the initial investment (`initial_amount` parameter)
-    - cash flows or withdrawals/contributions (`cashflow` parameter)
-    - discount rate (`discount_rate` parameter)
     - the rebalancing strategy (`rebalancing_period` parameter)
 
     The rebalancing is the action of bringing the portfolio that has deviated away
@@ -65,13 +61,6 @@ class Portfolio(make_asset_list.ListMaker):
     rebalancing_period : {'none', 'month', 'quarter', 'half-year', 'year'}, default 'month'
         Rebalancing period (rebalancing frequency) is predetermined time intervals when
         the investor rebalances the portfolio. If 'none' assets weights are not rebalanced.
-
-    initial_amount : float, default 1000
-        Portfolio initial investment FV (at last_date).
-
-    cashflow : float, default 0
-        Portfolio monthly cash flow FV (at last_date). Negative value corresponds to withdrawals.
-        Positive value corresponds to contributions. Cash flow value is indexed each month by discount_rate.
 
     symbol : str, default None
         Text symbol of portfolio. It is similar to tickers but have a namespace information.
@@ -164,7 +153,7 @@ class Portfolio(make_asset_list.ListMaker):
                 )
         self._ror = pd.DataFrame(dtype=float)
         try:
-            self.dcf.mc.clear_wealth_data()
+            self.dcf.mc._clear_wealth_data()
             self.dcf._wealth_index = pd.DataFrame()
         except AttributeError:
             pass
@@ -227,7 +216,7 @@ class Portfolio(make_asset_list.ListMaker):
         if rebalancing_period in settings.frequency_mapping.keys():
             self._ror = pd.DataFrame(dtype=float)
             try:
-                self.dcf.mc.clear_wealth_data()
+                self.dcf.mc._clear_wealth_data()
                 self.dcf._wealth_index = pd.DataFrame()
             except AttributeError:
                 pass
@@ -383,8 +372,6 @@ class Portfolio(make_asset_list.ListMaker):
 
         Wealth index is obtained from the accumulated return multiplicated by the initial investments.
         initial_amount_pv * (Acc_Return + 1)
-
-        initial_amount_pv is the discounted value of the initial investments (initial_amount).
 
         Returns
         -------
@@ -2364,6 +2351,9 @@ class PortfolioDCF:
     discount_rate: float or None, default None
         Cash flow discount rate required to calculate Present value (PV) or Future (FV) of cashflow. If not provided geometric mean of inflation is taken.
         For portfolios without inflation the default value from settings is used.
+
+    use_discounted_values: bool, default False
+        Defines weather to use discounted values in backtesting wealth indexes. If True the initital investments is discounted
     """
 
     def __init__(
@@ -2589,10 +2579,9 @@ class PortfolioDCF:
     @property
     def initial_investment_pv(self) -> Optional[float]:
         """
-        Calculate the discounted value (PV) of the initial investments at the historical first date.
+        The discounted value (PV) of the initial investments at the historical first date.
 
         The future value (FV) is defined by `initial_amount` parameter.
-        The discount rate is the average annual inflation.
 
         Returns
         -------
@@ -2792,7 +2781,7 @@ class PortfolioDCF:
             last_backtest_value = s1.iloc[-1]
             if last_backtest_value > 0:
                 self.cashflow_parameters.initial_investment = last_backtest_value
-                if self.cashflow_parameters.name == "fixed_amount":
+                if self.cashflow_parameters.NAME == "fixed_amount":
                     months = helpers.Date.get_difference_in_months(self.parent.last_date, self.parent.first_date).n
                     years = months / settings._MONTHS_PER_YEAR
                     periods = years / settings.frequency_periods_per_year[self.cashflow_parameters.frequency]
@@ -2946,17 +2935,17 @@ class PortfolioDCF:
             raise ValueError("confidence level must be between 0 and 1")
         if threshold > 1 or threshold < 0:
             raise ValueError("threshold must be between 0 and 1")
-        if self.cashflow_parameters.name == "fixed_amount":
+        if self.cashflow_parameters.NAME == "fixed_amount":
             saved_amount = self.cashflow_parameters.amount
             size_range = np.linspace(-self.cashflow_parameters.initial_investment, 0, withdrawal_steps)
-        elif self.cashflow_parameters.name == "fixed_percentage":
+        elif self.cashflow_parameters.NAME == "fixed_percentage":
             size_range = np.linspace(-1, 0, withdrawal_steps)
         else:
             raise TypeError("find_the_largest_withdrawals_size works with 'fixed_amount' or 'fixed_percentag' only.")
         for size in size_range:
-            if self.cashflow_parameters.name == "fixed_amount":
+            if self.cashflow_parameters.NAME == "fixed_amount":
                 self.cashflow_parameters.amount = size
-            elif self.cashflow_parameters.name == "fixed_percentage":
+            elif self.cashflow_parameters.NAME == "fixed_percentage":
                 self.cashflow_parameters.percentage = size
 
             sp_at_quantile = self.monte_carlo_survival_period(threshold=threshold).quantile(confidence_level)
@@ -2972,7 +2961,7 @@ class PortfolioDCF:
                     max_withdrawal = size
                     break
 
-        if self.cashflow_parameters.name == "fixed_amount":
+        if self.cashflow_parameters.NAME == "fixed_amount":
             self.cashflow_parameters.amount = saved_amount
         self.cashflow_parameters._clear_cf_cache()
         return max_withdrawal
@@ -2980,20 +2969,12 @@ class PortfolioDCF:
 
 class MonteCarlo:
     """
+    Monte Carlo simulation parameters for investment portfolio.
+
     Parameters
-        ----------
-        distr : {'norm', 'lognorm', 't'}, default 'norm'
-            Distribution type for the rate of return of portfolio.
-            'norm' - for normal distribution.
-            'lognorm' - for lognormal distribution.
-            't' - for Student's T distribution.
-
-        years : int, default 1
-            Forecast period for portfolio wealth index time series.
-            It should not exceed 1/2 of the portfolio history period length 'period_length'.
-
-        n : int, default 100
-            Number of random wealth indexes to generate with Monte Carlo simulation.
+    ----------
+    parent : PortfolioDCF
+        Parent PortfolioDCF instance.
     """
     def __init__(self, parent: PortfolioDCF):
         self.parent = parent
@@ -3002,7 +2983,19 @@ class MonteCarlo:
         self._mc_number: int = 100
 
     @property
-    def distribution(self):
+    def distribution(self) -> str:
+        """
+        The type of a distribution to generate random rate of return.
+
+        Allowed values for distribution:
+        -'norm' for normal distribution
+        -'lognorm' for lognormal distribution
+        -'t' for Student's (t-distribution)
+
+        Returns
+        -------
+        str
+        """
         return self._distribution
 
     @distribution.setter
@@ -3012,7 +3005,14 @@ class MonteCarlo:
         self._distribution = distribution
 
     @property
-    def period(self):
+    def period(self) -> int:
+        """
+        Forecast period for portfolio wealth index time series.
+
+        Returns
+        -------
+        int
+        """
         return self._period
 
     @period.setter
@@ -3022,7 +3022,14 @@ class MonteCarlo:
         self._period = period
 
     @property
-    def number(self):
+    def number(self) -> int:
+        """
+        Number of random wealth indexes to generate with Monte Carlo simulation.
+
+        Returns
+        -------
+        int
+        """
         return self._mc_number
 
     @number.setter
@@ -3031,11 +3038,19 @@ class MonteCarlo:
         self.parent._monte_carlo_wealth = pd.DataFrame()
         self._mc_number = mc_number
 
-    def clear_wealth_data(self):
+    def _clear_wealth_data(self):
         self.parent._monte_carlo_wealth = pd.DataFrame()
 
 
 class CashFlow:
+    """
+    Parent class for cash flow strategies.
+
+    Parameters
+    ----------
+    parent : Portfolio
+        Parent Portfolio instance.
+    """
     def __init__(self, parent: Portfolio):
         self.parent = parent
         self.frequency: Optional[str] = None
@@ -3043,7 +3058,22 @@ class CashFlow:
         self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
 
     @property
-    def frequency(self):
+    def frequency(self) -> str:
+        """
+        The frequency of regualr withdrawals or contributions in the strategy.
+
+        Allowed values for frequency:
+        - 'none' no frequency (default value)
+        - 'year' annual cash flows
+        - 'half-year' 6 months cash flows
+        - 'quarter' 3 months cash flows
+        - 'month' 1 month cash flows
+
+        Returns
+        -------
+        str
+            The frequency of withdrawals or contributions.
+        """
         return self._frequency
 
     @frequency.setter
@@ -3056,6 +3086,14 @@ class CashFlow:
 
     @property
     def initial_investment(self):
+        """
+        Portfolio initial investment FV size (at last_date).
+
+        Returns
+        -------
+        float
+            Portfolio initial investment.
+        """
         return self._initial_investment
 
     @initial_investment.setter
@@ -3071,18 +3109,52 @@ class CashFlow:
 
 
 class IndexationStrategy(CashFlow):
+    """
+    Cash flow strategy with indexed withdrawals or contributions.
+
+    Parameters
+    ----------
+    parent : Portfolio
+        Parent Portfolio instance.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
+    >>> # Set the cash flow strategy
+    >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
+    >>> ind.initial_investment = 10_000  # add initial investments size
+    >>> ind.frequency = "year"  # set cash flow frequency
+    >>> ind.ind.amount = -1_500  # set withdrawal size
+    >>> ind.indexation = "inflation"
+    >>> # Assign the strategy to Portfolio
+    >>> pf.dcf.cashflow_parameters = ind
+    >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
+    >>> # Plot wealth index with cash flow
+    >>> pf.dcf.wealth_index.plot()
+    >>> plt.show()
+    """
+    NAME = "fixed_amount"
     def __init__(
             self,
             parent: Portfolio,
     ):
         super().__init__(parent)
         self.portfolio = self.parent
-        self.name = "fixed_amount"
-        self.amount = 0
-        self.indexation = "inflation"
+        self.amount: float = 0
+        self.indexation: Union[str, float, None] = "inflation"
 
     @property
     def amount(self):
+        """
+        Portfolio regular contributions or withdrawals size. Negative value corresponds to withdrawals.
+        Positive value corresponds to contributions. Cash flow value is indexed each period by 'indexation'.
+
+        Returns
+        -------
+        float
+            Portfolio regular cash flow size.
+        """
         return self._amount
 
     @amount.setter
@@ -3117,39 +3189,126 @@ class IndexationStrategy(CashFlow):
 
 
 class PercentageStrategy(CashFlow):
+    """
+    Cash flow strategy with fixed percentage withdrawals or contributions.
+
+    Parameters
+    ----------
+    parent : Portfolio
+        Parent Portfolio instance.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
+    >>> pc = ok.PercentageStrategy(portf)  # create PercentageStrategy linked to the portfolio
+    >>> pc.initial_investment = 10_000  # add initial investments size
+    >>> pc.frequency = "year"  # set cash flow frequency
+    >>> pc.percentage = -0.12  # set withdrawal percentage
+    >>> # Assign the strategy to Portfolio
+    >>> pf.dcf.cashflow_parameters = pc
+    >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
+    >>> # Plot wealth index with cash flow
+    >>> pf.dcf.wealth_index.plot()
+    >>> plt.show()
+    """
+    NAME = "fixed_percentage"
     def __init__(
             self,
             parent: Portfolio,
     ):
         super().__init__(parent)
         self.portfolio = self.parent
-        self.name = "fixed_percentage"
         self.percentage = 0
 
     @property
-    def percentage(self):
+    def percentage(self) -> float:
+        """
+        The percentage of withdrawals or contributions.
+
+        The size of withdrawals or contribution is defined as a percentage of portfolio balance.
+        The value of percentage is form 0 to 1 (0 is 0%, 1 is 100%).
+
+        Returns
+        -------
+        float
+            The percentage of withdrawals or contributions.
+        """
         return self._percentage
 
     @percentage.setter
     def percentage(self, percentage):
         self._clear_cf_cache()
         validators.validate_real("percentage", percentage)
+        if percentage < 0 or percentage > 1:
+            raise ValueError("percentage must be between 0 and 1")
         self._percentage = percentage
 
 
 class TimeSeriesStrategy(CashFlow):
+    """
+    Cash flow strategy with user-defined withdrawals and contributions.
+
+    Withdrawals, contributions, as well as their dates, are defined in the dictionary.
+
+    Parameters
+    ----------
+    parent : Portfolio
+        Parent Portfolio instance.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
+    >>> # create simple dictionary with cash flow amounts and dates
+    >>> d = {
+        "2018-02": 2_000,
+        "2024-03": -4_000,
+    }
+    >>> ts = ok.TimeSeriesStrategy(pf)  # create TimeSeresStrategy linked to the portfolio
+    >>> ts.time_series_dic = d  # use the dictionary to set cash flow
+    >>> ts.initial_investment = 1_000  # add initial investments size (optional)
+    >>> # Assign the strategy to Portfolio
+    >>> pf.dcf.cashflow_parameters = ts
+    >>> # Plot wealth index with cash flow
+    >>> pf.dcf.wealth_index.plot()
+    >>> plt.show()
+    """
+    NAME = "time_series"
     def __init__(
             self,
             parent: Portfolio,
     ):
         super().__init__(parent)
         self.portfolio = self.parent
-        self.name = "time_series"
         self.time_series_dic = {}
         self.time_series = pd.Series()
 
     @property
-    def time_series_dic(self):
+    def time_series_dic(self) -> dict:
+        """
+        Cash flow time series in form of dictionary.
+
+        Negative number corresponds to withdrawals, positive number corresponds to contributions.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
+        >>> # create simple dictionary with cash flow amounts and dates
+        >>> d = {
+            "2018-02": 2_000,
+            "2024-03": -4_000,
+        }
+        >>> ts = ok.TimeSeriesStrategy(pf)  # create TimeSeresStrategy linked to the portfolio
+        >>> ts.time_series_dic = d  # use the dictionary to set cash flow
+        >>> ts.initial_investment = 1_000  # add initial investments size (optional)
+        >>> # Assign the strategy to Portfolio
+        >>> pf.dcf.cashflow_parameters = ts
+        >>> # Plot wealth index with cash flow
+        >>> pf.dcf.wealth_index.plot()
+        >>> plt.show()
+        """
         return self._time_series_dic
 
     @time_series_dic.setter
@@ -3159,7 +3318,12 @@ class TimeSeriesStrategy(CashFlow):
             self._time_series_dic = time_series_dic
         else:
             raise TypeError("time_series_dic must be a dictionary.")
+        self._make_series_from_dic()
+
+    def _make_series_from_dic(self):
+        """
+        Create cash flow time series in form of Pandas.Series.
+        """
         self.time_series = pd.Series(self._time_series_dic)
         self.time_series.index = pd.to_datetime(self.time_series.index).to_period("M")
         self.time_series.sort_index(inplace=True)
-

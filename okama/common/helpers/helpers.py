@@ -224,16 +224,16 @@ class Frame:
                 portfolio_position = 0
                 ror = ror.to_frame()
 
-            if cashflow_parameters.frequency == "month" or cashflow_parameters.name == "time_series":
+            if cashflow_parameters.frequency == "month" or cashflow_parameters.NAME == "time_series":
                 s = pd.Series(dtype=float, name=portfolio_symbol)
                 for n, row in enumerate(ror.itertuples()):
                     date = row[0]
                     r = row[portfolio_position + 1]
-                    if cashflow_parameters.name == "fixed_amount":
+                    if cashflow_parameters.NAME == "fixed_amount":
                         cashflow = amount * (1 + cashflow_parameters.indexation / settings._MONTHS_PER_YEAR) ** n
-                    elif cashflow_parameters.name == "fixed_percentage":
+                    elif cashflow_parameters.NAME == "fixed_percentage":
                         cashflow = cashflow_parameters.percentage * period_initial_amount
-                    elif cashflow_parameters.name == "time_series":
+                    elif cashflow_parameters.NAME == "time_series":
                         try:
                             cashflow = cashflow_parameters.time_series[date]
                             if dcf_object.use_discounted_values:
@@ -256,9 +256,9 @@ class Frame:
                 for n, x in enumerate(ror.resample(rule=pandas_frequency, convention="start")):
                     ror_df = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
                     period_wealth_index = period_initial_amount * (1 + ror_df).cumprod()
-                    if cashflow_parameters.name == "fixed_amount":
+                    if cashflow_parameters.NAME == "fixed_amount":
                         cashflow_value = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
-                    elif cashflow_parameters.name == "fixed_percentage":
+                    elif cashflow_parameters.NAME == "fixed_percentage":
                         cashflow_value = cashflow_parameters.percentage * period_initial_amount
                     else:
                         raise ValueError("Wrong cashflow_method value.")

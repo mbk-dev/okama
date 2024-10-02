@@ -13,8 +13,8 @@ class Asset:
 
     Parameters
     ----------
-    symbol: str, default "SPY.US"
-        Symbol is an asset ticker with namespace after dot. The default value is "SPY.US" (SPDR S&P 500 ETF Trust).
+    symbol: str, default 'SPY.US'
+        Symbol is an asset ticker with a namespace after dot. The default value is 'SPY.US' (SPDR S&P 500 ETF Trust).
     """
 
     def __init__(self, symbol: str = settings.default_ticker):
