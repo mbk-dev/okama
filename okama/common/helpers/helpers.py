@@ -213,8 +213,8 @@ class Frame:
             wealth_index = Frame.get_wealth_indexes(ror, period_initial_amount)
         else:
             try:
-                # amount is not defined in TimeSeriesStrategy
-                amount = dcf_object.amount_pv if dcf_object.use_discounted_values else cashflow_parameters.amount
+                # amount is not defined in TimeSeriesStrategy & PercentageStrategy
+                amount = dcf_object.cashflow_pv if dcf_object.use_discounted_values else cashflow_parameters.amount
             except AttributeError:
                 pass
             if isinstance(ror, pd.DataFrame):

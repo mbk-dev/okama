@@ -1751,7 +1751,6 @@ class Portfolio(make_asset_list.ListMaker):
         {10: 1228.3741255659957, 50: 1491.7857161011104, 90: 1745.1130920663286}
         Percentiles values for the wealth index 5 years forecast if the initial value is 1000.
         """
-        # TODO: check "today value"
         if distr == "hist":
             results = self.percentile_wealth_history(years=years, percentiles=percentiles).iloc[-1].to_dict()
         elif distr in ["norm", "lognorm", "t"]:
@@ -2385,7 +2384,7 @@ class PortfolioDCF:
         float
             Cash flow discount rate.
         """
-        return self._discount_rate
+        return float(self._discount_rate)
 
     @discount_rate.setter
     def discount_rate(self, discount_rate: Optional[float]):
@@ -2401,6 +2400,7 @@ class PortfolioDCF:
 
     @property
     def use_discounted_values(self) -> bool:
+        # TODO: set docstrings
         return self._use_discounted_values
 
     @use_discounted_values.setter
@@ -2413,6 +2413,24 @@ class PortfolioDCF:
                           distribution: str,
                           period: int,
                           number: int):
+        """
+        Add Monte Carlo simulation parameters to Portfolio.
+
+        Parameters
+        ----------
+        distribution: str
+            The type of a distribution to generate random rate of return.
+            Allowed values for distribution:
+            -'norm' for normal distribution
+            -'lognorm' for lognormal distribution
+            -'t' for Student's (t-distribution)
+
+        period: int
+            Forecast period for portfolio wealth index time series (in years).
+
+        number: int
+            Number of random wealth indexes to generate with Monte Carlo simulation.
+        """
         self.mc.distribution = distribution
         self.mc.period = period
         self.mc.number = number
@@ -2557,26 +2575,6 @@ class PortfolioDCF:
         return helpers.Frame.get_survival_date(self.wealth_index.loc[:, self.parent.symbol])
 
     @property
-    def amount_pv(self) -> Optional[float]:
-        """
-        Calculate the discounted value (PV) of the contributions/withdrawals value at the historical first date.
-
-        The future value (FV) is defined by `amount` parameter.
-
-        Returns
-        -------
-        float
-            The discounted value (PV) of the contributions/withdrawals at the historical first date.
-
-        Examples
-        --------
-        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB')
-        >>> pf.dcf.amount
-        73650
-        """
-        return self.cashflow_parameters.amount / (1.0 + self.discount_rate) ** self.parent.period_length
-
-    @property
     def initial_investment_pv(self) -> Optional[float]:
         """
         The discounted value (PV) of the initial investments at the historical first date.
@@ -2599,45 +2597,65 @@ class PortfolioDCF:
     @property
     def initial_investment_fv(self) -> Optional[float]:
         """
-        # TODO: change the docstring
-        Calculate the discounted value (PV) of the initial investments at the historical first date.
+        The future value (FV) of the initial investments at the end of forecast period.
 
-        The future value (FV) is defined by `initial_amount` parameter.
-        The discount rate is the average annual inflation.
+        The forecast period is defined in Monte Carlo parameters ('period').
+
+        FV is defined by the discount rate and the initial investments:
+        initial_investment_fv = initial_investment * (1 + discount_rate) ** period
+
+        When 'initial_investment' parameter is not defined, `initial_investment_fv` set to None.
 
         Returns
         -------
-        float
-            The discounted value (PV) of the initial investments at the historical first date.
+        float, None
+            The future value (FV) of the initial investments.
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB', initial_amount=100_000)
-        >>> pf.dcf.initial_investment_pv
-        73650
+        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB')
+        >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
+        >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
+        >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
+        >>> pf.dcf.mc.period = 10  # define forecast period
+        >>> pf.dcf.discount_rate = 0.10  # define discount rate
+        >>> pf.dcf.initial_investment_fv
         """
-        return self.cashflow_parameters.initial_investment * (1.0 + self.discount_rate) ** self.mc.period
+        if hasattr(self.cashflow_parameters, "initial_investment"):
+            return float(self.cashflow_parameters.initial_investment * (1.0 + self.discount_rate) ** self.mc.period)
+        else:
+            return None
 
     @property
     def cashflow_pv(self) -> Optional[float]:
         """
-        Calculate the discounted value (PV) of the cash flow amount at the historical first date.
+        The discounted value (PV) of the cash flow amount (contributions/withdrawals) at the historical first date.
 
-        The future value (FV) is defined by `cashflow` parameter.
-        The discount rate is the average annual inflation.
+        PV is defined by the discount rate and the cash flow amount:
+        cashflow_pv = amount / (1 + discount_rate) ** period_length
+
+        When cash flow 'amount' is not defined, `cashflow_pv` set to None.
 
         Returns
         -------
-        float
+        float, None
             The discounted value (PV) of the cash flow amount at the historical first date.
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD', initial_amount=100_000, cashflow=-5_000)
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD')
+        >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
+        >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
+        >>> ind.amount = -500  # set withdrawal size
+        >>> ind.frequency = "year"  # set withdrawal frequency
+        >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
+        >>> pf.dcf.discount_rate = 0.10  # define discount rate
         >>> pf.dcf.cashflow_pv
-        -3004
         """
-        return self.cashflow_parameters.amount / (1.0 + self.cashflow_parameters.indexation) ** self.parent.period_length
+        if hasattr(self.cashflow_parameters, "amount"):
+            return float(self.cashflow_parameters.amount / (1.0 + self.discount_rate) ** self.parent.period_length)
+        else:
+            return None
 
     @property
     def monte_carlo_wealth(self) -> pd.DataFrame:
@@ -2668,7 +2686,8 @@ class PortfolioDCF:
         2021-11  4179.544897  4156.839698  ...  3899.249696  4097.003962
         2021-12  4237.030690  4351.305114  ...  3916.639721  4042.011774
         """
-
+        if not hasattr(self, "cash_flow_parameters"):
+            raise AttributeError("'cash_flow_parameters' are not defined.")
         if self._monte_carlo_wealth.empty:
             return_ts = self.parent.monte_carlo_returns_ts(distr=self.mc.distribution,
                                                            years=self.mc.period,
@@ -2773,6 +2792,8 @@ class PortfolioDCF:
         >>> plt.show()
         """
         if backtest:
+            if not hasattr(self, "cash_flow_parameters"):
+                raise AttributeError("'cash_flow_parameters' are not defined.")
             backup_obj = self.cashflow_parameters
             backup = self.use_discounted_values
             self.use_discounted_values = False
@@ -2798,28 +2819,20 @@ class PortfolioDCF:
 
     def monte_carlo_survival_period(
         self,
-        threshold: float
+        threshold: float = 0
     ) -> pd.Series:
         """
-        # TODO: update docs
         Generate a survival period distribution for a portfolio with cash flows by Monte Carlo simulation.
 
-        It's possible to analyze the distribution finding "min", "max" and percentiles to see for how long will last
-        the investment strategy - possible longevity period.
+        Analyzing the result, finding "min", "max" and percentiles it's possible to see for how long
+        will last the investment strategy - possible longevity period.
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm', 't'}, default 'norm'
-            The type of a distribution to generate random portfolios.
-            'norm' - for normal distribution.
-            'lognorm' - for lognormal distribution.
-            't' - for Student's T distribution.
-
-        years : int, default 1
-            Forecast period for portfolio wealth index time series.
-
-        n : int, default 100
-            Number of random wealth indexes to generate with Monte Carlo simulation.
+        threshold : float, default 0
+            The percentage of the initial investments when the portfolio balance considered voided.
+            This parameter is important to use in cash flow strategies with a fixed
+            whtdrawal percentage (PercentageStrategy).
 
         Returns
         -------
@@ -2828,26 +2841,18 @@ class PortfolioDCF:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(
-            ['SPY.US', 'AGG.US', 'GLD.US'],
-            weights=[.60, .35, .05],
-            rebalancing_period='year',
-            initial_amount=300_000,
-            cashflow=-10_000
-        )
-        >>> s = pf.dcf.monte_carlo_survival_period(
-            distr="norm",
-            years=10,
-            n=100,
-        )
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05])
+        >>> pc = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
+        >>> pc.initial_investment = 10_000  # add initial investments size
+        >>> pc.frequency = "year"  # set cash flow frequency
+        >>> pc.percentage = -0.12  # set withdrawal percentage
+        >>> # Assign the strategy to Portfolio
+        >>> pf.dcf.cashflow_parameters = pc
+        >>> s = pf.dcf.monte_carlo_survival_period(threshold=0.05)  # the balance is considered voided at 5%
         >>> s.min()
-        2.2
         >>> s.max()
-        3.6
-        >> s.mean()
-        2.737
-        >> s.quantile(50 / 100)
-        2.7
+        >>> s.mean()
+        >>> s.quantile(50 / 100)
         """
         s2 = self.monte_carlo_wealth
         dates: pd.Series = helpers.Frame.get_survival_date(s2, self.discount_rate, threshold)
@@ -2975,6 +2980,8 @@ class MonteCarlo:
     ----------
     parent : PortfolioDCF
         Parent PortfolioDCF instance.
+
+    # TODO: add examples
     """
     def __init__(self, parent: PortfolioDCF):
         self.parent = parent
@@ -3007,7 +3014,7 @@ class MonteCarlo:
     @property
     def period(self) -> int:
         """
-        Forecast period for portfolio wealth index time series.
+        Forecast period in years for portfolio wealth index time series.
 
         Returns
         -------
