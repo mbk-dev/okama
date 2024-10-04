@@ -46,6 +46,8 @@ pf.dcf.cashflow_parameters = pc
 pf.dcf.discount_rate = 0.10
 pf.dcf.use_discounted_values = False
 
+print(pf.dcf)
+
 # df = pf.dcf.wealth_index
 
 # Set Monte Carlo

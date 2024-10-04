@@ -2373,8 +2373,14 @@ class PortfolioDCF:
 
     def __repr__(self):
         pf_repr = repr(self.parent)
-        # TODO: add MC, CashFlow, discount_rate, use_discounted_values
-        return pf_repr
+        dic = {
+            "Portfolio symbol": self.parent.symbol,
+            "Monte carlo distribution": self.mc.distribution,
+            "Monte carlo period": self.mc.period,
+            "Cash flow strategy": self.cashflow_parameters.NAME if hasattr(self.cashflow_parameters, "NAME") else None,
+            "use_discounted_values": self.use_discounted_values,
+        }
+        return repr(pd.Series(dic))
 
     @property
     def discount_rate(self) -> float:
@@ -2696,8 +2702,8 @@ class PortfolioDCF:
         2021-11  4179.544897  4156.839698  ...  3899.249696  4097.003962
         2021-12  4237.030690  4351.305114  ...  3916.639721  4042.011774
         """
-        if not hasattr(self, "cash_flow_parameters"):
-            raise AttributeError("'cash_flow_parameters' are not defined.")
+        if self.cashflow_parameters == None:
+            raise AttributeError("'cash_flow_parameters' is not defined.")
         if self._monte_carlo_wealth.empty:
             return_ts = self.parent.monte_carlo_returns_ts(distr=self.mc.distribution,
                                                            years=self.mc.period,
@@ -2802,8 +2808,8 @@ class PortfolioDCF:
         >>> plt.show()
         """
         if backtest:
-            if not hasattr(self, "cash_flow_parameters"):
-                raise AttributeError("'cash_flow_parameters' are not defined.")
+            if self.cash_flow_parameters == None:
+                raise AttributeError("'cash_flow_parameters' is not defined.")
             backup_obj = self.cashflow_parameters
             backup = self.use_discounted_values
             self.use_discounted_values = False
@@ -3265,7 +3271,6 @@ class PercentageStrategy(CashFlow):
         The percentage of withdrawals or contributions.
 
         The size of withdrawals or contribution is defined as a percentage of portfolio balance.
-        The value of percentage is form 0 to 1 (0 is 0%, 1 is 100%).
 
         Returns
         -------
@@ -3278,8 +3283,6 @@ class PercentageStrategy(CashFlow):
     def percentage(self, percentage):
         self._clear_cf_cache()
         validators.validate_real("percentage", percentage)
-        if percentage < 0 or percentage > 1:
-            raise ValueError("percentage must be between 0 and 1")
         self._percentage = percentage
 
 
