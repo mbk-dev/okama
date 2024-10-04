@@ -118,7 +118,7 @@ class Portfolio(make_asset_list.ListMaker):
     @property
     def weights(self) -> Union[list, tuple]:
         """
-        Get or set assets weights in portfolio.
+        Assets weights in portfolio.
 
         If not defined equal weights are used for each asset.
 
@@ -2348,11 +2348,13 @@ class PortfolioDCF:
     Parameters
     ----------
     discount_rate: float or None, default None
-        Cash flow discount rate required to calculate Present value (PV) or Future (FV) of cashflow. If not provided geometric mean of inflation is taken.
+        Cash flow discount rate required to calculate Present value (PV) or Future (FV) of cashflow.
+        If not provided geometric mean of inflation is taken.
         For portfolios without inflation the default value from settings is used.
 
     use_discounted_values: bool, default False
-        Defines weather to use discounted values in backtesting wealth indexes. If True the initital investments is discounted
+        Defines weather to use discounted values in backtesting wealth indexes.
+        If True the initial investments and cashflow size are discounted.
     """
 
     def __init__(
@@ -2400,7 +2402,15 @@ class PortfolioDCF:
 
     @property
     def use_discounted_values(self) -> bool:
-        # TODO: set docstrings
+        """
+        The value of attribute to define weather to use discounted values in backtesting wealth indexes.
+        If True the initial investments and cashflow size are discounted.
+
+        Returns
+        -------
+        bool
+            Weather to use discounted values in backtesting wealth indexes
+        """
         return self._use_discounted_values
 
     @use_discounted_values.setter
@@ -2981,7 +2991,28 @@ class MonteCarlo:
     parent : PortfolioDCF
         Parent PortfolioDCF instance.
 
-    # TODO: add examples
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
+    >>> # Set Monte Carlo parameters
+    >>> pf.dcf.set_mc_parameters(
+        distribution="t",  # use Student's distribution (t-distribution)
+        period=10,  # make forecast for 10 years
+        number=100  # create 100 randow wealth indexes
+    )
+    >>> # Set the cash flow strategy. It's required to generate random wealth indexes.
+    >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
+    >>> ind.initial_investment = 10_000  # add initial investments size
+    >>> ind.frequency = "year"  # set cash flow frequency
+    >>> ind.ind.amount = -1_500  # set withdrawal size
+    >>> ind.indexation = "inflation"
+    >>> # Assign the strategy to Portfolio
+    >>> pf.dcf.cashflow_parameters = ind
+    >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
+    >>> # Plot wealth index with cash flow
+    >>> pf.dcf.wealth_index.plot()
+    >>> plt.show()
     """
     def __init__(self, parent: PortfolioDCF):
         self.parent = parent
