@@ -2372,11 +2372,10 @@ class PortfolioDCF:
         self.use_discounted_values = use_discounted_values
 
     def __repr__(self):
-        pf_repr = repr(self.parent)
         dic = {
             "Portfolio symbol": self.parent.symbol,
-            "Monte carlo distribution": self.mc.distribution,
-            "Monte carlo period": self.mc.period,
+            "Monte Carlo distribution": self.mc.distribution,
+            "Monte Carlo period": self.mc.period,
             "Cash flow strategy": self.cashflow_parameters.NAME if hasattr(self.cashflow_parameters, "NAME") else None,
             "use_discounted_values": self.use_discounted_values,
         }
@@ -3026,6 +3025,15 @@ class MonteCarlo:
         self._period: int = 25
         self._mc_number: int = 100
 
+    def __repr__(self):
+        dic = {
+            "Portfolio symbol": self.parent.parent.symbol,
+            "Monte Carlo distribution": self.distribution,
+            "Monte Carlo period": self.period,
+            "Monte Carlo number": self.number,
+        }
+        return repr(pd.Series(dic))
+
     @property
     def distribution(self) -> str:
         """
@@ -3188,6 +3196,17 @@ class IndexationStrategy(CashFlow):
         self.amount: float = 0
         self.indexation: Union[str, float, None] = "inflation"
 
+    def __repr__(self):
+        dic = {
+            "Portfolio symbol": self.parent.symbol,
+            "Cash flow initial investment": self.initial_investment,
+            "Cash flow frequency": self.frequency,
+            "Cash flow strategy": self.NAME,
+            "Cash flow amount": self.amount,
+            "Cash flow indexation": self.indexation,
+        }
+        return repr(pd.Series(dic))
+
     @property
     def amount(self):
         """
@@ -3265,6 +3284,16 @@ class PercentageStrategy(CashFlow):
         self.portfolio = self.parent
         self.percentage = 0
 
+    def __repr__(self):
+        dic = {
+            "Portfolio symbol": self.parent.symbol,
+            "Cash flow initial investment": self.initial_investment,
+            "Cash flow frequency": self.frequency,
+            "Cash flow strategy": self.NAME,
+            "Cash flow percentage": self.percentage,
+        }
+        return repr(pd.Series(dic))
+
     @property
     def percentage(self) -> float:
         """
@@ -3324,6 +3353,14 @@ class TimeSeriesStrategy(CashFlow):
         self.portfolio = self.parent
         self.time_series_dic = {}
         self.time_series = pd.Series()
+
+    def __repr__(self):
+        dic = {
+            "Portfolio symbol": self.parent.symbol,
+            "Cash flow initial investment": self.initial_investment,
+            "Cash flow strategy": self.NAME,
+        }
+        return repr(pd.Series(dic))
 
     @property
     def time_series_dic(self) -> dict:
