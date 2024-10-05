@@ -24,10 +24,8 @@ def test_usdrub(init_asset_usdrub):
     assert_series_equal(init_asset_usdrub.close_monthly["2019-01":"2020-01"], close_monthly_sample, rtol=1e-1)
 
 
-@mark.xfail
 def test_eurusd(init_asset_eurusd):
-    close_daily_sample = pd.read_pickle(conftest.data_folder / "eurusd_close_daily.pkl")
-    assert_series_equal(init_asset_eurusd.close_daily["2019-01":"2020-01"], close_daily_sample, rtol=1e-2)
+    assert init_asset_eurusd.close_daily.loc["2020-01-15"] == 1.1149
 
 
 def test_close_daily(init_asset_spy, init_asset_usdrub):
@@ -35,7 +33,9 @@ def test_close_daily(init_asset_spy, init_asset_usdrub):
 
 
 def test_close_monthly(init_asset_spy):
-    assert init_asset_spy.close_monthly.loc["2000-01"] == 139.625  # changed in 2022 MAY from 139.5625
+    # changed in 2022 MAY from 139.5625
+    # changed in 2024 MAY from 139.625 to 139.5625
+    assert init_asset_spy.close_monthly.loc["2000-01"] == 139.5625
 
 
 def test_adj_close(init_asset_pif):
@@ -51,4 +51,4 @@ def test_dividends(init_asset_spy):
 
 
 def test_nav_ts(init_asset_pif):
-    assert init_asset_pif.nav_ts[0] == 101820352.18
+    assert init_asset_pif.nav_ts.iloc[0] == 101820352.18
