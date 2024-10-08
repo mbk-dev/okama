@@ -2573,8 +2573,6 @@ class PortfolioDCF:
         The portfolio survival period (longevity period) depends on the investment strategy: asset allocation,
         rebalancing, withdrawals rate etc.
 
-        The withdrawals are defined by the `cashflow` parameter of the portfolio.
-
         Returns
         -------
         float
@@ -2583,14 +2581,23 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(
-        ...    ['SPY.US', 'AGG.US'],
-        ...    ccy='USD',
-        ...    first_date='2010-01',
-        ...)
-        >>> pf.dcf.survival_period_hist
-        11.6
+                ['SPY.US', 'AGG.US'],
+                ccy='USD',
+                first_date='2010-01',
+                last_date='2024-10'
+            )
+        >>> # set cash flow strategy
+        >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
+        >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
+        >>> ind.amount = -2_500  # set annual withdrawal size
+        >>> ind.frequency = "year"  # set withdrawal frequency to year
+        >>> pf.dcf.cashflow_parameters = ind
+        >>> # Calculate the historical survival period for the cash flow strategy.
+        >>> # The balance is considered voided when it's equal to 0 (threshold=0)
+        >>> pf.dcf.survival_period_hist(threshold=0)
+        5.1
         """
-        return helpers.Date.get_period_length(last_date=self.survival_date_hist, first_date=self.parent.first_date)
+        return helpers.Date.get_period_length(last_date=self.survival_date_hist(threshold=threshold), first_date=self.parent.first_date)
 
     @property
     def survival_date_hist(self) -> pd.Timestamp:
