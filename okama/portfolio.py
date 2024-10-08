@@ -2521,7 +2521,7 @@ class PortfolioDCF:
     @property
     def wealth_index_with_assets(self) -> pd.DataFrame:
         """
-        Calculate wealth index time series for the portfolio and all assets considering cash flow (contributions and
+        Wealth index time series for the portfolio and all assets considering cash flow (contributions and
         withdrawals).
 
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
@@ -2545,8 +2545,8 @@ class PortfolioDCF:
         >>> ind = ok.IndexationStrategy(pf)  # Set Cash Flow Strategy parameters
         >>> ind.initial_investment = 100  # initial investments value
         >>> ind.frequency = "year"  # withdrawals frequency
-        >>> ind.amount = -0.5 * 12  # initital withdrawals amount
-        >>> ind.indexation = "inflation"  # the idexation is equal to inflation
+        >>> ind.amount = -0.5 * 12  # initial withdrawals amount
+        >>> ind.indexation = "inflation"  # the indexation is equal to inflation
         >>> pf.dcf.cashflow_parameters = ind  # assign the strategy to Portfolio
         >>> pf.dcf.wealth_index_with_assets.plot()
         >>> plt.show()
@@ -2566,8 +2566,7 @@ class PortfolioDCF:
         )
         return wealth_df
 
-    @property
-    def survival_period_hist(self) -> float:
+    def survival_period_hist(self, threshold: float = 0) -> float:
         """
         Calculate the period when the portfolio has positive balance considering withdrawals on the historical data.
 
