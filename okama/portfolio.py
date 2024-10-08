@@ -2749,23 +2749,7 @@ class PortfolioDCF:
         >>> ind.amount = -500  # set withdrawal size
         >>> ind.frequency = "year"  # set withdrawal frequency
         >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
-        >>> df = pf.dcf.monte_carlo_wealth
-        >>> df
-                           0             1   ...            98            99
-        2024-08  10000.000000  10000.000000  ...  10000.000000  10000.000000
-        2024-09  10116.590844  10243.575360  ...  10285.808938  10201.733368
-        2024-10   9810.489495  10204.606276  ...  10344.244570  10170.626697
-        2024-11   9693.705516  10334.428238  ...  10500.834328   9778.171946
-        2024-12   9535.275766  10243.856322  ...  10050.038508  10239.385612
-        ...               ...           ...  ...           ...           ...
-        2034-03  22711.571056  11227.003207  ...   9754.623687  15212.969151
-        2034-04  23200.940513  11243.415704  ...   9645.209807  15791.712237
-        2034-05  23749.990874  11220.215420  ...   9536.885003  15550.223342
-        2034-06  24707.505547  11551.418950  ...  10382.198220  15634.133910
-
-        It can be useful to plot Monte Carlo simulation results in an easy way.
-
-        >>> df.plot()
+        >>> pf.dcf.monte_carlo_wealth.plot()
         >>> plt.legend("")  # don't show legend for each line
         >>> plt.show()
         """
@@ -2869,17 +2853,9 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(
-                assets=['SPY.US', 'AGG.US', 'GLD.US'],
-                weights=[.60, .35, .05],
-                rebalancing_period='year'
-            )
+        >>> pf = ok.Portfolio(assets=['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
         >>> # Set Monte Carlo parameters
-        >>> pf.dcf.set_mc_parameters(
-                distribution="norm",
-                period=50,
-                number=200
-            )
+        >>> pf.dcf.set_mc_parameters(distribution="norm", period=50, number=200)
         >>> # set cash flow parameters
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
