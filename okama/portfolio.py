@@ -2893,8 +2893,8 @@ class PortfolioDCF:
         >>> plt.show()
         """
         if backtest:
-            if self.cash_flow_parameters == None:
-                raise AttributeError("'cash_flow_parameters' is not defined.")
+            if self.cashflow_parameters == None:
+                raise AttributeError("'cashflow_parameters' is not defined.")
             backup_obj = self.cashflow_parameters
             backup = self.use_discounted_values
             self.use_discounted_values = False
