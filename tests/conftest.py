@@ -101,7 +101,7 @@ def _init_asset_list(request, portfolio_short_history, portfolio_dividends, asse
 @pytest.fixture(scope="package")
 def init_portfolio_values():
     return dict(
-        assets=["RGBITR.INDX", "MCFTR.INDX"],
+        assets=["RGBITR.INDX", "MCFTR.INDX"],   # index values are better as they are not changing (adjusted_close)
         ccy="RUB",
         first_date="2015-01",
         last_date="2020-01",
@@ -153,40 +153,62 @@ def portfolio_dividends(init_portfolio_values):
 
 
 # DCF Scenarios
-# @pytest.fixture(scope="package")
-# def portfolio_cashflows_inflation(init_portfolio_values):
-#     _portfolio_cashflows_inflation = deepcopy(init_portfolio_values)
-#     _portfolio_cashflows_inflation["cashflow"] = -100
-#     _portfolio_cashflows_inflation["initial_amount"] = 100_000
-#     return ok.Portfolio(**_portfolio_cashflows_inflation)
-#
-#
-# @pytest.fixture(scope="package")
-# def portfolio_cashflows_NO_inflation(init_portfolio_values):
-#     _portfolio_cashflows_NO_inflation = deepcopy(init_portfolio_values)
-#     _portfolio_cashflows_NO_inflation["cashflow"] = -100.0
-#     _portfolio_cashflows_NO_inflation["initial_amount"] = 100_000.0
-#     _portfolio_cashflows_NO_inflation["inflation"] = False
-#     _portfolio_cashflows_NO_inflation["discount_rate"] = 0.09
-#     return ok.Portfolio(**_portfolio_cashflows_NO_inflation)
-#
-#
-# @pytest.fixture(scope="package")
-# def portfolio_cashflows_NO_inflation_NO_discount_rate(init_portfolio_values):
-#     _portfolio_cashflows_NO_inflation_NO_discount_rate = deepcopy(init_portfolio_values)
-#     _portfolio_cashflows_NO_inflation_NO_discount_rate["cashflow"] = -100.0
-#     _portfolio_cashflows_NO_inflation_NO_discount_rate["initial_amount"] = 100_000.0
-#     _portfolio_cashflows_NO_inflation_NO_discount_rate["inflation"] = False
-#     _portfolio_cashflows_NO_inflation_NO_discount_rate["discount_rate"] = None
-#     return ok.Portfolio(**_portfolio_cashflows_NO_inflation_NO_discount_rate)
-#
-#
-# @pytest.fixture(scope="package")
-# def portfolio_cashflows_inflation_large_cf(init_portfolio_values):
-#     _portfolio_cashflows_inflation_large_cf = deepcopy(init_portfolio_values)
-#     _portfolio_cashflows_inflation_large_cf["cashflow"] = -2000
-#     _portfolio_cashflows_inflation_large_cf["initial_amount"] = 100_000
-#     return ok.Portfolio(**_portfolio_cashflows_inflation_large_cf)
+@pytest.fixture(scope="package")
+def init_portfolio_dcf(init_portfolio_values):
+    _portfolio_values = deepcopy(init_portfolio_values)
+    _portfolio_dcf_values = dict(
+        discount_rate = None,
+        use_discounted_values = True,
+    )
+    return [_portfolio_values, _portfolio_dcf_values]
+
+
+@pytest.fixture(scope="package")
+def init_mc():
+    return dict(
+        distribution="t",
+        period=10,
+        number=100
+    )
+
+@pytest.fixture(scope="package")
+def portfolio_dcf(init_portfolio_dcf):
+    pf = ok.Portfolio(**init_portfolio_dcf[0])
+    pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
+    return pf_dcf
+
+
+@pytest.fixture(scope="package")
+def portfolio_dcf_no_inflation(init_portfolio_dcf):
+    values_list = deepcopy(init_portfolio_dcf)
+    values_list[0]["inflation"] = False
+    # Create Portfolio
+    pf = ok.Portfolio(**values_list[0])
+    pf_dcf = ok.PortfolioDCF(pf, **values_list[1])
+    return pf_dcf
+
+@pytest.fixture(scope="package")
+def portfolio_dcf_discount_rate(init_portfolio_dcf):
+    values_list = deepcopy(init_portfolio_dcf)
+    values_list[1]["discount_rate"] = 0.08
+    # Create Portfolio
+    pf = ok.Portfolio(**values_list[0])
+    pf_dcf = ok.PortfolioDCF(pf, **values_list[1])
+    return pf_dcf
+
+@pytest.fixture(scope="package")
+def portfolio_dcf_indexation(init_portfolio_dcf, init_mc):
+    pf = ok.Portfolio(**init_portfolio_dcf[0])
+    pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
+    pf_dcf.set_mc_parameters(**init_mc)
+    # Cash Flow
+    ind = ok.IndexationStrategy(pf)  # create IndexationStrategy linked to the portfolio
+    ind.initial_investment = 10_000  # add initial investments size
+    ind.frequency = "year"  # set cash flow frequency
+    ind.amount = -1_500  # set withdrawal size
+    ind.indexation = "inflation"
+    pf_dcf.cashflow_parameters = ind
+    return pf_dcf
 
 
 # Macro
