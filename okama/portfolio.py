@@ -2445,6 +2445,29 @@ class PortfolioDCF:
 
         number: int
             Number of random wealth indexes to generate with Monte Carlo simulation.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
+        >>> # Set Monte Carlo parameters
+        >>> pf.dcf.set_mc_parameters(
+            distribution="lognorm",  # use lognormal distribution
+            period=10,  # make forecast for 10 years
+            number=100  # create 100 randow wealth indexes
+        )
+        >>> # Set the cash flow strategy. It's required to generate random wealth indexes.
+        >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
+        >>> ind.initial_investment = 10_000  # add initial investments size
+        >>> ind.frequency = "year"  # set cash flow frequency
+        >>> ind.ind.amount = -1_500  # set withdrawal size
+        >>> ind.indexation = "inflation"
+        >>> # Assign the strategy to Portfolio
+        >>> pf.dcf.cashflow_parameters = ind
+        >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
+        >>> # Plot wealth index with cash flow
+        >>> pf.dcf.wealth_index.plot()
+        >>> plt.show()
         """
         self.mc.distribution = distribution
         self.mc.period = period
@@ -2453,7 +2476,7 @@ class PortfolioDCF:
     @property
     def wealth_index(self) -> pd.DataFrame:
         """
-        Calculate wealth index time series for the portfolio with cash flow (contributions and
+        Wealth index time series for the portfolio with cash flow (contributions and
         withdrawals).
 
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
@@ -2471,10 +2494,18 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.Portfolio(['SPY.US', 'BND.US'])
-        >>> x.dcf.wealth_index.plot()
+        >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
+        >>> ind = ok.IndexationStrategy(pf)  # Set Cash Flow Strategy parameters
+        >>> ind.initial_investment = 100  # initial investments value
+        >>> ind.frequency = "year"  # withdrawals frequency
+        >>> ind.amount = -0.5 * 12  # initial withdrawals amount
+        >>> ind.indexation = "inflation"  # the indexation is equal to inflation
+        >>> pf.dcf.cashflow_parameters = ind  # assign the strategy to Portfolio
+        >>> pf.dcf.wealth_index.plot()
         >>> plt.show()
         """
+        if self.cashflow_parameters == None:
+            raise AttributeError("'cashflow_parameters' is not defined.")
         if self._wealth_index.empty:
             df = self.parent._add_inflation()
             infl = self.parent.inflation if hasattr(self.parent, "inflation") else None

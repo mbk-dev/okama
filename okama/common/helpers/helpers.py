@@ -285,7 +285,7 @@ class Frame:
         raise TypeError("wealth_series must be a pd.Series or pd.DataFrame.")
 
     @get_survival_date.register
-    def _(wealth_series: pd.Series, discount_rate, threshold: float) -> pd.Timestamp:
+    def _(wealth_series: pd.Series, discount_rate: float, threshold: float) -> pd.Timestamp:
         if threshold > 1 or threshold < 0:
             raise ValueError("threshold must be in range from 0 to 1.")
         if threshold:

@@ -46,7 +46,7 @@ pf.dcf.cashflow_parameters = pc
 pf.dcf.discount_rate = 0.10
 pf.dcf.use_discounted_values = False
 
-print(pf.dcf)
+print(pf.dcf.survival_date_hist(threshold=0.05))
 
 # df = pf.dcf.wealth_index
 
@@ -57,14 +57,14 @@ pf.dcf.set_mc_parameters(
     number=100
 )
 
-largest_withdrawal = pf.dcf.find_the_largest_withdrawals_size(
-    withdrawal_steps=30,
-    confidence_level=0.50,
-    goal="survival_period",
-    threshold=0.10,
-    target_survival_period=25
-)
-print(largest_withdrawal)
+# largest_withdrawal = pf.dcf.find_the_largest_withdrawals_size(
+#     withdrawal_steps=30,
+#     confidence_level=0.50,
+#     goal="survival_period",
+#     threshold=0.10,
+#     target_survival_period=25
+# )
+# print(largest_withdrawal)
 
 # print(pf.dcf.monte_carlo_survival_period(threshold=0.05).describe())
 
