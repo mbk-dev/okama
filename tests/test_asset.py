@@ -34,7 +34,7 @@ def test_close_daily(init_asset_spy, init_asset_usdrub):
 
 def test_close_monthly(init_asset_spy):
     # changed in 2022 MAY from 139.5625
-    # changed in 2024 MAY from 139.625 to 139.5625
+    # changed in 2024 OCT from 139.625 to 139.5625
     assert init_asset_spy.close_monthly.loc["2000-01"] == 139.5625
 
 

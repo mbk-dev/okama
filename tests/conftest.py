@@ -108,9 +108,6 @@ def init_portfolio_values():
         inflation=True,
         rebalancing_period="year",
         symbol="pf1.PF",
-        cashflow=0,
-        initial_amount=1_000,
-        discount_rate=None,
     )
 
 
@@ -156,40 +153,40 @@ def portfolio_dividends(init_portfolio_values):
 
 
 # DCF Scenarios
-@pytest.fixture(scope="package")
-def portfolio_cashflows_inflation(init_portfolio_values):
-    _portfolio_cashflows_inflation = deepcopy(init_portfolio_values)
-    _portfolio_cashflows_inflation["cashflow"] = -100
-    _portfolio_cashflows_inflation["initial_amount"] = 100_000
-    return ok.Portfolio(**_portfolio_cashflows_inflation)
-
-
-@pytest.fixture(scope="package")
-def portfolio_cashflows_NO_inflation(init_portfolio_values):
-    _portfolio_cashflows_NO_inflation = deepcopy(init_portfolio_values)
-    _portfolio_cashflows_NO_inflation["cashflow"] = -100.0
-    _portfolio_cashflows_NO_inflation["initial_amount"] = 100_000.0
-    _portfolio_cashflows_NO_inflation["inflation"] = False
-    _portfolio_cashflows_NO_inflation["discount_rate"] = 0.09
-    return ok.Portfolio(**_portfolio_cashflows_NO_inflation)
-
-
-@pytest.fixture(scope="package")
-def portfolio_cashflows_NO_inflation_NO_discount_rate(init_portfolio_values):
-    _portfolio_cashflows_NO_inflation_NO_discount_rate = deepcopy(init_portfolio_values)
-    _portfolio_cashflows_NO_inflation_NO_discount_rate["cashflow"] = -100.0
-    _portfolio_cashflows_NO_inflation_NO_discount_rate["initial_amount"] = 100_000.0
-    _portfolio_cashflows_NO_inflation_NO_discount_rate["inflation"] = False
-    _portfolio_cashflows_NO_inflation_NO_discount_rate["discount_rate"] = None
-    return ok.Portfolio(**_portfolio_cashflows_NO_inflation_NO_discount_rate)
-
-
-@pytest.fixture(scope="package")
-def portfolio_cashflows_inflation_large_cf(init_portfolio_values):
-    _portfolio_cashflows_inflation_large_cf = deepcopy(init_portfolio_values)
-    _portfolio_cashflows_inflation_large_cf["cashflow"] = -2000
-    _portfolio_cashflows_inflation_large_cf["initial_amount"] = 100_000
-    return ok.Portfolio(**_portfolio_cashflows_inflation_large_cf)
+# @pytest.fixture(scope="package")
+# def portfolio_cashflows_inflation(init_portfolio_values):
+#     _portfolio_cashflows_inflation = deepcopy(init_portfolio_values)
+#     _portfolio_cashflows_inflation["cashflow"] = -100
+#     _portfolio_cashflows_inflation["initial_amount"] = 100_000
+#     return ok.Portfolio(**_portfolio_cashflows_inflation)
+#
+#
+# @pytest.fixture(scope="package")
+# def portfolio_cashflows_NO_inflation(init_portfolio_values):
+#     _portfolio_cashflows_NO_inflation = deepcopy(init_portfolio_values)
+#     _portfolio_cashflows_NO_inflation["cashflow"] = -100.0
+#     _portfolio_cashflows_NO_inflation["initial_amount"] = 100_000.0
+#     _portfolio_cashflows_NO_inflation["inflation"] = False
+#     _portfolio_cashflows_NO_inflation["discount_rate"] = 0.09
+#     return ok.Portfolio(**_portfolio_cashflows_NO_inflation)
+#
+#
+# @pytest.fixture(scope="package")
+# def portfolio_cashflows_NO_inflation_NO_discount_rate(init_portfolio_values):
+#     _portfolio_cashflows_NO_inflation_NO_discount_rate = deepcopy(init_portfolio_values)
+#     _portfolio_cashflows_NO_inflation_NO_discount_rate["cashflow"] = -100.0
+#     _portfolio_cashflows_NO_inflation_NO_discount_rate["initial_amount"] = 100_000.0
+#     _portfolio_cashflows_NO_inflation_NO_discount_rate["inflation"] = False
+#     _portfolio_cashflows_NO_inflation_NO_discount_rate["discount_rate"] = None
+#     return ok.Portfolio(**_portfolio_cashflows_NO_inflation_NO_discount_rate)
+#
+#
+# @pytest.fixture(scope="package")
+# def portfolio_cashflows_inflation_large_cf(init_portfolio_values):
+#     _portfolio_cashflows_inflation_large_cf = deepcopy(init_portfolio_values)
+#     _portfolio_cashflows_inflation_large_cf["cashflow"] = -2000
+#     _portfolio_cashflows_inflation_large_cf["initial_amount"] = 100_000
+#     return ok.Portfolio(**_portfolio_cashflows_inflation_large_cf)
 
 
 # Macro
