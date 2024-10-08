@@ -114,7 +114,6 @@ class Portfolio(make_asset_list.ListMaker):
         else:
             return self.ror
 
-
     @property
     def weights(self) -> Union[list, tuple]:
         """
@@ -2344,7 +2343,7 @@ class PortfolioDCF:
     pf.dcf.weatlh_index
     pf.dсf.cashflow_pv
     ```
-    
+
     Parameters
     ----------
     discount_rate: float or None, default None
@@ -2358,10 +2357,10 @@ class PortfolioDCF:
     """
 
     def __init__(
-            self,
-            parent: Portfolio,
-            discount_rate: Optional[float] = None,
-            use_discounted_values: bool = False,
+        self,
+        parent: Portfolio,
+        discount_rate: Optional[float] = None,
+        use_discounted_values: bool = False,
     ):
         self.parent = parent
         self.discount_rate = discount_rate
@@ -2424,10 +2423,7 @@ class PortfolioDCF:
         self._monte_carlo_wealth = pd.DataFrame()
         self._use_discounted_values = use_discounted_values
 
-    def set_mc_parameters(self,
-                          distribution: str,
-                          period: int,
-                          number: int):
+    def set_mc_parameters(self, distribution: str, period: int, number: int):
         """
         Add Monte Carlo simulation parameters to Portfolio.
 
@@ -2504,7 +2500,7 @@ class PortfolioDCF:
         >>> pf.dcf.wealth_index.plot()
         >>> plt.show()
         """
-        if self.cashflow_parameters == None:
+        if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._wealth_index.empty:
             df = self.parent._add_inflation()
@@ -2597,7 +2593,9 @@ class PortfolioDCF:
         >>> pf.dcf.survival_period_hist(threshold=0)
         5.1
         """
-        return helpers.Date.get_period_length(last_date=self.survival_date_hist(threshold=threshold), first_date=self.parent.first_date)
+        return helpers.Date.get_period_length(
+            last_date=self.survival_date_hist(threshold=threshold), first_date=self.parent.first_date
+        )
 
     def survival_date_hist(self, threshold: float = 0) -> pd.Timestamp:
         """
@@ -2771,12 +2769,12 @@ class PortfolioDCF:
         >>> plt.legend("")  # don't show legend for each line
         >>> plt.show()
         """
-        if self.cashflow_parameters == None:
+        if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._monte_carlo_wealth.empty:
-            return_ts = self.parent.monte_carlo_returns_ts(distr=self.mc.distribution,
-                                                           years=self.mc.period,
-                                                           n=self.mc.number)
+            return_ts = self.parent.monte_carlo_returns_ts(
+                distr=self.mc.distribution, years=self.mc.period, n=self.mc.number
+            )
             wealth_df = return_ts.apply(
                 helpers.Frame.get_wealth_indexes_with_cashflow,
                 axis=0,
@@ -2893,7 +2891,7 @@ class PortfolioDCF:
         >>> plt.show()
         """
         if backtest:
-            if self.cashflow_parameters == None:
+            if self.cashflow_parameters is None:
                 raise AttributeError("'cashflow_parameters' is not defined.")
             backup_obj = self.cashflow_parameters
             backup = self.use_discounted_values
@@ -2918,10 +2916,7 @@ class PortfolioDCF:
             s2 = self.monte_carlo_wealth
             s2.plot(legend=None)
 
-    def monte_carlo_survival_period(
-        self,
-        threshold: float = 0
-    ) -> pd.Series:
+    def monte_carlo_survival_period(self, threshold: float = 0) -> pd.Series:
         """
         Generate a survival period distribution for a portfolio with cash flows by Monte Carlo simulation.
 
@@ -2971,12 +2966,7 @@ class PortfolioDCF:
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
 
     def find_the_largest_withdrawals_size(
-            self,
-            withdrawal_steps: int,
-            confidence_level: float,
-            goal: str,
-            threshold: float,
-            target_survival_period: int
+        self, withdrawal_steps: int, confidence_level: float, goal: str, threshold: float, target_survival_period: int
     ) -> float:
         """
         Find the largest withdrawals size for Monte Carlo simulation according to Cashflow Strategy.
@@ -3117,6 +3107,7 @@ class MonteCarlo:
     >>> pf.dcf.wealth_index.plot()
     >>> plt.show()
     """
+
     def __init__(self, parent: PortfolioDCF):
         self.parent = parent
         self._distribution: str = "norm"
@@ -3201,10 +3192,11 @@ class CashFlow:
     parent : Portfolio
         Parent Portfolio instance.
     """
+
     def __init__(self, parent: Portfolio):
         self.parent = parent
         self.frequency: Optional[str] = None
-        self.initial_investment: float = 1000.
+        self.initial_investment: float = 1000.0
         self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
 
     @property
@@ -3284,10 +3276,12 @@ class IndexationStrategy(CashFlow):
     >>> pf.dcf.wealth_index.plot()
     >>> plt.show()
     """
+
     NAME = "fixed_amount"
+
     def __init__(
-            self,
-            parent: Portfolio,
+        self,
+        parent: Portfolio,
     ):
         super().__init__(parent)
         self.portfolio = self.parent
@@ -3373,10 +3367,12 @@ class PercentageStrategy(CashFlow):
     >>> pf.dcf.wealth_index.plot()
     >>> plt.show()
     """
+
     NAME = "fixed_percentage"
+
     def __init__(
-            self,
-            parent: Portfolio,
+        self,
+        parent: Portfolio,
     ):
         super().__init__(parent)
         self.portfolio = self.parent
@@ -3442,10 +3438,12 @@ class TimeSeriesStrategy(CashFlow):
     >>> pf.dcf.wealth_index.plot()
     >>> plt.show()
     """
+
     NAME = "time_series"
+
     def __init__(
-            self,
-            parent: Portfolio,
+        self,
+        parent: Portfolio,
     ):
         super().__init__(parent)
         self.portfolio = self.parent

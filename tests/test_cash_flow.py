@@ -11,4 +11,3 @@ def test_dcf_discount_rate(portfolio_dcf, portfolio_dcf_no_inflation, portfolio_
 
 def test_initial_investment_pv(portfolio_dcf_indexation):
     assert portfolio_dcf_indexation.initial_investment_pv == approx(7633.93, rel=1e-2)
-

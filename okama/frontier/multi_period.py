@@ -1,4 +1,3 @@
-import copy
 import time
 from typing import List, Tuple, Dict, Optional
 
@@ -816,4 +815,3 @@ class EfficientFrontierReb(asset_list.AssetList):
             row = {"Risk": risk, "CAGR": cagr}
             random_portfolios = pd.concat([random_portfolios, pd.DataFrame(row, index=[0])], ignore_index=True)
         return random_portfolios
-

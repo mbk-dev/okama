@@ -374,4 +374,3 @@ def test_init_portfolio_failing():
         ok.Portfolio(["RGBITR.INDX", "MCFTR.INDX"], weights=[0.1, 0.2, 0.7])
     with pytest.raises(ValueError, match="Weights sum is not equal to one."):
         ok.Portfolio(["RGBITR.INDX", "MCFTR.INDX"], weights=[0.1, 0.2])
-

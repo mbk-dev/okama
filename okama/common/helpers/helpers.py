@@ -176,8 +176,7 @@ class Frame:
 
     @staticmethod
     def get_wealth_indexes(
-        ror: Union[pd.Series, pd.DataFrame], 
-        initial_amount: float = 1000.0
+        ror: Union[pd.Series, pd.DataFrame], initial_amount: float = 1000.0
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Returns wealth indexes for a list of assets (or for portfolio).
@@ -207,7 +206,11 @@ class Frame:
         pf_object = cashflow_parameters.parent
         dcf_object = cashflow_parameters.parent.dcf
         amount = getattr(cashflow_parameters, "amount", None)
-        period_initial_amount = dcf_object.initial_investment_pv if dcf_object.use_discounted_values else cashflow_parameters.initial_investment
+        period_initial_amount = (
+            dcf_object.initial_investment_pv
+            if dcf_object.use_discounted_values
+            else cashflow_parameters.initial_investment
+        )
         period_initial_amount_cached = period_initial_amount
         if amount == 0:
             wealth_index = Frame.get_wealth_indexes(ror, period_initial_amount)
@@ -488,6 +491,7 @@ class Rebalance:
     """
     Methods for rebalancing portfolio.
     """
+
     def __init__(
         self, period: str = "year", abs_deviation: Optional[float] = None, rel_deviation: Optional[float] = None
     ):

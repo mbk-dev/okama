@@ -101,7 +101,7 @@ def _init_asset_list(request, portfolio_short_history, portfolio_dividends, asse
 @pytest.fixture(scope="package")
 def init_portfolio_values():
     return dict(
-        assets=["RGBITR.INDX", "MCFTR.INDX"],   # index values are better as they are not changing (adjusted_close)
+        assets=["RGBITR.INDX", "MCFTR.INDX"],  # index values are better as they are not changing (adjusted_close)
         ccy="RUB",
         first_date="2015-01",
         last_date="2020-01",
@@ -157,19 +157,16 @@ def portfolio_dividends(init_portfolio_values):
 def init_portfolio_dcf(init_portfolio_values):
     _portfolio_values = deepcopy(init_portfolio_values)
     _portfolio_dcf_values = dict(
-        discount_rate = None,
-        use_discounted_values = True,
+        discount_rate=None,
+        use_discounted_values=True,
     )
     return [_portfolio_values, _portfolio_dcf_values]
 
 
 @pytest.fixture(scope="package")
 def init_mc():
-    return dict(
-        distribution="t",
-        period=10,
-        number=100
-    )
+    return dict(distribution="t", period=10, number=100)
+
 
 @pytest.fixture(scope="package")
 def portfolio_dcf(init_portfolio_dcf):
@@ -187,6 +184,7 @@ def portfolio_dcf_no_inflation(init_portfolio_dcf):
     pf_dcf = ok.PortfolioDCF(pf, **values_list[1])
     return pf_dcf
 
+
 @pytest.fixture(scope="package")
 def portfolio_dcf_discount_rate(init_portfolio_dcf):
     values_list = deepcopy(init_portfolio_dcf)
@@ -195,6 +193,7 @@ def portfolio_dcf_discount_rate(init_portfolio_dcf):
     pf = ok.Portfolio(**values_list[0])
     pf_dcf = ok.PortfolioDCF(pf, **values_list[1])
     return pf_dcf
+
 
 @pytest.fixture(scope="package")
 def portfolio_dcf_indexation(init_portfolio_dcf, init_mc):

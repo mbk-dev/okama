@@ -11,7 +11,7 @@ default_macro_rate = "RUS_CBR.RATE"
 default_macro_indicator = "USA_CAPE10.RATIO"
 
 DEFAULT_DISCOUNT_RATE = 0.05
-DEFAULT_INITIAL_INVESTMENT = 1000.
+DEFAULT_INITIAL_INVESTMENT = 1000.0
 
 _MONTHS_PER_YEAR = 12
 PeriodLength = namedtuple("PeriodLength", "years months")
