@@ -2599,15 +2599,12 @@ class PortfolioDCF:
         """
         return helpers.Date.get_period_length(last_date=self.survival_date_hist(threshold=threshold), first_date=self.parent.first_date)
 
-    @property
-    def survival_date_hist(self) -> pd.Timestamp:
+    def survival_date_hist(self, threshold: float = 0) -> pd.Timestamp:
         """
         Get the date when the portfolio balance become negative considering withdrawals on the historical data.
 
         The portfolio survival date (longevity date) depends on the investment strategy: asset allocation,
         rebalancing, withdrawals rate etc.
-
-        The withdrawals are defined by the `cashflow` parameter of the portfolio.
 
         Returns
         -------
@@ -2617,14 +2614,23 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(
-        ...    ['SPY.US', 'AGG.US'],
-        ...    ccy='USD',
-        ...    first_date='2010-01',
-        ...)
-        >>> pf.dcf.survival_date_hist
-        Timestamp('2021-08-01 00:00:00')
+                ['SPY.US', 'AGG.US'],
+                ccy='USD',
+                first_date='2010-01',
+                last_date='2024-10'
+            )
+        >>> # set cash flow strategy
+        >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
+        >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
+        >>> ind.amount = -2_500  # set annual withdrawal size
+        >>> ind.frequency = "year"  # set withdrawal frequency to year
+        >>> pf.dcf.cashflow_parameters = ind
+        >>> # Calculate the historical survival period for the cash flow strategy
+        >>> pf.dcf.survival_date_hist(threshold=0)
+        Timestamp('2015-01-31 00:00:00')
         """
-        return helpers.Frame.get_survival_date(self.wealth_index.loc[:, self.parent.symbol])
+        ws = self.wealth_index.loc[:, self.parent.symbol]
+        return helpers.Frame.get_survival_date(ws, self.discount_rate, threshold)
 
     @property
     def initial_investment_pv(self) -> Optional[float]:
@@ -2640,9 +2646,14 @@ class PortfolioDCF:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB', initial_amount=100_000)
+        Get discounted PV value of `initial_investment` for a portfolio with 4 years of history (at 2020-04).
+        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB', last_date="2024-10")
+        >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
+        >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
+        >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
+        >>> pf.dcf.discount_rate = 0.10  # define discount rate as 10%
         >>> pf.dcf.initial_investment_pv
-        73650
+        6574.643143611553
         """
         return self.cashflow_parameters.initial_investment / (1.0 + self.discount_rate) ** self.parent.period_length
 
@@ -2665,13 +2676,15 @@ class PortfolioDCF:
 
         Examples
         --------
+        Get discounted FV of initial_investment value for a period of 10 years.
         >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB')
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
         >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
         >>> pf.dcf.mc.period = 10  # define forecast period
-        >>> pf.dcf.discount_rate = 0.10  # define discount rate
+        >>> pf.dcf.discount_rate = 0.10  # define discount rate as 10%
         >>> pf.dcf.initial_investment_fv
+        25937.424601000024
         """
         if hasattr(self.cashflow_parameters, "initial_investment"):
             return float(self.cashflow_parameters.initial_investment * (1.0 + self.discount_rate) ** self.mc.period)
@@ -2695,7 +2708,8 @@ class PortfolioDCF:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD')
+        Get discounted PV value of of the cash flow amount for a portfolio with 20 years of history (at 2003-10).
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD', last_date="2024-10")
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
         >>> ind.amount = -500  # set withdrawal size
@@ -2703,6 +2717,7 @@ class PortfolioDCF:
         >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
         >>> pf.dcf.discount_rate = 0.10  # define discount rate
         >>> pf.dcf.cashflow_pv
+        -68.86557103941368
         """
         if hasattr(self.cashflow_parameters, "amount"):
             return float(self.cashflow_parameters.amount / (1.0 + self.discount_rate) ** self.parent.period_length)
@@ -2729,17 +2744,35 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
-        >>> pf.dcf.monte_carlo_wealth
-                         0            1    ...          998          999
-        2021-07  3895.377293  3895.377293  ...  3895.377293  3895.377293
-        2021-08  3869.854680  4004.814981  ...  3874.455244  3935.913516
-        2021-09  3811.125717  3993.783034  ...  3648.925159  3974.103856
-        2021-10  4053.024519  4232.141143  ...  3870.099003  4082.189688
-        2021-11  4179.544897  4156.839698  ...  3899.249696  4097.003962
-        2021-12  4237.030690  4351.305114  ...  3916.639721  4042.011774
+        >>> pf.dcf.set_mc_parameters(distribution="t", period=10, number=100)  # Set Monte Carlo parameters
+        >>> # set cash flow parameters
+        >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
+        >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
+        >>> ind.amount = -500  # set withdrawal size
+        >>> ind.frequency = "year"  # set withdrawal frequency
+        >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
+        >>> df = pf.dcf.monte_carlo_wealth
+        >>> df
+                           0             1   ...            98            99
+        2024-08  10000.000000  10000.000000  ...  10000.000000  10000.000000
+        2024-09  10116.590844  10243.575360  ...  10285.808938  10201.733368
+        2024-10   9810.489495  10204.606276  ...  10344.244570  10170.626697
+        2024-11   9693.705516  10334.428238  ...  10500.834328   9778.171946
+        2024-12   9535.275766  10243.856322  ...  10050.038508  10239.385612
+        ...               ...           ...  ...           ...           ...
+        2034-03  22711.571056  11227.003207  ...   9754.623687  15212.969151
+        2034-04  23200.940513  11243.415704  ...   9645.209807  15791.712237
+        2034-05  23749.990874  11220.215420  ...   9536.885003  15550.223342
+        2034-06  24707.505547  11551.418950  ...  10382.198220  15634.133910
+
+        It can be useful to plot Monte Carlo simulation results in an easy way.
+
+        >>> df.plot()
+        >>> plt.legend("")  # don't show legend for each line
+        >>> plt.show()
         """
         if self.cashflow_parameters == None:
-            raise AttributeError("'cash_flow_parameters' is not defined.")
+            raise AttributeError("'cashflow_parameters' is not defined.")
         if self._monte_carlo_wealth.empty:
             return_ts = self.parent.monte_carlo_returns_ts(distr=self.mc.distribution,
                                                            years=self.mc.period,
@@ -2788,6 +2821,7 @@ class PortfolioDCF:
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
         >>> pc = ok.PercentageStrategy(pf)  # Define withdrawals strategy with fixed percentage
         >>> pc.frequency = "year"  # set withdrawals frequency
@@ -2837,10 +2871,25 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(assets=['SPY.US', 'AGG.US', 'GLD.US'],
-        ...                   weights=[.60, .35, .05],
-        ...                   rebalancing_period='year')
+        >>> pf = ok.Portfolio(
+                assets=['SPY.US', 'AGG.US', 'GLD.US'],
+                weights=[.60, .35, .05],
+                rebalancing_period='year'
+            )
+        >>> # Set Monte Carlo parameters
+        >>> pf.dcf.set_mc_parameters(
+                distribution="norm",
+                period=50,
+                number=200
+            )
+        >>> # set cash flow parameters
+        >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
+        >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
+        >>> ind.amount = -500  # set withdrawal size
+        >>> ind.frequency = "year"  # set withdrawal frequency
+        >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
         >>> pf.dcf.plot_forecast_monte_carlo(backtest=True)
+        >>> plt.yscale("log")  # Y-axis has logarithmic scale
         >>> plt.show()
         """
         if backtest:
@@ -2894,17 +2943,28 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05])
+        >>> # set Monte Carlos parameters
+        >>> pf.dcf.set_mc_parameters(
+                distribution="t",  # use Student's distribution (t-distribution)
+                period=50,  # make forecast for 50 years
+                number=200  # create 200 randow wealth indexes
+            )
+        >>> # Set Cash Flow parameters
         >>> pc = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
         >>> pc.initial_investment = 10_000  # add initial investments size
         >>> pc.frequency = "year"  # set cash flow frequency
-        >>> pc.percentage = -0.12  # set withdrawal percentage
+        >>> pc.percentage = -0.20  # set withdrawal percentage
         >>> # Assign the strategy to Portfolio
         >>> pf.dcf.cashflow_parameters = pc
-        >>> s = pf.dcf.monte_carlo_survival_period(threshold=0.05)  # the balance is considered voided at 5%
+        >>> s = pf.dcf.monte_carlo_survival_period(threshold=0.10)  # the balance is considered voided at 10%
         >>> s.min()
+        np.float64(10.5)
         >>> s.max()
+        np.float64(33.5)
         >>> s.mean()
+        np.float64(17.9055)
         >>> s.quantile(50 / 100)
+        np.float64(17.5)
         """
         s2 = self.monte_carlo_wealth
         dates: pd.Series = helpers.Frame.get_survival_date(s2, self.discount_rate, threshold)
@@ -2961,12 +3021,12 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(
-            assets=["MCFTR.INDX", "RUCBTRNS.INDX"],
-            weights=[.3, .7],
-            inflation=True,
-            ccy="RUB",
-            rebalancing_period="year",
-        )
+                assets=["MCFTR.INDX", "RUCBTRNS.INDX"],
+                weights=[.3, .7],
+                inflation=True,
+                ccy="RUB",
+                rebalancing_period="year",
+            )
         >>> # Fixed Percentage strategy
         >>> pc = ok.PercentageStrategy(pf)
         >>> pc.initial_investment = 10_000
@@ -2975,9 +3035,9 @@ class PortfolioDCF:
         >>> pf.dcf.cashflow_parameters = pc
         >>> # Set Monte Carlo parameters
         >>> pf.dcf.set_mc_parameters(
-            distribution="t",
+            distribution="norm",
             period=50,
-            number=100
+            number=200
         )
         >>> pf.dcf.find_the_largest_withdrawals_size(
             withdrawal_steps=30,
@@ -2986,6 +3046,7 @@ class PortfolioDCF:
             threshold=0.10,
             target_survival_period=25
         )
+        np.float64(-0.10344827586206895)
         """
         max_withdrawal = 0
         if confidence_level > 1 or confidence_level < 0:
