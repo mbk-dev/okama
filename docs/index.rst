@@ -46,6 +46,7 @@ Okama main features
 
 * Investment portfolio constrained Markowitz Mean-Variance Analysis (MVA) and optimization
 * Rebalanced portfolio optimization with constraints (multi-period Efficient Frontier)
+* Investment portfolios with contributions / withdrawals cash flows (DCF)
 * Monte Carlo Simulations for financial assets and investment portfolios
 * Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
 * Forecasting models according to normal and lognormal distribution
@@ -98,7 +99,8 @@ The latest development version can be installed directly from GitHub:
 
 .. code:: text
 
-    pip install git+https://github.com/mbk-dev/okama@dev
+    git clone https://github.com/mbk-dev/okama@dev
+    poetry install
 
 .. warning::
 
