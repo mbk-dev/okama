@@ -2452,7 +2452,7 @@ class PortfolioDCF:
         >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investments size
         >>> ind.frequency = "year"  # set cash flow frequency
-        >>> ind.ind.amount = -1_500  # set withdrawal size
+        >>> ind.amount = -1_500  # set withdrawal size
         >>> ind.indexation = "inflation"
         >>> # Assign the strategy to Portfolio
         >>> pf.dcf.cashflow_parameters = ind
@@ -2927,10 +2927,10 @@ class PortfolioDCF:
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05])
         >>> # set Monte Carlos parameters
         >>> pf.dcf.set_mc_parameters(
-                distribution="t",  # use Student's distribution (t-distribution)
-                period=50,  # make forecast for 50 years
-                number=200  # create 200 randow wealth indexes
-            )
+        ...        distribution="t",  # use Student's distribution (t-distribution)
+        ...        period=50,  # make forecast for 50 years
+        ...        number=200  # create 200 randow wealth indexes
+        ...    )
         >>> # Set Cash Flow parameters
         >>> pc = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
         >>> pc.initial_investment = 10_000  # add initial investments size
@@ -3086,7 +3086,7 @@ class MonteCarlo:
     >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
     >>> ind.initial_investment = 10_000  # add initial investments size
     >>> ind.frequency = 'year'  # set cash flow frequency
-    >>> ind.ind.amount = -1_500  # set withdrawal size
+    >>> ind.amount = -1_500  # set withdrawal size
     >>> ind.indexation = 'inflation'
     >>> # Assign the strategy to Portfolio
     >>> pf.dcf.cashflow_parameters = ind
@@ -3256,7 +3256,7 @@ class IndexationStrategy(CashFlow):
     >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
     >>> ind.initial_investment = 10_000  # add initial investments size
     >>> ind.frequency = "year"  # set cash flow frequency
-    >>> ind.ind.amount = -1_500  # set withdrawal size
+    >>> ind.amount = -1_500  # set withdrawal size
     >>> ind.indexation = "inflation"
     >>> # Assign the strategy to Portfolio
     >>> pf.dcf.cashflow_parameters = ind
