@@ -79,9 +79,11 @@ For many countries (China, USA, United Kingdom, European Union, Russia, Israel e
 `pip install okama`
 
 The latest development version can be installed directly from GitHub:
-`git clone https://github.com/mbk-dev/okama@dev`
 
-`poetry install`
+```python
+git clone https://github.com/mbk-dev/okama@dev`
+poetry install
+```
 
 
 ## Getting started
