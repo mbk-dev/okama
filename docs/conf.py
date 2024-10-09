@@ -142,7 +142,7 @@ nbsphinx_execute_arguments = [
 # nbsphinx do not use requirejs (breaks bootstrap)
 nbsphinx_requirejs_path = ""
 
-# -- matplotlib plot directive settings -----------------------------------
+# -- matplotlib plot directive settings (plot_directive) -----------------------------------
 plot_html_show_formats = False
 plot_include_source = True
 plot_html_show_source_link = False

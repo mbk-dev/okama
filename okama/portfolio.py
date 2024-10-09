@@ -2999,12 +2999,12 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(
-                assets=["MCFTR.INDX", "RUCBTRNS.INDX"],
-                weights=[.3, .7],
-                inflation=True,
-                ccy="RUB",
-                rebalancing_period="year",
-            )
+         ...       assets=["MCFTR.INDX", "RUCBTRNS.INDX"],
+         ...       weights=[.3, .7],
+         ...       inflation=True,
+         ...       ccy="RUB",
+         ...       rebalancing_period="year",
+         ...   )
         >>> # Fixed Percentage strategy
         >>> pc = ok.PercentageStrategy(pf)
         >>> pc.initial_investment = 10_000
@@ -3013,17 +3013,17 @@ class PortfolioDCF:
         >>> pf.dcf.cashflow_parameters = pc
         >>> # Set Monte Carlo parameters
         >>> pf.dcf.set_mc_parameters(
-            distribution="norm",
-            period=50,
-            number=200
-        )
+        ...    distribution="norm",
+        ...    period=50,
+        ...    number=200
+        ...)
         >>> pf.dcf.find_the_largest_withdrawals_size(
-            withdrawal_steps=30,
-            confidence_level=0.50,
-            goal="survival_period",
-            threshold=0.10,
-            target_survival_period=25
-        )
+        ...    withdrawal_steps=30,
+        ...    confidence_level=0.50,
+        ...    goal="survival_period",
+        ...    threshold=0.10,
+        ...    target_survival_period=25
+        ...)
         np.float64(-0.10344827586206895)
         """
         max_withdrawal = 0
@@ -3075,19 +3075,19 @@ class MonteCarlo:
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
+    >>> pf = ok.Portfolio(first_date='2015-01', last_date='2024-10')  # create Portfolio with default parameters
     >>> # Set Monte Carlo parameters
     >>> pf.dcf.set_mc_parameters(
-        distribution="t",  # use Student's distribution (t-distribution)
-        period=10,  # make forecast for 10 years
-        number=100  # create 100 randow wealth indexes
-    )
+    ... distribution='t',
+    ... period=10,
+    ... number=100
+    ... )
     >>> # Set the cash flow strategy. It's required to generate random wealth indexes.
     >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
     >>> ind.initial_investment = 10_000  # add initial investments size
-    >>> ind.frequency = "year"  # set cash flow frequency
+    >>> ind.frequency = 'year'  # set cash flow frequency
     >>> ind.ind.amount = -1_500  # set withdrawal size
-    >>> ind.indexation = "inflation"
+    >>> ind.indexation = 'inflation'
     >>> # Assign the strategy to Portfolio
     >>> pf.dcf.cashflow_parameters = ind
     >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
@@ -3193,6 +3193,7 @@ class CashFlow:
         The frequency of regualr withdrawals or contributions in the strategy.
 
         Allowed values for frequency:
+
         - 'none' no frequency (default value)
         - 'year' annual cash flows
         - 'half-year' 6 months cash flows
@@ -3413,10 +3414,7 @@ class TimeSeriesStrategy(CashFlow):
     >>> import matplotlib.pyplot as plt
     >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
     >>> # create simple dictionary with cash flow amounts and dates
-    >>> d = {
-        "2018-02": 2_000,
-        "2024-03": -4_000,
-    }
+    >>> d = {"2018-02": 2_000, "2024-03": -4_000}
     >>> ts = ok.TimeSeriesStrategy(pf)  # create TimeSeresStrategy linked to the portfolio
     >>> ts.time_series_dic = d  # use the dictionary to set cash flow
     >>> ts.initial_investment = 1_000  # add initial investments size (optional)
@@ -3458,10 +3456,7 @@ class TimeSeriesStrategy(CashFlow):
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
         >>> # create simple dictionary with cash flow amounts and dates
-        >>> d = {
-            "2018-02": 2_000,
-            "2024-03": -4_000,
-        }
+        >>> d = {"2018-02": 2_000, "2024-03": -4_000}
         >>> ts = ok.TimeSeriesStrategy(pf)  # create TimeSeresStrategy linked to the portfolio
         >>> ts.time_series_dic = d  # use the dictionary to set cash flow
         >>> ts.initial_investment = 1_000  # add initial investments size (optional)
