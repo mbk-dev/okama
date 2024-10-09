@@ -2569,6 +2569,13 @@ class PortfolioDCF:
         The portfolio survival period (longevity period) depends on the investment strategy: asset allocation,
         rebalancing, withdrawals rate etc.
 
+        Parameters
+        ----------
+        threshold : float, default 0
+            The percentage of the initial investments when the portfolio balance considered voided.
+            This parameter is important to use in cash flow strategies with a fixed
+            whtdrawal percentage (PercentageStrategy).
+
         Returns
         -------
         float
@@ -2603,6 +2610,13 @@ class PortfolioDCF:
 
         The portfolio survival date (longevity date) depends on the investment strategy: asset allocation,
         rebalancing, withdrawals rate etc.
+
+        Parameters
+        ----------
+        threshold : float, default 0
+            The percentage of the initial investments when the portfolio balance considered voided.
+            This parameter is important to use in cash flow strategies with a fixed
+            whtdrawal percentage (PercentageStrategy).
 
         Returns
         -------
@@ -3228,7 +3242,7 @@ class CashFlow:
 
 class IndexationStrategy(CashFlow):
     """
-    Cash flow strategy with indexed withdrawals or contributions.
+    Cash flow strategy with regualr indexed withdrawals or contributions.
 
     Parameters
     ----------
@@ -3321,7 +3335,7 @@ class IndexationStrategy(CashFlow):
 
 class PercentageStrategy(CashFlow):
     """
-    Cash flow strategy with fixed percentage withdrawals or contributions.
+    Cash flow strategy with regular fixed percentage withdrawals or contributions.
 
     Parameters
     ----------
