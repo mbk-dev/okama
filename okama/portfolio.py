@@ -2352,7 +2352,7 @@ class PortfolioDCF:
         For portfolios without inflation the default value from settings is used.
 
     use_discounted_values: bool, default False
-        Defines weather to use discounted values in backtesting wealth indexes.
+        Defines whether to use discounted values in backtesting wealth indexes.
         If True the initial investments and cashflow size are discounted.
     """
 
@@ -2425,7 +2425,7 @@ class PortfolioDCF:
 
     def set_mc_parameters(self, distribution: str, period: int, number: int):
         """
-        Add Monte Carlo simulation parameters to Portfolio.
+        Add Monte Carlo simulation parameters to PortfolioDCF.
 
         Parameters
         ----------
