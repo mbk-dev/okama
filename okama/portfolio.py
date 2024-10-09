@@ -114,6 +114,14 @@ class Portfolio(make_asset_list.ListMaker):
         else:
             return self.ror
 
+    def _clear_cache(self):
+        self._ror = pd.DataFrame(dtype=float)
+        try:
+            self.dcf._wealth_index = pd.DataFrame()
+            self.dcf._monte_carlo_wealth = pd.DataFrame()
+        except AttributeError:
+            pass
+
     @property
     def weights(self) -> Union[list, tuple]:
         """
@@ -150,12 +158,7 @@ class Portfolio(make_asset_list.ListMaker):
                     f"Number of tickers ({len(set(self.symbols))}) should be equal "
                     f"to the weights number ({len(weights)})"
                 )
-        self._ror = pd.DataFrame(dtype=float)
-        try:
-            self.dcf.mc._clear_wealth_data()
-            self.dcf._wealth_index = pd.DataFrame()
-        except AttributeError:
-            pass
+        self._clear_cache()
         self._weights = weights
 
     @property
@@ -213,12 +216,7 @@ class Portfolio(make_asset_list.ListMaker):
     @rebalancing_period.setter
     def rebalancing_period(self, rebalancing_period: str):
         if rebalancing_period in settings.frequency_mapping.keys():
-            self._ror = pd.DataFrame(dtype=float)
-            try:
-                self.dcf.mc._clear_wealth_data()
-                self.dcf._wealth_index = pd.DataFrame()
-            except AttributeError:
-                pass
+            self._clear_cache()
             self._rebalancing_period = rebalancing_period
         else:
             raise ValueError(f"rebalancing_period must be in {settings.frequency_mapping.keys()}")
@@ -261,6 +259,7 @@ class Portfolio(make_asset_list.ListMaker):
         if isinstance(text_symbol, str) and text_symbol.endswith(".PF"):
             if " " in text_symbol:
                 raise ValueError("portfolio text symbol should not have whitespace characters.")
+            self._clear_cache()
             self._symbol = text_symbol
         else:
             raise ValueError('portfolio symbol must be a string ending with ".PF" namespace.')
@@ -3275,7 +3274,7 @@ class IndexationStrategy(CashFlow):
         super().__init__(parent)
         self.portfolio = self.parent
         self.amount: float = 0
-        self.indexation: Union[str, float, None] = "inflation"
+        self.indexation: Optional[str, float] = None
 
     def __repr__(self):
         dic = {
