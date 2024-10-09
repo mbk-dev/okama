@@ -137,6 +137,10 @@ Assets & Portfolio
     okama.AssetList
     okama.Portfolio
     okama.PortfolioDCF
+    okama.MonteCarlo
+    okama.IndexationStrategy
+    okama.PercentageStrategy
+    okama.TimeSeriesStrategy
 
 Efficient Frontier
 ==================

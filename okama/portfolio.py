@@ -2447,11 +2447,7 @@ class PortfolioDCF:
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
         >>> # Set Monte Carlo parameters
-        >>> pf.dcf.set_mc_parameters(
-            distribution="lognorm",  # use lognormal distribution
-            period=10,  # make forecast for 10 years
-            number=100  # create 100 randow wealth indexes
-        )
+        >>> pf.dcf.set_mc_parameters(distribution="lognorm", period=10, number=100)
         >>> # Set the cash flow strategy. It's required to generate random wealth indexes.
         >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investments size
@@ -2658,7 +2654,7 @@ class PortfolioDCF:
 
         Examples
         --------
-        Get discounted PV value of `initial_investment` for a portfolio with 4 years of history (at 2020-04).
+        >>> # Get discounted PV value of `initial_investment` for a portfolio with 4 years of history (at 2020-04).
         >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB', last_date="2024-10")
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
@@ -2688,7 +2684,7 @@ class PortfolioDCF:
 
         Examples
         --------
-        Get discounted FV of initial_investment value for a period of 10 years.
+        >>> # Get discounted FV of initial_investment value for a period of 10 years.
         >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB')
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
@@ -2720,7 +2716,7 @@ class PortfolioDCF:
 
         Examples
         --------
-        Get discounted PV value of of the cash flow amount for a portfolio with 20 years of history (at 2003-10).
+        >>> # Get discounted PV value of of the cash flow amount for a portfolio with 20 years of history (at 2003-10).
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD', last_date="2024-10")
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
@@ -2755,6 +2751,7 @@ class PortfolioDCF:
 
         Examples
         --------
+        >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
         >>> pf.dcf.set_mc_parameters(distribution="t", period=10, number=100)  # Set Monte Carlo parameters
         >>> # set cash flow parameters
@@ -2962,6 +2959,7 @@ class PortfolioDCF:
         Find the largest withdrawals size for Monte Carlo simulation according to Cashflow Strategy.
 
         It's possible to find the largest withdrawl with 2 kind of goals:
+
         — 'maintain_balance' to keep the purchasing power of the invesments after inflation
             for the whole period defined in Monte Carlo parameteres.
         — 'survival_period' to keep positive balance for a period defined by 'target_survival_period'.
