@@ -203,6 +203,7 @@ class Frame:
 
         Values of the wealth index correspond to the beginning of the month.
         """
+        # TODO: add use_discounted_values parameters to setup initial conditions without modifying cashflow_parameters
         pf_object = cashflow_parameters.parent
         dcf_object = cashflow_parameters.parent.dcf
         amount = getattr(cashflow_parameters, "amount", None)

@@ -2876,12 +2876,12 @@ class PortfolioDCF:
         >>> plt.yscale("log")  # Y-axis has logarithmic scale
         >>> plt.show()
         """
+        backup_obj = self.cashflow_parameters
+        backup = self.use_discounted_values
+        self.use_discounted_values = False  # we need to start with not discounted values
         if backtest:
             if self.cashflow_parameters is None:
                 raise AttributeError("'cashflow_parameters' is not defined.")
-            backup_obj = self.cashflow_parameters
-            backup = self.use_discounted_values
-            self.use_discounted_values = False
             s1 = self.wealth_index[self.parent.symbol]
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
@@ -2895,12 +2895,12 @@ class PortfolioDCF:
                 s2 = self.monte_carlo_wealth
                 for s in s2:
                     s2[s].plot(legend=None)
-            self.cashflow_parameters = backup_obj
-            self.cashflow_parameters._clear_cf_cache()
-            self.use_discounted_values = backup
         else:
             s2 = self.monte_carlo_wealth
             s2.plot(legend=None)
+        self.cashflow_parameters = backup_obj
+        self.cashflow_parameters._clear_cf_cache()
+        self.use_discounted_values = backup
 
     def monte_carlo_survival_period(self, threshold: float = 0) -> pd.Series:
         """
@@ -3219,6 +3219,8 @@ class CashFlow:
         """
         Portfolio initial investment FV size (at last_date).
 
+        Initial investment must be positive.
+
         Returns
         -------
         float
@@ -3230,6 +3232,8 @@ class CashFlow:
     def initial_investment(self, initial_investment):
         if initial_investment is not None:
             validators.validate_real("initial_investment", initial_investment)
+            if initial_investment <= 0:
+                raise ValueError("Initial investment must be positive.")
         self._clear_cf_cache()
         self._initial_investment = initial_investment
 
