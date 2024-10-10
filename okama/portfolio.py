@@ -2505,6 +2505,7 @@ class PortfolioDCF:
                 portfolio_symbol=self.parent.symbol,
                 inflation_symbol=infl,
                 cashflow_parameters=self.cashflow_parameters,
+                use_discounted_values=self.use_discounted_values,
             )
             self._wealth_index = self.parent._make_df_if_series(df)
         return self._wealth_index
@@ -2553,6 +2554,7 @@ class PortfolioDCF:
                 None,  # symbol
                 None,  # inflation_symbol
                 self.cashflow_parameters,
+                self.use_discounted_values
             ),
         )
         return wealth_df
@@ -2776,6 +2778,7 @@ class PortfolioDCF:
                     None,  # portfolio_symbol
                     None,  # inflation_symbol
                     self.cashflow_parameters,
+                    False,  # use_discounted_values
                 ),
             )
 
@@ -2876,12 +2879,12 @@ class PortfolioDCF:
         >>> plt.yscale("log")  # Y-axis has logarithmic scale
         >>> plt.show()
         """
-        backup_obj = self.cashflow_parameters
-        backup = self.use_discounted_values
-        self.use_discounted_values = False  # we need to start with not discounted values
         if backtest:
             if self.cashflow_parameters is None:
                 raise AttributeError("'cashflow_parameters' is not defined.")
+            backup_obj = self.cashflow_parameters
+            backup = self.use_discounted_values
+            self.use_discounted_values = False  # we need to start with not discounted values
             s1 = self.wealth_index[self.parent.symbol]
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
@@ -2895,12 +2898,12 @@ class PortfolioDCF:
                 s2 = self.monte_carlo_wealth
                 for s in s2:
                     s2[s].plot(legend=None)
+            self.cashflow_parameters = backup_obj
+            self.use_discounted_values = backup
+            self.cashflow_parameters._clear_cf_cache()
         else:
             s2 = self.monte_carlo_wealth
             s2.plot(legend=None)
-        self.cashflow_parameters = backup_obj
-        self.cashflow_parameters._clear_cf_cache()
-        self.use_discounted_values = backup
 
     def monte_carlo_survival_period(self, threshold: float = 0) -> pd.Series:
         """

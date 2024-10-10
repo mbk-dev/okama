@@ -28,7 +28,7 @@ pf = ok.Portfolio(l, weights=w, ccy="EUR", rebalancing_period="none")
 ind = ok.IndexationStrategy(pf)
 ind.initial_investment = 10_000
 ind.frequency = "year"
-ind.amount = -1_000
+ind.amount = -500
 ind.indexation = "inflation"
 
 # # TimeSeries strategy
@@ -44,12 +44,12 @@ ind.indexation = "inflation"
 # Assign a strategy
 pf.dcf.cashflow_parameters = ind
 pf.dcf.discount_rate = 0.10
-pf.dcf.use_discounted_values = False
+pf.dcf.use_discounted_values = True
 
 # Set Monte Carlo
 pf.dcf.set_mc_parameters(distribution="t", period=50, number=100)
 
-pf.dcf.plot_forecast_monte_carlo(backtest=False)
+pf.dcf.plot_forecast_monte_carlo(backtest=True)
 
 plt.yscale("log")  # log or linear
 plt.legend("")
