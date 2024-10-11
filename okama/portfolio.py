@@ -2651,7 +2651,7 @@ class PortfolioDCF:
 
         Returns
         -------
-        float
+        float, None
             The discounted value (PV) of the initial investments at the historical first date.
 
         Examples
@@ -2665,7 +2665,10 @@ class PortfolioDCF:
         >>> pf.dcf.initial_investment_pv
         6574.643143611553
         """
-        return self.cashflow_parameters.initial_investment / (1.0 + self.discount_rate) ** self.parent.period_length
+        if hasattr(self.cashflow_parameters, "initial_investment"):
+            return self.cashflow_parameters.initial_investment / (1.0 + self.discount_rate) ** self.parent.period_length
+        else:
+            return None
 
     @property
     def initial_investment_fv(self) -> Optional[float]:
