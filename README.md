@@ -81,7 +81,7 @@ For many countries (China, USA, United Kingdom, European Union, Russia, Israel e
 The latest development version can be installed directly from GitHub:
 
 ```python
-git clone https://github.com/mbk-dev/okama@dev`
+git clone https://github.com/mbk-dev/okama@dev
 poetry install
 ```
 
