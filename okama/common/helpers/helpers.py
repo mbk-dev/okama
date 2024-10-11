@@ -206,6 +206,7 @@ class Frame:
         """
         pf_object = cashflow_parameters.parent
         dcf_object = cashflow_parameters.parent.dcf
+        dcf_object.cashflow_parameters = cashflow_parameters
         amount = getattr(cashflow_parameters, "amount", None)
         period_initial_amount = (
             dcf_object.initial_investment_pv
