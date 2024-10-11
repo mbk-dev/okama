@@ -2639,6 +2639,7 @@ class PortfolioDCF:
         Timestamp('2015-01-31 00:00:00')
         """
         ws = self.wealth_index.loc[:, self.parent.symbol]
+        # TODO: change threshold to nominal value (idea)
         return helpers.Frame.get_survival_date(ws, self.discount_rate, threshold)
 
     @property
@@ -2900,10 +2901,10 @@ class PortfolioDCF:
                     s2[s].plot(legend=None)
             self.cashflow_parameters = backup_obj
             self.use_discounted_values = backup
-            self.cashflow_parameters._clear_cf_cache()
         else:
             s2 = self.monte_carlo_wealth
             s2.plot(legend=None)
+        self.cashflow_parameters._clear_cf_cache()
 
     def monte_carlo_survival_period(self, threshold: float = 0) -> pd.Series:
         """
@@ -2955,7 +2956,12 @@ class PortfolioDCF:
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
 
     def find_the_largest_withdrawals_size(
-        self, withdrawal_steps: int, confidence_level: float, goal: str, threshold: float, target_survival_period: int
+        self,
+            withdrawal_steps: int,
+            confidence_level: float,
+            goal: str,
+            threshold: float = 0,
+            target_survival_period: int = 25
     ) -> float:
         """
         Find the largest withdrawals size for Monte Carlo simulation according to Cashflow Strategy.
@@ -2977,11 +2983,12 @@ class PortfolioDCF:
         Parameters
         ----------
         withdrawal_steps : int
-            Number of intermediate values for the withdrawal size.
+            The number of intermediate steps during the iteration of values fom maximum
+            to minimum of the withdrawal size.
             The withdrawal size varies from 100% of the initial investment to zero.
 
         confidence_level : float
-            Confidence level in percents (form 0 to 100).
+            Confidence level must be form 0 to 1.
             Confidence level defines the percentile of Monte Carlo time series. 0.01 or 0.05 are the examples of "bad"
             scenarios. 0.50 is mediane (50% percentile). 0.95 or 0.99 are optimiststic scenarios.
 
@@ -2991,11 +2998,11 @@ class PortfolioDCF:
             'survival_period' - the goal is to keep positive balance
             for a period defined by 'target_survival_period'.
 
-        threshold : float
-            The percentage of inititial investments when the portfolio balance is considered voided.
+        threshold : float, default 0
+            The percentage of initial investments when the portfolio balance is considered voided.
             Important for the "fixed_percentage" Cash flow strategy.
 
-        target_survival_period: int
+        target_survival_period: int, default 25
             The smallest acceptable survival period. It wokrs with the 'survival_period' goal only.
 
         Examples
@@ -3023,23 +3030,25 @@ class PortfolioDCF:
         ...    withdrawal_steps=30,
         ...    confidence_level=0.50,
         ...    goal="survival_period",
-        ...    threshold=0.10,
+        ...    threshold=0.05,
         ...    target_survival_period=25
         ...)
         np.float64(-0.10344827586206895)
         """
         max_withdrawal = 0
+        if target_survival_period > self.mc.period:
+            raise ValueError(f"target_survival_period must be less or equal than Monte Carlo simulation period ({self.mc.period}).")
         if confidence_level > 1 or confidence_level < 0:
             raise ValueError("confidence level must be between 0 and 1")
         if threshold > 1 or threshold < 0:
             raise ValueError("threshold must be between 0 and 1")
         if self.cashflow_parameters.NAME == "fixed_amount":
-            saved_amount = self.cashflow_parameters.amount
             size_range = np.linspace(-self.cashflow_parameters.initial_investment, 0, withdrawal_steps)
         elif self.cashflow_parameters.NAME == "fixed_percentage":
             size_range = np.linspace(-1, 0, withdrawal_steps)
         else:
             raise TypeError("find_the_largest_withdrawals_size works with 'fixed_amount' or 'fixed_percentag' only.")
+        backup_obj = self.cashflow_parameters
         for size in size_range:
             if self.cashflow_parameters.NAME == "fixed_amount":
                 self.cashflow_parameters.amount = size
@@ -3058,9 +3067,7 @@ class PortfolioDCF:
                 if condition:
                     max_withdrawal = size
                     break
-
-        if self.cashflow_parameters.NAME == "fixed_amount":
-            self.cashflow_parameters.amount = saved_amount
+        self.cashflow_parameters = backup_obj
         self.cashflow_parameters._clear_cf_cache()
         return max_withdrawal
 
