@@ -501,8 +501,9 @@ class Rebalance:
         self.abs_deviation = abs_deviation
         self.rel_deviation = rel_deviation
         self.pandas_frequency = settings.frequency_mapping.get(self.period)
+        # TODO: Introduce "Rebalancing bands" strategy with self.rel_deviation & self.abs_deviation
 
-    def wealth_ts(self, weights: list, ror: pd.DataFrame) -> pd.Series:
+    def wealth_ts(self, target_weights: list, ror: pd.DataFrame) -> pd.Series:
         """
         Calculate wealth index time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
@@ -510,20 +511,48 @@ class Rebalance:
         """
         # Frame.weights_sum_is_one(weights)
         initial_inv = 1000
-        wealth_index = pd.Series(dtype="float64")
-        if self.period == "none":  # Not rebalanced portfolio
-            inv_period_spread = np.asarray(weights) * initial_inv
-            assets_wealth_indexes = inv_period_spread * (1 + ror).cumprod()
-            wealth_index = assets_wealth_indexes.sum(axis=1)
+        portfolio_wealth_index = pd.Series(dtype="float64")
+        target_weights_np = np.asarray(target_weights)
+        if self.period == "none":  # No calendar rebalancing
+            if self.abs_deviation is None and self.rel_deviation is None:  # No Rebalancing bands
+                initial_allocation = target_weights_np * initial_inv
+                assets_wealth_indexes = initial_allocation * (1 + ror).cumprod()
+                portfolio_wealth_index = assets_wealth_indexes.sum(axis=1)
+            else:
+                for n, row in enumerate(ror.itertuples()):
+                    date = row[0]
+                    r = pd.Series(row[1:], name=date)
+                    if n == 0:
+                        initial_allocation = target_weights_np * initial_inv  # initial rebalancing
+                        assets_wealth_indexes_values = initial_allocation * (1 + r)
+                    else:
+                        if rebalancing_condition:
+                            assets_wealth_indexes_values = target_weights_np * assets_wealth_indexes_values.sum()
+                        assets_wealth_indexes_values *= 1 + r
+                    # row = pd.DataFrame(assets_wealth_indexes_values).T
+                    # row.columns = ror.columns
+                    # assets_wealth_indexes = pd.concat([assets_wealth_indexes, row])
+
+                    portfolio_wealth_index_value = assets_wealth_indexes_values.sum()
+                    portfolio_wealth_index[date] = portfolio_wealth_index_value
+                    # Check if rebalancing required
+                    weights = assets_wealth_indexes_values.divide(portfolio_wealth_index_value, axis=0)
+                    weights_difference_abs = weights - pd.Series(target_weights)
+                    weights_difference_abs = weights_difference_abs.abs()
+                    weights_difference_rel = weights.divide(pd.Series(target_weights), axis=0) - 1
+                    condition_abs = False if self.abs_deviation is None else (weights_difference_abs > self.abs_deviation).any()
+                    condition_rel = False if self.rel_deviation is None else (weights_difference_rel > self.rel_deviation).any()
+                    rebalancing_condition = condition_abs or condition_rel
+
         else:
             for x in ror.resample(rule=self.pandas_frequency, convention="start"):
                 df = x[1]  # select ror part of the grouped data
-                inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
-                assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
+                initial_allocation = target_weights_np * initial_inv  # rebalancing
+                assets_wealth_indexes = initial_allocation * (1 + df).cumprod()
                 wealth_index_local = assets_wealth_indexes.sum(axis=1)
-                wealth_index = pd.concat([None if wealth_index.empty else wealth_index, wealth_index_local], sort=False)
-                initial_inv = wealth_index.iloc[-1]
-        return wealth_index
+                portfolio_wealth_index = pd.concat([None if portfolio_wealth_index.empty else portfolio_wealth_index, wealth_index_local], sort=False)
+                initial_inv = portfolio_wealth_index.iloc[-1]
+        return portfolio_wealth_index
 
     def assets_wealth_ts(self, weights: list, ror: pd.DataFrame) -> pd.DataFrame:
         """
@@ -535,13 +564,13 @@ class Rebalance:
         assets_wealth_indexes = pd.DataFrame(dtype="float64")
         wealth_index = pd.Series(dtype="float64")
         if self.period == "none":  # Not rebalanced portfolio
-            inv_period_spread = np.asarray(weights) * initial_inv
-            assets_wealth_indexes = inv_period_spread * (1 + ror).cumprod()
+            initial_allocation = np.asarray(weights) * initial_inv
+            assets_wealth_indexes = initial_allocation * (1 + ror).cumprod()
         else:
             for x in ror.resample(rule=self.pandas_frequency, convention="start"):
                 df = x[1]  # select ror part of the grouped data
-                inv_period_spread = np.asarray(weights) * initial_inv  # rebalancing
-                assets_wealth_indexes_local = inv_period_spread * (1 + df).cumprod()
+                initial_allocation = np.asarray(weights) * initial_inv  # rebalancing
+                assets_wealth_indexes_local = initial_allocation * (1 + df).cumprod()
                 assets_wealth_indexes = pd.concat(
                     [assets_wealth_indexes_local, assets_wealth_indexes],
                     verify_integrity=True,
@@ -557,7 +586,7 @@ class Rebalance:
         Calculate assets weights monthly time series for rebalanced portfolio.
         """
         assets_wealth_indexes = self.assets_wealth_ts(weights=weights, ror=ror)
-        portfolio_wealth_index = self.wealth_ts(weights=weights, ror=ror)
+        portfolio_wealth_index = self.wealth_ts(target_weights=weights, ror=ror)
         return assets_wealth_indexes.divide(portfolio_wealth_index, axis=0)
 
     def return_ror_ts(self, weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
