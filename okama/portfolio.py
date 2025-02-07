@@ -122,6 +122,8 @@ class Portfolio(make_asset_list.ListMaker):
         except AttributeError:
             pass
 
+    # todo: add setters for dates and ccy
+
     @property
     def weights(self) -> Union[list, tuple]:
         """
@@ -2376,6 +2378,7 @@ class PortfolioDCF:
             "Monte Carlo period": self.mc.period,
             "Cash flow strategy": self.cashflow_parameters.NAME if hasattr(self.cashflow_parameters, "NAME") else None,
             "use_discounted_values": self.use_discounted_values,
+            "discount_rate": self.discount_rate,
         }
         return repr(pd.Series(dic))
 
@@ -2833,7 +2836,7 @@ class PortfolioDCF:
         >>> plt.legend("")  # no legend is required
         >>> plt.show()
         """
-        wealth_df = self.monte_carlo_wealth
+        wealth_df = self.monte_carlo_wealth.copy()
         wealth_df_pv = pd.DataFrame()
         for n, row in enumerate(wealth_df.iterrows()):
             w = row[1]
@@ -3038,6 +3041,7 @@ class PortfolioDCF:
         ...)
         np.float64(-0.10344827586206895)
         """
+        # TODO: introduce withdrawals_range (500, 0)
         max_withdrawal = 0
         if target_survival_period > self.mc.period:
             raise ValueError(f"target_survival_period must be less or equal than Monte Carlo simulation period ({self.mc.period}).")
@@ -3054,6 +3058,7 @@ class PortfolioDCF:
         backup_obj = self.cashflow_parameters
         for size in size_range:
             if self.cashflow_parameters.NAME == "fixed_amount":
+                # TODO: amount should depend on "frequency" (devide by 12 for month)
                 self.cashflow_parameters.amount = size
             elif self.cashflow_parameters.NAME == "fixed_percentage":
                 self.cashflow_parameters.percentage = size
