@@ -536,29 +536,41 @@ class EfficientFrontierReb(asset_list.AssetList):
         }
 
     @property
-    def _max_cagr_asset_right_to_max_cagr(self) -> Optional[dict]:
-        # sourcery skip: use-named-expression
+    def _max_cagr_asset_right_to_max_cagr(self) -> dict:
         """
         The asset with max CAGR lying to the right of the global max CAGR point
         (risk should be more than self.max_return['Risk']).
-
         Global max return point should not be an asset.
         """
-        tolerance = 0.01  # assets CAGR should be less than max CAGR with certain tolerance
         cagr = helpers.Frame.get_cagr(self.assets_ror)
-        global_max_cagr_is_not_asset = (cagr < self.global_max_return_portfolio["CAGR"] * (1 - tolerance)).all()
+        risk = self.risk_annual.squeeze()
+        
+        tolerance = 0.01
+        
+        global_max_cagr = self.global_max_return_portfolio["CAGR"]
+        global_max_risk = self.global_max_return_portfolio["Risk"]
+        
+        global_max_cagr_is_not_asset = (cagr < global_max_cagr * (1 - tolerance)).all()
+        
         if global_max_cagr_is_not_asset:
-            condition = self.risk_annual.iloc[-1, :].values > self.global_max_return_portfolio["Risk"]
-            ror_selected = self.assets_ror.loc[:, condition]
-            if not ror_selected.empty:
-                cagr_selected = helpers.Frame.get_cagr(ror_selected)
-                max_asset_cagr = cagr_selected.max()
-                ticker_with_largest_cagr = cagr_selected.nlargest(1, keep="first").index.values[0]
+            cagr_diff = cagr - global_max_cagr
+            risk_diff = risk - global_max_risk
+        
+            ratio = cagr_diff / risk_diff
+            right_assets = risk_diff > 0
+            
+            if np.any(right_assets):
+                valid_ratios = ratio[right_assets]
+                max_ticker = valid_ratios.idxmax()
+                
                 return {
-                    "max_asset_cagr": max_asset_cagr,
-                    "ticker_with_largest_cagr": ticker_with_largest_cagr,
-                    "list_position": self.symbols.index(ticker_with_largest_cagr),
+                    "max_asset_cagr": cagr[max_ticker],
+                    "ticker_with_largest_cagr": max_ticker,
+                    "list_position": self.assets_ror.columns.get_loc(max_ticker)
                 }
+        
+        return None
+
 
     @property
     def _max_annual_risk_asset(self) -> dict:
