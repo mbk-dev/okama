@@ -59,3 +59,64 @@ def test_max_return(init_efficient_frontier_reb):
 @mark.frontier
 def test_ef_points_reb(init_efficient_frontier_reb):
     assert init_efficient_frontier_reb.ef_points["CAGR"].iloc[1] == approx(0.1889, abs=1e-2)
+
+
+@mark.rebalance
+@mark.frontier
+def convex_right_frontier():
+
+    ls_m = ["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"]
+    curr_rub = "RUB"
+
+    x = ok.EfficientFrontierReb(
+        assets=ls_m,
+        first_date="2005-01",
+        last_date="2020-11",
+        ccy=curr_rub,
+        rebalancing_period="year", 
+        n_points=5,
+        verbose=True,
+    )
+
+    result = x._max_cagr_asset_right_to_max_cagr
+
+    expected_result = {
+        "max_asset_cagr": 0.17520700138002665,
+        "ticker_with_largest_cagr": "PGJ.US",  
+        "list_position": 2 
+    }
+
+    assert result == expected_result
+
+@mark.rebalance
+@mark.frontier
+def nonconvex_right_frontier():
+
+    ls_m = ["SPY.US", "GLD.US", "VB.US", "RGBITR.INDX", "MCFTR.INDX"]
+    curr_rub = "RUB"
+
+    x = ok.EfficientFrontierReb(
+        assets=ls_m,
+        first_date="2004-12",
+        last_date="2020-12",
+        ccy=curr_rub,
+        rebalancing_period="year", 
+        n_points=5,
+        verbose=True,
+    )
+
+    result = x._max_cagr_asset_right_to_max_cagr
+
+    expected_result = {
+        "max_asset_cagr": 0.15691138904751512,
+        "ticker_with_largest_cagr": "MCFTR.INDX",  
+        "list_position": 4
+    }
+
+    assert result == expected_result
+
+
+
+
+
+
