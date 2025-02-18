@@ -153,9 +153,20 @@ class AssetList(make_asset_list.ListMaker):
         --------
         >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
         >>> al.risk_annual
-        GC.COMM    0.195236
-        SHV.US     0.004960
-        dtype: float64
+        Symbols   GC.COMM    SHV.US
+        date
+        2007-03  0.097820  0.000511
+        2007-04  0.084806  0.000552
+        2007-05  0.099466  0.001633
+        2007-06  0.089265  0.001472
+        2007-07  0.095290  0.001442
+        ...           ...       ...
+        2020-09  0.193815  0.004824
+        2020-10  0.193087  0.004813
+        2020-11  0.192583  0.004807
+        2020-12  0.193513  0.004796
+        2021-01  0.192754  0.004788
+        [167 rows x 2 columns]
         """
         risk_ts = self.assets_ror.expanding().std()
         mean_return_ts = self.assets_ror.expanding().mean()

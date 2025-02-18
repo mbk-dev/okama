@@ -94,6 +94,7 @@ class EfficientFrontier(asset_list.AssetList):
         self.labels_are_tickers = ticker_names
         self._ef_points = pd.DataFrame(dtype=float)
         self._mdp_points = pd.DataFrame(dtype=float)
+        # TODO: add missing tests (might be problems when no bounds)
 
     def __repr__(self):
         dic = {
@@ -341,8 +342,8 @@ class EfficientFrontier(asset_list.AssetList):
         monthly_return: bool = False,
     ) -> dict:
         """
-        Calculate assets weights, risk, return and Diversification ratio for the most diversified portfolio given
-        the target return within given bounds.
+        Calculate assets weights, annualized values for risk and return, Diversification ratio
+        for the most diversified portfolio given the target return within given bounds.
 
         The most diversified portfolio has the largest Diversification Ratio.
 
@@ -352,7 +353,7 @@ class EfficientFrontier(asset_list.AssetList):
         Returns
         -------
         dict
-             Weights of assets, risk and return of the most diversified portfolio.
+             Weights of assets and annualized values for risk, return and CAGR of the most diversified portfolio.
 
         Parameters
         ----------
@@ -532,7 +533,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         In Mean-Variance optimization the objective function is risk (standard deviation of return time series).
 
-        Optimization returns a "point" on the Efficient Frontier with values:
+        Optimization returns a "point" on the Efficient Frontier with annualized values:
 
         - weights of assets
         - annualized mean rate of return
@@ -546,7 +547,7 @@ class EfficientFrontier(asset_list.AssetList):
         Returns
         -------
         dict
-            Point on the Efficient Frontier with assets weights, mean return, CAGR, risk.
+            Point on the Efficient Frontier with assets weights and annualized values for mean return, CAGR, risk.
 
         Parameters
         ----------

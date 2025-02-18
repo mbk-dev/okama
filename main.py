@@ -11,54 +11,53 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
-l = ["SPY.US", "GLD.US", "AGG.US"]
-w=[0.20, 0.30, 0.50]
+portfolio = ['RUCBTRNS.INDX', 'RGBITR.INDX', 'MCFTR.INDX', 'GC.COMM' ] # Список активов
+weights = [.22, .09, .45, .24]
 
-pf = ok.Portfolio(l, weights=w, ccy="EUR", rebalancing_period="none")
-
-
-
-# Fixed Percentage strategy
-pc = ok.PercentageStrategy(pf)
-pc.initial_investment = 10_000
-pc.frequency = "year"
-pc.percentage = -0.08
-
-# # Fixed Amount strategy
-# ind = ok.IndexationStrategy(pf)
-# ind.initial_investment = 10_000
-# ind.frequency = "year"
-# ind.amount = -500
-# ind.indexation = "inflation"
-
-# # TimeSeries strategy
-# d = {
-#     "2025-02": 1_000,
-#     "2029-03": -2_000,
-# }
-#
-# ts = ok.TimeSeriesStrategy(pf)
-# ts.initial_investment = 10_000
-# ts.time_series_dic = d
-
-# Assign a strategy
-pf.dcf.cashflow_parameters = pc
-# pf.dcf.discount_rate = 0.10
-# pf.dcf.use_discounted_values = True
-
-# Set Monte Carlo
-pf.dcf.set_mc_parameters(distribution="norm", period=30, number=100)
-
-w = pf.dcf.find_the_largest_withdrawals_size(
-    withdrawal_steps=10,   # The number of intermediate steps during the iteration of values fom max to min of the withdrawal size
-    confidence_level=0.50,  # Confidence level defines the percentile of Monte Carlo time series. The 25th percentile is a negative scenario.
-    goal="maintain_balance",  # The goal of the strategy in this case is to keep the portfolio's real balance
+pf = ok.Portfolio(
+    portfolio,
+    weights=weights,
+    ccy='RUB',
+    rebalancing_period='year',
+    last_date = '2024-12'
 )
-print(w)
 
-# pf.dcf.plot_forecast_monte_carlo(backtest=True)
+print(pf.dividend_yield_annual)
+
+
+# assets = ['MCFTR.INDX', 'RGBITR.INDX']
+# weights = [0.60, 0.40]
+# pf = ok.Portfolio(assets, weights=weights, ccy='RUB', rebalancing_period='year', inflation=False)
 #
-# plt.yscale("log")  # log or linear
-# plt.legend("")
-# # plt.savefig('time_series.png')
+# ind = ok.IndexationStrategy(pf)
+# ind.initial_investment = 4_000  # the initial investments size
+# ind.amount = -10  # set withdrawal/contribution size
+# ind.frequency = "month"  # set cash flow frequency TODO: add parameter
+# ind.indexation = None  # set indexation size
+# pf.dcf.cashflow_parameters = ind
+#
+# pf.dcf.set_mc_parameters(
+#     distribution="norm",
+#     period=2,
+#     number=100
+# )
+#
+# df = pf.dcf.monte_carlo_survival_period()
+# print(df)
+
+
+
+
+
+
+
+# ror = pf.assets_ror
+
+# x = ok.Rebalance(
+#     period='none', abs_deviation=0.10, rel_deviation=None
+# )
+#
+#
+# (x.wealth_ts(target_weights=pf.weights, ror=ror)[1] * 100).plot(figsize=[14, 8])
+# plt.legend(["Индекс Мосбиржи", "Индекс ОФЗ"])
 # plt.show()
