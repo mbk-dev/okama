@@ -11,18 +11,24 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
-portfolio = ['RUCBTRNS.INDX', 'RGBITR.INDX', 'MCFTR.INDX', 'GC.COMM' ] # Список активов
-weights = [.22, .09, .45, .24]
+al = ok.AssetList(["MEBCTR.INDX", "MCFTR.INDX"], ccy="RUB", inflation=False)
 
-pf = ok.Portfolio(
-    portfolio,
-    weights=weights,
-    ccy='RUB',
-    rebalancing_period='year',
-    last_date = '2024-12'
-)
+td = al.tracking_difference()
 
-print(pf.dividend_yield_annual)
+print(td.tail())
+
+# portfolio = ['RUCBTRNS.INDX', 'RGBITR.INDX', 'MCFTR.INDX', 'GC.COMM' ] # Список активов
+# weights = [.22, .09, .45, .24]
+#
+# pf = ok.Portfolio(
+#     portfolio,
+#     weights=weights,
+#     ccy='RUB',
+#     rebalancing_period='year',
+#     last_date = '2024-12'
+# )
+#
+# print(pf.dividend_yield_annual)
 
 
 # assets = ['MCFTR.INDX', 'RGBITR.INDX']
