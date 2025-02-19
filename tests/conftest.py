@@ -288,3 +288,36 @@ def init_efficient_frontier_reb():
         full_frontier=False,
         inflation=True,
     )
+
+
+@pytest.fixture(scope="module")
+def convex_frontier_params():
+    return dict(
+        assets=["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"],
+        ccy="RUB",
+        first_date="2005-01",
+        last_date="2020-11",
+        rebalancing_period="year",
+        n_points=5,
+        verbose=True,
+    )
+
+@pytest.fixture(scope="module")
+def nonconvex_frontier_params():
+    return dict(
+        assets=["SPY.US", "GLD.US", "VB.US", "RGBITR.INDX", "MCFTR.INDX"],
+        ccy="RUB",
+        first_date="2004-12",
+        last_date="2020-12",
+        rebalancing_period="year",
+        n_points=5,
+        verbose=True,
+    )
+
+@pytest.fixture(scope="module")
+def init_convex_frontier(convex_frontier_params):
+    return ok.EfficientFrontierReb(**convex_frontier_params)
+
+@pytest.fixture(scope="module")
+def init_nonconvex_frontier(nonconvex_frontier_params):
+    return ok.EfficientFrontierReb(**nonconvex_frontier_params)

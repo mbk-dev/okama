@@ -114,6 +114,54 @@ def nonconvex_right_frontier():
     }
 
     assert result == expected_result
+    
+    
+@mark.rebalance
+@mark.frontier
+def test_maximize_risk_with_convex_right_frontier():
+
+    ls_m = ["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"]
+    curr_rub = "RUB"
+
+    x = EfficientFrontierReb(
+        assets=ls_m,
+        first_date="2005-01",
+        last_date="2020-11",
+        ccy=curr_rub,
+        rebalancing_period="year", 
+        n_points=5,
+        verbose=True,
+    )
+
+    result = x._maximize_risk(0.17520700138002665)
+    
+    expected_result = (0, 0, 1, 0, 0)
+
+    assert result == expected_result
+
+@mark.rebalance
+@mark.frontier
+def test_maximize_risk_with_nonconvex_right_frontier():
+
+    ls_m = ["SPY.US", "GLD.US", "VB.US", "RGBITR.INDX", "MCFTR.INDX"]
+    curr_rub = "RUB"
+
+    x = EfficientFrontierReb(
+        assets=ls_m,
+        first_date="2004-12",
+        last_date="2020-12",
+        ccy=curr_rub,
+        rebalancing_period="year", 
+        n_points=5,
+        verbose=True,
+    )
+
+    result = x._maximize_risk(0.15691138904751512)
+    
+    expected_result = (0, 0, 0, 0, 1)
+
+    assert result == expected_result
+  
 
 
 
