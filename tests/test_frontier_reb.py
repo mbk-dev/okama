@@ -88,6 +88,7 @@ def convex_right_frontier():
 
     assert result == expected_result
 
+
 @mark.rebalance
 @mark.frontier
 def nonconvex_right_frontier():
@@ -139,6 +140,7 @@ def test_maximize_risk_with_convex_right_frontier():
 
     assert result == expected_result
 
+
 @mark.rebalance
 @mark.frontier
 def test_maximize_risk_with_nonconvex_right_frontier():
@@ -161,10 +163,3 @@ def test_maximize_risk_with_nonconvex_right_frontier():
     expected_result = (0, 0, 0, 0, 1)
 
     assert result == expected_result
-  
-
-
-
-
-
-

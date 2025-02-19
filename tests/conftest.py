@@ -302,6 +302,7 @@ def convex_frontier_params():
         verbose=True,
     )
 
+
 @pytest.fixture(scope="module")
 def nonconvex_frontier_params():
     return dict(
@@ -314,10 +315,13 @@ def nonconvex_frontier_params():
         verbose=True,
     )
 
+
 @pytest.fixture(scope="module")
 def init_convex_frontier(convex_frontier_params):
     return ok.EfficientFrontierReb(**convex_frontier_params)
 
+
 @pytest.fixture(scope="module")
 def init_nonconvex_frontier(nonconvex_frontier_params):
     return ok.EfficientFrontierReb(**nonconvex_frontier_params)
+
