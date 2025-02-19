@@ -521,14 +521,16 @@ class Rebalance:
             else:
                 for n, row in enumerate(ror.itertuples()):
                     date = row[0]
-                    r = pd.Series(row[1:], name=date)
+                    r = pd.Series(row[1:], index=ror.columns, name=date)
                     if n == 0:
                         initial_allocation = target_weights_np * initial_inv  # initial rebalancing
                         assets_wealth_indexes_values = initial_allocation * (1 + r)
+                        weights_ts = pd.DataFrame(columns=ror.columns)  # TODO: move to a separete function
                     else:
                         if rebalancing_condition:
                             assets_wealth_indexes_values = target_weights_np * assets_wealth_indexes_values.sum()
                         assets_wealth_indexes_values *= 1 + r
+                        assets_wealth_indexes_values.rename(date, inplace=True)  # TODO: move to a separete function
                     # row = pd.DataFrame(assets_wealth_indexes_values).T
                     # row.columns = ror.columns
                     # assets_wealth_indexes = pd.concat([assets_wealth_indexes, row])
@@ -537,9 +539,13 @@ class Rebalance:
                     portfolio_wealth_index[date] = portfolio_wealth_index_value
                     # Check if rebalancing required
                     weights = assets_wealth_indexes_values.divide(portfolio_wealth_index_value, axis=0)
-                    weights_difference_abs = weights - pd.Series(target_weights)
+                    weights_s = weights.to_frame().T
+                    weights_ts = pd.concat([weights_ts, weights_s])
+                    weights_ts.columns = ror.columns
+                    target_weights_s = pd.Series(target_weights, index=ror.columns, name=date)
+                    weights_difference_abs = weights - target_weights_s
                     weights_difference_abs = weights_difference_abs.abs()
-                    weights_difference_rel = weights.divide(pd.Series(target_weights), axis=0) - 1
+                    weights_difference_rel = weights.divide(target_weights_s, axis=0) - 1
                     condition_abs = False if self.abs_deviation is None else (weights_difference_abs > self.abs_deviation).any()
                     condition_rel = False if self.rel_deviation is None else (weights_difference_rel > self.rel_deviation).any()
                     rebalancing_condition = condition_abs or condition_rel
