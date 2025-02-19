@@ -480,8 +480,8 @@ class EfficientFrontierReb(asset_list.AssetList):
         n = self.assets_ror.shape[1]  # number of assets
 
         init_guess = np.repeat(0, n)
-        if self._max_cagr_asset_right_to_max_cagr:
-            init_guess[self._max_cagr_asset_right_to_max_cagr["list_position"]] = 1.0
+        if self._max_ratio_asset_right_to_max_cagr:
+            init_guess[self._max_ratio_asset_right_to_max_cagr["list_position"]] = 1.0
 
         def objective_function(w):
             # annual risk
@@ -536,11 +536,11 @@ class EfficientFrontierReb(asset_list.AssetList):
         }
 
     @property
-    def _max_cagr_asset_right_to_max_cagr(self) -> Optional[dict]:
+    def _max_ratio_asset_right_to_max_cagr(self) -> Optional[dict]:
         """
-        The asset with max CAGR lying to the right of the global max CAGR point
-        (risk should be more than self.max_return['Risk']).
-        Global max return point should not be an asset.
+        The asset with the maximum ratio between the CAGR 
+        (Compound Annual Growth Rate) and the risk for assets that are “to the right” 
+        of the portfolio with the maximum CAGR on the efficiency frontier.
         """
         cagr = helpers.Frame.get_cagr(self.assets_ror)
         risk_monthly = self.assets_ror.std()
@@ -553,22 +553,24 @@ class EfficientFrontierReb(asset_list.AssetList):
         
         global_max_cagr_is_not_asset = (cagr < global_max_cagr * (1 - tolerance)).all()
         if global_max_cagr_is_not_asset:
+            cagr_diff = cagr - global_max_cagr
+            risk_diff = risk - global_max_risk
             
-            angle = np.degrees(np.arctan2(cagr - global_max_cagr, risk - global_max_risk))
+            if risk_diff is not None and (risk_diff == 0).any():  
+                risk_diff += 0.0001  # to avoid division by zero
+            
+            ratio = cagr_diff / risk_diff
+            right_assets = risk_diff > 0
 
-            right_assets = risk - global_max_risk > 0
             if right_assets.any():
-
-                valid_angle = angle[right_assets]
-                max_ticker = valid_angle.idxmax()
-                
+                valid_ratios = ratio[right_assets]
+                max_ticker = valid_ratios.idxmax()
                 return {
                     "max_asset_cagr": cagr[max_ticker],
                     "ticker_with_largest_cagr": max_ticker,
                     "list_position": self.assets_ror.columns.get_loc(max_ticker)
                 }
-        
-        return None
+        return None                
 
     @property
     def _max_annual_risk_asset(self) -> dict:
@@ -602,8 +604,8 @@ class EfficientFrontierReb(asset_list.AssetList):
         Range of CAGR values from the Global CAGR max to the max asset cagr
         to the right of the max CAGR point (if exists).
         """
-        if self._max_cagr_asset_right_to_max_cagr:
-            ticker_cagr = self._max_cagr_asset_right_to_max_cagr["max_asset_cagr"]
+        if self._max_ratio_asset_right_to_max_cagr:
+            ticker_cagr = self._max_ratio_asset_right_to_max_cagr["max_asset_cagr"]
             max_cagr = self.global_max_return_portfolio["CAGR"]
             if not np.isclose(max_cagr, ticker_cagr, rtol=1e-3, atol=1e-05):
                 k = abs((self._target_cagr_range_left[0] - self._target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
