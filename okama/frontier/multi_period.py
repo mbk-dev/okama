@@ -10,6 +10,10 @@ from scipy.optimize import minimize
 from okama import asset_list, settings
 from okama.common.helpers import helpers
 
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class EfficientFrontierReb(asset_list.AssetList):
     """
@@ -725,7 +729,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             row = self.minimize_risk(target_cagr)
             end_time = time.time()
             if self.verbose:
-                print(f"left EF point #{i + 1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
+                logger.info(f"left EF point #{i + 1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
             return row
 
         ef_points_records = Parallel(n_jobs=-1)(
@@ -742,7 +746,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 ef_points_records.append(row)
                 end_time = time.time()
                 if self.verbose:
-                    print(f"right EF point #{i + 1}/{len(range_right)} is done in {end_time - start_time:.2f} sec.")
+                    logger.info(f"right EF point #{i + 1}/{len(range_right)} is done in {end_time - start_time:.2f} sec.")
                 return row
 
             ef_points_records += Parallel(n_jobs=-1)(
@@ -752,7 +756,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         df = helpers.Frame.change_columns_order(df, ["Risk", "CAGR"])
         main_end_time = time.time()
         if self.verbose:
-            print(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
+            logger.info(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
         self._ef_points = df
 
     def get_monte_carlo(self, n: int = 100) -> pd.DataFrame:
