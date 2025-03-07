@@ -1,5 +1,6 @@
 from typing import Dict, Optional, List, Any, Type, Union
 from abc import ABC, abstractmethod
+from joblib import Parallel, delayed
 
 import numpy as np
 import pandas as pd
@@ -50,8 +51,8 @@ class ListMaker(ABC):
     ):
         self._assets = list(dict.fromkeys(assets)) if assets else [settings.default_ticker]
         self._currency = asset.Asset(symbol=f"{ccy}.FX")
+        self.asset_obj_dict = ListMaker._get_asset_obj_dict(self._list_of_asset_like_objects)
         (
-            self.asset_obj_dict,
             self.first_date,
             self.last_date,
             self.newest_asset,
@@ -62,9 +63,8 @@ class ListMaker(ABC):
             self.assets_last_dates,
             self.assets_ror,
         ) = self._make_list(
-            ls=self._list_of_asset_like_objects,
             first_date=first_date,
-            last_date=last_date,
+            last_date=last_date
         ).values()
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
@@ -105,7 +105,22 @@ class ListMaker(ABC):
     def __getitem__(self, item):
         return list(self.asset_obj_dict.values())[item]
 
-    def _make_list(self, ls: list, first_date, last_date) -> dict:
+    @staticmethod
+    def _get_asset_obj_dict(ls: list) -> dict:
+        def get_item(symbol):
+            asset_item = symbol if hasattr(symbol, "symbol") and hasattr(symbol, "ror") else asset.Asset(symbol)
+            if asset_item.pl.years == 0 and asset_item.pl.months <= 2:
+                raise ShortPeriodLengthError(
+                    f"{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months."
+                )
+            return asset_item
+
+        asset_obj_list = Parallel(n_jobs=-1, backend="threading")(
+            delayed(get_item)(s) for s in ls
+        )
+        return {obj.symbol: obj for obj in asset_obj_list}
+
+    def _make_list(self, first_date, last_date) -> dict:
         """
         Make an asset list from a list of symbols.
         """
@@ -113,7 +128,6 @@ class ListMaker(ABC):
         currency_first_date: pd.Timestamp = self._currency.first_date
         currency_last_date: pd.Timestamp = self._currency.last_date
 
-        asset_obj_dict = {}  # dict of Asset/Portfolio type objects
         own_first_dates: Dict[str, pd.Timestamp] = {}
         own_last_dates: Dict[str, pd.Timestamp] = {}
         first_dates: Dict[str, pd.Timestamp] = {}
@@ -123,15 +137,10 @@ class ListMaker(ABC):
         df = pd.DataFrame()
         input_first_date = pd.to_datetime(first_date) if first_date else None
         input_last_date = pd.to_datetime(last_date) if last_date else None
-        for i, x in enumerate(ls):
-            asset_item = x if hasattr(x, "symbol") and hasattr(x, "ror") else asset.Asset(x)
+        for i, asset_item  in enumerate(self.asset_obj_dict.values()):
             # get asset own first and last dates
             asset_own_first_date = asset_item.first_date
             asset_own_last_date = asset_item.last_date
-            if asset_item.pl.years == 0 and asset_item.pl.months <= 2:
-                raise ShortPeriodLengthError(
-                    f"{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months."
-                )
             if i == 0:  # required to use pd.concat below (df should not be empty).
                 df = self._make_ror(asset_item, base_currency_ticker)
             else:
@@ -150,7 +159,6 @@ class ListMaker(ABC):
                     f"{asset_item.symbol} historical data period length is too short. " f"It must be at least 3 months."
                 )
             # append data to dictionaries
-            asset_obj_dict[asset_item.symbol] = asset_item
             currencies[asset_item.symbol] = asset_item.currency
             names[asset_item.symbol] = asset_item.name
             first_dates[asset_item.symbol] = asset_first_date
@@ -175,7 +183,6 @@ class ListMaker(ABC):
             df = df.to_frame()
         df.columns.name = "Symbols"  # required for Plotly charts
         return dict(
-            asset_obj_list=asset_obj_dict,
             first_date=list_first_date,
             last_date=list_last_date,
             newest_asset=own_first_dates_sorted[-1][0],
@@ -186,6 +193,7 @@ class ListMaker(ABC):
             own_last_dates_sorted=dict(own_last_dates_sorted),
             ror=df,
         )
+
 
     def _make_ror(self, list_asset: asset.Asset, base_currency_name: str) -> pd.Series:
         """
