@@ -69,7 +69,6 @@ class EfficientFrontierReb(asset_list.AssetList):
     For monthly rebalanced portfolios okama.EfficientFrontier class could be used.
     """
 
-    # TODO: Add bounds
     def __init__(
         self,
         assets: Optional[List[str]] = None,
@@ -77,6 +76,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         first_date: Optional[str] = None,
         last_date: Optional[str] = None,
         ccy: str = "USD",
+        bounds: Optional[Tuple[Tuple[float, ...], ...]] = None,
         inflation: bool = False,
         full_frontier: bool = True,
         rebalancing_period: str = "year",
@@ -93,6 +93,9 @@ class EfficientFrontierReb(asset_list.AssetList):
             ccy=ccy,
             inflation=inflation,
         )
+        
+        self._bounds = None
+        self.bounds = bounds
         self.rebalancing_period = rebalancing_period
         self.n_points = n_points
         self.ticker_names = ticker_names
@@ -108,9 +111,53 @@ class EfficientFrontierReb(asset_list.AssetList):
             "last_date": self.last_date.strftime("%Y-%m"),
             "period_length": self._pl_txt,
             "rebalancing_period": self.rebalancing_period,
+            "bounds": self.bounds,
             "inflation": self.inflation if hasattr(self, "inflation") else "None",
         }
         return repr(pd.Series(dic))
+
+    @property
+    def bounds(self) -> Tuple[Tuple[float, ...], ...]:
+        """
+        Return bounds for the assets weights.
+
+        Bounds are used in optimization. Each asset can have weights limitation from 0 to 1.0.
+
+        If an asset has limitation for 10 to 20% bounds are defined as (0.1, 0.2).
+        bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
+        from 0 to 50%. The second asset has no limitations.
+
+        Returns
+        -------
+        tuple of ((float, float),...)
+            Weights bounds used for portfolio optimization.
+
+        Examples
+        --------
+        >>> two_assets = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> two_assets.bounds
+        ((0.0, 1.0), (0.0, 1.0))
+
+        By default there are no limitations for assets weights.
+        Bounds can be set for a Efficient Frontier object.
+
+        >>> two_assets.bounds = ((0.5, 0.9), (0, 1.0))
+
+        Now the optimization is bounded (SPY has weights limits from 50 to 90%).
+        """
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds):
+        if bounds:
+            if len(bounds) != len(self.symbols):
+                raise ValueError(
+                    f"The number of symbols ({len(self.symbols)}) "
+                    f"and the length of bounds ({len(bounds)}) should be equal."
+                )
+            self._bounds = bounds
+        else:
+            self._bounds = ((0.0, 1.0),) * len(self.symbols)  # an N-tuple of 2-tuples
 
     @property
     def n_points(self) -> int:
@@ -229,7 +276,6 @@ class EfficientFrontierReb(asset_list.AssetList):
         period = self.rebalancing_period
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
-        bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples
 
         # Set the objective function
         def objective_function(w):
@@ -244,7 +290,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             method="SLSQP",
             options={"disp": False},
             constraints=(weights_sum_to_1,),
-            bounds=bounds,
+            bounds=self.bounds,
         )
         return weights.x
 
@@ -273,7 +319,6 @@ class EfficientFrontierReb(asset_list.AssetList):
         period = self.rebalancing_period
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
-        bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples!
 
         # Set the objective function
         def objective_function(w):
@@ -290,7 +335,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             method="SLSQP",
             options={"disp": False},
             constraints=(weights_sum_to_1,),
-            bounds=bounds,
+            bounds=self.bounds,
         )
         return weights.x
 
@@ -371,7 +416,6 @@ class EfficientFrontierReb(asset_list.AssetList):
         period = self.rebalancing_period
         n = self.assets_ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
-        bounds = ((0.0, 1.0),) * n
 
         # Set the objective function
         def objective_function(w):
@@ -388,7 +432,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             method="SLSQP",
             options={"disp": False},
             constraints=(weights_sum_to_1,),
-            bounds=bounds,
+            bounds=self.bounds,
         )
         portfolio_ts = objective_function.returns
         mean_return = portfolio_ts.mean()
@@ -439,7 +483,6 @@ class EfficientFrontierReb(asset_list.AssetList):
             return helpers.Float.annualize_risk(risk_monthly, mean_return)
 
         # construct the constraints
-        bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples for Weights constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         cagr_is_target = {
             "type": "eq",
@@ -456,7 +499,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 "ftol": 1e-06,
             },
             constraints=(weights_sum_to_1, cagr_is_target),
-            bounds=bounds,
+            bounds=self.bounds,
         )
 
         # Calculate points of EF given optimal weights
@@ -496,7 +539,6 @@ class EfficientFrontierReb(asset_list.AssetList):
             return result
 
         # construct the constraints
-        bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples for Weights constrains
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         cagr_is_target = {
             "type": "eq",
@@ -513,7 +555,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 "maxiter": 100,
             },
             constraints=(weights_sum_to_1, cagr_is_target),
-            bounds=bounds,
+            bounds=self.bounds,
         )
 
         # Calculate points of EF given optimal weights
