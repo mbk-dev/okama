@@ -11,11 +11,6 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
-al = ok.AssetList(["MEBCTR.INDX", "MCFTR.INDX"], ccy="RUB", inflation=False)
-
-td = al.tracking_difference()
-
-print(td.tail())
 
 # portfolio = ['RUCBTRNS.INDX', 'RGBITR.INDX', 'MCFTR.INDX', 'GC.COMM' ] # Список активов
 # weights = [.22, .09, .45, .24]
@@ -31,25 +26,35 @@ print(td.tail())
 # print(pf.dividend_yield_annual)
 
 
-# assets = ['MCFTR.INDX', 'RGBITR.INDX']
-# weights = [0.60, 0.40]
-# pf = ok.Portfolio(assets, weights=weights, ccy='RUB', rebalancing_period='year', inflation=False)
-#
-# ind = ok.IndexationStrategy(pf)
-# ind.initial_investment = 4_000  # the initial investments size
-# ind.amount = -10  # set withdrawal/contribution size
-# ind.frequency = "month"  # set cash flow frequency TODO: add parameter
-# ind.indexation = None  # set indexation size
-# pf.dcf.cashflow_parameters = ind
-#
-# pf.dcf.set_mc_parameters(
-#     distribution="norm",
-#     period=2,
-#     number=100
-# )
-#
+assets = ['RGBITR.INDX', 'RUCBTRNS.INDX', 'MCFTR.INDX', 'GC.COMM']
+weights = [0.16, 0.40,  0.25, 0.19]
+pf = ok.Portfolio(assets, weights=weights, ccy='RUB', rebalancing_period='year', inflation=False)
+pf.dcf.discount_rate = 0.09
+
+ind = ok.IndexationStrategy(pf)
+ind.initial_investment = 2_000_000 * 90
+ind.amount = -4000 * 90
+ind.frequency = "month"
+ind.indexation = 0.09
+
+pf.dcf.cashflow_parameters = ind
+
+pf.dcf.set_mc_parameters(
+    distribution="norm",
+    period=50,
+    number=1000
+)
+
 # df = pf.dcf.monte_carlo_survival_period()
-# print(df)
+# print(df.describe())
+
+w, err = pf.dcf.find_the_largest_withdrawals_size(
+    goal="maintain_balance_pv",
+    percentile=20,
+    tolerance_rel=0.01,
+)
+
+print(w, err)
 
 
 
