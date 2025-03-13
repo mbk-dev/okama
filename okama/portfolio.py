@@ -1612,7 +1612,7 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
-        >>> pf.monte_carlo_wealth(distr='lognorm', years=5, n=1000)
+        >>> pf.monte_carlo_wealth_fv(distr='lognorm', years=5, n=1000)
                          0            1    ...          998          999
         2021-07  3895.377293  3895.377293  ...  3895.377293  3895.377293
         2021-08  3869.854680  4004.814981  ...  3874.455244  3935.913516
@@ -2966,21 +2966,23 @@ class PortfolioDCF:
 
     def find_the_largest_withdrawals_size(
         self,
-            withdrawal_steps: int,
-            confidence_level: float,
             goal: str,
+            target_survival_period: int = 25,
+            percentile: float = 0.20,
             threshold: float = 0,
-            target_survival_period: int = 25
-    ) -> float:
+            tolerance_rel: float = 0.01,
+            iter_max: int =100
+    ) -> Tuple[float, float]:
         """
         Find the largest withdrawals size for Monte Carlo simulation according to Cashflow Strategy.
 
         It's possible to find the largest withdrawl with 2 kind of goals:
 
-        — 'maintain_balance' to keep the purchasing power of the invesments after inflation
+        — 'maintain_balance_pv' to keep the purchasing power of the invesments after inflation
             for the whole period defined in Monte Carlo parameteres.
         — 'survival_period' to keep positive balance for a period defined by 'target_survival_period'.
-            The method works with IndexationStrategy and PercentageStrategy only.
+            The method works with IndexationStrategy
+             and PercentageStrategy only.
 
         The withdrawal size defined in cash flow strategy must be negative.
 
@@ -2991,18 +2993,15 @@ class PortfolioDCF:
 
         Parameters
         ----------
-        withdrawal_steps : int
-            The number of intermediate steps during the iteration of values fom maximum
-            to minimum of the withdrawal size.
-            The withdrawal size varies from 100% of the initial investment to zero.
-
-        confidence_level : float
+        percentile : float
             Confidence level must be form 0 to 1.
             Confidence level defines the percentile of Monte Carlo time series. 0.01 or 0.05 are the examples of "bad"
             scenarios. 0.50 is mediane (50% percentile). 0.95 or 0.99 are optimiststic scenarios.
 
-        goal : {'maintain_balance', 'survival_period'}
-            'maintain_balance' - the goal is to keep the purchasing power of the invesments after inflation
+        goal : {'maintain_balance_fv', 'maintain_balance_pv', 'survival_period'}
+            'maintain_balance_fv' - the goal is to maintain the balance not lower than the nominal amount of the initial investment after inflation
+            for the whole period defined in Monte Carlo parameteres.
+            'maintain_balance_pv' - the goal is to keep the purchasing power of the invesments after inflation
             for the whole period defined in Monte Carlo parameteres.
             'survival_period' - the goal is to keep positive balance
             for a period defined by 'target_survival_period'.
@@ -3013,6 +3012,10 @@ class PortfolioDCF:
 
         target_survival_period: int, default 25
             The smallest acceptable survival period. It wokrs with the 'survival_period' goal only.
+
+        iter_max : integer, default 100
+
+        tolerance_rel : float, default 0.10
 
         Examples
         --------
@@ -3037,7 +3040,7 @@ class PortfolioDCF:
         ...)
         >>> pf.dcf.find_the_largest_withdrawals_size(
         ...    withdrawal_steps=30,
-        ...    confidence_level=0.50,
+        ...    percentile=0.50,
         ...    goal="survival_period",
         ...    threshold=0.05,
         ...    target_survival_period=25
@@ -3045,42 +3048,81 @@ class PortfolioDCF:
         np.float64(-0.10344827586206895)
         """
         # TODO: introduce withdrawals_range (500, 0)
-        max_withdrawal = 0
         if target_survival_period > self.mc.period:
             raise ValueError(f"target_survival_period must be less or equal than Monte Carlo simulation period ({self.mc.period}).")
-        if confidence_level > 1 or confidence_level < 0:
-            raise ValueError("confidence level must be between 0 and 1")
+        if percentile > 100 or percentile < 0:
+            raise ValueError("percentile must be between 0 and 100")
         if threshold > 1 or threshold < 0:
             raise ValueError("threshold must be between 0 and 1")
-        if self.cashflow_parameters.NAME == "fixed_amount":
-            size_range = np.linspace(-self.cashflow_parameters.initial_investment, 0, withdrawal_steps)
-        elif self.cashflow_parameters.NAME == "fixed_percentage":
-            size_range = np.linspace(-1, 0, withdrawal_steps)
-        else:
-            raise TypeError("find_the_largest_withdrawals_size works with 'fixed_amount' or 'fixed_percentag' only.")
         backup_obj = self.cashflow_parameters
-        for size in size_range:
-            if self.cashflow_parameters.NAME == "fixed_amount":
-                # TODO: amount should depend on "frequency" (devide by 12 for month)
-                self.cashflow_parameters.amount = size
-            elif self.cashflow_parameters.NAME == "fixed_percentage":
-                self.cashflow_parameters.percentage = size
+        start_investment = self.cashflow_parameters.initial_investment
+        expected_min_withdrawal = 0
+        if self.cashflow_parameters.NAME == "fixed_amount":
 
-            sp_at_quantile = self.monte_carlo_survival_period(threshold=threshold).quantile(confidence_level)
-            if goal == "maintain_balance":
-                wealth_at_quantile = self.monte_carlo_wealth.iloc[-1, :].quantile(confidence_level)
-                condition = (sp_at_quantile == self.mc.period) and (wealth_at_quantile >= self.initial_investment_fv)
-                if condition:
-                    max_withdrawal = size
-                    break
+            if goal == "maintain_balance_pv":
+                self.cashflow_parameters.amount = - 0.03 * start_investment / self.cashflow_parameters.periods_per_year
+                expected_max_withdrawal = - 0.10 * start_investment / self.cashflow_parameters.periods_per_year
+            elif goal == "maintain_balance_fv":
+                self.cashflow_parameters.amount = - 0.04 * start_investment / self.cashflow_parameters.periods_per_year
+                expected_max_withdrawal = - 0.15 * start_investment / self.cashflow_parameters.periods_per_year
+            elif goal == "survival_period":
+                self.cashflow_parameters.amount = - 0.10 * start_investment / self.cashflow_parameters.periods_per_year
+                expected_max_withdrawal = - 0.20 * start_investment / self.cashflow_parameters.periods_per_year
+        elif self.cashflow_parameters.NAME == "fixed_percentage":
+            # TODO: amount should depend on "frequency" (devide by 12 for month)
+            self.cashflow_parameters.percentage = - 0.03 * start_investment / self.cashflow_parameters.periods_per_year
+        # NEW Code ()
+        iter = 0
+        solutions = pd.DataFrame(columns=["withdrawal", "error_rel", "error_rel_change"])
+        while True:
+            wealth_at_quantile = self.monte_carlo_wealth_pv.iloc[-1, :].quantile(percentile / 100)
+            sp_at_quantile = self.monte_carlo_survival_period(threshold=0).quantile(percentile / 100)
+
+            if goal in ["maintain_balance_fv", "maintain_balance_pv"]:
+                condition = (wealth_at_quantile >= start_investment) and (sp_at_quantile == self.mc.period)
+                print(wealth_at_quantile, self.cashflow_parameters.amount)
+                error_rel = abs(wealth_at_quantile - start_investment) / start_investment
             elif goal == "survival_period":
                 condition = sp_at_quantile >= target_survival_period
-                if condition:
-                    max_withdrawal = size
+                print(f'{sp_at_quantile=:.2f}, {self.cashflow_parameters.amount=:.2f}')
+                error_rel = abs(sp_at_quantile - target_survival_period) / target_survival_period
+
+            solutions.at[iter, "withdrawal"] = self.cashflow_parameters.amount
+            solutions.at[iter, "error_rel"] = error_rel
+            gradient = solutions.at[iter, "error_rel"] - solutions.at[iter - 1, "error_rel"] if iter != 0 else 0
+            solutions.at[iter, "error_rel_change"] = gradient
+
+            print(f'{error_rel=:.3f}, {gradient=:.3f}')
+
+            if condition:
+                if error_rel < tolerance_rel:
+                    max_withdrawal = self.cashflow_parameters.amount
+                    print(f'solution found: {max_withdrawal} after {iter} steps.')
                     break
+                expected_min_withdrawal = self.cashflow_parameters.amount
+                delta = abs(expected_max_withdrawal - self.cashflow_parameters.amount)  # ind.amount must be negative
+                self.cashflow_parameters.amount -= delta / 2
+                print("increasing withdrawal")
+            else:
+                if error_rel < tolerance_rel:
+                    max_withdrawal = self.cashflow_parameters.amount
+                    print(f'solution found: {max_withdrawal} after {iter} steps.')
+                    break
+                expected_max_withdrawal = self.cashflow_parameters.amount
+                delta = abs(self.cashflow_parameters.amount - expected_min_withdrawal)
+                self.cashflow_parameters.amount += delta / 2
+                print("decreasing withdrawal")
+            iter += 1
+            if iter > iter_max:
+                condition = solutions["error_rel"].idxmin()
+                best_result = solutions.loc[condition]["withdrawal"]
+                max_withdrawal = solutions.loc[condition]["error_rel"]
+                print(
+                    f"'Didn't found solution after {iter} steps. The closest withdrawal was {best_result} or {self.cashflow_parameters.amount / start_investment * 12} with an error: {max_withdrawal}")
+                break
         self.cashflow_parameters = backup_obj
         self.cashflow_parameters._clear_cf_cache()
-        return max_withdrawal
+        return max_withdrawal, error_rel
 
 
 class MonteCarlo:
@@ -3236,7 +3278,14 @@ class CashFlow:
             raise ValueError(f"frequency must be in {settings.frequency_mapping.keys()}")
 
     @property
-    def initial_investment(self):
+    def periods_per_year(self) -> int:
+        """
+        Show the number of periods per year. Period is defined by the frequency.
+        """
+        return settings.frequency_periods_per_year[self.frequency]
+
+    @property
+    def initial_investment(self) -> float:
         """
         Portfolio initial investment FV size (at last_date).
 

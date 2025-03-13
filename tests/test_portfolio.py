@@ -308,7 +308,7 @@ def test_get_rolling_cagr_failing_no_inflation(portfolio_no_inflation):
 
 
 def test_monte_carlo_wealth(portfolio_rebalanced_month):
-    df = portfolio_rebalanced_month.monte_carlo_wealth(distr="norm", years=1, n=1000)
+    df = portfolio_rebalanced_month.monte_carlo_wealth_fv(distr="norm", years=1, n=1000)
     assert df.shape == (12, 1000)
     assert df.iloc[-1, :].mean() == approx(2915.55, rel=1e-1)
 
