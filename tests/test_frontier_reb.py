@@ -20,16 +20,23 @@ def test_init_efficient_frontier_reb():
 def test_repr(init_efficient_frontier_reb):
     value = pd.Series(
         dict(
-            symbols="[SPY.US, GLD.US]",
+            symbols=["SPY.US", "GLD.US"],
             currency="USD",
             first_date="2019-01",
             last_date="2020-02",
             period_length="1 years, 2 months",
             rebalancing_period="year",
-            inflation="USD.INFL",
+            bounds=((0, 1), (0, 1)),
+            inflation="USD.INFL"
         )
     )
     assert repr(init_efficient_frontier_reb) == repr(value)
+
+
+@mark.rebalance
+@mark.frontier
+def test_bounds_frontier(init_bounds_frontier):
+    assert init_bounds_frontier.bounds == ((0, 0.2), (0.2, 0.4), (0.4, 0.6), (0, 1), (0, 1))
 
 
 @mark.rebalance
@@ -75,6 +82,7 @@ def test_convex_right_frontier(init_convex_frontier):
 
     assert result == expected_result
 
+
 @mark.rebalance
 @mark.frontier
 def test_nonconvex_right_frontier(init_nonconvex_frontier):
@@ -89,6 +97,7 @@ def test_nonconvex_right_frontier(init_nonconvex_frontier):
 
     assert result == expected_result
 
+
 @mark.rebalance
 @mark.frontier
 def test_maximize_risk_with_convex_right_frontier(init_convex_frontier):
@@ -99,6 +108,7 @@ def test_maximize_risk_with_convex_right_frontier(init_convex_frontier):
     expected_risk = approx(0.30419612104254684, abs=1e-2)
 
     assert result_risk == expected_risk
+
 
 @mark.rebalance
 @mark.frontier

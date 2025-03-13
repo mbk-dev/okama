@@ -277,15 +277,28 @@ def init_efficient_frontier_three_assets(init_efficient_frontier_values2):
 # Efficient Frontier Multi-Period
 @pytest.fixture(scope="module")
 def init_efficient_frontier_reb():
-    ls = ["SPY.US", "GLD.US"]
     return ok.EfficientFrontierReb(
-        assets=ls,
+        assets=["SPY.US", "GLD.US"],
         ccy="USD",
         first_date="2019-01",
         last_date="2020-02",
+        rebalancing_period="year",    
+        bounds=((0, 1), (0, 1)),
+        inflation=True,
         n_points=2,
-        verbose=False,
         full_frontier=False,
+    )
+
+
+@pytest.fixture(scope="module")
+def bounds_frontier_params():
+    return dict(
+        assets=["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"],
+        ccy="USD",
+        first_date="2019-01",
+        last_date="2020-02",
+        rebalancing_period="year",    
+        bounds=((0, 0.2), (0.2, 0.4), (0.4, 0.6), (0, 1), (0, 1)),
         inflation=True,
     )
 
@@ -314,6 +327,11 @@ def nonconvex_frontier_params():
         n_points=5,
         verbose=True,
     )
+
+
+@pytest.fixture(scope="module")
+def init_bounds_frontier(bounds_frontier_params):
+    return ok.EfficientFrontierReb(**bounds_frontier_params)
 
 
 @pytest.fixture(scope="module")
