@@ -1968,10 +1968,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        distr : {'norm', 'lognorm'}, default 'norm'
+        distr : {'norm', 'lognorm', 't'}, default 'norm'
             The name of a distribution to fit.
             'norm' - for normal distribution.
             'lognorm' - for lognormal distribution.
+            't' - for Student's T distribution
 
 
         Notes
@@ -2159,17 +2160,19 @@ class Portfolio(make_asset_list.ListMaker):
         if distr == "norm":  # Generate PDF
             mu, std = scipy.stats.norm.fit(data)
             p = scipy.stats.norm.pdf(x, mu, std)
+            title = f"Fit results: mu = {mu:.3f}, std = {std:.3f}"
         elif distr == "lognorm":
             std, loc, scale = scipy.stats.lognorm.fit(data)
             mu = np.log(scale)
             p = scipy.stats.lognorm.pdf(x, std, loc, scale)
+            title = f"Fit results: mu = {mu:.3f}, std = {std:.3f}"
         elif distr == "t":
             df, loc, scale = scipy.stats.t.fit(data)
             p = scipy.stats.t.pdf(x, loc=loc, scale=scale, df=df)
+            title = f"Fit results: df = {df:.3f}, loc = {loc:.3f}, scale = {scale:.3f}"
         else:
             raise ValueError('distr must be "norm" (default) or "lognorm".')
         plt.plot(x, p, "k", linewidth=2)
-        title = "Fit results: mu = %.3f,  std = %.3f" % (mu, std)
         plt.title(title)
         plt.show()
 
@@ -2741,11 +2744,11 @@ class PortfolioDCF:
             return None
 
     @property
-    def monte_carlo_wealth(self) -> pd.DataFrame:
+    def monte_carlo_wealth_fv(self) -> pd.DataFrame:
         """
-        Portfolio random wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
+        Portfolio not discounted random wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
 
-        Monte Carlo simulation generates n random monthly time series.
+        Monte Carlo simulation generates n random monthly time series (not discounted).
         Each wealth index is calculated with rate of return time series of a given distribution.
 
         First date of forecasted returns is portfolio last_date.
@@ -2768,7 +2771,7 @@ class PortfolioDCF:
         >>> ind.amount = -500  # set withdrawal size
         >>> ind.frequency = "year"  # set withdrawal frequency
         >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
-        >>> pf.dcf.monte_carlo_wealth.plot()
+        >>> pf.dcf.monte_carlo_wealth_fv.plot()
         >>> plt.legend("")  # don't show legend for each line
         >>> plt.show()
         """
@@ -2836,7 +2839,7 @@ class PortfolioDCF:
         >>> plt.legend("")  # no legend is required
         >>> plt.show()
         """
-        wealth_df = self.monte_carlo_wealth.copy()
+        wealth_df = self.monte_carlo_wealth_fv.copy()
         wealth_df_pv = pd.DataFrame()
         for n, row in enumerate(wealth_df.iterrows()):
             w = row[1]
@@ -2902,13 +2905,13 @@ class PortfolioDCF:
                     years = months / settings._MONTHS_PER_YEAR
                     periods = years / settings.frequency_periods_per_year[self.cashflow_parameters.frequency]
                     self.cashflow_parameters.amount *= (1.0 + self.cashflow_parameters.indexation) ** periods
-                s2 = self.monte_carlo_wealth
+                s2 = self.monte_carlo_wealth_fv
                 for s in s2:
                     s2[s].plot(legend=None)
             self.cashflow_parameters = backup_obj
             self.use_discounted_values = backup
         else:
-            s2 = self.monte_carlo_wealth
+            s2 = self.monte_carlo_wealth_fv
             s2.plot(legend=None)
         self.cashflow_parameters._clear_cf_cache()
 
@@ -2957,7 +2960,7 @@ class PortfolioDCF:
         >>> s.quantile(50 / 100)
         np.float64(17.5)
         """
-        s2 = self.monte_carlo_wealth
+        s2 = self.monte_carlo_wealth_fv
         dates: pd.Series = helpers.Frame.get_survival_date(s2, self.discount_rate, threshold)
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
 
@@ -3147,7 +3150,7 @@ class MonteCarlo:
     @distribution.setter
     def distribution(self, distribution):
         validators.validate_distribution(distribution)
-        self.parent._monte_carlo_wealth = pd.DataFrame()
+        self._clear_cf_cache()
         self._distribution = distribution
 
     @property
@@ -3164,7 +3167,7 @@ class MonteCarlo:
     @period.setter
     def period(self, period):
         validators.validate_integer("period", period)
-        self.parent._monte_carlo_wealth = pd.DataFrame()
+        self._clear_cf_cache()
         self._period = period
 
     @property
@@ -3181,10 +3184,10 @@ class MonteCarlo:
     @number.setter
     def number(self, mc_number):
         validators.validate_integer("mc_number", mc_number)
-        self.parent._monte_carlo_wealth = pd.DataFrame()
+        self._clear_cf_cache()
         self._mc_number = mc_number
 
-    def _clear_wealth_data(self):
+    def _clear_cf_cache(self):
         self.parent._monte_carlo_wealth = pd.DataFrame()
 
 
@@ -3207,7 +3210,7 @@ class CashFlow:
     @property
     def frequency(self) -> str:
         """
-        The frequency of regualr withdrawals or contributions in the strategy.
+        The frequency of regular withdrawals or contributions in the strategy.
 
         Allowed values for frequency:
 
