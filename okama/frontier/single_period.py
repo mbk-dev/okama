@@ -142,6 +142,9 @@ class EfficientFrontier(asset_list.AssetList):
 
     @bounds.setter
     def bounds(self, bounds):
+        
+        self._ef_points = pd.DataFrame(dtype=float) 
+        
         if bounds:
             if len(bounds) != len(self.symbols):
                 raise ValueError(

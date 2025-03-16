@@ -12,6 +12,9 @@ from okama.common.helpers import helpers
 
 import logging
 
+import warnings
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -40,6 +43,12 @@ class EfficientFrontierReb(asset_list.AssetList):
 
     ccy : str, default 'USD'
         Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
+
+    bounds: tuple of ((float, float),...)
+        Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
+        If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
+        bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
+        from 0 to 50%. The second asset has no limitations.
 
     inflation : bool, default True
         Defines whether to take inflation data into account in the calculations.
@@ -149,6 +158,9 @@ class EfficientFrontierReb(asset_list.AssetList):
 
     @bounds.setter
     def bounds(self, bounds):
+        
+        self._ef_points = pd.DataFrame(dtype=float)     
+        
         if bounds:
             if len(bounds) != len(self.symbols):
                 raise ValueError(
@@ -771,6 +783,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             row = self.minimize_risk(target_cagr)
             end_time = time.time()
             if self.verbose:
+                logger.info(target_cagr)
                 logger.info(f"left EF point #{i + 1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
             return row
 
