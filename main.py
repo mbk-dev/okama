@@ -41,17 +41,21 @@ pf.dcf.cashflow_parameters = ind
 
 pf.dcf.set_mc_parameters(
     distribution="norm",
-    period=50,
-    number=1000
+    period=25,
+    number=100
 )
 
 # df = pf.dcf.monte_carlo_survival_period()
 # print(df.describe())
 
 w, err = pf.dcf.find_the_largest_withdrawals_size(
-    goal="maintain_balance_pv",
+    goal="survival_period",
+    target_survival_period=10,
     percentile=20,
     tolerance_rel=0.01,
+    # withdrawals_range=(- 2_000_000 * 90 * 0.10 / 12, 100_000),
+    withdrawals_range=(0.05, 0.30),
+    iter_max = 10
 )
 
 print(w, err)
