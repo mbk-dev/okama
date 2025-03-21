@@ -41,6 +41,37 @@ def test_bounds_frontier(init_bounds_frontier):
 
 @mark.rebalance
 @mark.frontier
+def test_bounds_setter_valid_input(init_frontier_with_bounds):
+    frontier = init_frontier_with_bounds
+    expected_bounds = ((0, 1), (0, 1), (0, 1), (0, 0.4))
+    assert frontier.bounds == expected_bounds
+
+
+@mark.rebalance
+@mark.frontier
+def test_bounds_setter_empty_input(init_frontier_without_bounds):
+    frontier = init_frontier_without_bounds
+    frontier.bounds = None
+    assert frontier.bounds == ((0.0, 1.0),) * len(frontier._assets)  
+
+
+def test_bounds_setter_ef_points_reset(init_frontier_with_bounds):
+    frontier = init_frontier_with_bounds
+
+    frontier._ef_points = pd.DataFrame({
+        'GLD.US': [0.25],
+        'PGJ.US': [0.25],
+        'GC.COMM': [0.25],
+        'VB.US': [0.25]
+    })
+
+    frontier.bounds = ((0, 1), (0, 1), (0, 1), (0, 1))
+
+    assert frontier._ef_points.empty
+
+
+@mark.rebalance
+@mark.frontier
 def test_gmv_annual_weights(init_efficient_frontier_reb):
     assert_allclose(
         init_efficient_frontier_reb.gmv_annual_weights,
@@ -113,6 +144,28 @@ def test_minimize_risk_with_bounds(init_frontier_with_bounds, dict_1, dict_2):
     
     for key in dict_2:
         assert np.isclose(result[key], dict_2[key], rtol=1e-2)
+
+
+@mark.rebalance
+@mark.frontier
+def test_minimize_risk_with_bounds(init_frontier_with_bounds):
+    target_cagr = 0.17674807724452934
+    expected_risk = 0.19857284519244595
+    
+    result = init_frontier_with_bounds.minimize_risk(target_cagr)
+
+    assert np.isclose(result['Risk'], expected_risk, rtol=1e-2)
+
+
+@mark.rebalance
+@mark.frontier
+def test_minimize_risk_without_bounds(init_frontier_without_bounds):
+    target_cagr = 0.17674807724452934
+    expected_risk = 0.1942250533311337
+    
+    result = init_frontier_without_bounds.minimize_risk(target_cagr)
+    print(result)
+    assert np.isclose(result['Risk'], expected_risk, rtol=1e-2)
 
 
 @mark.rebalance
