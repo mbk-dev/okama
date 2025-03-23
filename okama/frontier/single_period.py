@@ -915,6 +915,12 @@ class EfficientFrontier(asset_list.AssetList):
 
         Parameters
         ----------
+        bounds : tuple of ((float, float),...)
+            Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
+            If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
+            bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
+            from 0 to 50%. The second asset has no limitations.
+
         x_axe : {'risk', 'cagr'}, default 'risk'
             Show the relation between weights and CAGR (if 'cagr') or between weights and Risk (if 'risk').
             CAGR or Risk are displayed on the x-axis.
@@ -996,7 +1002,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> import matplotlib.pyplot as plt
         >>> ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
         >>> curr = 'USD'
-        >>> last_date = '07-2021'
+        >>> last_date = '2021-07'
         >>> ef = ok.EfficientFrontier(ls4, ccy=curr, last_date=last_date)
         >>> ef.plot_pair_ef()
         >>> plt.show()
@@ -1014,7 +1020,6 @@ class EfficientFrontier(asset_list.AssetList):
         >>> ax.plot(df4['Risk'], df4['Mean return'], color = 'black', linestyle='--')
         >>> plt.show()
         """
-        # TODO: Add bounds
         if len(self.symbols) < 3:
             raise ValueError("The number of symbols cannot be less than 3")
         # self._verify_axes()
