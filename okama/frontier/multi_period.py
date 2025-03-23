@@ -1,8 +1,10 @@
 import time
+import itertools
 from typing import List, Tuple, Dict, Optional
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 
 from scipy.optimize import minimize
@@ -11,9 +13,6 @@ from okama import asset_list, settings
 from okama.common.helpers import helpers
 
 import logging
-
-import warnings
-warnings.simplefilter(action="ignore", category=FutureWarning)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -783,7 +782,6 @@ class EfficientFrontierReb(asset_list.AssetList):
             row = self.minimize_risk(target_cagr)
             end_time = time.time()
             if self.verbose:
-                logger.info(target_cagr)
                 logger.info(f"left EF point #{i + 1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
             return row
 
@@ -886,3 +884,78 @@ class EfficientFrontierReb(asset_list.AssetList):
             row = {"Risk": risk, "CAGR": cagr}
             random_portfolios = pd.concat([random_portfolios, pd.DataFrame(row, index=[0])], ignore_index=True)
         return random_portfolios
+
+    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> plt.axes:
+        """
+        Plot Efficient Frontier of every pair of assets.
+
+        Efficient Frontier is a set of portfolios which satisfy the condition that no other portfolio exists
+        with a higher expected return but with the same risk (standard deviation of return).
+
+        Arithmetic mean (expected return) is used for optimized portfolios.
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Parameters
+        ----------
+        tickers : {'tickers', 'names'} or list of str, default 'tickers'
+            Annotation type for assets.
+            'tickers' - assets symbols are shown in form of 'SPY.US'
+            'names' - assets names are used like - 'SPDR S&P 500 ETF Trust'
+            To show custom annotations for each asset pass the list of names.
+
+        figsize: (float, float), optional
+            Figure size: width, height in inches.
+            If None default matplotlib size is taken: [6.4, 4.8]
+
+        Notes
+        -----
+        It should be at least 3 assets.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
+        >>> curr = 'USD'
+        >>> last_date = '2021-07'
+        >>> ef = ok.EfficientFrontierReb(ls4, ccy=curr, last_date=last_date)
+        >>> ef.plot_pair_ef()
+        >>> plt.show()
+
+        It can be useful to plot the full Efficent Frontier (EF) with optimized 4 assets portfolios
+        together with the EFs for each pair of assets.
+
+        >>> ef4 = ok.EfficientFrontierReb(assets=ls4, ccy=curr, n_points=100)
+        >>> df4 = ef4.ef_points
+        >>> fig = plt.figure()
+        >>> # Plot Efficient Frontier of every pair of assets. Optimized portfolios will have 2 assets.
+        >>> ef4.plot_pair_ef()  # mean return is used for optimized portfolios.
+        >>> ax = plt.gca()
+        >>> # Plot the full Efficient Frontier for 4 asset portfolios.
+        >>> ax.plot(df4['Risk'], df4['Mean return'], color = 'black', linestyle='--')
+        >>> plt.show()
+        """
+        if len(self.symbols) < 3:
+            raise ValueError("The number of symbols cannot be less than 3")
+        # self._verify_axes()
+        bool_inflation = hasattr(self, "inflation")
+        fig, ax = plt.subplots(figsize=figsize)
+        for i in itertools.combinations(self.asset_obj_dict.values(), 2):
+            sym_pair = list(i)
+            index0 = self.symbols.index(sym_pair[0].symbol)
+            index1 = self.symbols.index(sym_pair[1].symbol)
+            bounds_pair = (self.bounds[index0], self.bounds[index1])
+            ef = EfficientFrontierReb(
+                assets=sym_pair,
+                ccy=self.currency,
+                first_date=self.first_date,
+                last_date=self.last_date,
+                inflation=bool_inflation,
+                full_frontier=True,
+                bounds=bounds_pair,
+            ).ef_points
+            ax.plot(ef["Risk"], ef["CAGR"])
+        self.plot_assets(kind="cagr", tickers=tickers)
+        return ax
