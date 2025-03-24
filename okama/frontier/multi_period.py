@@ -954,6 +954,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 last_date=self.last_date,
                 inflation=bool_inflation,
                 full_frontier=True,
+                n_points=self.n_points,
                 bounds=bounds_pair,
             ).ef_points
             ax.plot(ef["Risk"], ef["CAGR"])
