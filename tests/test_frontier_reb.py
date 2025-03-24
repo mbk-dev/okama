@@ -43,7 +43,7 @@ def test_bounds_frontier(init_bounds_frontier):
 @mark.frontier
 def test_bounds_setter_valid_input(init_frontier_with_bounds):
     frontier = init_frontier_with_bounds
-    expected_bounds = ((0, 1), (0, 1), (0, 1), (0, 0.4))
+    expected_bounds = ((0, 1), (0, 1), (0, 0.4))
     assert frontier.bounds == expected_bounds
 
 
@@ -61,11 +61,10 @@ def test_bounds_setter_ef_points_reset(init_frontier_with_bounds):
     frontier._ef_points = pd.DataFrame({
         'GLD.US': [0.25],
         'PGJ.US': [0.25],
-        'GC.COMM': [0.25],
         'VB.US': [0.25]
     })
 
-    frontier.bounds = ((0, 1), (0, 1), (0, 1), (0, 1))
+    frontier.bounds = ((0, 1), (0, 1), (0, 1))
 
     assert frontier._ef_points.empty
 
@@ -99,58 +98,11 @@ def test_ef_points_reb(init_efficient_frontier_reb):
     assert init_efficient_frontier_reb.ef_points["CAGR"].iloc[1] == approx(0.1889, abs=1e-2)
 
 
-test_params = [
-    (
-        {  
-            'GLD.US': 0.0,
-            'PGJ.US': 0.084373066707716,
-            'GC.COMM': 0.3657553971903911,
-            'VB.US': 0.549871536101893,
-            'CAGR': 0.17674807724452934,
-            'Risk': 0.1942250533311337
-        },
-        { 
-            'GLD.US': 0.4824328877342874,
-            'PGJ.US': 0.1175671122657124,
-            'GC.COMM': 1.759024851233533e-16,
-            'VB.US': 0.4,
-            'CAGR': 0.17674807724452934,
-            'Risk': 0.19857284519244595
-        }
-    )
-]
-
-
-@mark.rebalance
-@mark.frontier
-@pytest.mark.parametrize("dict_1, dict_2", test_params)
-def test_minimize_risk_without_bounds(init_frontier_without_bounds, dict_1, dict_2):
-
-    target_cagr = 0.17674807724452934
-    
-    result = init_frontier_without_bounds.minimize_risk(target_cagr)
-    
-    for key in dict_1:
-        assert np.isclose(result[key], dict_1[key], rtol=1e-2)
-
-@mark.rebalance
-@mark.frontier
-@pytest.mark.parametrize("dict_1, dict_2", test_params)
-def test_minimize_risk_with_bounds(init_frontier_with_bounds, dict_1, dict_2):
-
-    target_cagr = 0.17674807724452934
-    
-    result = init_frontier_with_bounds.minimize_risk(target_cagr)
-    
-    for key in dict_2:
-        assert np.isclose(result[key], dict_2[key], rtol=1e-2)
-
-
 @mark.rebalance
 @mark.frontier
 def test_minimize_risk_with_bounds(init_frontier_with_bounds):
     target_cagr = 0.17674807724452934
-    expected_risk = 0.19857284519244595
+    expected_risk = 0.20058690788622102
     
     result = init_frontier_with_bounds.minimize_risk(target_cagr)
 

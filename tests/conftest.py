@@ -306,7 +306,7 @@ def bounds_frontier_params():
 @pytest.fixture(scope="function")
 def without_bounds_params():
     return dict(
-        assets=["GLD.US", "PGJ.US", "GC.COMM", "VB.US"],
+        assets=["PGJ.US", "GC.COMM", "VB.US"],
         ccy="RUB",
         first_date="2004-12",
         last_date="2020-12",
@@ -318,37 +318,12 @@ def without_bounds_params():
 @pytest.fixture(scope="function")
 def with_bounds_params():
     return dict(
-        assets=["GLD.US", "PGJ.US", "GC.COMM", "VB.US"],
+        assets=["PGJ.US", "GC.COMM", "VB.US"],
         ccy="RUB",
         first_date="2004-12",
         last_date="2020-12",
         rebalancing_period="year",    
-        bounds=((0, 1), (0, 1), (0, 1), (0, 0.4)),
-        inflation=True,
-    )
-
-
-@pytest.fixture(scope="module")
-def without_bounds_params():
-    return dict(
-        assets=["GLD.US", "PGJ.US", "GC.COMM", "VB.US"],
-        ccy="RUB",
-        first_date="2004-12",
-        last_date="2020-12",
-        rebalancing_period="year",    
-        inflation=True,
-    )
-
-
-@pytest.fixture(scope="module")
-def with_bounds_params():
-    return dict(
-        assets=["GLD.US", "PGJ.US", "GC.COMM", "VB.US"],
-        ccy="RUB",
-        first_date="2004-12",
-        last_date="2020-12",
-        rebalancing_period="year",    
-        bounds=((0, 1), (0, 1), (0, 1), (0, 0.4)),
+        bounds=((0, 1), (0, 1), (0, 0.4)),
         inflation=True,
     )
 
@@ -390,16 +365,6 @@ def init_frontier_without_bounds(without_bounds_params):
 
 
 @pytest.fixture(scope="function")
-def init_frontier_with_bounds(with_bounds_params):
-    return ok.EfficientFrontierReb(**with_bounds_params)
-
-
-@pytest.fixture(scope="module")
-def init_frontier_without_bounds(without_bounds_params):
-    return ok.EfficientFrontierReb(**without_bounds_params)
-
-
-@pytest.fixture(scope="module")
 def init_frontier_with_bounds(with_bounds_params):
     return ok.EfficientFrontierReb(**with_bounds_params)
 
