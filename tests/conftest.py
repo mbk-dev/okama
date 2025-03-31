@@ -306,25 +306,23 @@ def bounds_frontier_params():
 @pytest.fixture(scope="function")
 def without_bounds_params():
     return dict(
-        assets=["PGJ.US", "GC.COMM", "VB.US"],
-        ccy="RUB",
-        first_date="2004-12",
-        last_date="2020-12",
+        assets=["VOO.US", "GLD.US", "SCHA.US"],
+        ccy="USD",
+        first_date="2004-10",
+        last_date="2020-10",    
         rebalancing_period="year",    
-        inflation=True,
     )
 
 
 @pytest.fixture(scope="function")
 def with_bounds_params():
     return dict(
-        assets=["PGJ.US", "GC.COMM", "VB.US"],
-        ccy="RUB",
-        first_date="2004-12",
-        last_date="2020-12",
+        assets=["VOO.US", "GLD.US", "SCHA.US"],
+        ccy="USD",
+        first_date="2004-10",
+        last_date="2020-10",
         rebalancing_period="year",    
-        bounds=((0, 1), (0, 1), (0, 0.4)),
-        inflation=True,
+        bounds=((0, 0.4), (0, 1), (0, 1)),
     )
 
 

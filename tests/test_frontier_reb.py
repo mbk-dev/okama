@@ -43,7 +43,7 @@ def test_bounds_frontier(init_bounds_frontier):
 @mark.frontier
 def test_bounds_setter_valid_input(init_frontier_with_bounds):
     frontier = init_frontier_with_bounds
-    expected_bounds = ((0, 1), (0, 1), (0, 0.4))
+    expected_bounds = ((0, 0.4), (0, 1), (0, 1))
     assert frontier.bounds == expected_bounds
 
 
@@ -101,8 +101,8 @@ def test_ef_points_reb(init_efficient_frontier_reb):
 @mark.rebalance
 @mark.frontier
 def test_minimize_risk_with_bounds(init_frontier_with_bounds):
-    target_cagr = 0.17674807724452934
-    expected_risk = 0.20058690788622102
+    target_cagr = 0.1035764996098511
+    expected_risk = 0.1325340380516895
     
     result = init_frontier_with_bounds.minimize_risk(target_cagr)
 
@@ -112,11 +112,11 @@ def test_minimize_risk_with_bounds(init_frontier_with_bounds):
 @mark.rebalance
 @mark.frontier
 def test_minimize_risk_without_bounds(init_frontier_without_bounds):
-    target_cagr = 0.17674807724452934
-    expected_risk = 0.1942250533311337
+    target_cagr = 0.1035764996098511
+    expected_risk = 0.11948185412271976
     
     result = init_frontier_without_bounds.minimize_risk(target_cagr)
-    print(result)
+
     assert np.isclose(result['Risk'], expected_risk, rtol=1e-2)
 
 
