@@ -1038,6 +1038,7 @@ class EfficientFrontier(asset_list.AssetList):
                 inflation=bool_inflation,
                 full_frontier=True,
                 bounds=bounds_pair,
+                n_points=self.n_points,
             ).ef_points
             ax.plot(ef["Risk"], ef["Mean return"])
         self.plot_assets(kind="mean", tickers=tickers)
