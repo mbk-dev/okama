@@ -98,26 +98,55 @@ def test_ef_points_reb(init_efficient_frontier_reb):
     assert init_efficient_frontier_reb.ef_points["CAGR"].iloc[1] == approx(0.1889, abs=1e-2)
 
 
+test_params = {
+    "with_bounds": {
+        "target_cagr_1": 0.060973018282528796,
+        "expected_risk_1": 0.1390686876877882,
+        "target_cagr_2": 0.1035764996098511,
+        "expected_risk_2": 0.1325340380516895,
+    },
+    "without_bounds": {
+        "target_cagr_1": 0.060973018282528796,
+        "expected_risk_1": 0.1390686876877882,
+        "target_cagr_2": 0.1035764996098511,
+        "expected_risk_2": 0.11948185412271976,
+    }
+}
+
+
 @mark.rebalance
 @mark.frontier
 def test_minimize_risk_with_bounds(init_frontier_with_bounds):
-    target_cagr = 0.1035764996098511
-    expected_risk = 0.1325340380516895
+    params = test_params["with_bounds"]
     
-    result = init_frontier_with_bounds.minimize_risk(target_cagr)
-
-    assert np.isclose(result['Risk'], expected_risk, rtol=1e-2)
+    result = init_frontier_with_bounds.minimize_risk(params["target_cagr_1"])
+    assert np.isclose(result["Risk"], params["expected_risk_1"], rtol=1e-2)
+    
+    result = init_frontier_with_bounds.minimize_risk(params["target_cagr_2"])
+    assert np.isclose(result["Risk"], params["expected_risk_2"], rtol=1e-2)
 
 
 @mark.rebalance
 @mark.frontier
 def test_minimize_risk_without_bounds(init_frontier_without_bounds):
-    target_cagr = 0.1035764996098511
-    expected_risk = 0.11948185412271976
-    
-    result = init_frontier_without_bounds.minimize_risk(target_cagr)
+    params = test_params["without_bounds"]
 
-    assert np.isclose(result['Risk'], expected_risk, rtol=1e-2)
+    result = init_frontier_without_bounds.minimize_risk(params["target_cagr_1"])
+    assert np.isclose(result["Risk"], params["expected_risk_1"], rtol=1e-2)
+    
+    result = init_frontier_without_bounds.minimize_risk(params["target_cagr_2"])
+    assert np.isclose(result["Risk"], params["expected_risk_2"], rtol=1e-2)
+
+
+@mark.rebalance
+@mark.frontier
+def test_minimize_risk_raises_error_when_no_solution(init_frontier_with_bounds):
+    target_cagr = 0.5 
+    
+    with pytest.raises(RecursionError) as exc_info:
+        init_frontier_with_bounds.minimize_risk(target_cagr)
+    
+    assert str(exc_info.value) == f"No solution found for target CAGR value: {target_cagr}."
 
 
 @mark.rebalance
