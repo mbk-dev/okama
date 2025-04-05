@@ -868,7 +868,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         >>> ax.legend()
         >>> plt.show()
         """
-        weights_df = helpers.Float.get_random_weights(n, self.assets_ror.shape[1])
+        weights_df = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
 
         # Portfolio risk and cagr for each set of weights
         portfolios_ror = weights_df.aggregate(

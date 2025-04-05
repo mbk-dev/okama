@@ -1,5 +1,5 @@
 import math
-from typing import Union, Callable, Optional
+from typing import Union, Callable, Optional, Tuple
 from functools import singledispatchmethod
 
 import pandas as pd
@@ -70,16 +70,39 @@ class Float:
         return np.exp(np.log(1.0 + mean_return) - 0.5 * std**2 / (1.0 + mean_return) ** 2) - 1.0
 
     @staticmethod
-    def get_random_weights(n: int, w_shape: int) -> pd.Series:
+    def get_random_weights(n: int, w_shape: int, bounds: Optional[Tuple[Tuple[float, float], ...]] = None) -> pd.Series:
         """
         Produce N random normalized weights of a given shape.
+        bounds : tuple of tuples, optional.
+        Constraints for each asset's weight, e.g., ((0, 1), (0, 0.5), (0.5, 1), ...).
+        If None, default constraints are applied.
         """
-        # Random weights
-        rand_nos = np.random.rand(n, w_shape)
-        weights_transposed = rand_nos.transpose() / rand_nos.sum(axis=1)
-        weights = weights_transposed.transpose()
-        weights_df = pd.DataFrame(weights)
-        return weights_df.aggregate(np.array, axis=1)  # Converts df to DataFrame of np.array
+        if bounds is None:
+            bounds = ((0.0, 1.0),) * w_shape
+
+        weights = np.zeros((n, w_shape))
+
+        for i in range(n):
+            max_attempts = 1000
+            attempt = 0
+            valid = False
+
+            while not valid and attempt < max_attempts:
+
+                w = np.array([np.random.uniform(low, high) for (low, high) in bounds])
+                w /= w.sum()
+                valid = True
+
+                for j in range(w_shape):
+                    if not (bounds[j][0] <= w[j] <= bounds[j][1]):
+                        valid = False
+                        break
+
+                attempt += 1
+
+            weights[i] = w
+
+        return pd.Series([np.array(w) for w in weights])
 
     @staticmethod
     def get_purchasing_power(inflation: float, value: float = 1000.0):

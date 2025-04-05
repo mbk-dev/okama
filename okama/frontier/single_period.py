@@ -869,7 +869,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> ax.legend()
         >>> plt.show()
         """
-        weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1])
+        weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
 
         # Portfolio risk and return for each set of weights
         random_portfolios = pd.DataFrame(dtype=float)
