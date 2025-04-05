@@ -228,7 +228,7 @@ class Frame:
                 # for Series
                 portfolio_position = 0
                 ror = ror.to_frame()
-
+            periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
             if cashflow_parameters.frequency == "month" or cashflow_parameters.NAME == "time_series":
                 s = pd.Series(dtype=float, name=portfolio_symbol)
                 for n, row in enumerate(ror.itertuples()):
@@ -237,7 +237,7 @@ class Frame:
                     if cashflow_parameters.NAME == "fixed_amount":
                         cashflow = amount * (1 + cashflow_parameters.indexation / settings._MONTHS_PER_YEAR) ** n
                     elif cashflow_parameters.NAME == "fixed_percentage":
-                        cashflow = cashflow_parameters.percentage * period_initial_amount
+                        cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
                     elif cashflow_parameters.NAME == "time_series":
                         try:
                             cashflow = cashflow_parameters.time_series[date]
@@ -256,7 +256,6 @@ class Frame:
                     s[date] = period_initial_amount
             else:
                 pandas_frequency = settings.frequency_mapping[cashflow_parameters.frequency]
-                periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
                 wealth_df = pd.DataFrame(dtype=float, columns=[portfolio_symbol])
                 for n, x in enumerate(ror.resample(rule=pandas_frequency, convention="start")):
                     ror_df = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
@@ -264,7 +263,7 @@ class Frame:
                     if cashflow_parameters.NAME == "fixed_amount":
                         cashflow_value = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
                     elif cashflow_parameters.NAME == "fixed_percentage":
-                        cashflow_value = cashflow_parameters.percentage * period_initial_amount
+                        cashflow_value = cashflow_parameters.percentage / periods_per_year  * period_initial_amount
                     else:
                         raise ValueError("Wrong cashflow_method value.")
                     period_final_balance = period_wealth_index.iloc[-1] + cashflow_value

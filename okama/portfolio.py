@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from okama import settings
 from okama.common import make_asset_list, validators
 from okama.common.helpers import helpers, ratios
+from okama.common.solver import Result
 
 
 class Portfolio(make_asset_list.ListMaker):
@@ -2973,7 +2974,7 @@ class PortfolioDCF:
             threshold: float = 0,
             tolerance_rel: float = 0.01,
             iter_max: int = 20
-    ) -> Tuple[float, float]:
+    ):
         """
         Find the largest withdrawals size for Monte Carlo simulation according to Cashflow Strategy.
 
@@ -3075,57 +3076,85 @@ class PortfolioDCF:
             expected_max_withdrawal = withdrawals_range[1]
             expected_min_withdrawal = withdrawals_range[0]
             self.cashflow_parameters.percentage = - expected_max_withdrawal
+        else:
+            raise ValueError("This method works with IndexationStrategy or PercentageStrategy only.")
         iter = 0
-        solutions = pd.DataFrame(columns=["withdrawal", "error_rel", "error_rel_change"])
+        solutions = pd.DataFrame(columns=["withdrawal_abs", "withdrawal_rel", "error_rel", "error_rel_change"])
         while True:
-            wealth_at_quantile = self.monte_carlo_wealth_pv.iloc[-1, :].quantile(percentile / 100)
-            sp_at_quantile = self.monte_carlo_survival_period(threshold=0).quantile(percentile / 100)
-
+            sp_at_quantile = self.monte_carlo_survival_period(threshold=threshold).quantile(percentile / 100)
+            if self.cashflow_parameters.NAME == "fixed_amount":
+                main_parameter = self.cashflow_parameters.amount
+            elif self.cashflow_parameters.NAME == "fixed_percentage":
+                main_parameter = self.cashflow_parameters.percentage
             if goal in ["maintain_balance_fv", "maintain_balance_pv"]:
+                wealth_at_quantile = self.monte_carlo_wealth_pv.iloc[-1, :].quantile(percentile / 100)
                 condition = (wealth_at_quantile >= start_investment) and (sp_at_quantile == self.mc.period)
-                print(f'{wealth_at_quantile=:.2f}, {self.cashflow_parameters.amount=:.2f}')
+                print(f'{wealth_at_quantile=:.2f}, {main_parameter=:.3f}')
                 error_rel = abs(wealth_at_quantile - start_investment) / start_investment
             elif goal == "survival_period":
                 condition = sp_at_quantile >= target_survival_period
-                print(f'{sp_at_quantile=:.2f}, {self.cashflow_parameters.amount=:.2f}')
+                print(f'{sp_at_quantile=:.2f}, {main_parameter=:.3f}')
                 error_rel = abs(sp_at_quantile - target_survival_period) / target_survival_period
 
-            solutions.at[iter, "withdrawal"] = self.cashflow_parameters.amount
+            withdrawal_abs = main_parameter if self.cashflow_parameters.NAME == "fixed_amount" else main_parameter * start_investment / self.cashflow_parameters.periods_per_year
+            solutions.at[iter, "withdrawal_abs"] = withdrawal_abs
+            withdrawal_rel = abs(main_parameter / start_investment * self.cashflow_parameters.periods_per_year) if self.cashflow_parameters.NAME == "fixed_amount" else abs(self.cashflow_parameters.percentage)
+            solutions.at[iter, "withdrawal_rel"] = withdrawal_rel
             solutions.at[iter, "error_rel"] = error_rel
             gradient = solutions.at[iter, "error_rel"] - solutions.at[iter - 1, "error_rel"] if iter != 0 else 0
             solutions.at[iter, "error_rel_change"] = gradient
 
             print(f'{error_rel=:.3f}, {gradient=:.3f}')
 
+            if error_rel < tolerance_rel:
+                print(f'solution found: {withdrawal_abs:.2f} or {withdrawal_rel * 100:.2f}% after {iter + 1} steps.')
+                result = Result(
+                    success=True,
+                    withdrawal_abs=withdrawal_abs,
+                    withdrawal_rel=withdrawal_rel,
+                    error_rel=error_rel,
+                    solutions=solutions,
+                )
+                break
+
             if condition:
-                if error_rel < tolerance_rel:
-                    max_withdrawal = self.cashflow_parameters.amount
-                    print(f'solution found: {max_withdrawal} after {iter} steps.')
-                    break
-                expected_min_withdrawal = self.cashflow_parameters.amount
-                delta = abs(expected_max_withdrawal - self.cashflow_parameters.amount)  # ind.amount must be negative
-                self.cashflow_parameters.amount -= delta / 2
+                expected_min_withdrawal = main_parameter
+                delta = abs(expected_max_withdrawal - main_parameter)
+                if self.cashflow_parameters.NAME == "fixed_amount":
+                    self.cashflow_parameters.amount -= delta / 2
+                elif self.cashflow_parameters.NAME == "fixed_percentage":
+                    self.cashflow_parameters.percentage -= delta / 2
                 print("increasing withdrawal")
             else:
-                if error_rel < tolerance_rel:
-                    max_withdrawal = self.cashflow_parameters.amount
-                    print(f'solution found: {max_withdrawal} after {iter} steps.')
-                    break
-                expected_max_withdrawal = self.cashflow_parameters.amount
-                delta = abs(self.cashflow_parameters.amount - expected_min_withdrawal)
-                self.cashflow_parameters.amount += delta / 2
+                expected_max_withdrawal = main_parameter
+                delta = abs(main_parameter - expected_min_withdrawal)
+                if self.cashflow_parameters.NAME == "fixed_amount":
+                    self.cashflow_parameters.amount += delta / 2
+                elif self.cashflow_parameters.NAME == "fixed_percentage":
+                    self.cashflow_parameters.percentage += delta / 2
                 print("decreasing withdrawal")
             iter += 1
             if iter > iter_max - 1:
                 condition = solutions["error_rel"].idxmin()
-                best_result = solutions.loc[condition]["withdrawal"]
-                max_withdrawal = solutions.loc[condition]["error_rel"]
+                best_result_abs = solutions.loc[condition]["withdrawal_abs"]
+                best_result_rel = solutions.loc[condition]["withdrawal_rel"]
+                best_err_rel = solutions.loc[condition]["error_rel"]
                 print(
-                    f"'Didn't found solution after {iter} steps. The closest withdrawal was {best_result} or {self.cashflow_parameters.amount / start_investment * 12} with an error: {max_withdrawal}")
+                    f"Didn't found solution after {iter} steps. "
+                    f"The closest withdrawal was {best_result_abs} or {best_result_rel * 100:.2f}% "
+                    f"with an error: {best_err_rel * 100:.2f}%")
+                result = Result(
+                    success=False,
+                    withdrawal_abs=best_result_abs,
+                    withdrawal_rel=best_result_rel,
+                    error_rel=best_err_rel,
+                    solutions=solutions,
+                )
                 break
+
         self.cashflow_parameters = backup_obj
         self.cashflow_parameters._clear_cf_cache()
-        return max_withdrawal, error_rel
+        return result
 
 
 class MonteCarlo:
@@ -3381,6 +3410,8 @@ class IndexationStrategy(CashFlow):
     def amount(self, amount):
         self._clear_cf_cache()
         validators.validate_real("amount", amount)
+        if amount > self.initial_investment:
+            raise ValueError("Amount must be less or equal to the initial investment.")
         self._amount = amount
 
     @property
@@ -3458,7 +3489,7 @@ class PercentageStrategy(CashFlow):
         """
         The percentage of withdrawals or contributions.
 
-        The size of withdrawals or contribution is defined as a percentage of portfolio balance.
+        The size of withdrawals or contribution is defined as a percentage of portfolio balance per year.
 
         Returns
         -------
@@ -3471,6 +3502,8 @@ class PercentageStrategy(CashFlow):
     def percentage(self, percentage):
         self._clear_cf_cache()
         validators.validate_real("percentage", percentage)
+        if percentage < -1:
+            raise ValueError("Withdrawal Percentage must less or equal to the Initial investment (100%).")
         self._percentage = percentage
 
 

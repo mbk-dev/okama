@@ -31,39 +31,39 @@ weights = [0.16, 0.40,  0.25, 0.19]
 pf = ok.Portfolio(assets, weights=weights, ccy='RUB', rebalancing_period='year', inflation=False)
 pf.dcf.discount_rate = 0.09
 
-ind = ok.IndexationStrategy(pf)
-ind.initial_investment = 2_000_000 * 90
-ind.amount = -4000 * 90
-ind.frequency = "month"
-ind.indexation = 0.09
+# ind = ok.IndexationStrategy(pf)
+# ind.initial_investment = 2_000_000 * 90
+# ind.amount = -4000 * 90
+# ind.frequency = "month"
+# ind.indexation = 0.09
 
-pf.dcf.cashflow_parameters = ind
+# pf.dcf.cashflow_parameters = ind
+
+# Fixed Percentage strategy
+pc = ok.PercentageStrategy(pf)
+pc.initial_investment = 10_000
+pc.frequency = "year"
+pc.percentage = -0.55
+
+pf.dcf.cashflow_parameters = pc
 
 pf.dcf.set_mc_parameters(
     distribution="norm",
-    period=25,
+    period=50,
     number=100
 )
 
-# df = pf.dcf.monte_carlo_survival_period()
-# print(df.describe())
-
-w, err = pf.dcf.find_the_largest_withdrawals_size(
-    goal="survival_period",
-    target_survival_period=10,
+solution = pf.dcf.find_the_largest_withdrawals_size(
+    goal="maintain_balance_pv",
     percentile=20,
-    tolerance_rel=0.01,
-    # withdrawals_range=(- 2_000_000 * 90 * 0.10 / 12, 100_000),
-    withdrawals_range=(0.05, 0.30),
-    iter_max = 10
+    tolerance_rel=0.05,
+    threshold=0.05,
+    iter_max=20
 )
 
-print(w, err)
-
-
-
-
-
+print(
+    solution
+)
 
 
 # ror = pf.assets_ror
