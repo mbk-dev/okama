@@ -72,37 +72,62 @@ class Float:
     @staticmethod
     def get_random_weights(n: int, w_shape: int, bounds: Optional[Tuple[Tuple[float, float], ...]] = None) -> pd.Series:
         """
-        Produce N random normalized weights of a given shape.
+        Produce N random normalized weights of a given shape using sequential generation.
         bounds : tuple of tuples, optional.
         Constraints for each asset's weight, e.g., ((0, 1), (0, 0.5), (0.5, 1), ...).
         If None, default constraints are applied.
         """
         if bounds is None:
             bounds = ((0.0, 1.0),) * w_shape
+    
+        weights = []
+        attempts_per_weight = 1000  
+    
+        while len(weights) < n:
+            remaining = 1.0
+            indices = list(range(w_shape))
+            np.random.shuffle(indices) 
+            w = np.zeros(w_shape)
+            valid = True
+            
+            for i, j in enumerate(indices[:-1]):  
+                low, high = bounds[j]
+                
+                min_remaining = sum(bounds[k][0] for k in indices[i+1:])
+                max_remaining = sum(bounds[k][1] for k in indices[i+1:])
+                
+                adjusted_low = max(low, remaining - max_remaining)
+                adjusted_high = min(high, remaining - min_remaining)
+                
+                if adjusted_low > adjusted_high:
+                    valid = False
+                    break
+                    
+                w[j] = np.random.uniform(adjusted_low, adjusted_high)
+                remaining -= w[j]
+            
+            if not valid:
+                continue
+                
+            last_idx = indices[-1]
+            w[last_idx] = remaining
 
-        weights = np.zeros((n, w_shape))
+            if not (bounds[last_idx][0] <= w[last_idx] <= bounds[last_idx][1]):
+                valid = False
 
-        for i in range(n):
-            max_attempts = 1000
-            attempt = 0
-            valid = False
-
-            while not valid and attempt < max_attempts:
-
-                w = np.array([np.random.uniform(low, high) for (low, high) in bounds])
-                w /= w.sum()
-                valid = True
-
-                for j in range(w_shape):
-                    if not (bounds[j][0] <= w[j] <= bounds[j][1]):
-                        valid = False
-                        break
-
-                attempt += 1
-
-            weights[i] = w
-
-        return pd.Series([np.array(w) for w in weights])
+            if np.any(w < 0):
+                valid = False
+                
+            if valid:
+                weights.append(w)
+                
+            elif len(weights) + (n - len(weights)) * attempts_per_weight < attempts_per_weight * n:
+                continue
+            
+            else:
+                break
+    
+        return pd.Series([np.array(w) for w in weights[:n]])
 
     @staticmethod
     def get_purchasing_power(inflation: float, value: float = 1000.0):
