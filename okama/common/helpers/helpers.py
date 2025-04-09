@@ -186,8 +186,9 @@ class Frame:
         """
         initial_investments = initial_amount
         first_date = ror.index[0]
-        wealth_index = initial_investments * (ror + 1).cumprod().shift(1)
-        wealth_index.loc[first_date] = initial_investments  # replaces NaN with the first period return
+        wealth_index = initial_investments * (ror + 1).cumprod()
+        first_wealth_index_date = first_date - 1  # set 1000 to one month earlie
+        wealth_index.loc[first_wealth_index_date] = initial_investments
         wealth_index.sort_index(ascending=True, inplace=True)
         return wealth_index
 
@@ -524,12 +525,12 @@ class Rebalance:
                     if n == 0:
                         initial_allocation = target_weights_np * initial_inv  # initial rebalancing
                         assets_wealth_indexes_values = initial_allocation * (1 + r)
-                        weights_ts = pd.DataFrame(columns=ror.columns)  # TODO: move to a separete function
+                        weights_ts = pd.DataFrame(columns=ror.columns)  # TODO: move to a separate function
                     else:
                         if rebalancing_condition:
                             assets_wealth_indexes_values = target_weights_np * assets_wealth_indexes_values.sum()
                         assets_wealth_indexes_values *= 1 + r
-                        assets_wealth_indexes_values.rename(date, inplace=True)  # TODO: move to a separete function
+                        assets_wealth_indexes_values.rename(date, inplace=True)  # TODO: move to a separate function
                     # row = pd.DataFrame(assets_wealth_indexes_values).T
                     # row.columns = ror.columns
                     # assets_wealth_indexes = pd.concat([assets_wealth_indexes, row])
@@ -623,6 +624,20 @@ class Date:
             dt.replace(year=dt.year - years + 1, month=1)
             if dt.month == 12
             else dt.replace(year=dt.year - years, month=dt.month + 1)
+        )
+
+    @staticmethod
+    def subtract_months(dt: pd.Timestamp, months: int) -> pd.Timestamp:
+        """
+        Subtract N months (integer) from a date. Used for time series.
+        First month is +1 (if today is August the series should start at September to give 12 months).
+        """
+        if not isinstance(months, int):
+            raise TypeError("The period should be integer")
+        return (
+            dt.replace(year=dt.year, month=dt.month - months)
+            if dt.month > months
+            else dt.replace(year=dt.year - 1, month=12 - (months - dt.month))
         )
 
     @staticmethod
