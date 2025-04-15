@@ -482,10 +482,25 @@ class EfficientFrontierReb(asset_list.AssetList):
         >>> frontier.minimize_risk(0.107)
         {'SPY.US': 0.9810857623382343, 'AGG.US': 0.018914237661765643, 'CAGR': 0.107, 'Risk': 0.1549703673806012}
         """
+        
         n = self.assets_ror.shape[1]  # number of assets
+        
+        # Case 1: Left asset's CAGR is bigger than right asset's CAGR
+        if (hasattr(self, '_min_ratio_asset_left_to_max_cagr') and 
+            hasattr(self, '_max_ratio_asset_right_to_max_cagr') and
+            self._min_ratio_asset_left_to_max_cagr and
+            self._max_ratio_asset_right_to_max_cagr and
+            self._min_ratio_asset_left_to_max_cagr['min_asset_cagr'] >= 
+            self._max_ratio_asset_right_to_max_cagr['max_asset_cagr']):
+            
+            init_guess = np.repeat(0, n)
+            if self._min_ratio_asset_left_to_max_cagr:
+                init_guess[self._min_ratio_asset_left_to_max_cagr["list_position"]] = 1.0
 
-        init_guess = np.repeat(1 / n, n)  # initial weights
-
+        # Case 2: Left asset's CAGR is less than right asset's CAGR
+        else:
+            init_guess = np.repeat(1 / n, n)  # initial weights
+        
         def objective_function(w):
             # annual risk
             ts = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(w, self.assets_ror)
@@ -593,6 +608,44 @@ class EfficientFrontierReb(asset_list.AssetList):
         }
 
     @property
+    def _min_ratio_asset_left_to_max_cagr(self) -> Optional[dict]:
+        """
+        The asset with the minimum ratio between the CAGR 
+        (Compound Annual Growth Rate) and the risk for assets that are "to the left" 
+        of the portfolio with the maximum CAGR on the efficiency frontier.
+        """
+        cagr = helpers.Frame.get_cagr(self.assets_ror)
+        risk_monthly = self.assets_ror.std()
+        mean_return = self.assets_ror.mean()
+        risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
+        tolerance = 0.01
+        
+        global_max_cagr = self.global_max_return_portfolio["CAGR"]
+        global_max_risk = self.global_max_return_portfolio["Risk"]
+        
+
+        global_max_cagr_is_not_asset = (cagr < global_max_cagr * (1 - tolerance)).all()
+        if global_max_cagr_is_not_asset:
+            cagr_diff = global_max_cagr - cagr
+            risk_diff = global_max_risk - risk   
+            
+            if risk_diff is not None and (risk_diff == 0).any():  
+                risk_diff += 0.0001  # to avoid division by zero
+            
+            ratio = cagr_diff / risk_diff
+            left_assets = risk_diff > 0  
+    
+            if left_assets.any():
+                valid_ratios = ratio[left_assets]
+                min_ticker = valid_ratios.idxmin() 
+                return {
+                    "min_asset_cagr": cagr[min_ticker],
+                    "ticker_with_smallest_ratio": min_ticker,
+                    "list_position": self.assets_ror.columns.get_loc(min_ticker)
+                }
+        return None
+
+    @property
     def _max_ratio_asset_right_to_max_cagr(self) -> Optional[dict]:
         """
         The asset with the maximum ratio between the CAGR 
@@ -647,12 +700,24 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         Full range of CAGR values (from min to max).
         """
+        # Case 1: Left asset's CAGR is bigger than right asset's CAGR
+        if (hasattr(self, '_min_ratio_asset_left_to_max_cagr') and 
+            hasattr(self, '_max_ratio_asset_right_to_max_cagr') and
+            self._min_ratio_asset_left_to_max_cagr and
+            self._max_ratio_asset_right_to_max_cagr and
+            self._min_ratio_asset_left_to_max_cagr['min_asset_cagr'] >= 
+            self._max_ratio_asset_right_to_max_cagr['max_asset_cagr']):
+            
+            left_cagr = self._min_ratio_asset_left_to_max_cagr['min_asset_cagr']
+            return np.linspace(left_cagr, self.global_max_return_portfolio["CAGR"], self.n_points)
+        
+        # Case 2: Left asset's CAGR is less than right asset's CAGR
         if self.full_frontier:
             min_cagr = helpers.Frame.get_cagr(self.assets_ror).min()
         else:
             min_cagr = self.gmv_annual_values[1]
+        
         max_cagr = self.global_max_return_portfolio["CAGR"]
-
         return np.linspace(min_cagr, max_cagr, self.n_points)
 
     @property
