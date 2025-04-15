@@ -327,6 +327,26 @@ def with_bounds_params():
 
 
 @pytest.fixture(scope="module")
+def min_ratio_asset_left_to_max_cagr_when_none_params():
+    return dict(
+        assets=["SPY.US", "GLD.US"],
+        ccy="USD",
+        last_date="2020-10",
+        rebalancing_period="year",    
+    )
+
+
+@pytest.fixture(scope="module")
+def min_ratio_asset_left_to_max_cagr_when_not_none_params():
+    return dict(
+        assets=["SPY.US", "MCFTR.INDX"],
+        ccy="RUB",
+        last_date="2025-03",
+        rebalancing_period="year",    
+    )
+
+
+@pytest.fixture(scope="module")
 def convex_frontier_params():
     return dict(
         assets=["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"],
@@ -365,6 +385,16 @@ def init_frontier_without_bounds(without_bounds_params):
 @pytest.fixture(scope="function")
 def init_frontier_with_bounds(with_bounds_params):
     return ok.EfficientFrontierReb(**with_bounds_params)
+
+
+@pytest.fixture(scope="module")
+def init_frontier_with_none(min_ratio_asset_left_to_max_cagr_when_none_params):
+    return ok.EfficientFrontierReb(**min_ratio_asset_left_to_max_cagr_when_none_params)
+
+
+@pytest.fixture(scope="module")
+def init_frontier_with_not_none(min_ratio_asset_left_to_max_cagr_when_not_none_params):
+    return ok.EfficientFrontierReb(**min_ratio_asset_left_to_max_cagr_when_not_none_params)
 
 
 @pytest.fixture(scope="module")
