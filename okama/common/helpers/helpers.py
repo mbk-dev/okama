@@ -77,58 +77,60 @@ class Float:
         Constraints for each asset's weight, e.g., ((0, 1), (0, 0.5), (0.5, 1), ...).
         If None, default constraints are applied.
         """
+        # Case 1: default bounds
         if bounds is None:
-            # Case 1: default bounds
             random_numbers = np.random.rand(n, w_shape)
             # keepdims instead of transpose
-            weights = random_numbers / random_numbers.sum(axis=1, keepdims=True) 
-
+            weights = random_numbers / random_numbers.sum(axis=1, keepdims=True)
+        
+        # Case 2: custom bounds
         else:
-            # Case 2: custom bounds
+            bounds_arr = np.array(bounds)
+            mins = bounds_arr[:, 0]
+            maxs = bounds_arr[:, 1]
+            
             weights = []
-            attempts_per_weight = 1000  
+            batch_size = min(1000, n) 
             
             while len(weights) < n:
-                remaining = 1.0
-                indices = list(range(w_shape))
-                np.random.shuffle(indices) 
-                w = np.zeros(w_shape)
-                valid = True
-                    
-                for i, j in enumerate(indices[:-1]):  
-                    low, high = bounds[j]
-                    
-                    min_remaining = sum(bounds[k][0] for k in indices[i+1:])
-                    max_remaining = sum(bounds[k][1] for k in indices[i+1:])
-                    
-                    adjusted_low = max(low, remaining - max_remaining)
-                    adjusted_high = min(high, remaining - min_remaining)
-                    
-                    if adjusted_low > adjusted_high:
-                        valid = False
-                        break
-                            
-                    w[j] = np.random.uniform(adjusted_low, adjusted_high)
-                    remaining -= w[j]
+    
+                remaining = np.ones(batch_size)
+                indices = np.arange(w_shape)
+                batch_w = np.zeros((batch_size, w_shape))
+                valid_mask = np.ones(batch_size, dtype=bool)
                 
-                if not valid:
-                    continue
+                shuffled_indices = np.tile(indices, (batch_size, 1))
+                for i in range(batch_size):
+                    np.random.shuffle(shuffled_indices[i])
+                
+                for i in range(w_shape - 1):
+    
+                    idx = shuffled_indices[:, i]
+                    low = mins[idx]
+                    high = maxs[idx]
                     
-                last_idx = indices[-1]
-                w[last_idx] = remaining
-        
-                if not (bounds[last_idx][0] <= w[last_idx] <= bounds[last_idx][1]):
-                    valid = False
-        
-                if np.any(w < 0):
-                    valid = False
+                    future_mins = np.sum(mins[shuffled_indices[:, i+1:]], axis=1)
+                    future_maxs = np.sum(maxs[shuffled_indices[:, i+1:]], axis=1)
                     
-                if valid:
-                    weights.append(w)
+                    adjusted_low = np.maximum(low, remaining - future_maxs)
+                    adjusted_high = np.minimum(high, remaining - future_mins)
+     
+                    rand_vals = np.random.uniform(adjusted_low, adjusted_high)
                     
-                elif len(weights) + (n - len(weights)) * attempts_per_weight < attempts_per_weight * n:
-                    continue
-                else:
+                    batch_w[np.arange(batch_size), idx] = rand_vals
+                    remaining -= rand_vals
+    
+                    valid_mask &= (adjusted_low <= adjusted_high)
+    
+                last_idx = shuffled_indices[:, -1]
+                batch_w[np.arange(batch_size), last_idx] = remaining
+                valid_mask &= (mins[last_idx] <= remaining) & (remaining <= maxs[last_idx])
+                valid_mask &= np.all(batch_w >= 0, axis=1)
+    
+                valid_weights = batch_w[valid_mask]
+                weights.extend(valid_weights.tolist())
+       
+                if len(weights) >= n:
                     break
         
         return pd.Series([np.array(w) for w in weights[:n]])
