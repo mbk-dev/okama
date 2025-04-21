@@ -513,51 +513,57 @@ class Rebalance:
         initial_inv = 1000
         portfolio_wealth_index = pd.Series(dtype="float64")
         target_weights_np = np.asarray(target_weights)
-        if self.period == "none":  # No calendar rebalancing
-            if self.abs_deviation is None and self.rel_deviation is None:  # No Rebalancing bands
-                initial_allocation = target_weights_np * initial_inv
-                assets_wealth_indexes = initial_allocation * (1 + ror).cumprod()
-                portfolio_wealth_index = assets_wealth_indexes.sum(axis=1)
-            else:
-                for n, row in enumerate(ror.itertuples()):
-                    date = row[0]
-                    r = pd.Series(row[1:], index=ror.columns, name=date)
-                    if n == 0:
-                        initial_allocation = target_weights_np * initial_inv  # initial rebalancing
-                        assets_wealth_indexes_values = initial_allocation * (1 + r)
-                        weights_ts = pd.DataFrame(columns=ror.columns)  # TODO: move to a separate function
-                    else:
-                        if rebalancing_condition:
-                            assets_wealth_indexes_values = target_weights_np * assets_wealth_indexes_values.sum()
-                        assets_wealth_indexes_values *= 1 + r
-                        assets_wealth_indexes_values.rename(date, inplace=True)  # TODO: move to a separate function
-                    # row = pd.DataFrame(assets_wealth_indexes_values).T
-                    # row.columns = ror.columns
-                    # assets_wealth_indexes = pd.concat([assets_wealth_indexes, row])
-
-                    portfolio_wealth_index_value = assets_wealth_indexes_values.sum()
-                    portfolio_wealth_index[date] = portfolio_wealth_index_value
-                    # Check if rebalancing required
-                    weights = assets_wealth_indexes_values.divide(portfolio_wealth_index_value, axis=0)
-                    weights_s = weights.to_frame().T
-                    weights_ts = pd.concat([weights_ts, weights_s])
-                    weights_ts.columns = ror.columns
-                    target_weights_s = pd.Series(target_weights, index=ror.columns, name=date)
-                    weights_difference_abs = weights - target_weights_s
-                    weights_difference_abs = weights_difference_abs.abs()
-                    weights_difference_rel = weights.divide(target_weights_s, axis=0) - 1
-                    condition_abs = False if self.abs_deviation is None else (weights_difference_abs > self.abs_deviation).any()
-                    condition_rel = False if self.rel_deviation is None else (weights_difference_rel > self.rel_deviation).any()
-                    rebalancing_condition = condition_abs or condition_rel
-
-        else:
+        if self.period == "none" and self.abs_deviation is None and self.rel_deviation is None:  # No rebalancing
+            initial_allocation = target_weights_np * initial_inv
+            assets_wealth_indexes = initial_allocation * (1 + ror).cumprod()
+            portfolio_wealth_index = assets_wealth_indexes.sum(axis=1)
+        elif self.period == "none":  # No calendar rebalancing
+            portfolio_wealth_index = self.rebalance_by_condition(ror, target_weights)
+        elif self.abs_deviation is None and self.rel_deviation is None:
             for x in ror.resample(rule=self.pandas_frequency, convention="start"):
                 df = x[1]  # select ror part of the grouped data
                 initial_allocation = target_weights_np * initial_inv  # rebalancing
-                assets_wealth_indexes = initial_allocation * (1 + df).cumprod()
-                wealth_index_local = assets_wealth_indexes.sum(axis=1)
+                assets_wealth_indexes_values = initial_allocation * (1 + df).cumprod()
+                wealth_index_local = assets_wealth_indexes_values.sum(axis=1)
                 portfolio_wealth_index = pd.concat([None if portfolio_wealth_index.empty else portfolio_wealth_index, wealth_index_local], sort=False)
                 initial_inv = portfolio_wealth_index.iloc[-1]
+        return portfolio_wealth_index
+
+    def rebalance_by_condition(self, ror, target_weights):
+        initial_inv = 1000
+        portfolio_wealth_index = pd.Series(dtype="float64")
+        target_weights_np = np.asarray(target_weights)
+        for n, row in enumerate(ror.itertuples()):
+            date = row[0]
+            r = pd.Series(row[1:], index=ror.columns, name=date)
+            if n == 0:
+                initial_allocation = target_weights_np * initial_inv  # initial rebalancing
+                assets_wealth_indexes_values = initial_allocation * (1 + r)
+                weights_ts = pd.DataFrame(columns=ror.columns)  # TODO: move to a separate function
+            else:
+                if rebalancing_condition:
+                    assets_wealth_indexes_values = target_weights_np * assets_wealth_indexes_values.sum()
+                assets_wealth_indexes_values *= 1 + r
+                assets_wealth_indexes_values.rename(date, inplace=True)  # TODO: move to a separate function
+            # row = pd.DataFrame(assets_wealth_indexes_values).T
+            # row.columns = ror.columns
+            # assets_wealth_indexes = pd.concat([assets_wealth_indexes, row])
+
+            portfolio_wealth_index_value = assets_wealth_indexes_values.sum()
+            portfolio_wealth_index[date] = portfolio_wealth_index_value
+            # Check if rebalancing required
+            weights = assets_wealth_indexes_values.divide(portfolio_wealth_index_value, axis=0)
+            weights_s = weights.to_frame().T
+            weights_ts = pd.concat([weights_ts, weights_s])
+            weights_ts.columns = ror.columns
+            target_weights_s = pd.Series(target_weights, index=ror.columns, name=date)
+            weights_difference_abs = weights - target_weights_s
+            weights_difference_abs = weights_difference_abs.abs()
+            weights_difference_rel = weights.divide(target_weights_s, axis=0) - 1
+            weights_difference_rel = weights_difference_rel.abs()
+            condition_abs = False if self.abs_deviation is None else (weights_difference_abs > self.abs_deviation).any()
+            condition_rel = False if self.rel_deviation is None else (weights_difference_rel > self.rel_deviation).any()
+            rebalancing_condition = condition_abs or condition_rel  # Determined at the end, as it is not needed during the first run.
         return portfolio_wealth_index
 
     def assets_wealth_ts(self, weights: list, ror: pd.DataFrame) -> pd.DataFrame:
