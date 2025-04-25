@@ -701,20 +701,16 @@ class EfficientFrontierReb(asset_list.AssetList):
         Full range of CAGR values (from min to max).
         """
         # Case 1: Left asset's CAGR is bigger than right asset's CAGR
-        has_min_ratio = hasattr(self, '_min_ratio_asset_left_to_max_cagr')
-        has_max_ratio = hasattr(self, '_max_ratio_asset_right_to_max_cagr')
-        
-        if has_min_ratio and has_max_ratio:
-            min_ratio_data = self._min_ratio_asset_left_to_max_cagr
-            max_ratio_data = self._max_ratio_asset_right_to_max_cagr
+        min_ratio_data = self._min_ratio_asset_left_to_max_cagr
+        max_ratio_data = self._max_ratio_asset_right_to_max_cagr
             
-            if min_ratio_data is not None and max_ratio_data is not None:
-                left_cagr = min_ratio_data.get('min_asset_cagr')
-                right_cagr = max_ratio_data.get('max_asset_cagr')
+        if min_ratio_data is not None and max_ratio_data is not None:
+            left_cagr = min_ratio_data.get('min_asset_cagr')
+            right_cagr = max_ratio_data.get('max_asset_cagr')
                 
-                if left_cagr is not None and right_cagr is not None:
-                    if left_cagr >= right_cagr:
-                        return np.linspace(left_cagr, self.global_max_return_portfolio["CAGR"], self.n_points)
+            if left_cagr is not None and right_cagr is not None:
+                if left_cagr >= right_cagr:
+                    return np.linspace(left_cagr, self.global_max_return_portfolio["CAGR"], self.n_points)
         
         # Case 2: Left asset's CAGR is less than right asset's CAGR
         if self.full_frontier:
