@@ -10,9 +10,9 @@ os.environ["PYTHONWARNINGS"] = "ignore::FutureWarning"
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
-ef = ok.EfficientFrontierReb(['SP500TR.INDX', 'MCFTR.INDX', 'GC.COMM'], ccy='RUB', last_date='2020-03', full_frontier=True)
-w = ef.minimize_risk(0.184914755913651)
-print(w)
+# ef = ok.EfficientFrontierReb(['SP500TR.INDX', 'MCFTR.INDX', 'GC.COMM'], ccy='RUB', last_date='2020-03', full_frontier=True)
+# w = ef.minimize_risk(0.184914755913651)
+# print(w)
 # df_reb_year = ef.ef_points
 # fig, ax = plt.subplots(figsize=(12, 10))
 #
@@ -49,9 +49,9 @@ print(w)
 
 # assets = ['RGBITR.INDX', 'RUCBTRNS.INDX', 'MCFTR.INDX', 'GC.COMM']
 # weights = [0.16, 0.40,  0.25, 0.19]
-# assets = ['SPY.US', 'AGG.US']
-# weights = [0.60,  0.40]
-# pf = ok.Portfolio(assets, weights=weights, ccy='USD', rebalancing_period='year', inflation=False)
+assets = ['SPY.US', 'AGG.US']
+weights = [0.60,  0.40]
+pf = ok.Portfolio(assets, weights=weights, ccy='USD', rebalancing_period='year', inflation=False)
 # pf.dcf.discount_rate = 0.09
 
 # ind = ok.IndexationStrategy(pf)
@@ -89,13 +89,13 @@ print(w)
 # )
 
 
-# ror = pf.assets_ror
-#
-# x = ok.Rebalance(
-#     period='none', abs_deviation=0.10, rel_deviation=0.05
-# )
-#
-#
-# (x.wealth_ts(target_weights=pf.weights, ror=ror) * 100).plot(figsize=[14, 8])
-# # plt.legend(["Индекс Мосбиржи", "Индекс ОФЗ"])
-# plt.show()
+ror = pf.assets_ror
+
+x = ok.Rebalance(
+    period='none', abs_deviation=0.10, rel_deviation=0.05
+)
+
+
+(x.wealth_ts(target_weights=pf.weights, ror=ror) * 100).plot(figsize=[14, 8])
+# plt.legend(["Индекс Мосбиржи", "Индекс ОФЗ"])
+plt.show()
