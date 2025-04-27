@@ -578,33 +578,6 @@ class Rebalance:
             rebalancing_condition = condition_abs or condition_rel  # Determined at the end, as it is not needed during the first run.
         return portfolio_wealth_index, assets_wealth_indexes
 
-    def assets_wealth_ts(self, weights: list, ror: pd.DataFrame) -> pd.DataFrame:
-        """
-        Calculate ASSETS wealth indexes time series of rebalanced portfolio given returns time series of the assets.
-        Default rebalancing period is a Year (end of year)
-        For not rebalanced portfolio set Period to 'none'
-        """
-        initial_inv = 1000
-        assets_wealth_indexes = pd.DataFrame(dtype="float64")
-        wealth_index = pd.Series(dtype="float64")
-        if self.period == "none":  # Not rebalanced portfolio
-            initial_allocation = np.asarray(weights) * initial_inv
-            assets_wealth_indexes = initial_allocation * (1 + ror).cumprod()
-        else:
-            for x in ror.resample(rule=self.pandas_frequency, convention="start"):
-                df = x[1]  # select ror part of the grouped data
-                initial_allocation = np.asarray(weights) * initial_inv  # rebalancing
-                assets_wealth_indexes_local = initial_allocation * (1 + df).cumprod()
-                assets_wealth_indexes = pd.concat(
-                    [assets_wealth_indexes_local, assets_wealth_indexes],
-                    verify_integrity=True,
-                    sort=False,
-                )
-                wealth_index_local = assets_wealth_indexes_local.sum(axis=1)
-                wealth_index = pd.concat([None if wealth_index.empty else wealth_index, wealth_index_local], sort=False)
-                initial_inv = wealth_index.iloc[-1]
-        return assets_wealth_indexes
-
     def assets_weights_ts(self, weights: list, ror: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate assets weights monthly time series for rebalanced portfolio.
