@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats
 
-from okama.common.validators import validate_integer, validate_distribution
+from okama.common.validators import validate_integer, validate_distribution, validate_real
 from okama.common.error import (
     LongRollingWindowLengthError,
     RollingWindowLengthBelowOneYearError,
@@ -491,7 +491,7 @@ class Frame:
 
 class Rebalance:
     """
-    Methods for rebalancing portfolio.
+    Rebalancing strategies for portfolios.
     """
 
     def __init__(
@@ -501,6 +501,25 @@ class Rebalance:
         self.abs_deviation = abs_deviation
         self.rel_deviation = rel_deviation
         self.pandas_frequency = settings.frequency_mapping.get(self.period)
+
+    def validate_condition(self):
+        if self.period not in settings.frequency_mapping.keys():
+            raise ValueError(f"rebalancing_period must be in {settings.frequency_mapping.keys()}")
+        if self.period != "none" and (self.abs_deviation or self.rel_deviation):
+            raise ValueError(f"Rebalancing cannot be both calendar and conditional.")
+        if self.abs_deviation:
+            validate_real(arg_name="abs_deviation", arg_value=self.abs_deviation)
+            if self.abs_deviation <= 0:
+                raise ValueError("Absolute deviation must be positive.")
+            if self.abs_deviation > 1:
+                raise ValueError("Absolute deviation must be less or equal to 1.")
+        if self.rel_deviation:
+            validate_real(arg_name="abs_deviation", arg_value=self.abs_deviation)
+            if self.rel_deviation <= 0:
+                raise ValueError("Relative deviation must be positive.")
+            if self.rel_deviation > 1:
+                raise ValueError("Relative deviation must be less or equal to 1.")
+
 
     def wealth_ts(self, target_weights: list, ror: pd.DataFrame, calculate_assets_wealth_indexes:bool = False) -> Tuple[pd.Series, pd.DataFrame]:
         """
@@ -524,7 +543,8 @@ class Rebalance:
                 ror,
                 target_weights,
                 initial_inv,
-                calculate_assets_wealth_indexes)
+                calculate_assets_wealth_indexes
+            )
         elif self.abs_deviation is None and self.rel_deviation is None:  # Calendar rebalancing
             for x in ror.resample(rule=self.pandas_frequency, convention="start"):
                 df = x[1]  # select ror part of the grouped data
@@ -578,26 +598,26 @@ class Rebalance:
             rebalancing_condition = condition_abs or condition_rel  # Determined at the end, as it is not needed during the first run.
         return portfolio_wealth_index, assets_wealth_indexes
 
-    def assets_weights_ts(self, weights: list, ror: pd.DataFrame) -> pd.DataFrame:
+    def assets_weights_ts(self, target_weights: list, ror: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate assets weights monthly time series for rebalanced portfolio.
         """
-        portfolio_wealth_index, assets_wealth_indexes = self.wealth_ts(target_weights=weights,
+        portfolio_wealth_index, assets_wealth_indexes = self.wealth_ts(target_weights=target_weights,
                                                                        ror=ror,
                                                                        calculate_assets_wealth_indexes=True)
         return assets_wealth_indexes.divide(portfolio_wealth_index, axis=0)
 
-    def return_ror_ts(self, weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
+    def return_ror_ts(self, target_weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
         """
         Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
         Default rebalancing period is a Year (end of year)
-        For not rebalanced portfolio set Period to 'none'
+        For not rebalanced portfolio set Period to 'none'.
         """
         # define data of the first period
         first_date = ror.index[0]
-        return_first_period = ror.iloc[0] @ weights
+        return_first_period = ror.iloc[0] @ target_weights
 
-        wealth_index = self.wealth_ts(weights, ror)
+        wealth_index = self.wealth_ts(target_weights, ror)[0]
         ror = wealth_index.pct_change()
         ror.loc[first_date] = return_first_period  # replaces NaN with the first period return
         return ror

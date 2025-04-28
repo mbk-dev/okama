@@ -193,7 +193,7 @@ class Portfolio(make_asset_list.ListMaker):
         if self.rebalancing_period != "month":
             return helpers.Rebalance(period=self.rebalancing_period).assets_weights_ts(
                 ror=self.assets_ror,
-                weights=self.weights,
+                target_weights=self.weights,
             )
         values = np.tile(self.weights, (self.ror.shape[0], 1))
         return pd.DataFrame(values, index=self.ror.index, columns=self.symbols)
