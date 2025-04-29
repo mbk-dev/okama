@@ -7,6 +7,7 @@ import scipy.stats
 from matplotlib import pyplot as plt
 
 from okama import settings
+from okama.common.helpers.rebalancing import Rebalance
 from okama.common import make_asset_list, validators
 from okama.common.helpers import helpers, ratios
 from okama.common.solver import Result
@@ -59,7 +60,7 @@ class Portfolio(make_asset_list.ListMaker):
         The weight of an asset is the percent of an investment portfolio that corresponds to the asset.
         If weights = None an equally weighted portfolio is created (all weights are equal).
 
-    rebalancing_period : {'none', 'month', 'quarter', 'half-year', 'year'}, default 'month'
+    rebalancing_strategy : {'none', 'month', 'quarter', 'half-year', 'year'}, default 'month'
         Rebalancing period (rebalancing frequency) is predetermined time intervals when
         the investor rebalances the portfolio. If 'none' assets weights are not rebalanced.
 
@@ -78,7 +79,7 @@ class Portfolio(make_asset_list.ListMaker):
         ccy: str = "USD",
         inflation: bool = True,
         weights: Optional[List[float]] = None,
-        rebalancing_period: str = "month",
+        rebalancing_strategy: Rebalance = Rebalance(period="month"),
         symbol: str = None,
     ):
         super().__init__(
@@ -90,7 +91,7 @@ class Portfolio(make_asset_list.ListMaker):
         )
         self.weights = weights
         self.assets_weights = dict(zip(self.symbols, self.weights))
-        self.rebalancing_period = rebalancing_period
+        self.rebalancing_strategy = rebalancing_strategy
         self.symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
         self._ror = pd.DataFrame(dtype=float)
         self.dcf = PortfolioDCF(self)
@@ -100,7 +101,7 @@ class Portfolio(make_asset_list.ListMaker):
             "symbol": self.symbol,
             "assets": self.symbols,
             "weights": self.weights,
-            "rebalancing_period": self.rebalancing_period,
+            "rebalancing_period": self.rebalancing_strategy,
             "currency": self.currency,
             "inflation": self.inflation if hasattr(self, "inflation") else "None",
             "first_date": self.first_date.strftime("%Y-%m"),
@@ -180,18 +181,18 @@ class Portfolio(make_asset_list.ListMaker):
         --------
         >>> import matplotlib.pyplot as plt
         >>> reb_period='none'  # The Portfolio is not rebalanced.
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.5, 0.5], rebalancing_period=reb_period)
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.5, 0.5], rebalancing_strategy=reb_period)
         >>> pf.weights_ts.plot()
         >>> plt.show()
 
         The weights of assets time series will differ significantly if the portfolio rebalancing_period is 1 year.
 
-        >>> pf.rebalancing_period = 'year'  # set a new rebalancing period
+        >>> pf.rebalancing_strategy = 'year'  # set a new rebalancing period
         >>> pf.weights_ts.plot()
         >>> plt.show()
         """
-        if self.rebalancing_period != "month":
-            return helpers.Rebalance(period=self.rebalancing_period).assets_weights_ts(
+        if self.rebalancing_strategy.period != "month":
+            return self.rebalancing_strategy.assets_weights_ts(
                 ror=self.assets_ror,
                 target_weights=self.weights,
             )
@@ -199,7 +200,7 @@ class Portfolio(make_asset_list.ListMaker):
         return pd.DataFrame(values, index=self.ror.index, columns=self.symbols)
 
     @property
-    def rebalancing_period(self) -> str:
+    def rebalancing_strategy(self) -> Rebalance:
         """
         Return rebalancing period of the portfolio.
 
@@ -214,15 +215,15 @@ class Portfolio(make_asset_list.ListMaker):
         str
             Portfolio rebalancing period.
         """
-        return self._rebalancing_period
+        return self._rebalancing_strategy
 
-    @rebalancing_period.setter
-    def rebalancing_period(self, rebalancing_period: str):
-        if rebalancing_period in settings.frequency_mapping.keys():
+    @rebalancing_strategy.setter
+    def rebalancing_strategy(self, rebalancing_strategy: Rebalance):
+        if isinstance(rebalancing_strategy, Rebalance):
             self._clear_cache()
-            self._rebalancing_period = rebalancing_period
+            self._rebalancing_strategy = rebalancing_strategy
         else:
-            raise ValueError(f"rebalancing_period must be in {settings.frequency_mapping.keys()}")
+            raise ValueError(f"rebalancing_strategy must be of type Rebalance")
 
     @property
     def symbol(self) -> str:
@@ -319,10 +320,10 @@ class Portfolio(make_asset_list.ListMaker):
         >>> plt.show()
         """
         if self._ror.empty:
-            if self.rebalancing_period == "month":
+            if self.rebalancing_strategy.period == "month":
                 s = helpers.Frame.get_portfolio_return_ts(self.weights, self.assets_ror)
             else:
-                s = helpers.Rebalance(period=self.rebalancing_period).return_ror_ts(self.weights, self.assets_ror)
+                s = self.rebalancing_strategy.return_ror_ts(self.weights, self.assets_ror)
             s.rename(self.symbol, inplace=True)
             self._ror = s
         return self._ror
@@ -640,7 +641,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.6, .35, .05], rebalancing_period='year')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.6, .35, .05], rebalancing_strategy='year')
         >>> pf.get_rolling_cumulative_return(window=24, real=True)
                  portfolio_9012.PF
         2006-11           0.125728
@@ -1404,7 +1405,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> pf.percentile_inverse_cagr(distr='lognorm', score=0, years=1, n=5000)
         18.08
         The probability of getting negative result (score=0) in 1 year period for lognormal distribution.
@@ -1442,7 +1443,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='none')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='none')
         >>> pf.percentile_history_cagr(years=5, percentiles=[1, 50, 99])
                      1         50        99
         years
@@ -1494,7 +1495,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
         >>> pf.percentile_wealth_history(years=5)
                         10           50           90
         years
@@ -1548,7 +1549,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
         >>> pf.monte_carlo_returns_ts(years=8, distr='norm', n=5000)
                      0         1         2     ...      4997      4998      4999
         2021-07 -0.008383 -0.013167 -0.031659  ...  0.046717  0.065675  0.017933
@@ -1612,7 +1613,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
         >>> pf.monte_carlo_wealth_fv(distr='lognorm', years=5, n=1000)
                          0            1    ...          998          999
         2021-07  3895.377293  3895.377293  ...  3895.377293  3895.377293
@@ -1684,7 +1685,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> pf.percentile_distribution_cagr()
         {10: -0.0329600265453808, 50: 0.08247141141668779, 90: 0.21338327078214836}
         Forecast CAGR according to normal distribution within 1 year period.
@@ -1747,7 +1748,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> pf.percentile_wealth(distr='hist', years=5, today_value=1000, n=5000)
         {10: 1228.3741255659957, 50: 1491.7857161011104, 90: 1745.1130920663286}
         Percentiles values for the wealth index 5 years forecast if the initial value is 1000.
@@ -2105,7 +2106,7 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> pf.plot_percentiles_fit(distr='lognorm')
         >>> plt.show()
         """
@@ -2224,7 +2225,7 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> pf.plot_forecast()
         >>> plt.show()
         """
@@ -2296,7 +2297,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'],
         ...                    weights=[.60, .35, .05],
-        ...                    rebalancing_period='year')
+        ...                    rebalancing_strategy='year')
         >>> pf.plot_forecast_monte_carlo(years=5, distr='lognorm', n=100)
         >>> plt.show()
         """
@@ -2320,7 +2321,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[.60, .40], rebalancing_period='year')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[.60, .40], rebalancing_strategy='year')
         >>> pf.okamaio_link
         'https://okama.io/portfolio?tickers=SPY.US,AGG.US&weights=60.0,40.0&ccy=USD&first_date=2003-10-01&last_date=2024-08-01&rebal=year&symbol=portfolio_6323.PF'
         """
@@ -2334,7 +2335,8 @@ class Portfolio(make_asset_list.ListMaker):
         new_url += f"&ccy={self.currency}"
         new_url += f"&first_date={self.first_date.strftime('%Y-%m-%d')}"
         new_url += f"&last_date={self.last_date.strftime('%Y-%m-%d')}"
-        new_url += f"&rebal={self.rebalancing_period}"
+        # TODO: change rebalancing strategy in the link
+        new_url += f"&rebal={self.rebalancing_strategy}"
         new_url += f"&symbol={self.symbol}"
         return new_url
 
@@ -2764,7 +2766,7 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
         >>> pf.dcf.set_mc_parameters(distribution="t", period=10, number=100)  # Set Monte Carlo parameters
         >>> # set cash flow parameters
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
@@ -2828,7 +2830,7 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='month')
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
         >>> pc = ok.PercentageStrategy(pf)  # Define withdrawals strategy with fixed percentage
         >>> pc.frequency = "year"  # set withdrawals frequency
         >>> pc.percentage = -0.08  # investor would take 8% every year
@@ -2877,7 +2879,7 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(assets=['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_period='year')
+        >>> pf = ok.Portfolio(assets=['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> # Set Monte Carlo parameters
         >>> pf.dcf.set_mc_parameters(distribution="norm", period=50, number=200)
         >>> # set cash flow parameters
@@ -3033,7 +3035,7 @@ class PortfolioDCF:
          ...       weights=[.3, .7],
          ...       inflation=True,
          ...       ccy="RUB",
-         ...       rebalancing_period="year",
+         ...       rebalancing_strategy="year",
          ...   )
         >>> # Fixed Percentage strategy
         >>> pc = ok.PercentageStrategy(pf)

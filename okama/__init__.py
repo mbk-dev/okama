@@ -41,7 +41,8 @@ from okama.api.search import search
 from okama.api.api_methods import API
 import okama.api.namespaces
 from okama.api.namespaces import symbols_in_namespace
-from okama.common.helpers.helpers import Float, Frame, Rebalance, Date
+from okama.common.helpers.helpers import Float, Frame, Date
+from okama.common.helpers.rebalancing import Rebalance
 import okama.settings
 
 
