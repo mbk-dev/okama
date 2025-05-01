@@ -1,4 +1,5 @@
 from typing import Optional, Tuple, Union
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -33,7 +34,7 @@ class Rebalance:
             if self.abs_deviation > 1:
                 raise ValueError("Absolute deviation must be less or equal to 1.")
         if self.rel_deviation:
-            validate_real(arg_name="abs_deviation", arg_value=self.abs_deviation)
+            validate_real(arg_name="rel_deviation", arg_value=self.rel_deviation)
             if self.rel_deviation <= 0:
                 raise ValueError("Relative deviation must be positive.")
             if self.rel_deviation > 1:
