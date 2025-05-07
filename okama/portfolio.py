@@ -2976,7 +2976,7 @@ class PortfolioDCF:
             threshold: float = 0,
             tolerance_rel: float = 0.01,
             iter_max: int = 20
-    ):
+    ) -> Result:
         """
         Find the largest withdrawals size for Monte Carlo simulation according to Cashflow Strategy.
 

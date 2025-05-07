@@ -8,6 +8,33 @@ from okama import settings
 from okama.common.validators import validate_real
 
 
+@dataclass(frozen=True)
+class Result:
+    """
+    The result of finding a solution for `find_the_largest_withdrawals_size()`.
+
+    Attributes
+    ----------
+    success : bool
+        Whether or not the solver exited successfully.
+
+    withdrawal_abs : float
+        The absolute amount of withdrawal size (the best solution found).
+
+    withdrawal_rel : float
+        The relative amount of withdrawal size (the best solution found).
+
+    error_rel : float
+        Characterizes how accurately the goal is fulfilled. The goal is set in the parameters.
+
+    solutions : pd.DataFrame
+        The array of results of attempts to find solutions.
+    """
+    portfolio_wealth_index: pd.Series
+    assets_wealth_indexes: pd.DataFrame
+    events: pd.Series
+
+
 class Rebalance:
     """
     Rebalancing strategies for portfolios.
@@ -22,11 +49,25 @@ class Rebalance:
         self.pandas_frequency = settings.frequency_mapping.get(self.period)
         self.validate_condition()
 
+    def __str__(self):
+        dic = {
+            "period": self.period,
+            "abs_deviation": self.abs_deviation,
+            "rel_deviation": self.rel_deviation,
+        }
+        return repr(pd.Series(dic))
+
+    def __repr__(self):
+        dic = {
+            "period": self.period,
+            "abs_deviation": self.abs_deviation,
+            "rel_deviation": self.rel_deviation,
+        }
+        return repr(pd.Series(dic))
+
     def validate_condition(self):
         if self.period not in settings.frequency_mapping.keys():
             raise ValueError(f"rebalancing_period must be in {settings.frequency_mapping.keys()}")
-        if self.period != "none" and (self.abs_deviation or self.rel_deviation):
-            raise ValueError(f"Rebalancing cannot be both calendar and conditional.")
         if self.abs_deviation:
             validate_real(arg_name="abs_deviation", arg_value=self.abs_deviation)
             if self.abs_deviation <= 0:
@@ -37,20 +78,23 @@ class Rebalance:
             validate_real(arg_name="rel_deviation", arg_value=self.rel_deviation)
             if self.rel_deviation <= 0:
                 raise ValueError("Relative deviation must be positive.")
-            if self.rel_deviation > 1:
-                raise ValueError("Relative deviation must be less or equal to 1.")
 
 
-    def wealth_ts(self, target_weights: list, ror: pd.DataFrame, calculate_assets_wealth_indexes:bool = False) -> Tuple[pd.Series, pd.DataFrame]:
+    def wealth_ts(self, target_weights: list, ror: pd.DataFrame, calculate_assets_wealth_indexes:bool = False) -> Result:
         """
         Calculate wealth index time series of rebalanced portfolio given returns time series of the assets.
 
         Optionally calculate also ASSETS wealth indexes time series inside rebalanced portfolio.
         """
         # Frame.weights_sum_is_one(weights)
+        if isinstance(ror, pd.Series):
+            ror = ror.to_frame()
+        if len(target_weights) != len(ror.columns):
+            raise ValueError(f"The dimension of target_weights and the number of columns in ror must be equal")
         initial_inv = 1000
         portfolio_wealth_index = pd.Series(dtype="float64")
         assets_wealth_indexes = pd.DataFrame(columns=ror.columns, dtype="float64")
+        events_ts = pd.Series(dtype="float64")
         target_weights_np = np.asarray(target_weights)
         if self.period == "none" and self.abs_deviation is None and self.rel_deviation is None:  # No rebalancing
             initial_allocation = target_weights_np * initial_inv
@@ -59,16 +103,24 @@ class Rebalance:
             if calculate_assets_wealth_indexes:
                 assets_wealth_indexes = assets_wealth_indexes_local
         elif self.period == "none":  # No calendar rebalancing
-            portfolio_wealth_index, assets_wealth_indexes = self.rebalance_by_condition(
+            portfolio_wealth_index, assets_wealth_indexes, events_ts = self.rebalance_by_condition(
                 ror,
                 target_weights,
                 initial_inv,
                 calculate_assets_wealth_indexes
             )
-        elif self.abs_deviation is None and self.rel_deviation is None:  # Calendar rebalancing
-            for x in ror.resample(rule=self.pandas_frequency, convention="start"):
+        else:  # Calendar rebalancing
+            rebalancing_by_condition_needed = self.abs_deviation or self.rel_deviation
+            rebalancing_condition = False
+            for i, x in enumerate(ror.resample(rule=self.pandas_frequency, convention="start")):
                 df = x[1]  # select ror part of the grouped data
-                initial_allocation = target_weights_np * initial_inv  # rebalancing
+                if (rebalancing_by_condition_needed and rebalancing_condition) or (not rebalancing_by_condition_needed):
+                    initial_allocation = target_weights_np * initial_inv  # rebalancing
+                    if i != 0:
+                        date = x[0]
+                        events_ts[date.asfreq('M', how='start') - 1] = 'calendar'
+                elif rebalancing_by_condition_needed and not rebalancing_condition:
+                    initial_allocation = target_weights_np if i==0 else end_period_allocation  # skip rebalancing
                 assets_wealth_indexes_local = initial_allocation * (1 + df).cumprod()
                 if calculate_assets_wealth_indexes:
                     assets_wealth_indexes = pd.concat(
@@ -79,14 +131,29 @@ class Rebalance:
                 wealth_index_local = assets_wealth_indexes_local.sum(axis=1)
                 portfolio_wealth_index = pd.concat([None if portfolio_wealth_index.empty else portfolio_wealth_index, wealth_index_local], sort=False)
                 initial_inv = portfolio_wealth_index.iloc[-1]
-        return portfolio_wealth_index, assets_wealth_indexes
+                if rebalancing_by_condition_needed:
+                    end_period_allocation = assets_wealth_indexes_local.iloc[-1].divide(wealth_index_local.iloc[-1], axis=0)
+                    rebalancing_condition = self.check_if_rebalancing_required(assets_wealth_indexes_local,
+                                                                               wealth_index_local,
+                                                                               target_weights)
+        return Result(
+            portfolio_wealth_index=portfolio_wealth_index,
+            assets_wealth_indexes=assets_wealth_indexes,
+            events=events_ts
+        )
 
-    def rebalance_by_condition(self, ror, target_weights, initial_inv, calculate_assets_wealth_indexes: bool = False) -> Tuple[pd.Series, pd.DataFrame]:
+    def rebalance_by_condition(
+            self,
+            ror,
+            target_weights,
+            initial_inv,
+            calculate_assets_wealth_indexes: bool = False
+    ) -> Tuple[pd.Series, pd.DataFrame, pd.Series]:
         target_weights_np = np.asarray(target_weights)
         portfolio_wealth_index = pd.Series(dtype="float64")
-        weights_ts = pd.DataFrame(columns=ror.columns)
         assets_wealth_indexes_local = pd.DataFrame(columns=ror.columns, dtype="float64")
         assets_wealth_indexes = pd.DataFrame(columns=ror.columns, dtype="float64")
+        events_ts = pd.Series(dtype="float64")
         for n, row in enumerate(ror.itertuples()):
             date = row[0]
             r = pd.Series(row[1:], index=ror.columns, name=date)
@@ -96,36 +163,45 @@ class Rebalance:
             else:
                 if rebalancing_condition:
                     assets_wealth_indexes_local = target_weights_np * assets_wealth_indexes_local.sum()
+                    events_ts[date - 1] = 'abs' if condition_abs else 'rel'  # set previous month as its EOD data
                 assets_wealth_indexes_local *= 1 + r
                 assets_wealth_indexes_local.rename(date, inplace=True)
             if calculate_assets_wealth_indexes:
                 row = pd.DataFrame(assets_wealth_indexes_local).T
                 assets_wealth_indexes = pd.concat([assets_wealth_indexes, row])
-            portfolio_wealth_index_value = assets_wealth_indexes_local.sum()
-            portfolio_wealth_index[date] = portfolio_wealth_index_value
+            portfolio_wealth_index_local = assets_wealth_indexes_local.sum()
+            portfolio_wealth_index[date] = portfolio_wealth_index_local
             # Check if rebalancing required
-            weights = assets_wealth_indexes_local.divide(portfolio_wealth_index_value, axis=0)
-            weights_s = weights.to_frame().T
-            weights_ts = pd.concat([weights_ts, weights_s])
-            weights_ts.columns = ror.columns
-            target_weights_s = pd.Series(target_weights, index=ror.columns, name=date)
-            weights_difference_abs = weights - target_weights_s
-            weights_difference_abs = weights_difference_abs.abs()
-            weights_difference_rel = weights.divide(target_weights_s, axis=0) - 1
-            weights_difference_rel = weights_difference_rel.abs()
-            condition_abs = False if self.abs_deviation is None else (weights_difference_abs > self.abs_deviation).any()
-            condition_rel = False if self.rel_deviation is None else (weights_difference_rel > self.rel_deviation).any()
-            rebalancing_condition = condition_abs or condition_rel  # Determined at the end, as it is not needed during the first run.
-        return portfolio_wealth_index, assets_wealth_indexes
+            rebalancing_condition = self.check_if_rebalancing_required(assets_wealth_indexes_local,
+                                                                       portfolio_wealth_index_local,
+                                                                       target_weights)
+        return portfolio_wealth_index, assets_wealth_indexes, events_ts
+
+    def check_if_rebalancing_required(
+            self,
+            assets_wealth_indexes_local,
+            portfolio_wealth_index_local,
+            target_weights,
+    ) -> bool:
+        weights = assets_wealth_indexes_local.iloc[-1].divide(portfolio_wealth_index_local.iloc[-1], axis=0)
+        target_weights_s = pd.Series(target_weights, index=assets_wealth_indexes_local.columns)
+        weights_difference_abs = weights - target_weights_s
+        weights_difference_abs = weights_difference_abs.abs()
+        weights_difference_rel = weights.divide(target_weights_s, axis=0) - 1
+        weights_difference_rel = weights_difference_rel.abs()
+        condition_abs = False if self.abs_deviation is None else (weights_difference_abs > self.abs_deviation).any()
+        condition_rel = False if self.rel_deviation is None else (weights_difference_rel > self.rel_deviation).any()
+        rebalancing_condition = condition_abs or condition_rel  # Determined at the end, as it is not needed during the first run.
+        return rebalancing_condition
 
     def assets_weights_ts(self, target_weights: list, ror: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate assets weights monthly time series for rebalanced portfolio.
         """
-        portfolio_wealth_index, assets_wealth_indexes = self.wealth_ts(target_weights=target_weights,
-                                                                       ror=ror,
-                                                                       calculate_assets_wealth_indexes=True)
-        return assets_wealth_indexes.divide(portfolio_wealth_index, axis=0)
+        reb = self.wealth_ts(target_weights=target_weights,
+                             ror=ror,
+                             calculate_assets_wealth_indexes=True)
+        return reb.assets_wealth_indexes.divide(reb.portfolio_wealth_index, axis=0)
 
     def return_ror_ts(self, target_weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
         """
@@ -137,7 +213,8 @@ class Rebalance:
         first_date = ror.index[0]
         return_first_period = ror.iloc[0] @ target_weights
 
-        wealth_index = self.wealth_ts(target_weights, ror)[0]
+        wealth_index = self.wealth_ts(target_weights, ror).portfolio_wealth_index
         ror = wealth_index.pct_change()
         ror.loc[first_date] = return_first_period  # replaces NaN with the first period return
         return ror
+
