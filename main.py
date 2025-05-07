@@ -48,17 +48,20 @@ pd.set_option("display.float_format", lambda x: "%.2f" % x)
 # print(pf.dividend_yield_annual)
 
 
-# assets = ['RGBITR.INDX', 'RUCBTRNS.INDX', 'MCFTR.INDX', 'GC.COMM']
-# weights = [0.16, 0.40,  0.25, 0.19]
-assets = ['SPY.US', 'AGG.US']
-weights = [0.60,  0.40]
+assets = ['RGBITR.INDX', 'MCFTR.INDX', 'GC.COMM']
+weights = [0.50,   0.45, 0.05]
+# assets = ['SPY.US', 'AGG.US']
+# weights = [0.60,  0.40]
+
 pf = ok.Portfolio(
     assets,
     weights=weights,
     ccy='USD',
-    rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.10),
+    rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.10, rel_deviation=0.50),
     inflation=False
 )
+ev = pf.rebalancing_strategy.wealth_ts(target_weights=weights, ror=pf.assets_ror).events
+print(ev)
 # pf.dcf.discount_rate = 0.09
 
 # ind = ok.IndexationStrategy(pf)
@@ -95,14 +98,3 @@ pf = ok.Portfolio(
 #     solution
 # )
 
-
-# ror = pf.assets_ror
-#
-# x = ok.Rebalance(
-#     period='none', abs_deviation=0.10, rel_deviation=0.05
-# )
-#
-#
-# (x.wealth_ts(target_weights=pf.weights, ror=ror) * 100).plot(figsize=[14, 8])
-# # plt.legend(["Индекс Мосбиржи", "Индекс ОФЗ"])
-# plt.show()
