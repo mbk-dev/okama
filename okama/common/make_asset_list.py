@@ -61,14 +61,14 @@ class ListMaker(ABC):
             self.currencies,
             self.assets_first_dates,
             self.assets_last_dates,
-            self.assets_ror,
+            self._assets_ror,
         ) = self._make_list(
             first_date=first_date,
             last_date=last_date
         ).values()
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
-        self.assets_ror = self.assets_ror[self.first_date :]
+        self._assets_ror = self._assets_ror[self.first_date :]
         if last_date:
             self.last_date = min(self.last_date, pd.to_datetime(last_date))
         if inflation:
@@ -82,11 +82,11 @@ class ListMaker(ABC):
             # Add inflation to the date range dict
             self.assets_first_dates.update({self.inflation: macro.Inflation(self.inflation).first_date})
             self.assets_last_dates.update({self.inflation: macro.Inflation(self.inflation).last_date})
-        self.assets_ror: pd.DataFrame = self.assets_ror[self.first_date : self.last_date]
+        self._assets_ror: pd.DataFrame = self._assets_ror[self.first_date : self.last_date]
         self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1)
         self.pl = settings.PeriodLength(
-            self.assets_ror.shape[0] // settings._MONTHS_PER_YEAR,
-            self.assets_ror.shape[0] % settings._MONTHS_PER_YEAR,
+            self._assets_ror.shape[0] // settings._MONTHS_PER_YEAR,
+            self._assets_ror.shape[0] % settings._MONTHS_PER_YEAR,
         )
         self._pl_txt = f"{self.pl.years} years, {self.pl.months} months"
         self._dividend_yield: pd.DataFrame = pd.DataFrame(dtype=float)
@@ -243,9 +243,9 @@ class ListMaker(ABC):
         Add inflation column to returns DataFrame.
         """
         if hasattr(self, "inflation"):
-            return pd.concat([self.assets_ror, self.inflation_ts], axis=1, join="inner", copy="false")
+            return pd.concat([self._assets_ror, self.inflation_ts], axis=1, join="inner", copy="false")
         else:
-            return self.assets_ror
+            return self._assets_ror
 
     def _validate_period(self, period: Any) -> None:
         """
@@ -355,9 +355,21 @@ class ListMaker(ABC):
         return assets
 
     @property
+    def assets_ror(self) -> pd.DataFrame:
+        """
+        Rate of return monthly time series for all assets.
+
+        Returns
+        -------
+        DataFrame
+            Rate of return monthly data.
+        """
+        return self._assets_ror
+
+    @property
     def symbols(self) -> List[str]:
         """
-        Return a list of financial symbols used to set the AssetList.
+        Return a list of used financial symbols.
 
         Symbols are similar to tickers but have a namespace information:
 
@@ -367,16 +379,16 @@ class ListMaker(ABC):
         Returns
         -------
         list of str
-            List of symbols included in the Asset List.
+            List of used symbols.
         """
         return self._define_symbol_list(self._list_of_asset_like_objects)
 
     @property
     def tickers(self) -> List[str]:
         """
-        Return a list of tickers (symbols without a namespace) used to set the AssetList.
+        Return a list of used tickers (symbols without a namespace).
 
-        tickers are similar to symbols but do not have namespace information:
+        Tickers are similar to symbols but do not have namespace information:
 
         * SPY is a ticker
         * SPY.US is a symbol
@@ -384,21 +396,21 @@ class ListMaker(ABC):
         Returns
         -------
         list of str
-            List of tickers included in the Asset List.
+            List of used tickers.
         """
         return [x.split(".", 1)[0] for x in self.symbols]
 
     @property
     def currency(self) -> str:
         """
-        Return the base currency of the Asset List.
+        Return the base currency.
 
         Such properties as rate of return and risk are adjusted to the base currency.
 
         Returns
         -------
-        okama.Asset
-            Base currency of the Asset List in form of okama.Asset class.
+        str
+            Base currency.
         """
         return self._currency.currency
 
@@ -457,13 +469,13 @@ class ListMaker(ABC):
         >>> plt.show()
         """
         # TODO: rename tickers to labels or annotations
-        risk_monthly = self.assets_ror.std()
-        mean_return_monthly = self.assets_ror.mean()
+        risk_monthly = self._assets_ror.std()
+        mean_return_monthly = self._assets_ror.mean()
         risks = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
         if kind == "mean":
-            returns = helpers.Float.annualize_return(self.assets_ror.mean())
+            returns = helpers.Float.annualize_return(self._assets_ror.mean())
         elif kind == "cagr":
-            returns = helpers.Frame.get_cagr(self.assets_ror).loc[self.symbols]
+            returns = helpers.Frame.get_cagr(self._assets_ror).loc[self.symbols]
         else:
             raise ValueError('kind should be "mean" or "cagr".')
         # set lists for single point scatter
