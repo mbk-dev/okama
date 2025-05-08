@@ -118,7 +118,10 @@ class Rebalance:
                     initial_allocation = target_weights_np * initial_inv  # rebalancing
                     if i != 0:
                         date = x[0]
-                        events_ts[date.asfreq('M', how='start') - 1] = 'calendar'
+                        if rebalancing_by_condition_needed:
+                            events_ts[date.asfreq('M', how='start') - 1] = 'abs' if condition_abs else 'rel'
+                        else:
+                            events_ts[date.asfreq('M', how='start') - 1] = 'calendar'
                 elif rebalancing_by_condition_needed and not rebalancing_condition:
                     initial_allocation = target_weights_np if i==0 else end_period_allocation  # skip rebalancing
                 assets_wealth_indexes_local = initial_allocation * (1 + df).cumprod()
@@ -133,9 +136,9 @@ class Rebalance:
                 initial_inv = portfolio_wealth_index.iloc[-1]
                 if rebalancing_by_condition_needed:
                     end_period_allocation = assets_wealth_indexes_local.iloc[-1].divide(wealth_index_local.iloc[-1], axis=0)
-                    rebalancing_condition = self.check_if_rebalancing_required(assets_wealth_indexes_local,
-                                                                               wealth_index_local,
-                                                                               target_weights)
+                    rebalancing_condition, condition_abs = self.check_if_rebalancing_required(assets_wealth_indexes_local,
+                                                                                  wealth_index_local,
+                                                                                  target_weights)
         return Result(
             portfolio_wealth_index=portfolio_wealth_index,
             assets_wealth_indexes=assets_wealth_indexes,
@@ -172,7 +175,7 @@ class Rebalance:
             portfolio_wealth_index_local = assets_wealth_indexes_local.sum()
             portfolio_wealth_index[date] = portfolio_wealth_index_local
             # Check if rebalancing required
-            rebalancing_condition = self.check_if_rebalancing_required(assets_wealth_indexes_local,
+            rebalancing_condition, condition_abs = self.check_if_rebalancing_required(assets_wealth_indexes_local,
                                                                        portfolio_wealth_index_local,
                                                                        target_weights)
         return portfolio_wealth_index, assets_wealth_indexes, events_ts
@@ -182,9 +185,15 @@ class Rebalance:
             assets_wealth_indexes_local,
             portfolio_wealth_index_local,
             target_weights,
-    ) -> bool:
-        weights = assets_wealth_indexes_local.iloc[-1].divide(portfolio_wealth_index_local.iloc[-1], axis=0)
-        target_weights_s = pd.Series(target_weights, index=assets_wealth_indexes_local.columns)
+    ) -> Tuple[bool, bool]:
+        try:
+            # DataFrame
+            weights = assets_wealth_indexes_local.iloc[-1].divide(portfolio_wealth_index_local.iloc[-1], axis=0)
+            target_weights_s = pd.Series(target_weights, index=assets_wealth_indexes_local.columns)
+        except AttributeError:
+            # Series
+            weights = assets_wealth_indexes_local.divide(portfolio_wealth_index_local, axis=0)
+            target_weights_s = pd.Series(target_weights, index=assets_wealth_indexes_local.index)
         weights_difference_abs = weights - target_weights_s
         weights_difference_abs = weights_difference_abs.abs()
         weights_difference_rel = weights.divide(target_weights_s, axis=0) - 1
@@ -192,7 +201,7 @@ class Rebalance:
         condition_abs = False if self.abs_deviation is None else (weights_difference_abs > self.abs_deviation).any()
         condition_rel = False if self.rel_deviation is None else (weights_difference_rel > self.rel_deviation).any()
         rebalancing_condition = condition_abs or condition_rel  # Determined at the end, as it is not needed during the first run.
-        return rebalancing_condition
+        return rebalancing_condition, condition_abs
 
     def assets_weights_ts(self, target_weights: list, ror: pd.DataFrame) -> pd.DataFrame:
         """
