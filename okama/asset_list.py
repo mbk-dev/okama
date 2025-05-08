@@ -50,6 +50,7 @@ class AssetList(make_asset_list.ListMaker):
         }
         return repr(pd.Series(dic))
 
+
     @property
     def wealth_indexes(self) -> pd.DataFrame:
         """

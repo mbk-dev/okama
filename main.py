@@ -57,7 +57,7 @@ pf = ok.Portfolio(
     assets,
     weights=weights,
     ccy='USD',
-    rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.10, rel_deviation=0.50),
+    rebalancing_strategy=ok.Rebalance(period="none", abs_deviation=None, rel_deviation=0.050),
     inflation=False
 )
 ev = pf.rebalancing_strategy.wealth_ts(target_weights=weights, ror=pf.assets_ror).events

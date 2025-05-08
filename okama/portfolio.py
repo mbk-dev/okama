@@ -168,7 +168,7 @@ class Portfolio(make_asset_list.ListMaker):
     @property
     def weights_ts(self) -> pd.DataFrame:
         """
-        Calculate assets weights time series.
+        Calculate assets weights time series considering rebalancing strategy.
 
         The weights of assets in Portfolio are not constant if rebalancing_period is different from 'month'.
 
@@ -191,11 +191,13 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.weights_ts.plot()
         >>> plt.show()
         """
-        if self.rebalancing_strategy.period != "month":
+        if self._condition_for_rebalancing:
             return self.rebalancing_strategy.assets_weights_ts(
                 ror=self.assets_ror,
                 target_weights=self.weights,
+
             )
+        # Fast calculation
         values = np.tile(self.weights, (self.ror.shape[0], 1))
         return pd.DataFrame(values, index=self.ror.index, columns=self.symbols)
 
@@ -224,6 +226,14 @@ class Portfolio(make_asset_list.ListMaker):
             self._rebalancing_strategy = rebalancing_strategy
         else:
             raise ValueError(f"rebalancing_strategy must be of type Rebalance")
+
+    def _condition_for_rebalancing(self):
+        """
+        Verify whether assets weights are constant
+        The weights are constant only if the period is 'month' and no conditional rebalancing.
+        """
+        return self.rebalancing_strategy.period != "month" or (
+                self.rebalancing_strategy.abs_deviation or self.rebalancing_strategy.rel_deviation)
 
     @property
     def symbol(self) -> str:
@@ -289,12 +299,12 @@ class Portfolio(make_asset_list.ListMaker):
     @property
     def ror(self) -> pd.Series:
         """
-        Calculate monthly rate of return time series for portfolio.
+        Calculate monthly rate of return time series for portfolio considering rebalancing strategy.
 
         Returns
         -------
         Series
-            Rate of return monthly time series for portfolio.
+            Rate of return monthly time series for the portfolio.
 
         Examples
         --------
@@ -320,7 +330,8 @@ class Portfolio(make_asset_list.ListMaker):
         >>> plt.show()
         """
         if self._ror.empty:
-            if self.rebalancing_strategy.period == "month":
+            if not self._condition_for_rebalancing:
+                # Fast calculation
                 s = helpers.Frame.get_portfolio_return_ts(self.weights, self.assets_ror)
             else:
                 s = self.rebalancing_strategy.return_ror_ts(self.weights, self.assets_ror)
