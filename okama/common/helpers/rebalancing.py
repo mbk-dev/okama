@@ -11,24 +11,18 @@ from okama.common.validators import validate_real
 @dataclass(frozen=True)
 class Result:
     """
-    The result of finding a solution for `find_the_largest_withdrawals_size()`.
+    The result of rebalancing portfolio.
 
     Attributes
     ----------
-    success : bool
-        Whether or not the solver exited successfully.
+    portfolio_wealth_index : Series
+        Monthly time series for rebalanced portfolio wealth index.
 
-    withdrawal_abs : float
+    assets_wealth_indexes : DataFrame
         The absolute amount of withdrawal size (the best solution found).
 
-    withdrawal_rel : float
+    events : Series
         The relative amount of withdrawal size (the best solution found).
-
-    error_rel : float
-        Characterizes how accurately the goal is fulfilled. The goal is set in the parameters.
-
-    solutions : pd.DataFrame
-        The array of results of attempts to find solutions.
     """
     portfolio_wealth_index: pd.Series
     assets_wealth_indexes: pd.DataFrame
@@ -37,7 +31,10 @@ class Result:
 
 class Rebalance:
     """
-    Rebalancing strategies for portfolios.
+    Rebalancing strategy for an investment portfolio.
+
+    Rebalancing is the process by which an investor restores their portfolio to its target allocation
+    by selling and buying assets. After rebalancing all the assets have original (target) weights.
     """
 
     def __init__(
@@ -103,7 +100,7 @@ class Rebalance:
             if calculate_assets_wealth_indexes:
                 assets_wealth_indexes = assets_wealth_indexes_local
         elif self.period == "none":  # No calendar rebalancing
-            portfolio_wealth_index, assets_wealth_indexes, events_ts = self.rebalance_by_condition(
+            portfolio_wealth_index, assets_wealth_indexes, events_ts = self._rebalance_by_condition(
                 ror,
                 target_weights,
                 initial_inv,
@@ -123,7 +120,7 @@ class Rebalance:
                         else:
                             events_ts[date.asfreq('M', how='start') - 1] = 'calendar'
                 elif rebalancing_by_condition_needed and not rebalancing_condition:
-                    initial_allocation = target_weights_np if i==0 else end_period_allocation  # skip rebalancing
+                    initial_allocation = target_weights_np * initial_inv if i==0 else end_period_allocation  # skip rebalancing
                 assets_wealth_indexes_local = initial_allocation * (1 + df).cumprod()
                 if calculate_assets_wealth_indexes:
                     assets_wealth_indexes = pd.concat(
@@ -136,16 +133,19 @@ class Rebalance:
                 initial_inv = portfolio_wealth_index.iloc[-1]
                 if rebalancing_by_condition_needed:
                     end_period_allocation = assets_wealth_indexes_local.iloc[-1].divide(wealth_index_local.iloc[-1], axis=0)
-                    rebalancing_condition, condition_abs = self.check_if_rebalancing_required(assets_wealth_indexes_local,
-                                                                                  wealth_index_local,
-                                                                                  target_weights)
+                    rebalancing_condition, condition_abs = self._check_if_rebalancing_required(assets_wealth_indexes_local,
+                                                                                               wealth_index_local,
+                                                                                               target_weights)
+            portfolio_wealth_index.sort_index(ascending=True, inplace=True)
+            if calculate_assets_wealth_indexes:
+                assets_wealth_indexes.sort_index(ascending=True, inplace=True)
         return Result(
             portfolio_wealth_index=portfolio_wealth_index,
             assets_wealth_indexes=assets_wealth_indexes,
             events=events_ts
         )
 
-    def rebalance_by_condition(
+    def _rebalance_by_condition(
             self,
             ror,
             target_weights,
@@ -175,12 +175,12 @@ class Rebalance:
             portfolio_wealth_index_local = assets_wealth_indexes_local.sum()
             portfolio_wealth_index[date] = portfolio_wealth_index_local
             # Check if rebalancing required
-            rebalancing_condition, condition_abs = self.check_if_rebalancing_required(assets_wealth_indexes_local,
-                                                                       portfolio_wealth_index_local,
-                                                                       target_weights)
+            rebalancing_condition, condition_abs = self._check_if_rebalancing_required(assets_wealth_indexes_local,
+                                                                                       portfolio_wealth_index_local,
+                                                                                       target_weights)
         return portfolio_wealth_index, assets_wealth_indexes, events_ts
 
-    def check_if_rebalancing_required(
+    def _check_if_rebalancing_required(
             self,
             assets_wealth_indexes_local,
             portfolio_wealth_index_local,

@@ -202,9 +202,13 @@ class Portfolio(make_asset_list.ListMaker):
         return pd.DataFrame(values, index=self.ror.index, columns=self.symbols)
 
     @property
+    def rebalancing_events(self):
+        return self.rebalancing_strategy.wealth_ts(target_weights=self.weights, ror=self.assets_ror).events
+
+    @property
     def rebalancing_strategy(self) -> Rebalance:
         """
-        Return rebalancing period of the portfolio.
+        Return rebalancing strategy of the portfolio.
 
         Rebalancing is the process by which an investor restores their portfolio to its target allocation
         by selling and buying assets. After rebalancing all the assets have original weights.
@@ -214,8 +218,8 @@ class Portfolio(make_asset_list.ListMaker):
 
         Returns
         -------
-        str
-            Portfolio rebalancing period.
+        Rebalance
+            Portfolio rebalancing strategy.
         """
         return self._rebalancing_strategy
 

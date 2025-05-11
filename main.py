@@ -49,17 +49,18 @@ pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
 
 assets = ['RGBITR.INDX', 'MCFTR.INDX', 'GC.COMM']
-weights = [0.50,   0.45, 0.05]
+weights = [0.60,   0.35, 0.05]
 # assets = ['SPY.US', 'AGG.US']
 # weights = [0.60,  0.40]
-
-pf = ok.Portfolio(
-    assets,
-    weights=weights,
-    ccy='USD',
-    rebalancing_strategy=ok.Rebalance(period="none", abs_deviation=None, rel_deviation=0.050),
-    inflation=False
-)
+reb = ok.Rebalance(period="year", abs_deviation=0.10, rel_deviation=0.05)
+pf = ok.Portfolio(assets, weights=weights, ccy='USD', rebalancing_strategy=reb, inflation=False)
+# pf = ok.Portfolio(
+#     assets,
+#     weights=weights,
+#     ccy='USD',
+#     rebalancing_strategy=ok.Rebalance(period="none", abs_deviation=None, rel_deviation=0.050),
+#     inflation=False
+# )
 ev = pf.rebalancing_strategy.wealth_ts(target_weights=weights, ror=pf.assets_ror).events
 print(ev)
 # pf.dcf.discount_rate = 0.09
