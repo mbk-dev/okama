@@ -89,6 +89,8 @@ class Rebalance:
         if len(target_weights) != len(ror.columns):
             raise ValueError(f"The dimension of target_weights and the number of columns in ror must be equal")
         initial_inv = 1000
+        first_date = ror.index[0]
+        first_wealth_index_date = first_date - 1
         portfolio_wealth_index = pd.Series(dtype="float64")
         assets_wealth_indexes = pd.DataFrame(columns=ror.columns, dtype="float64")
         events_ts = pd.Series(dtype="float64")
@@ -112,13 +114,16 @@ class Rebalance:
             for i, x in enumerate(ror.resample(rule=self.pandas_frequency, convention="start")):
                 df = x[1]  # select ror part of the grouped data
                 if (rebalancing_by_condition_needed and rebalancing_condition) or (not rebalancing_by_condition_needed):
-                    initial_allocation = target_weights_np * initial_inv  # rebalancing
+                    # rebalancing
                     if i != 0:
+                        initial_allocation = target_weights_np * initial_inv
                         date = x[0]
                         if rebalancing_by_condition_needed:
                             events_ts[date.asfreq('M', how='start') - 1] = 'abs' if condition_abs else 'rel'
                         else:
                             events_ts[date.asfreq('M', how='start') - 1] = 'calendar'
+                    else:
+                        initial_allocation = target_weights_np * end_period_balance
                 elif rebalancing_by_condition_needed and not rebalancing_condition:
                     initial_allocation = target_weights_np * initial_inv if i==0 else end_period_allocation  # skip rebalancing
                 assets_wealth_indexes_local = initial_allocation * (1 + df).cumprod()
@@ -130,14 +135,17 @@ class Rebalance:
                     )
                 wealth_index_local = assets_wealth_indexes_local.sum(axis=1)
                 portfolio_wealth_index = pd.concat([None if portfolio_wealth_index.empty else portfolio_wealth_index, wealth_index_local], sort=False)
-                initial_inv = portfolio_wealth_index.iloc[-1]
+                end_period_balance = portfolio_wealth_index.iloc[-1]
                 if rebalancing_by_condition_needed:
                     end_period_allocation = assets_wealth_indexes_local.iloc[-1].divide(wealth_index_local.iloc[-1], axis=0)
                     rebalancing_condition, condition_abs = self._check_if_rebalancing_required(assets_wealth_indexes_local,
                                                                                                wealth_index_local,
                                                                                                target_weights)
+
+            portfolio_wealth_index.loc[first_wealth_index_date] = initial_inv
             portfolio_wealth_index.sort_index(ascending=True, inplace=True)
             if calculate_assets_wealth_indexes:
+                assets_wealth_indexes.loc[first_wealth_index_date] = target_weights_np * initial_inv
                 assets_wealth_indexes.sort_index(ascending=True, inplace=True)
         return Result(
             portfolio_wealth_index=portfolio_wealth_index,

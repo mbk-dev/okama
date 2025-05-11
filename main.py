@@ -48,10 +48,10 @@ pd.set_option("display.float_format", lambda x: "%.2f" % x)
 # print(pf.dividend_yield_annual)
 
 
-assets = ['RGBITR.INDX', 'MCFTR.INDX', 'GC.COMM']
-weights = [0.60,   0.35, 0.05]
-# assets = ['SPY.US', 'AGG.US']
-# weights = [0.60,  0.40]
+# assets = ['RGBITR.INDX', 'MCFTR.INDX', 'GC.COMM']
+# weights = [0.60,   0.35, 0.05]
+assets = ['SPY.US', 'AGG.US']
+weights = [0.60,  0.40]
 reb = ok.Rebalance(period="year", abs_deviation=0.10, rel_deviation=0.05)
 pf = ok.Portfolio(assets, weights=weights, ccy='USD', rebalancing_strategy=reb, inflation=False)
 # pf = ok.Portfolio(
@@ -61,7 +61,11 @@ pf = ok.Portfolio(assets, weights=weights, ccy='USD', rebalancing_strategy=reb, 
 #     rebalancing_strategy=ok.Rebalance(period="none", abs_deviation=None, rel_deviation=0.050),
 #     inflation=False
 # )
-ev = pf.rebalancing_strategy.wealth_ts(target_weights=weights, ror=pf.assets_ror).events
+ev = pf.rebalancing_strategy.wealth_ts(
+    target_weights=weights,
+    ror=pf.assets_ror,
+    calculate_assets_wealth_indexes=True
+).portfolio_wealth_index
 print(ev)
 # pf.dcf.discount_rate = 0.09
 
