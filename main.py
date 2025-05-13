@@ -52,7 +52,7 @@ pd.set_option("display.float_format", lambda x: "%.2f" % x)
 # weights = [0.60,   0.35, 0.05]
 assets = ['SPY.US', 'AGG.US']
 weights = [0.60,  0.40]
-reb = ok.Rebalance(period="year", abs_deviation=0.10, rel_deviation=0.05)
+reb = ok.Rebalance(period="none", abs_deviation=None, rel_deviation=None)
 pf = ok.Portfolio(assets, weights=weights, ccy='USD', rebalancing_strategy=reb, inflation=False)
 # pf = ok.Portfolio(
 #     assets,
