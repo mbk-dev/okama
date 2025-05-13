@@ -43,8 +43,8 @@ class Rebalance:
         self.period = period
         self.abs_deviation = abs_deviation
         self.rel_deviation = rel_deviation
-        self.pandas_frequency = settings.frequency_mapping.get(self.period)
-        self.validate_condition()
+        self._pandas_frequency = settings.frequency_mapping.get(self.period)
+        self._validate_condition()
 
     def __str__(self):
         dic = {
@@ -62,9 +62,9 @@ class Rebalance:
         }
         return repr(pd.Series(dic))
 
-    def validate_condition(self):
+    def _validate_condition(self):
         if self.period not in settings.frequency_mapping.keys():
-            raise ValueError(f"rebalancing_period must be in {settings.frequency_mapping.keys()}")
+            raise ValueError(f"rebalancing_period must be in {list(settings.frequency_mapping.keys())}")
         if self.abs_deviation:
             validate_real(arg_name="abs_deviation", arg_value=self.abs_deviation)
             if self.abs_deviation <= 0:
@@ -110,7 +110,7 @@ class Rebalance:
         else:  # Calendar rebalancing
             rebalancing_by_condition_needed = self.abs_deviation or self.rel_deviation
             rebalancing_condition = False
-            for n, x in enumerate(ror.resample(rule=self.pandas_frequency, convention="start")):
+            for n, x in enumerate(ror.resample(rule=self._pandas_frequency, convention="start")):
                 df = x[1]  # select ror part of the grouped data
                 if n == 0:
                     initial_allocation = target_weights_np * initial_inv
