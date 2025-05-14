@@ -151,18 +151,18 @@ def test_minimize_risk_raises_error_when_no_solution(init_frontier_with_bounds):
 
 @mark.rebalance
 @mark.frontier
-def test_min_ratio_asset_left_to_max_cagr_when_none(init_frontier_with_none):
+def test_min_ratio_asset_when_none(init_frontier_with_none):
     x = init_frontier_with_none
-    result = x._min_ratio_asset_left_to_max_cagr
+    result = x._min_ratio_asset
 
     assert result == None
 
 
 @mark.rebalance
 @mark.frontier
-def test_min_ratio_asset_left_to_max_cagr_when_not_none(init_frontier_with_not_none):
+def test_min_ratio_asset_when_not_none(init_frontier_with_not_none):
     x = init_frontier_with_not_none
-    result = x._min_ratio_asset_left_to_max_cagr
+    result = x._min_ratio_asset
 
     expected_result = {
         "min_asset_cagr": approx(0.1959425614987127, abs=1e-2),

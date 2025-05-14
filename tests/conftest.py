@@ -327,7 +327,7 @@ def with_bounds_params():
 
 
 @pytest.fixture(scope="module")
-def min_ratio_asset_left_to_max_cagr_when_none_params():
+def _min_ratio_asset_when_none_params():
     return dict(
         assets=["SPY.US", "GLD.US"],
         ccy="USD",
@@ -337,7 +337,7 @@ def min_ratio_asset_left_to_max_cagr_when_none_params():
 
 
 @pytest.fixture(scope="module")
-def min_ratio_asset_left_to_max_cagr_when_not_none_params():
+def _min_ratio_asset_when_not_none_params():
     return dict(
         assets=["SPY.US", "MCFTR.INDX"],
         ccy="RUB",
@@ -388,13 +388,13 @@ def init_frontier_with_bounds(with_bounds_params):
 
 
 @pytest.fixture(scope="module")
-def init_frontier_with_none(min_ratio_asset_left_to_max_cagr_when_none_params):
-    return ok.EfficientFrontierReb(**min_ratio_asset_left_to_max_cagr_when_none_params)
+def init_frontier_with_none(_min_ratio_asset_when_none_params):
+    return ok.EfficientFrontierReb(**_min_ratio_asset_when_none_params)
 
 
 @pytest.fixture(scope="module")
-def init_frontier_with_not_none(min_ratio_asset_left_to_max_cagr_when_not_none_params):
-    return ok.EfficientFrontierReb(**min_ratio_asset_left_to_max_cagr_when_not_none_params)
+def init_frontier_with_not_none(_min_ratio_asset_when_not_none_params):
+    return ok.EfficientFrontierReb(**_min_ratio_asset_when_not_none_params)
 
 
 @pytest.fixture(scope="module")
