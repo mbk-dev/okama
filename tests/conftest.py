@@ -106,7 +106,7 @@ def init_portfolio_values():
         first_date="2015-01",
         last_date="2020-01",
         inflation=True,
-        rebalancing_period="year",
+        rebalancing_strategy=ok.Rebalance(period="year"),
         symbol="pf1.PF",
     )
 
@@ -119,7 +119,7 @@ def portfolio_rebalanced_year(init_portfolio_values):
 @pytest.fixture(scope="package")
 def portfolio_not_rebalanced(init_portfolio_values):
     _portfolio_not_rebalanced = deepcopy(init_portfolio_values)
-    _portfolio_not_rebalanced["rebalancing_period"] = "none"
+    _portfolio_not_rebalanced["rebalancing_strategy"] = ok.Rebalance(period="none")
     return ok.Portfolio(**_portfolio_not_rebalanced)
 
 
