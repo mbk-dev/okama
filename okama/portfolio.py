@@ -2420,7 +2420,7 @@ class PortfolioDCF:
         self._wealth_index = pd.DataFrame()
         self._monte_carlo_wealth = pd.DataFrame()
         if discount_rate is None and hasattr(self.parent, "inflation"):
-            self._discount_rate = self.parent.get_cagr().loc[self.parent.inflation]
+            self._discount_rate = helpers.Frame.get_cagr(self.parent.inflation_ts)
         elif discount_rate is None and not hasattr(self.parent, "inflation"):
             self._discount_rate = settings.DEFAULT_DISCOUNT_RATE
         else:
