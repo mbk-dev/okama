@@ -231,13 +231,16 @@ class Portfolio(make_asset_list.ListMaker):
         else:
             raise ValueError(f"rebalancing_strategy must be of type Rebalance")
 
-    def _condition_for_rebalancing(self):
+    @property
+    def _condition_for_rebalancing(self) -> bool:
         """
         Verify whether assets weights are constant
         The weights are constant only if the period is 'month' and no conditional rebalancing.
         """
-        return self.rebalancing_strategy.period != "month" or (
-                self.rebalancing_strategy.abs_deviation or self.rebalancing_strategy.rel_deviation)
+        return (self.rebalancing_strategy.period != "month" or
+                self.rebalancing_strategy.abs_deviation is not None or
+                self.rebalancing_strategy.rel_deviation is not None)
+
 
     @property
     def symbol(self) -> str:
