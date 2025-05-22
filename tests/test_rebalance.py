@@ -108,5 +108,24 @@ def test_assets_weights_ts(portfolio_not_rebalanced, period, abs_d, rel_d, exp1,
     ror = portfolio_not_rebalanced.assets_ror
     target_weights = portfolio_not_rebalanced.weights
     weights_ts = rb.assets_weights_ts(target_weights=target_weights, ror=ror)
+    assert weights_ts.shape[1] == len(target_weights)
     assert weights_ts.iloc[-1, 0] == approx(exp1, abs=1e-2)
     assert weights_ts.iloc[-1, 1] == approx(exp2, abs=1e-2)
+
+@mark.parametrize(
+    "period, abs_d, rel_d, exp",
+    [
+        ("none", None, None, 2.5018),
+        ("month", 0.01, None, 2.4979),
+        ("quarter", None, 0.01, 2.4921),
+        ("half-year", 0.01, 0.01, 2.4965),
+        ("year", None, None, 2.4908),
+    ],
+    ids=["none", "month", "quarter", "half-year", "year"],
+)
+def test_return_ror_ts(portfolio_not_rebalanced, period, abs_d, rel_d, exp):
+    rb = ok.Rebalance(period=period, abs_deviation=abs_d, rel_deviation=rel_d)
+    ror = portfolio_not_rebalanced.assets_ror
+    target_weights = portfolio_not_rebalanced.weights
+    ror_ts = rb.return_ror_ts(target_weights=target_weights, ror=ror)
+    assert (ror_ts + 1).prod() == approx(exp, abs=1e-4)
