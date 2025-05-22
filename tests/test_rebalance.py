@@ -56,16 +56,11 @@ def test_wealth_ts_no_rebalancing(init_rebalance_no_rebalancing, portfolio_not_r
     [
         (0.01, None, 2497.98, 1248.80, "abs", "2019-12"),
         (None, 0.01, 2499.72, 1249.67, "rel", "2019-12"),
-        (None, None, 2501.89, 1039.87, "rel", "2018-09"),
+        (0.01, 0.01, 2499.72, 1249.67, "abs", "2019-12"),
     ],
-    ids=["Only abs deviation", "Only rel deviation", "None & None deviations"],
+    ids=["Only abs deviation", "Only rel deviation", "Abs & Rel deviations"],
 )
-def test_wealth_ts_rebalancing_conditional(abs_d, rel_d, exp1, exp2, exp3, exp4):
-    portfolio_not_rebalanced = ok.Portfolio(
-        ['RGBITR.INDX', 'MCFTR.INDX'],
-        first_date="2015-01",
-        last_date="2020-01",
-        ccy='RUB', inflation=True)
+def test_wealth_ts_rebalancing_conditional(portfolio_not_rebalanced, abs_d, rel_d, exp1, exp2, exp3, exp4):
     rb = ok.Rebalance(period="none", abs_deviation=abs_d, rel_deviation=rel_d)
     ror = portfolio_not_rebalanced.assets_ror
     target_weights = portfolio_not_rebalanced.weights
@@ -75,3 +70,43 @@ def test_wealth_ts_rebalancing_conditional(abs_d, rel_d, exp1, exp2, exp3, exp4)
     if not ws.events.empty:
         assert ws.events.iloc[-1] == exp3
         assert ws.events.index[-1] == pd.Period(exp4, freq="M")
+
+@mark.parametrize(
+    "period, abs_d, rel_d, exp1, exp2, exp3, exp4",
+    [
+        ("month", 0.01, None, 2497.98, 1248.80, "abs", "2019-12"),
+        ("quarter", None, 0.01, 2492.13, 1245.88, "rel", "2019-12"),
+        ("half-year", 0.01, 0.01, 2496.57, 1248.10, "abs", "2019-12"),
+        ("year", None, None, 2490.84, 1245.23, "calendar", "2019-12"),
+    ],
+    ids=["month", "quarter", "half-year", "year"],
+)
+def test_wealth_ts_rebalancing_calendar(portfolio_not_rebalanced, period, abs_d, rel_d, exp1, exp2, exp3, exp4):
+    rb = ok.Rebalance(period=period, abs_deviation=abs_d, rel_deviation=rel_d)
+    ror = portfolio_not_rebalanced.assets_ror
+    target_weights = portfolio_not_rebalanced.weights
+    ws = rb.wealth_ts(target_weights, ror, calculate_assets_wealth_indexes=True)
+    assert ws.portfolio_wealth_index.iloc[-1] == approx(exp1, rel=1e-4)
+    assert ws.assets_wealth_indexes.iloc[-1, 0] == approx(exp2, rel=1e-4)
+    if not ws.events.empty:
+        assert ws.events.iloc[-1] == exp3
+        assert ws.events.index[-1] == pd.Period(exp4, freq="M")
+
+@mark.parametrize(
+    "period, abs_d, rel_d, exp1, exp2",
+    [
+        ("none", None, None, 0.4156, 0.5843),
+        ("month", 0.01, None, 0.499, 0.5000),
+        ("quarter", None, 0.01, 0.4999, 0.5000),
+        ("half-year", 0.01, 0.01, 0.4999, 0.5000),
+        ("year", None, None, 0.4999, 0.5000),
+    ],
+    ids=["none", "month", "quarter", "half-year", "year"],
+)
+def test_assets_weights_ts(portfolio_not_rebalanced, period, abs_d, rel_d, exp1, exp2):
+    rb = ok.Rebalance(period=period, abs_deviation=abs_d, rel_deviation=rel_d)
+    ror = portfolio_not_rebalanced.assets_ror
+    target_weights = portfolio_not_rebalanced.weights
+    weights_ts = rb.assets_weights_ts(target_weights=target_weights, ror=ror)
+    assert weights_ts.iloc[-1, 0] == approx(exp1, abs=1e-2)
+    assert weights_ts.iloc[-1, 1] == approx(exp2, abs=1e-2)
