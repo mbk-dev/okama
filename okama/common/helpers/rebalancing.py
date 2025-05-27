@@ -82,6 +82,11 @@ class Rebalance:
         Calculate wealth index time series of rebalanced portfolio given returns time series of the assets.
 
         Optionally calculate also ASSETS wealth indexes time series inside rebalanced portfolio.
+
+        Returns
+        -------
+        Result
+            Result of rebalancing investment portfolio.
         """
         if isinstance(ror, pd.Series):
             ror = ror.to_frame()

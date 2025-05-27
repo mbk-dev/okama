@@ -3010,9 +3010,16 @@ class PortfolioDCF:
 
         The withdrawal size defined in cash flow strategy must be negative.
 
+        The result of finding a solution has the following parameters:
+        - 'success' - whether the solution was found or not.
+        - 'withdrawal_abs' - the absolute amount of withdrawal size (the best solution if found).
+        - 'withdrawal_rel' - the relative amount of withdrawal size (the best solution if found).
+        - 'error_rel' - characterizes how accurately the goal is fulfilled.
+        - 'solutions' - the history of attempts to find solutions (withdrawal values and error level).
+
         Returns
         -------
-        float
+        Result
             the largest withdrawals size according to Cashflow Strategy.
 
         Parameters
@@ -3055,7 +3062,7 @@ class PortfolioDCF:
          ...       weights=[.3, .7],
          ...       inflation=True,
          ...       ccy="RUB",
-         ...       rebalancing_strategy="year",
+         ...       rebalancing_strategy=ok.Rebalance(period="year"),
          ...   )
         >>> # Fixed Percentage strategy
         >>> pc = ok.PercentageStrategy(pf)
@@ -3069,14 +3076,33 @@ class PortfolioDCF:
         ...    period=50,
         ...    number=200
         ...)
-        >>> pf.dcf.find_the_largest_withdrawals_size(
-        ...    withdrawal_steps=30,
+        >>> res = pf.dcf.find_the_largest_withdrawals_size(
         ...    percentile=0.50,
         ...    goal="survival_period",
         ...    threshold=0.05,
         ...    target_survival_period=25
         ...)
-        np.float64(-0.10344827586206895)
+        >>> res
+        success                True
+        withdrawal_abs   -917.96875
+        withdrawal_rel     0.091797
+        error_rel           0.00442
+        attempts                 10
+        dtype: object
+
+        in the result the 'withdrawal_abs' is the absolute value of the withdrawal (the first withdrawal value),
+        and the 'withdrawal_rel' the relative withdrawal amount (the first withdrawal value divided by the initial investment).
+
+        If the solution was not found it's still possible to see the intermediate steps.
+
+        >>> res.solutions
+          withdrawal_abs withdrawal_rel error_rel error_rel_change
+        0       -10000.0              1     0.968                0
+        1        -5000.0            0.5     0.848            -0.12
+        2        -2500.0           0.25    0.6082          -0.2398
+        3        -1250.0          0.125   0.24816         -0.36004
+        4         -625.0         0.0625   0.55576           0.3076
+        5         -937.5        0.09375   0.00442         -0.55134
         """
         if withdrawals_range[0] > withdrawals_range[1]:
             raise ValueError("withdrawals_range[0] must be smaller than withdrawals_range[1]")
