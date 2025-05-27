@@ -294,8 +294,8 @@ class Frame:
         if threshold > 1 or threshold < 0:
             raise ValueError("threshold must be in range from 0 to 1.")
         if threshold:
-            fv = wealth_series[0] * pd.Series(1.0 + discount_rate / 12, index=wealth_series.index).shift(1).cumprod()
-            fv[0] = wealth_series[0]
+            fv = wealth_series.iloc[0] * pd.Series(1.0 + discount_rate / 12, index=wealth_series.index).shift(1).cumprod()
+            fv.iloc[0] = wealth_series.iloc[0]
             condition = wealth_series <= fv * threshold
         else:
             condition = wealth_series <= 0
