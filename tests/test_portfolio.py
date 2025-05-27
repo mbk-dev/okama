@@ -27,6 +27,8 @@ def test_repr(portfolio_rebalanced_year):
             assets="[RGBITR.INDX, MCFTR.INDX]",
             weights="[0.5, 0.5]",
             rebalancing_period="year",
+            rebalancing_abs_deviation=None,
+            rebalancing_rel_deviation=None,
             currency="RUB",
             inflation="RUB.INFL",
             first_date="2015-01",
@@ -71,7 +73,7 @@ def test_wealth_index(portfolio_rebalanced_year):
 
 def test_wealth_index_with_assets(portfolio_rebalanced_year, portfolio_no_inflation):
     result = portfolio_rebalanced_year.wealth_index_with_assets.iloc[-1, :].values
-    assert_allclose(np.array(result), np.array([2462.161392, 2056.11199, 2889.930097, 1310.606208]), rtol=1e-02)
+    assert_allclose(np.array(result), np.array([2490.845572, 2079.757278, 2924.031272, 1315.8486]), rtol=1e-02)
 
 
 def test_weights(portfolio_rebalanced_month):
@@ -115,29 +117,26 @@ def test_assets_close_monthly(portfolio_not_rebalanced):
 
 
 def test_close_monthly(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.close_monthly.iloc[-1] == approx(2473.0, rel=1e-2)
+    assert portfolio_not_rebalanced.close_monthly.iloc[-1] == approx(2501.89, rel=1e-2)
 
 
 def test_get_assets_dividends(portfolio_dividends):
-    assert portfolio_dividends._get_assets_dividends().iloc[-1, 0] == approx(0, abs=1e-2)
-    # T.US 2020-01=$0.3927 , RUBUSD=63.03 (  http://joxi.ru/823dnYWizBvEOA  )
-    # T.US 2020-01=$0.5200 , RUBUSD=63.03 ( http://joxi.ru/Grqjdaliz5Ow9m )  04.09.2022
-    # T.US 2020-01-09, 0.5200 from EOD
-    assert portfolio_dividends._get_assets_dividends().iloc[-1, 1] == approx(24.75, rel=1e-2)
-    assert portfolio_dividends._get_assets_dividends().iloc[-1, 2] == approx(0, rel=1e-2)
+    assert portfolio_dividends._get_assets_dividends().iloc[:, 0].sum() == approx(36.42, abs=1e-2)  # SBER
+    assert portfolio_dividends._get_assets_dividends().iloc[:, 1].sum() == approx(646.75, rel=1e-2)  # T
+    assert portfolio_dividends._get_assets_dividends().iloc[:, 2].sum() == approx(99.79, rel=1e-2)  # GNS
 
 
 def test_number_of_securities(portfolio_not_rebalanced, portfolio_dividends):
-    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 0] == approx(1.7777, rel=1e-2)  # RGBITR.INDX
+    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 0] == approx(1.7985, rel=1e-2)  # RGBITR.INDX
     assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 1] == approx(0.2754, abs=1e-2)  # MCFTR.INDX
     # with dividends
-    assert portfolio_dividends.number_of_securities.iloc[-1, 0] == approx(4.12, rel=1e-2)  # SBER.MOEX
-    assert portfolio_dividends.number_of_securities.iloc[-1, 1] == approx(0.5832, abs=1e-2)  # T.US
+    assert portfolio_dividends.number_of_securities.iloc[-1, 0] == approx(4.18, rel=1e-2)  # SBER.MOEX
+    assert portfolio_dividends.number_of_securities.iloc[-1, 1] == approx(0.448, abs=1e-2)  # T.US
     assert portfolio_dividends.number_of_securities.iloc[-1, 2] == approx(0.004137, abs=1e-2)  # GNS.LSE
 
 
 def test_dividends(portfolio_dividends):
-    assert portfolio_dividends.dividends.iloc[-1] == approx(14.43, rel=1e-2)
+    assert portfolio_dividends.dividends.iloc[-1] == approx(14.70, rel=1e-2)
 
 
 def test_dividend_yield(portfolio_dividends):
@@ -145,7 +144,7 @@ def test_dividend_yield(portfolio_dividends):
 
 
 def test_dividends_annual(portfolio_dividends):
-    assert portfolio_dividends.dividends_annual.iloc[-1].sum() == approx(24.754197, rel=1e-3)
+    assert portfolio_dividends.dividends_annual.iloc[-1].sum() == approx(32.77, rel=1e-3)
 
 
 def test_dividend_yield_annual(portfolio_dividends):
@@ -237,14 +236,12 @@ def test_cumulative_return_error(portfolio_no_inflation, period, real, exception
         portfolio_no_inflation.get_cumulative_return(period=period, real=real)
 
 
-@mark.xfail
 def test_describe_inflation(portfolio_rebalanced_month):
     description = portfolio_rebalanced_month.describe()
     description_sample = pd.read_pickle(conftest.data_folder / "portfolio_description.pkl")
     assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False, atol=1e-2)
 
 
-@mark.xfail
 def test_describe_no_inflation(portfolio_no_inflation):
     description = portfolio_no_inflation.describe()
     description_sample = pd.read_pickle(conftest.data_folder / "portfolio_description_no_inflation.pkl")
@@ -308,8 +305,8 @@ def test_get_rolling_cagr_failing_no_inflation(portfolio_no_inflation):
 
 
 def test_monte_carlo_wealth(portfolio_rebalanced_month):
-    df = portfolio_rebalanced_month.monte_carlo_wealth_fv(distr="norm", years=1, n=1000)
-    assert df.shape == (12, 1000)
+    df = portfolio_rebalanced_month.monte_carlo_wealth(distr="norm", years=1, n=1000)
+    assert df.shape == (13, 1000)
     assert df.iloc[-1, :].mean() == approx(2915.55, rel=1e-1)
 
 

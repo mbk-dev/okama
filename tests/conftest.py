@@ -126,7 +126,7 @@ def portfolio_not_rebalanced(init_portfolio_values):
 @pytest.fixture(scope="package")
 def portfolio_rebalanced_month(init_portfolio_values):
     _portfolio_rebalanced_month = deepcopy(init_portfolio_values)
-    _portfolio_rebalanced_month["rebalancing_period"] = "month"
+    _portfolio_rebalanced_month["rebalancing_strategy"] = ok.Rebalance(period="month")
     return ok.Portfolio(**_portfolio_rebalanced_month)
 
 
@@ -134,7 +134,7 @@ def portfolio_rebalanced_month(init_portfolio_values):
 def portfolio_no_inflation(init_portfolio_values):
     _portfolio_no_inflation = deepcopy(init_portfolio_values)
     _portfolio_no_inflation["inflation"] = False
-    _portfolio_no_inflation["rebalancing_period"] = "month"
+    _portfolio_no_inflation["rebalancing_strategy"] = ok.Rebalance(period="month")
     return ok.Portfolio(**_portfolio_no_inflation)
 
 
