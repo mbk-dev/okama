@@ -1,5 +1,5 @@
 import math
-from typing import Union, Callable, Optional
+from typing import Union, Callable, Optional, Tuple
 from functools import singledispatchmethod
 
 import pandas as pd
@@ -70,16 +70,70 @@ class Float:
         return np.exp(np.log(1.0 + mean_return) - 0.5 * std**2 / (1.0 + mean_return) ** 2) - 1.0
 
     @staticmethod
-    def get_random_weights(n: int, w_shape: int) -> pd.Series:
+    def get_random_weights(n: int, w_shape: int, bounds: Optional[Tuple[Tuple[float, float], ...]] = None) -> pd.Series:
         """
-        Produce N random normalized weights of a given shape.
+        Produce N random normalized weights of a given shape using sequential generation.
+        bounds : tuple of tuples, optional.
+        Constraints for each asset's weight, e.g., ((0, 1), (0, 0.5), (0.5, 1), ...).
+        If None, default constraints are applied.
         """
-        # Random weights
-        rand_nos = np.random.rand(n, w_shape)
-        weights_transposed = rand_nos.transpose() / rand_nos.sum(axis=1)
-        weights = weights_transposed.transpose()
-        weights_df = pd.DataFrame(weights)
-        return weights_df.aggregate(np.array, axis=1)  # Converts df to DataFrame of np.array
+        # Case 1: default bounds
+        if bounds is None:
+            random_numbers = np.random.rand(n, w_shape)
+            # keepdims instead of transpose
+            weights = random_numbers / random_numbers.sum(axis=1, keepdims=True)
+        
+        # Case 2: custom bounds
+        else:
+            bounds_arr = np.array(bounds)
+            mins = bounds_arr[:, 0]
+            maxs = bounds_arr[:, 1]
+            
+            weights = []
+            batch_size = min(1000, n) 
+            
+            while len(weights) < n:
+    
+                remaining = np.ones(batch_size)
+                indices = np.arange(w_shape)
+                batch_w = np.zeros((batch_size, w_shape))
+                valid_mask = np.ones(batch_size, dtype=bool)
+                
+                shuffled_indices = np.tile(indices, (batch_size, 1))
+                for i in range(batch_size):
+                    np.random.shuffle(shuffled_indices[i])
+                
+                for i in range(w_shape - 1):
+    
+                    idx = shuffled_indices[:, i]
+                    low = mins[idx]
+                    high = maxs[idx]
+                    
+                    future_mins = np.sum(mins[shuffled_indices[:, i+1:]], axis=1)
+                    future_maxs = np.sum(maxs[shuffled_indices[:, i+1:]], axis=1)
+                    
+                    adjusted_low = np.maximum(low, remaining - future_maxs)
+                    adjusted_high = np.minimum(high, remaining - future_mins)
+     
+                    rand_vals = np.random.uniform(adjusted_low, adjusted_high)
+                    
+                    batch_w[np.arange(batch_size), idx] = rand_vals
+                    remaining -= rand_vals
+    
+                    valid_mask &= (adjusted_low <= adjusted_high)
+    
+                last_idx = shuffled_indices[:, -1]
+                batch_w[np.arange(batch_size), last_idx] = remaining
+                valid_mask &= (mins[last_idx] <= remaining) & (remaining <= maxs[last_idx])
+                valid_mask &= np.all(batch_w >= 0, axis=1)
+    
+                valid_weights = batch_w[valid_mask]
+                weights.extend(valid_weights.tolist())
+       
+                if len(weights) >= n:
+                    break
+        
+        return pd.Series([np.array(w) for w in weights[:n]])
 
     @staticmethod
     def get_purchasing_power(inflation: float, value: float = 1000.0):

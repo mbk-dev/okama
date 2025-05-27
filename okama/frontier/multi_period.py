@@ -1,8 +1,10 @@
 import time
+import itertools
 from typing import List, Tuple, Dict, Optional
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 
 from scipy.optimize import minimize
@@ -42,6 +44,12 @@ class EfficientFrontierReb(asset_list.AssetList):
     ccy : str, default 'USD'
         Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
 
+    bounds: tuple of ((float, float),...)
+        Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
+        If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
+        bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
+        from 0 to 50%. The second asset has no limitations.
+
     inflation : bool, default True
         Defines whether to take inflation data into account in the calculations.
         Including inflation could limit available data (last_date, first_date)
@@ -70,7 +78,6 @@ class EfficientFrontierReb(asset_list.AssetList):
     For monthly rebalanced portfolios okama.EfficientFrontier class could be used.
     """
 
-    # TODO: Add bounds
     def __init__(
         self,
         assets: Optional[List[str]] = None,
@@ -78,6 +85,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         first_date: Optional[str] = None,
         last_date: Optional[str] = None,
         ccy: str = "USD",
+        bounds: Optional[Tuple[Tuple[float, ...], ...]] = None,
         inflation: bool = False,
         full_frontier: bool = True,
         rebalancing_period: str = "year",
@@ -94,6 +102,9 @@ class EfficientFrontierReb(asset_list.AssetList):
             ccy=ccy,
             inflation=inflation,
         )
+        
+        self._bounds = None
+        self.bounds = bounds
         self.rebalancing_period = rebalancing_period
         self.n_points = n_points
         self.ticker_names = ticker_names
@@ -109,9 +120,56 @@ class EfficientFrontierReb(asset_list.AssetList):
             "last_date": self.last_date.strftime("%Y-%m"),
             "period_length": self._pl_txt,
             "rebalancing_period": self.rebalancing_period,
+            "bounds": self.bounds,
             "inflation": self.inflation if hasattr(self, "inflation") else "None",
         }
         return repr(pd.Series(dic))
+
+    @property
+    def bounds(self) -> Tuple[Tuple[float, ...], ...]:
+        """
+        Return bounds for the assets weights.
+
+        Bounds are used in optimization. Each asset can have weights limitation from 0 to 1.0.
+
+        If an asset has limitation for 10 to 20% bounds are defined as (0.1, 0.2).
+        bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
+        from 0 to 50%. The second asset has no limitations.
+
+        Returns
+        -------
+        tuple of ((float, float),...)
+            Weights bounds used for portfolio optimization.
+
+        Examples
+        --------
+        >>> two_assets = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> two_assets.bounds
+        ((0.0, 1.0), (0.0, 1.0))
+
+        By default there are no limitations for assets weights.
+        Bounds can be set for a Efficient Frontier object.
+
+        >>> two_assets.bounds = ((0.5, 0.9), (0, 1.0))
+
+        Now the optimization is bounded (SPY has weights limits from 50 to 90%).
+        """
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds):
+        
+        self._ef_points = pd.DataFrame(dtype=float)     
+        
+        if bounds:
+            if len(bounds) != len(self.symbols):
+                raise ValueError(
+                    f"The number of symbols ({len(self.symbols)}) "
+                    f"and the length of bounds ({len(bounds)}) should be equal."
+                )
+            self._bounds = bounds
+        else:
+            self._bounds = ((0.0, 1.0),) * len(self.symbols)  # an N-tuple of 2-tuples
 
     @property
     def n_points(self) -> int:
@@ -230,7 +288,6 @@ class EfficientFrontierReb(asset_list.AssetList):
         period = self.rebalancing_period
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
-        bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples
 
         # Set the objective function
         def objective_function(w):
@@ -245,7 +302,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             method="SLSQP",
             options={"disp": False},
             constraints=(weights_sum_to_1,),
-            bounds=bounds,
+            bounds=self.bounds,
         )
         return weights.x
 
@@ -274,7 +331,6 @@ class EfficientFrontierReb(asset_list.AssetList):
         period = self.rebalancing_period
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
-        bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples!
 
         # Set the objective function
         def objective_function(w):
@@ -291,7 +347,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             method="SLSQP",
             options={"disp": False},
             constraints=(weights_sum_to_1,),
-            bounds=bounds,
+            bounds=self.bounds,
         )
         return weights.x
 
@@ -372,7 +428,6 @@ class EfficientFrontierReb(asset_list.AssetList):
         period = self.rebalancing_period
         n = self.assets_ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
-        bounds = ((0.0, 1.0),) * n
 
         # Set the objective function
         def objective_function(w):
@@ -389,7 +444,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             method="SLSQP",
             options={"disp": False},
             constraints=(weights_sum_to_1,),
-            bounds=bounds,
+            bounds=self.bounds,
         )
         portfolio_ts = objective_function.returns
         mean_return = portfolio_ts.mean()
@@ -428,10 +483,17 @@ class EfficientFrontierReb(asset_list.AssetList):
         >>> frontier.minimize_risk(0.107)
         {'SPY.US': 0.9810857623382343, 'AGG.US': 0.018914237661765643, 'CAGR': 0.107, 'Risk': 0.1549703673806012}
         """
+        
         n = self.assets_ror.shape[1]  # number of assets
-
-        init_guess = np.repeat(1 / n, n)  # initial weights
-
+        init_guess = np.repeat(1/n, n)  # initial weights
+        
+        min_ratio_data = self._min_ratio_asset
+        max_ratio_data = self._max_ratio_asset_right_to_max_cagr
+            
+        if min_ratio_data is not None and max_ratio_data is not None:
+            init_guess = np.repeat(0, n) # clear weights
+            init_guess[self._min_ratio_asset["list_position"]] = 1.0
+        
         def objective_function(w):
             # annual risk
             ts = okama.common.helpers.rebalancing.Rebalance(period=self.rebalancing_period).return_ror_ts(w, self.assets_ror)
@@ -440,7 +502,6 @@ class EfficientFrontierReb(asset_list.AssetList):
             return helpers.Float.annualize_risk(risk_monthly, mean_return)
 
         # construct the constraints
-        bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples for Weights constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         cagr_is_target = {
             "type": "eq",
@@ -457,7 +518,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 "ftol": 1e-06,
             },
             constraints=(weights_sum_to_1, cagr_is_target),
-            bounds=bounds,
+            bounds=self.bounds,
         )
 
         # Calculate points of EF given optimal weights
@@ -497,7 +558,6 @@ class EfficientFrontierReb(asset_list.AssetList):
             return result
 
         # construct the constraints
-        bounds = ((0.0, 1.0),) * n  # an N-tuple of 2-tuples for Weights constrains
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         cagr_is_target = {
             "type": "eq",
@@ -514,7 +574,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 "maxiter": 100,
             },
             constraints=(weights_sum_to_1, cagr_is_target),
-            bounds=bounds,
+            bounds=self.bounds,
         )
 
         # Calculate points of EF given optimal weights
@@ -539,6 +599,50 @@ class EfficientFrontierReb(asset_list.AssetList):
             "ticker_with_largest_cagr": ticker_with_largest_cagr,
             "list_position": self.symbols.index(ticker_with_largest_cagr),
         }
+
+    @property
+    def _min_ratio_asset(self) -> Optional[dict]:
+        """
+        The asset with the minimum ratio between the CAGR 
+        (Compound Annual Growth Rate) and the risk for assets that are "to the left" 
+        of the portfolio with the maximum CAGR on the efficiency frontier.
+        """
+        cagr = helpers.Frame.get_cagr(self.assets_ror)
+        risk_monthly = self.assets_ror.std()
+        mean_return = self.assets_ror.mean()
+        risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
+        
+        global_max_cagr = self.global_max_return_portfolio["CAGR"]
+        global_max_risk = self.global_max_return_portfolio["Risk"]
+
+        cagr_diff = global_max_cagr - cagr
+        risk_diff = global_max_risk - risk   
+            
+        if risk_diff is not None and (risk_diff == 0).any():  
+            risk_diff += 0.0001  # to avoid division by zero
+            
+        ratio = cagr_diff / risk_diff
+        left_assets = risk_diff > 0  
+    
+        if left_assets.any():
+            valid_ratios = ratio[left_assets]
+            min_ticker = valid_ratios.idxmin() 
+            return {
+                "min_asset_cagr": cagr[min_ticker],
+                "ticker_with_smallest_ratio": min_ticker,
+                "list_position": self.assets_ror.columns.get_loc(min_ticker)
+            }
+        if not left_assets.any():
+            right_assets = risk_diff < 0
+            valid_ratios = ratio[right_assets]
+            min_ticker = valid_ratios.idxmin()
+            return {
+                "min_asset_cagr": cagr[min_ticker],
+                "ticker_with_smallest_ratio": min_ticker,
+                "list_position": self.assets_ror.columns.get_loc(min_ticker)
+            }
+        return None
+
 
     @property
     def _max_ratio_asset_right_to_max_cagr(self) -> Optional[dict]:
@@ -595,12 +699,20 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         Full range of CAGR values (from min to max).
         """
+        min_ratio_data = self._min_ratio_asset
+        max_ratio_data = self._max_ratio_asset_right_to_max_cagr
+            
+        if min_ratio_data is not None and max_ratio_data is not None:
+            min_cagr = min_ratio_data.get('min_asset_cagr')
+            max_cagr = self.global_max_return_portfolio["CAGR"]
+            return np.linspace(min_cagr, max_cagr, self.n_points)
+        
         if self.full_frontier:
             min_cagr = helpers.Frame.get_cagr(self.assets_ror).min()
         else:
             min_cagr = self.gmv_annual_values[1]
+        
         max_cagr = self.global_max_return_portfolio["CAGR"]
-
         return np.linspace(min_cagr, max_cagr, self.n_points)
 
     @property
@@ -618,6 +730,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 number_of_points = round(self.n_points / k) + 1 if k > 1 else self.n_points
                 target_range = np.linspace(max_cagr, ticker_cagr, number_of_points)
                 return target_range[1:]  # skip the first point (max cagr) as it presents in the left part of the EF
+        return None  
 
     @property
     def target_risk_range(self) -> np.ndarray:
@@ -816,7 +929,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         >>> ax.legend()
         >>> plt.show()
         """
-        weights_df = helpers.Float.get_random_weights(n, self.assets_ror.shape[1])
+        weights_df = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
 
         # Portfolio risk and cagr for each set of weights
         portfolios_ror = weights_df.aggregate(
@@ -832,3 +945,79 @@ class EfficientFrontierReb(asset_list.AssetList):
             row = {"Risk": risk, "CAGR": cagr}
             random_portfolios = pd.concat([random_portfolios, pd.DataFrame(row, index=[0])], ignore_index=True)
         return random_portfolios
+
+    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> plt.axes:
+        """
+        Plot Efficient Frontier of every pair of assets.
+
+        Efficient Frontier is a set of portfolios which satisfy the condition that no other portfolio exists
+        with a higher expected return but with the same risk (standard deviation of return).
+
+        Arithmetic mean (expected return) is used for optimized portfolios.
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Parameters
+        ----------
+        tickers : {'tickers', 'names'} or list of str, default 'tickers'
+            Annotation type for assets.
+            'tickers' - assets symbols are shown in form of 'SPY.US'
+            'names' - assets names are used like - 'SPDR S&P 500 ETF Trust'
+            To show custom annotations for each asset pass the list of names.
+
+        figsize: (float, float), optional
+            Figure size: width, height in inches.
+            If None default matplotlib size is taken: [6.4, 4.8]
+
+        Notes
+        -----
+        It should be at least 3 assets.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
+        >>> curr = 'USD'
+        >>> last_date = '2021-07'
+        >>> ef = ok.EfficientFrontierReb(ls4, ccy=curr, last_date=last_date)
+        >>> ef.plot_pair_ef()
+        >>> plt.show()
+
+        It can be useful to plot the full Efficent Frontier (EF) with optimized 4 assets portfolios
+        together with the EFs for each pair of assets.
+
+        >>> ef4 = ok.EfficientFrontierReb(assets=ls4, ccy=curr, n_points=100)
+        >>> df4 = ef4.ef_points
+        >>> fig = plt.figure()
+        >>> # Plot Efficient Frontier of every pair of assets. Optimized portfolios will have 2 assets.
+        >>> ef4.plot_pair_ef()  # mean return is used for optimized portfolios.
+        >>> ax = plt.gca()
+        >>> # Plot the full Efficient Frontier for 4 asset portfolios.
+        >>> ax.plot(df4['Risk'], df4['Mean return'], color = 'black', linestyle='--')
+        >>> plt.show()
+        """
+        if len(self.symbols) < 3:
+            raise ValueError("The number of symbols cannot be less than 3")
+        # self._verify_axes()
+        bool_inflation = hasattr(self, "inflation")
+        fig, ax = plt.subplots(figsize=figsize)
+        for i in itertools.combinations(self.asset_obj_dict.values(), 2):
+            sym_pair = list(i)
+            index0 = self.symbols.index(sym_pair[0].symbol)
+            index1 = self.symbols.index(sym_pair[1].symbol)
+            bounds_pair = (self.bounds[index0], self.bounds[index1])
+            ef = EfficientFrontierReb(
+                assets=sym_pair,
+                ccy=self.currency,
+                first_date=self.first_date,
+                last_date=self.last_date,
+                inflation=bool_inflation,
+                full_frontier=True,
+                n_points=self.n_points,
+                bounds=bounds_pair,
+            ).ef_points
+            ax.plot(ef["Risk"], ef["CAGR"])
+        self.plot_assets(kind="cagr", tickers=tickers)
+        return ax

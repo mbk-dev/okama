@@ -142,6 +142,9 @@ class EfficientFrontier(asset_list.AssetList):
 
     @bounds.setter
     def bounds(self, bounds):
+        
+        self._ef_points = pd.DataFrame(dtype=float) 
+        
         if bounds:
             if len(bounds) != len(self.symbols):
                 raise ValueError(
@@ -866,7 +869,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> ax.legend()
         >>> plt.show()
         """
-        weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1])
+        weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
 
         # Portfolio risk and return for each set of weights
         random_portfolios = pd.DataFrame(dtype=float)
@@ -999,7 +1002,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> import matplotlib.pyplot as plt
         >>> ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
         >>> curr = 'USD'
-        >>> last_date = '07-2021'
+        >>> last_date = '2021-07'
         >>> ef = ok.EfficientFrontier(ls4, ccy=curr, last_date=last_date)
         >>> ef.plot_pair_ef()
         >>> plt.show()
@@ -1035,6 +1038,7 @@ class EfficientFrontier(asset_list.AssetList):
                 inflation=bool_inflation,
                 full_frontier=True,
                 bounds=bounds_pair,
+                n_points=self.n_points,
             ).ef_points
             ax.plot(ef["Risk"], ef["Mean return"])
         self.plot_assets(kind="mean", tickers=tickers)
