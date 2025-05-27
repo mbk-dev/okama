@@ -3020,7 +3020,7 @@ class PortfolioDCF:
         Returns
         -------
         Result
-            the largest withdrawals size according to Cashflow Strategy.
+            The result of finding solution process.
 
         Parameters
         ----------
@@ -3052,8 +3052,10 @@ class PortfolioDCF:
             The smallest acceptable survival period. It wokrs with the 'survival_period' goal only.
 
         iter_max : integer, default 20
+            The maximum number of iterations to find the solution.
 
         tolerance_rel : float, default 0.10
+            The allowed tolerance for the solution. The tolerance is the largest error for the achieved goal.
 
         Examples
         --------
