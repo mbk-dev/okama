@@ -35,6 +35,22 @@ class Rebalance:
 
     Rebalancing is the process by which an investor restores their portfolio to its target allocation
     by selling and buying assets. After rebalancing all the assets have original (target) weights.
+
+    Attributes
+    ----------
+    period : {'none', 'month', 'quarter', 'half-year', 'year'}
+        The rebalancing period for the investment portfolio.
+
+    abs_deviation : float, optional
+        The absolute deviation allowed for the assets weights in the portfolio.
+        It is defined for an asset weight as an absolut value of: actual_weight - target_weight.
+        It must be more than 0 (0%).
+        Max value is 1 (100%).
+
+    rel_deviation : float, optional
+        The relative deviation allowed for the assets weights in the portfolio.
+        It is defined for an asset weight as an absolut value of: actual_weight / target_weight - 1.
+        it must be positive.
     """
 
     def __init__(
@@ -77,11 +93,27 @@ class Rebalance:
                 raise ValueError("Relative deviation must be positive.")
 
 
-    def wealth_ts(self, target_weights: list, ror: pd.DataFrame, calculate_assets_wealth_indexes:bool = False) -> Result:
+    def wealth_ts(
+            self, target_weights: list,
+            ror: pd.DataFrame,
+            calculate_assets_wealth_indexes: bool = False
+    ) -> Result:
         """
         Calculate wealth index time series of rebalanced portfolio given returns time series of the assets.
 
         Optionally calculate also ASSETS wealth indexes time series inside rebalanced portfolio.
+
+        Parameters
+        ----------
+        target_weights : list of float
+            The target weights for assets in the portfolio.
+
+        ror : pd.DataFrame
+            Assets rate of return monthly time series.
+
+        calculate_assets_wealth_indexes : bool, optional
+            Whether or not to calculate assets wealth indexes after rebalancing.
+            When 'True' works slower.
 
         Returns
         -------
@@ -219,6 +251,19 @@ class Rebalance:
     def assets_weights_ts(self, target_weights: list, ror: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate assets weights monthly time series for rebalanced portfolio.
+
+        Parameters
+        ----------
+        target_weights : list of float
+            The target weights for assets in the portfolio.
+
+        ror : pd.DataFrame
+            Assets rate of return monthly time series.
+
+        Returns
+        -------
+        pd.DataFrame
+            Assets weights monthly time series.
         """
         reb = self.wealth_ts(target_weights=target_weights,
                              ror=ror,
@@ -228,8 +273,19 @@ class Rebalance:
     def return_ror_ts(self, target_weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
         """
         Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
-        Default rebalancing period is a Year (end of year)
-        For not rebalanced portfolio set Period to 'none'.
+
+        Parameters
+        ----------
+        target_weights : list of float
+            The target weights for assets in the portfolio.
+
+        ror : pd.DataFrame
+            Assets rate of return monthly time series.
+
+        Returns
+        -------
+        pd.Series
+            The monthly rate of return time series of rebalanced portfolio.
         """
         # define data of the first period
         first_date = ror.index[0]
