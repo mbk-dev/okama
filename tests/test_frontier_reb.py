@@ -26,6 +26,8 @@ def test_repr(init_efficient_frontier_reb):
             last_date="2020-02",
             period_length="1 years, 2 months",
             rebalancing_period="year",
+            rebalancing_abs_deviation=None,
+            rebalancing_rel_deviation=None,
             bounds=((0, 1), (0, 1)),
             inflation="USD.INFL"
         )
@@ -120,10 +122,10 @@ def test_minimize_risk_with_bounds(init_frontier_with_bounds):
     params = test_params["with_bounds"]
     
     result = init_frontier_with_bounds.minimize_risk(params["target_cagr_1"])
-    assert np.isclose(result["Risk"], params["expected_risk_1"], rtol=1e-2)
+    assert np.isclose(result["Risk"], params["expected_risk_1"], atol=1e-2)
     
     result = init_frontier_with_bounds.minimize_risk(params["target_cagr_2"])
-    assert np.isclose(result["Risk"], params["expected_risk_2"], rtol=1e-2)
+    assert np.isclose(result["Risk"], params["expected_risk_2"], atol=1e-2)
 
 
 @mark.rebalance

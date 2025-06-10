@@ -282,7 +282,7 @@ def init_efficient_frontier_reb():
         ccy="USD",
         first_date="2019-01",
         last_date="2020-02",
-        rebalancing_period="year",    
+        rebalancing_strategy=ok.Rebalance(period="year"),
         bounds=((0, 1), (0, 1)),
         inflation=True,
         n_points=2,
@@ -297,7 +297,7 @@ def bounds_frontier_params():
         ccy="USD",
         first_date="2019-01",
         last_date="2020-02",
-        rebalancing_period="year",    
+        rebalancing_strategy=ok.Rebalance(period="year"),
         bounds=((0, 0.2), (0.2, 0.4), (0.4, 0.6), (0, 1), (0, 1)),
         inflation=True,
     )
@@ -310,7 +310,7 @@ def without_bounds_params():
         ccy="USD",
         first_date="2004-10",
         last_date="2020-10",    
-        rebalancing_period="year",    
+        rebalancing_strategy=ok.Rebalance(period="year"),
     )
 
 
@@ -321,7 +321,7 @@ def with_bounds_params():
         ccy="USD",
         first_date="2004-10",
         last_date="2020-10",
-        rebalancing_period="year",    
+        rebalancing_strategy=ok.Rebalance(period="year"),
         bounds=((0, 0.4), (0, 1), (0, 1)),
     )
 
@@ -332,7 +332,7 @@ def _min_ratio_asset_when_none_params():
         assets=["SPY.US", "GLD.US"],
         ccy="USD",
         last_date="2020-10",
-        rebalancing_period="year",    
+        rebalancing_strategy=ok.Rebalance(period="year"),
     )
 
 
@@ -342,7 +342,7 @@ def _min_ratio_asset_when_not_none_params():
         assets=["SPY.US", "MCFTR.INDX"],
         ccy="RUB",
         last_date="2025-03",
-        rebalancing_period="year",    
+        rebalancing_strategy=ok.Rebalance(period="year"),
     )
 
 
@@ -353,7 +353,7 @@ def convex_frontier_params():
         ccy="RUB",
         first_date="2005-01",
         last_date="2020-11",
-        rebalancing_period="year",
+        rebalancing_strategy=ok.Rebalance(period="year"),
         n_points=5,
         verbose=True,
     )
@@ -366,7 +366,7 @@ def nonconvex_frontier_params():
         ccy="RUB",
         first_date="2004-12",
         last_date="2020-12",
-        rebalancing_period="year",
+        rebalancing_strategy=ok.Rebalance(period="year"),
         n_points=5,
         verbose=True,
     )

@@ -11,7 +11,8 @@ os.environ["PYTHONWARNINGS"] = "ignore::FutureWarning"
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
-# ef = ok.EfficientFrontierReb(['SP500TR.INDX', 'MCFTR.INDX', 'GC.COMM'], ccy='RUB', last_date='2020-03', full_frontier=True)
+ef = ok.EfficientFrontierReb(['SP500TR.INDX', 'MCFTR.INDX', 'GC.COMM'], ccy='RUB', first_date='2020-01', last_date='2025-03', full_frontier=True)
+print(ef._get_gmv_monthly())
 # w = ef.minimize_risk(0.184914755913651)
 # print(w)
 # df_reb_year = ef.ef_points
@@ -50,32 +51,34 @@ pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
 # assets = ['RGBITR.INDX', 'MCFTR.INDX', 'GC.COMM']
 # weights = [0.60,   0.35, 0.05]
-assets = ['RGBITR.INDX', 'MCFTR.INDX']
-weights = [0.50,  0.50]
-pf = ok.Portfolio(assets, weights=weights,
-                  first_date="2015-01",
-                  last_date="2020-01",
-                  ccy='RUB',
-                  inflation=True)
-pf.rebalancing_strategy = ok.Rebalance(
-    period="none",
-    abs_deviation=0.10,
-    rel_deviation=None
-)
-print(pf.rebalancing_strategy)
-# pf = ok.Portfolio(
-#     assets,
-#     weights=weights,
-#     ccy='USD',
-#     rebalancing_strategy=ok.Rebalance(period="none", abs_deviation=None, rel_deviation=0.050),
-#     inflation=False
+# assets = ['RGBITR.INDX', 'MCFTR.INDX']
+# weights = [0.50,  0.50]
+# pf = ok.Portfolio(assets, weights=weights,
+#                   first_date="2015-01",
+#                   last_date="2020-01",
+#                   ccy='RUB',
+#                   inflation=True)
+# pf.rebalancing_strategy = ok.Rebalance(
+#     period="none",
+#     abs_deviation=0.10,
+#     rel_deviation=None
 # )
-ev = pf.rebalancing_strategy.wealth_ts(
-    target_weights=weights,
-    ror=pf.assets_ror,
-    calculate_assets_wealth_indexes=True
-).events
-print(ev)
+# print(pf.rebalancing_strategy)
+# # pf = ok.Portfolio(
+# #     assets,
+# #     weights=weights,
+# #     ccy='USD',
+# #     rebalancing_strategy=ok.Rebalance(period="none", abs_deviation=None, rel_deviation=0.050),
+# #     inflation=False
+# # )
+# ev = pf.rebalancing_strategy.wealth_ts(
+#     target_weights=weights,
+#     ror=pf.assets_ror,
+#     calculate_assets_wealth_indexes=True
+# ).events
+# print(ev)
+
+
 # pf.dcf.discount_rate = 0.09
 
 # ind = ok.IndexationStrategy(pf)
