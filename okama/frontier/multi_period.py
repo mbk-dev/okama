@@ -12,6 +12,7 @@ from scipy.optimize import minimize
 import okama.common.helpers.rebalancing
 from okama import asset_list, settings
 from okama.common.helpers import helpers
+from okama.common.helpers.rebalancing import Rebalance
 
 import logging
 
@@ -88,7 +89,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         bounds: Optional[Tuple[Tuple[float, ...], ...]] = None,
         inflation: bool = False,
         full_frontier: bool = True,
-        rebalancing_period: str = "year",
+        rebalancing_strategy: Rebalance = Rebalance(period="year"),
         n_points: int = 20,
         verbose: bool = False,
         ticker_names: bool = True,
@@ -105,7 +106,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         
         self._bounds = None
         self.bounds = bounds
-        self.rebalancing_period = rebalancing_period
+        self.rebalancing_strategy = rebalancing_strategy
         self.n_points = n_points
         self.ticker_names = ticker_names
         self.verbose = verbose
@@ -119,7 +120,9 @@ class EfficientFrontierReb(asset_list.AssetList):
             "first_date": self.first_date.strftime("%Y-%m"),
             "last_date": self.last_date.strftime("%Y-%m"),
             "period_length": self._pl_txt,
-            "rebalancing_period": self.rebalancing_period,
+            "rebalancing_period": self.rebalancing_strategy.period,
+            "rebalancing_abs_deviation": self.rebalancing_strategy.abs_deviation,
+            "rebalancing_rel_deviation": self.rebalancing_strategy.rel_deviation,
             "bounds": self.bounds,
             "inflation": self.inflation if hasattr(self, "inflation") else "None",
         }
@@ -193,11 +196,14 @@ class EfficientFrontierReb(asset_list.AssetList):
     def n_points(self, n_points: int):
         if not isinstance(n_points, int):
             raise ValueError("n_points should be an integer")
-        self._ef_points = pd.DataFrame(dtype=float)  # renew EF points DataFrame
+        self._clear_cache()
         self._n_points = n_points
 
+    def _clear_cache(self):
+        self._ef_points = pd.DataFrame(dtype=float)  # renew EF points DataFrame
+
     @property
-    def rebalancing_period(self):
+    def rebalancing_strategy(self):
         """
         Return or set rebalancing period for multi-period Efficient Frontier.
 
@@ -218,14 +224,15 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         >>> frontier.rebalancing_strategy = 'none'  # change for not rebalanced portfolios
         """
-        return self._reb_period
+        return self._rebalancing_strategy
 
-    @rebalancing_period.setter
-    def rebalancing_period(self, reb_period: str):
-        if reb_period not in ["year", "none"]:
-            raise ValueError('reb_period: Rebalancing period should be "year" - year or "none" - not rebalanced.')
-        self._ef_points = pd.DataFrame(dtype=float)  # renew EF points DataFrame
-        self._reb_period = reb_period
+    @rebalancing_strategy.setter
+    def rebalancing_strategy(self, rebalancing_strategy: Rebalance):
+        if isinstance(rebalancing_strategy, Rebalance):
+            self._clear_cache()
+            self._rebalancing_strategy = rebalancing_strategy
+        else:
+            raise ValueError(f"rebalancing_strategy must be of type Rebalance")
 
     @property
     def ticker_names(self):
@@ -285,13 +292,17 @@ class EfficientFrontierReb(asset_list.AssetList):
         array([0.0578446, 0.9421554])
         """
         ror = self.assets_ror
-        period = self.rebalancing_period
+        args = dict(
+            period=self.rebalancing_strategy.period,
+            abs_deviation=self.rebalancing_strategy.abs_deviation,
+            rel_deviation=self.rebalancing_strategy.rel_deviation
+        )
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
         # Set the objective function
         def objective_function(w):
-            risk = okama.common.helpers.rebalancing.Rebalance(period=period).return_ror_ts(w, ror).std()
+            risk = okama.common.helpers.rebalancing.Rebalance(**args).return_ror_ts(w, ror).std()
             return risk
 
         # construct the constraints
@@ -328,13 +339,17 @@ class EfficientFrontierReb(asset_list.AssetList):
         array([0.05373824, 0.94626176])
         """
         ror = self.assets_ror
-        period = self.rebalancing_period
+        args = dict(
+            period=self.rebalancing_strategy.period,
+            abs_deviation=self.rebalancing_strategy.abs_deviation,
+            rel_deviation=self.rebalancing_strategy.rel_deviation
+        )
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
         # Set the objective function
         def objective_function(w):
-            ts = okama.common.helpers.rebalancing.Rebalance(period=period).return_ror_ts(w, ror)
+            ts = Rebalance(**args).return_ror_ts(w, ror)
             mean_return = ts.mean()
             risk = ts.std()
             return helpers.Float.annualize_risk(risk=risk, mean_return=mean_return)
@@ -357,20 +372,13 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
         """
-        return (
-            okama.common.helpers.rebalancing.Rebalance(period=self.rebalancing_period)
-            .return_ror_ts(
-                self.gmv_monthly_weights,
-                self.assets_ror,
-            )
-            .std(),
-            okama.common.helpers.rebalancing.Rebalance(period=self.rebalancing_period)
-            .return_ror_ts(
-                self.gmv_monthly_weights,
-                self.assets_ror,
-            )
-            .mean(),
+        args = dict(
+            period = self.rebalancing_strategy.period,
+            abs_deviation = self.rebalancing_strategy.abs_deviation,
+            rel_deviation = self.rebalancing_strategy.rel_deviation
         )
+        ts = Rebalance(**args).return_ror_ts(self.gmv_monthly_weights, self.assets_ror)
+        return ts.std(), ts.mean()
 
     @property
     def gmv_annual_values(self) -> Tuple[float, float]:
@@ -394,9 +402,12 @@ class EfficientFrontierReb(asset_list.AssetList):
         >>> frontier.gmv_annual_values
         (0.03695845106087943, 0.04418318557516887)
         """
-        returns = okama.common.helpers.rebalancing.Rebalance(period=self.rebalancing_period).return_ror_ts(
-            self.gmv_annual_weights, self.assets_ror
+        args = dict(
+            period=self.rebalancing_strategy.period,
+            abs_deviation=self.rebalancing_strategy.abs_deviation,
+            rel_deviation=self.rebalancing_strategy.rel_deviation
         )
+        returns = Rebalance(**args).return_ror_ts(self.gmv_annual_weights, self.assets_ror)
         return (
             helpers.Float.annualize_risk(returns.std(), returns.mean()),
             (returns + 1.0).prod() ** (settings._MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
@@ -425,14 +436,18 @@ class EfficientFrontierReb(asset_list.AssetList):
         {'Weights': array([1., 0.]), 'CAGR': 0.10797159166196812, 'Risk': 0.1583011735798155, 'Risk_monthly': 0.0410282468594492}
         """
         ror = self.assets_ror
-        period = self.rebalancing_period
+        args = dict(
+            period=self.rebalancing_strategy.period,
+            abs_deviation=self.rebalancing_strategy.abs_deviation,
+            rel_deviation=self.rebalancing_strategy.rel_deviation
+        )
         n = self.assets_ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
 
         # Set the objective function
         def objective_function(w):
             # Accumulated return for rebalanced portfolio time series
-            objective_function.returns = okama.common.helpers.rebalancing.Rebalance(period=period).return_ror_ts(w, ror)
+            objective_function.returns = Rebalance(**args).return_ror_ts(w, ror)
             accumulated_return = (objective_function.returns + 1.0).prod() - 1.0
             return -accumulated_return
 
@@ -458,7 +473,12 @@ class EfficientFrontierReb(asset_list.AssetList):
         return point
 
     def _get_cagr(self, weights):
-        ts = okama.common.helpers.rebalancing.Rebalance(period=self.rebalancing_period).return_ror_ts(weights, self.assets_ror)
+        args = dict(
+            period=self.rebalancing_strategy.period,
+            abs_deviation=self.rebalancing_strategy.abs_deviation,
+            rel_deviation=self.rebalancing_strategy.rel_deviation
+        )
+        ts = Rebalance(**args).return_ror_ts(weights, self.assets_ror)
         acc_return = (ts + 1.0).prod() - 1.0
         return (1.0 + acc_return) ** (settings._MONTHS_PER_YEAR / ts.shape[0]) - 1.0
 
@@ -489,6 +509,12 @@ class EfficientFrontierReb(asset_list.AssetList):
         
         min_ratio_data = self._min_ratio_asset
         max_ratio_data = self._max_ratio_asset_right_to_max_cagr
+
+        args = dict(
+            period=self.rebalancing_strategy.period,
+            abs_deviation=self.rebalancing_strategy.abs_deviation,
+            rel_deviation=self.rebalancing_strategy.rel_deviation
+        )
             
         if min_ratio_data is not None and max_ratio_data is not None:
             init_guess = np.repeat(0, n) # clear weights
@@ -496,7 +522,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         
         def objective_function(w):
             # annual risk
-            ts = okama.common.helpers.rebalancing.Rebalance(period=self.rebalancing_period).return_ror_ts(w, self.assets_ror)
+            ts = Rebalance(**args).return_ror_ts(w, self.assets_ror)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             return helpers.Float.annualize_risk(risk_monthly, mean_return)
@@ -546,12 +572,18 @@ class EfficientFrontierReb(asset_list.AssetList):
         n = self.assets_ror.shape[1]  # number of assets
 
         init_guess = np.repeat(0, n)
+
+        args = dict(
+            period=self.rebalancing_strategy.period,
+            abs_deviation=self.rebalancing_strategy.abs_deviation,
+            rel_deviation=self.rebalancing_strategy.rel_deviation
+        )
         if self._max_ratio_asset_right_to_max_cagr:
             init_guess[self._max_ratio_asset_right_to_max_cagr["list_position"]] = 1.0
 
         def objective_function(w):
             # annual risk
-            ts = okama.common.helpers.rebalancing.Rebalance(period=self.rebalancing_period).return_ror_ts(w, self.assets_ror)
+            ts = Rebalance(**args).return_ror_ts(w, self.assets_ror)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             result = -helpers.Float.annualize_risk(risk_monthly, mean_return)
@@ -790,7 +822,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         ...                             first_date='2004-12',
         ...                             last_date='2020-10',
         ...                             ccy=curr,
-        ...                             rebalancing_period='year',
+        ...                             rebalancing_strategy=ok.Rebalnce(period='year'),
         ...                             ticker_names=True,  # use tickers in DataFrame column names (can be set to False to show full assets names instead tickers)
         ...                             n_points=20,  # number of points in the Efficient Frontier
         ...                             full_frontier=False,  # draw the frontier to the global CAGR max only
@@ -805,10 +837,10 @@ class EfficientFrontierReb(asset_list.AssetList):
         4  0.150615  0.089397  0.059713  0.940287
 
         To compare the Efficient Frontiers of annually rebalanced portfolios with not rebalanced portfolios it's possible to draw 2 charts:
-        rebalancing_period='year' and rebalancing_period='none'.
+        rebalancing_strategy=ok.Rebalance(period='year') and period='none'.
 
         >>> import matplotlib.pyplot as plt
-        >>> y.rebalancing_strategy = 'none'
+        >>> y.rebalancing_strategy = ok.Rebalance(period='none')
         >>> df_not_reb = y.ef_points
         >>> fig = plt.figure()
         >>> # Plot the assets points
@@ -898,7 +930,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         ...                             first_date='2005-01',
         ...                             last_date='2020-11',
         ...                             ccy=curr_rub,
-        ...                             rebalancing_period='year',  # set rebalancing period to one year
+        ...                             rebalancing_strategy=ok.Rebalance(period='year'),  # set rebalancing period to one year
         ...                             n_points=20,
         ...                             verbose=False)
         >>> monte_carlo = x.get_monte_carlo(n=1000)  # it can take some time ...
@@ -933,7 +965,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         # Portfolio risk and cagr for each set of weights
         portfolios_ror = weights_df.aggregate(
-            okama.common.helpers.rebalancing.Rebalance(period=self.rebalancing_period).return_ror_ts,
+            Rebalance(period=self.rebalancing_period).return_ror_ts,
             ror=self.assets_ror,
         )
         random_portfolios = pd.DataFrame()
