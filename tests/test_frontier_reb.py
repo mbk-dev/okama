@@ -157,7 +157,7 @@ def test_min_ratio_asset_when_none(init_frontier_with_none):
     x = init_frontier_with_none
     result = x._min_ratio_asset
 
-    assert result == None
+    assert result is None
 
 
 @mark.rebalance

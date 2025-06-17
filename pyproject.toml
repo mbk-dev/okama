@@ -29,12 +29,13 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4.0.0"
+python = ">=3.10,<4.0.0"
 pandas = "^2.0.0"
 scipy = ">=1.9.0"
 matplotlib = ">=3.5.1"
 requests = "*"
 joblib = "*"
+pandas-stubs = "*"
 
 [tool.poetry.group.test]
 optional = false

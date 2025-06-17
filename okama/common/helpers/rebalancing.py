@@ -56,11 +56,9 @@ class Rebalance:
     def __init__(
         self, period: str = "year", abs_deviation: Optional[float] = None, rel_deviation: Optional[float] = None
     ):
-        self.period = period
         self.abs_deviation = abs_deviation
         self.rel_deviation = rel_deviation
-        self._pandas_frequency = settings.frequency_mapping.get(self.period)
-        self._validate_condition()
+        self.period = period
 
     def __str__(self):
         dic = {
@@ -92,6 +90,20 @@ class Rebalance:
             if self.rel_deviation <= 0:
                 raise ValueError("Relative deviation must be positive.")
 
+    @property
+    def period(self) -> str:
+        """
+        The rebalancing period for the investment portfolio.
+
+        It can be: 'none', 'month', 'quarter', 'half-year', 'year'.
+        """
+        return self._period
+
+    @period.setter
+    def period(self, value: str):
+        self._period = value
+        self._validate_condition()
+        self._pandas_frequency = settings.frequency_mapping.get(self.period)
 
     def wealth_ts(
             self, target_weights: list,
