@@ -662,7 +662,6 @@ class EfficientFrontierReb(asset_list.AssetList):
         ratio = cagr_diff / risk_diff
         left_assets = risk_diff > 0  
 
-        # TODO: change to if / else
         if left_assets.any():
             valid_ratios = ratio[left_assets]
             min_ticker = valid_ratios.idxmin() 
@@ -671,7 +670,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 "ticker_with_smallest_ratio": min_ticker,
                 "list_position": self.assets_ror.columns.get_loc(min_ticker)
             }
-        if not left_assets.any():
+        else:
             right_assets = risk_diff < 0
             valid_ratios = ratio[right_assets]
             min_ticker = valid_ratios.idxmin()
@@ -680,7 +679,6 @@ class EfficientFrontierReb(asset_list.AssetList):
                 "ticker_with_smallest_ratio": min_ticker,
                 "list_position": self.assets_ror.columns.get_loc(min_ticker)
             }
-        return None
 
 
     @property
