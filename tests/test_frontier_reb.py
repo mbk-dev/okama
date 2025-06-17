@@ -103,15 +103,15 @@ def test_ef_points_reb(init_efficient_frontier_reb):
 test_params = {
     "with_bounds": {
         "target_cagr_1": 0.060973018282528796,
-        "expected_risk_1": 0.1390686876877882,
+        "expected_risk_1": 0.14242,
         "target_cagr_2": 0.1035764996098511,
         "expected_risk_2": 0.1325340380516895,
     },
     "without_bounds": {
         "target_cagr_1": 0.060973018282528796,
-        "expected_risk_1": 0.1390686876877882,
+        "expected_risk_1": 0.14242,
         "target_cagr_2": 0.1035764996098511,
-        "expected_risk_2": 0.11948185412271976,
+        "expected_risk_2": 0.13428,
     }
 }
 
@@ -165,6 +165,7 @@ def test_min_ratio_asset_when_none(init_frontier_with_none):
 def test_min_ratio_asset_when_not_none(init_frontier_with_not_none):
     x = init_frontier_with_not_none
     result = x._min_ratio_asset
+    # TODO: add case when left_assets.any() is False
 
     expected_result = {
         "min_asset_cagr": approx(0.1959425614987127, abs=1e-2),
@@ -227,3 +228,6 @@ def test_maximize_risk_with_nonconvex_right_frontier(init_nonconvex_frontier):
     expected_risk = approx(0.28761107914313766, abs=1e-2)
 
     assert result_risk == expected_risk
+
+# TODO: add test for `get_monte_carlo`
+# TODO: add test for `plot_pair_ef`

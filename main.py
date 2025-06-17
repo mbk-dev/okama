@@ -14,22 +14,28 @@ pd.set_option("display.float_format", lambda x: "%.2f" % x)
 ef = ok.EfficientFrontierReb(
     ['SPY.US', 'AGG.US', 'GLD.US'],
     rebalancing_strategy=ok.Rebalance(period='year'),
-    ccy='RUB',
+    ccy='USD',
     first_date='2020-01', last_date='2025-03', full_frontier=True, verbose=True)
+glob = ef.global_max_return_portfolio
+cagr = glob['CAGR']
+print(cagr)
+
+pf = ef.minimize_risk(cagr)
+print(pf)
+
 # w = ef.minimize_risk(0.184914755913651)
 # print(w)
-ef.rebalancing_strategy.period = "month"
-df_reb_year = ef.ef_points
-fig, ax = plt.subplots(figsize=(12, 10))
+
+
 
 # Plot the Efficient Fronrier
-ax.plot(df_reb_year.Risk, df_reb_year.CAGR, label="Annually rebalanced")
+# ax.plot(df_reb_year.Risk, df_reb_year.CAGR, label="Annually rebalanced")
 # ax.plot(df_not_reb.Risk, df_not_reb.CAGR, label="Not rebalanced")
 
 # Plot the aseets
-ef.plot_assets(kind="cagr")
+# ef.plot_assets(kind="cagr")
 
-plt.show()
+# plt.show()
 
 # al = ok.AssetList(['MCFTR.INDX'], ccy='RUB', inflation=False, first_date='2025-01')
 # wealth = al.wealth_indexes

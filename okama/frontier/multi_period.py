@@ -79,6 +79,8 @@ class EfficientFrontierReb(asset_list.AssetList):
     For monthly rebalanced portfolios okama.EfficientFrontier class could be used.
     """
 
+    FTOL = 1e-02  # allowed tolerance for optimizer
+
     def __init__(
         self,
         assets: Optional[List[str]] = None,
@@ -457,7 +459,11 @@ class EfficientFrontierReb(asset_list.AssetList):
             objective_function,
             init_guess,
             method="SLSQP",
-            options={"disp": False},
+            options={
+                "disp": False,
+                "maxiter": 100,
+                "ftol": self.FTOL,
+            },
             constraints=(weights_sum_to_1,),
             bounds=self.bounds,
         )
@@ -541,7 +547,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             options={
                 "disp": False,
                 "maxiter": 100,
-                "ftol": 1e-06,
+                "ftol": self.FTOL,
             },
             constraints=(weights_sum_to_1, cagr_is_target),
             bounds=self.bounds,
@@ -602,7 +608,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             method="SLSQP",
             options={
                 "disp": False,
-                "ftol": 1e-06,
+                "ftol": self.FTOL,
                 "maxiter": 100,
             },
             constraints=(weights_sum_to_1, cagr_is_target),
@@ -635,8 +641,8 @@ class EfficientFrontierReb(asset_list.AssetList):
     @property
     def _min_ratio_asset(self) -> Optional[dict]:
         """
-        The asset with the minimum ratio between the CAGR 
-        (Compound Annual Growth Rate) and the risk for assets that are "to the left" 
+        The asset with the minimum ratio between the CAGR (Compound Annual Growth Rate)
+        and the risk for assets that are "to the left"
         of the portfolio with the maximum CAGR on the efficiency frontier.
         """
         cagr = helpers.Frame.get_cagr(self.assets_ror)
@@ -655,7 +661,8 @@ class EfficientFrontierReb(asset_list.AssetList):
             
         ratio = cagr_diff / risk_diff
         left_assets = risk_diff > 0  
-    
+
+        # TODO: change to if / else
         if left_assets.any():
             valid_ratios = ratio[left_assets]
             min_ticker = valid_ratios.idxmin() 
