@@ -211,6 +211,21 @@ def portfolio_dcf_indexation(init_portfolio_dcf, init_mc):
     return pf_dcf
 
 
+@pytest.fixture(scope="function")
+def portfolio_dcf_percentage(init_portfolio_dcf, init_mc):
+    pf = ok.Portfolio(**init_portfolio_dcf[0])
+    pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
+    pf_dcf.set_mc_parameters(**init_mc)
+    # Cash Flow
+    pc = ok.PercentageStrategy(pf)  # create IndexationStrategy linked to the portfolio
+    pc.initial_investment = 100_000  # add initial investments size
+    pc.frequency = "half-year"  # set cash flow frequency
+    pc.percentage = 0.04  # set withdrawal size
+    pf_dcf.cashflow_parameters = pc
+    pf_dcf.use_discounted_values = True
+    return pf_dcf
+
+
 # Macro
 @pytest.fixture(scope="function")
 def _init_inflation(request):
