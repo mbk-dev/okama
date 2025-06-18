@@ -198,6 +198,8 @@ class EfficientFrontierReb(asset_list.AssetList):
     def n_points(self, n_points: int):
         if not isinstance(n_points, int):
             raise ValueError("n_points should be an integer")
+        if n_points <= 0:
+            raise ValueError("n_points should be greater than zero")
         self._clear_cache()
         self._n_points = n_points
 
