@@ -326,8 +326,9 @@ class Frame:
                     period_initial_amount = period_final_balance
                     wealth_df = pd.concat([None if wealth_df.empty else wealth_df, period_wealth_index], sort=False)
                 s = wealth_df.squeeze()
-            s = s.shift(1)  # values of the wealth index correspond to the beginning of the month.
-            s.iloc[0] = period_initial_amount_cached  # replaces NaN with the first period return
+            first_date = s.index[0]
+            first_wealth_index_date = first_date - 1  # set first date to one month earlie
+            s.loc[first_wealth_index_date] = period_initial_amount_cached
             if inflation_symbol:
                 cum_inflation = Frame.get_wealth_indexes(
                     ror=ror.loc[:, inflation_symbol], initial_amount=period_initial_amount_cached
