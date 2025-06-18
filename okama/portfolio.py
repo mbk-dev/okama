@@ -2992,9 +2992,9 @@ class PortfolioDCF:
             goal: str,
             withdrawals_range: Tuple[float, float] = (0, 1),
             target_survival_period: int = 25,
-            percentile: float = 0.20,
+            percentile: int = 20,
             threshold: float = 0,
-            tolerance_rel: float = 0.01,
+            tolerance_rel: float = 0.10,
             iter_max: int = 20
     ) -> Result:
         """
@@ -3005,8 +3005,7 @@ class PortfolioDCF:
         — 'maintain_balance_pv' to keep the purchasing power of the invesments after inflation
             for the whole period defined in Monte Carlo parameteres.
         — 'survival_period' to keep positive balance for a period defined by 'target_survival_period'.
-            The method works with IndexationStrategy
-             and PercentageStrategy only.
+            The method works with IndexationStrategy and PercentageStrategy only.
 
         The withdrawal size defined in cash flow strategy must be negative.
 
@@ -3039,10 +3038,11 @@ class PortfolioDCF:
             The first value is expected minimum withdrawal. The second value is expected maximum withdrawal.
             The search for a solution occurs only within this range.
 
-        percentile : float
-            Confidence level must be form 0 to 1.
-            Confidence level defines the percentile of Monte Carlo time series. 0.01 or 0.05 are the examples of "bad"
-            scenarios. 0.50 is mediane (50% percentile). 0.95 or 0.99 are optimiststic scenarios.
+        percentile : int, default 20
+            The percentile of Monte-Carlo simulation distribution where the goal is achieved.
+            Percentile must be form 0 to 100.
+            1th or 5th percentiles are the examples of "bad" scenarios. 50th is mediane.
+            95th or 99th are optimiststic scenarios.
 
         threshold : float, default 0
             The percentage of initial investments when the portfolio balance is considered voided.
@@ -3079,12 +3079,13 @@ class PortfolioDCF:
         ...    number=200
         ...)
         >>> res = pf.dcf.find_the_largest_withdrawals_size(
-        ...    percentile=0.50,
+        ...    percentile=50,
         ...    goal="survival_period",
         ...    threshold=0.05,
         ...    target_survival_period=25
         ...)
         >>> res
+        # TODO: update example results
         success                True
         withdrawal_abs   -917.96875
         withdrawal_rel     0.091797
@@ -3093,7 +3094,7 @@ class PortfolioDCF:
         dtype: object
 
         in the result the 'withdrawal_abs' is the absolute value of the withdrawal (the first withdrawal value),
-        and the 'withdrawal_rel' the relative withdrawal amount (the first withdrawal value divided by the initial investment).
+        and the 'withdrawal_rel' the relative withdrawal size (the first withdrawal value divided by the initial investment).
 
         If the solution was not found it's still possible to see the intermediate steps.
 
@@ -3145,6 +3146,8 @@ class PortfolioDCF:
                 condition = sp_at_quantile >= target_survival_period
                 print(f'{sp_at_quantile=:.2f}, {main_parameter=:.3f}')
                 error_rel = abs(sp_at_quantile - target_survival_period) / target_survival_period
+            else:
+                raise ValueError("The goal can be: maintain_balance_fv, maintain_balance_pv or survival_period.")
 
             withdrawal_abs = main_parameter if self.cashflow_parameters.NAME == "fixed_amount" else main_parameter * start_investment / self.cashflow_parameters.periods_per_year
             solutions.at[iter, "withdrawal_abs"] = withdrawal_abs
@@ -3353,7 +3356,7 @@ class CashFlow:
 
     @frequency.setter
     def frequency(self, frequency):
-        if frequency in settings.frequency_mapping.keys() or frequency is None:
+        if frequency in settings.frequency_mapping.keys():
             self._clear_cf_cache()
             self._frequency = frequency
         else:
