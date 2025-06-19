@@ -299,12 +299,8 @@ class Rebalance:
         pd.Series
             The monthly rate of return time series of rebalanced portfolio.
         """
-        # define data of the first period
-        first_date = ror.index[0]
-        return_first_period = ror.iloc[0] @ target_weights
-
         wealth_index = self.wealth_ts(target_weights, ror).portfolio_wealth_index
         ror = wealth_index.pct_change()
-        ror.loc[first_date] = return_first_period  # replaces NaN with the first period return
+        ror.dropna(inplace=True)
         return ror
 

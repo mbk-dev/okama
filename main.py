@@ -60,7 +60,7 @@ pd.set_option("display.float_format", lambda x: "%.2f" % x)
 #
 # print(pf.dividend_yield_annual)
 
-pf2 = ok.Portfolio(first_date="2015-01", last_date="2024-10")
+pf2 = ok.Portfolio(first_date="2015-01", last_date="2024-10", rebalancing_strategy=ok.Rebalance(period="year"))
 d = {
     "2018-02": 2_000,  # contribution
     "2024-03": -4_000  # withdrawal
