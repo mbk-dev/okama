@@ -2863,11 +2863,10 @@ class PortfolioDCF:
         >>> plt.show()
         """
         wealth_df = self.monte_carlo_wealth_fv.copy()
-        wealth_df_pv = pd.DataFrame()
-        for n, row in enumerate(wealth_df.iterrows()):
-            w = row[1]
-            w /= (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** n
-            wealth_df_pv = pd.concat([wealth_df_pv, w.to_frame().T], sort=False)
+        # Vectorized discounting
+        n_rows = wealth_df.shape[0]
+        discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
+        wealth_df_pv = wealth_df.div(discount_factors, axis=0)
         return wealth_df_pv
 
     def plot_forecast_monte_carlo(
@@ -2912,6 +2911,7 @@ class PortfolioDCF:
         >>> plt.yscale("log")  # Y-axis has logarithmic scale
         >>> plt.show()
         """
+        # TODO: return axe
         if backtest:
             if self.cashflow_parameters is None:
                 raise AttributeError("'cashflow_parameters' is not defined.")
@@ -3433,7 +3433,7 @@ class IndexationStrategy(CashFlow):
         super().__init__(parent)
         self.portfolio = self.parent
         self.amount: float = 0
-        self.indexation: Optional[str, float] = None
+        self.indexation: Optional[Union[str, float]] = None
 
     def __repr__(self):
         dic = {
@@ -3596,7 +3596,7 @@ class TimeSeriesStrategy(CashFlow):
         super().__init__(parent)
         self.portfolio = self.parent
         self.time_series_dic = {}
-        self.time_series = pd.Series()
+        self.time_series = pd.Series(dtype=float)
 
     def __repr__(self):
         dic = {
