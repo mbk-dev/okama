@@ -31,7 +31,7 @@ class Result:
     withdrawal_abs: float
     withdrawal_rel: float
     error_rel: float
-    solutions: pd.DataFrame
+    solutions: pd.DataFrame(columns=["withdrawal_abs", "withdrawal_rel", "error_rel", "error_rel_change"])
 
     def __repr__(self):
         dic = {
