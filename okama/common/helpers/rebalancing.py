@@ -103,7 +103,7 @@ class Rebalance:
     def period(self, value: str):
         self._period = value
         self._validate_condition()
-        self._pandas_frequency = settings.frequency_mapping.get(self.period)
+        self._pandas_frequency = settings.frequency_mapping[self.period]
 
     def wealth_ts(
             self, target_weights: list,
