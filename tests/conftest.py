@@ -164,8 +164,13 @@ def init_portfolio_dcf(init_portfolio_values):
 
 
 @pytest.fixture(scope="package")
-def init_mc():
+def init_mc_students():
     return dict(distribution="t", period=10, number=100)
+
+
+@pytest.fixture(scope="package")
+def init_mc_normal_small():
+    return dict(distribution="norm", period=1, number=10)
 
 
 @pytest.fixture(scope="package")
@@ -196,10 +201,10 @@ def portfolio_dcf_discount_rate(init_portfolio_dcf):
 
 
 @pytest.fixture(scope="function")
-def portfolio_dcf_indexation(init_portfolio_dcf, init_mc):
+def portfolio_dcf_indexation(init_portfolio_dcf, init_mc_students):
     pf = ok.Portfolio(**init_portfolio_dcf[0])
     pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
-    pf_dcf.set_mc_parameters(**init_mc)
+    pf_dcf.set_mc_parameters(**init_mc_students)
     # Cash Flow
     ind = ok.IndexationStrategy(pf)  # create IndexationStrategy linked to the portfolio
     ind.initial_investment = 10_000  # add initial investments size
@@ -210,12 +215,27 @@ def portfolio_dcf_indexation(init_portfolio_dcf, init_mc):
     pf_dcf.use_discounted_values = False
     return pf_dcf
 
-
 @pytest.fixture(scope="function")
-def portfolio_dcf_percentage(init_portfolio_dcf, init_mc):
+def portfolio_dcf_indexation_small(init_portfolio_dcf, init_mc_normal_small):
     pf = ok.Portfolio(**init_portfolio_dcf[0])
     pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
-    pf_dcf.set_mc_parameters(**init_mc)
+    pf_dcf.set_mc_parameters(**init_mc_normal_small)
+    # Cash Flow
+    ind = ok.IndexationStrategy(pf)  # create IndexationStrategy linked to the portfolio
+    ind.initial_investment = 10_000  # add initial investments size
+    ind.frequency = "month"  # set cash flow frequency
+    ind.amount = -1_500 / 12   # set withdrawal size
+    ind.indexation = "inflation"
+    pf_dcf.cashflow_parameters = ind
+    pf_dcf.use_discounted_values = False
+    return pf_dcf
+
+
+@pytest.fixture(scope="function")
+def portfolio_dcf_percentage(init_portfolio_dcf, init_mc_students):
+    pf = ok.Portfolio(**init_portfolio_dcf[0])
+    pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
+    pf_dcf.set_mc_parameters(**init_mc_students)
     # Cash Flow
     pc = ok.PercentageStrategy(pf)  # create IndexationStrategy linked to the portfolio
     pc.initial_investment = 100_000  # add initial investments size
@@ -223,6 +243,24 @@ def portfolio_dcf_percentage(init_portfolio_dcf, init_mc):
     pc.percentage = 0.04  # set withdrawal size
     pf_dcf.cashflow_parameters = pc
     pf_dcf.use_discounted_values = True
+    return pf_dcf
+
+
+@pytest.fixture(scope="function")
+def portfolio_dcf_time_series(init_portfolio_dcf, init_mc_students):
+    pf = ok.Portfolio(**init_portfolio_dcf[0])
+    pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
+    pf_dcf.set_mc_parameters(**init_mc_students)
+    # Cash Flow
+    d = {
+        "2018-02": 2_000,  # contribution
+        "2024-03": -4_000  # withdrawal
+    }
+    ts = ok.TimeSeriesStrategy(pf)  # create TimeSeriesStrategy linked to the portfolio
+    ts.time_series_dic = d  # use the dictionary to set cash flow
+    ts.initial_investment = 1_000  # add initial investments size
+    pf_dcf.cashflow_parameters = ts
+    pf_dcf.use_discounted_values = False
     return pf_dcf
 
 
