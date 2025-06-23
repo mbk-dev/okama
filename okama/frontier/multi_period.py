@@ -79,7 +79,7 @@ class EfficientFrontierReb(asset_list.AssetList):
     For monthly rebalanced portfolios okama.EfficientFrontier class could be used.
     """
 
-    FTOL = 1e-02  # allowed tolerance for optimizer
+    FTOL = (1e-06, 1e-05, 1e-3, 1e-02)  # tolerance sequence for the optimizer
 
     def __init__(
         self,
@@ -464,7 +464,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             options={
                 "disp": False,
                 "maxiter": 100,
-                "ftol": self.FTOL,
+                "ftol": self.FTOL[0],
             },
             constraints=(weights_sum_to_1,),
             bounds=self.bounds,
@@ -515,7 +515,6 @@ class EfficientFrontierReb(asset_list.AssetList):
         n = self.assets_ror.shape[1]  # number of assets
         init_guess = np.repeat(1/n, n)  # initial weights
         
-        min_ratio_data = self._min_ratio_asset
         max_ratio_data = self._max_ratio_asset_right_to_max_cagr
 
         args = dict(
@@ -524,7 +523,9 @@ class EfficientFrontierReb(asset_list.AssetList):
             rel_deviation=self.rebalancing_strategy.rel_deviation
         )
             
-        if min_ratio_data is not None and max_ratio_data is not None:
+        if max_ratio_data is not None:
+            # TODO: create other guesses for intermedeate points
+            #  (remember the weights for solved points, GMV, global max)
             init_guess = np.repeat(0, n) # clear weights
             init_guess[self._min_ratio_asset["list_position"]] = 1.0
         
@@ -541,27 +542,30 @@ class EfficientFrontierReb(asset_list.AssetList):
             "type": "eq",
             "fun": lambda weights: target_value - self._get_cagr(weights),
         }
+        for i in range(4):
+            weights = minimize(
+                objective_function,
+                init_guess,
+                method="SLSQP",
+                options={
+                    "disp": False,
+                    "maxiter": 80,
+                    "ftol": self.FTOL[i],
+                },
+                constraints=(weights_sum_to_1, cagr_is_target),
+                bounds=self.bounds,
+            )
 
-        weights = minimize(
-            objective_function,
-            init_guess,
-            method="SLSQP",
-            options={
-                "disp": False,
-                "maxiter": 100,
-                "ftol": self.FTOL,
-            },
-            constraints=(weights_sum_to_1, cagr_is_target),
-            bounds=self.bounds,
-        )
-
-        # Calculate points of EF given optimal weights
-        if weights.success:
-            asset_labels = self.symbols if self.ticker_names else list(self.names.values())
-            point = dict(zip(asset_labels, weights.x))
-            point["CAGR"] = target_value
-            point["Risk"] = weights.fun
-        else:
+            # Calculate points of EF given optimal weights
+            if weights.success:
+                asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+                point = dict(zip(asset_labels, weights.x))
+                point["CAGR"] = target_value
+                point["Risk"] = weights.fun
+                point["FTOL"] = self.FTOL[i]
+                point["iter"] = weights.nit
+                break
+        if not weights.success:
             raise RecursionError(f"No solution found for target CAGR value: {target_value}.")
         return point
 
@@ -603,27 +607,30 @@ class EfficientFrontierReb(asset_list.AssetList):
             "type": "eq",
             "fun": lambda weights: target_return - self._get_cagr(weights),
         }
+        for i in range(4):
+            weights = minimize(
+                objective_function,
+                init_guess,
+                method="SLSQP",
+                options={
+                    "disp": False,
+                    "ftol": self.FTOL[i],
+                    "maxiter": 80,
+                },
+                constraints=(weights_sum_to_1, cagr_is_target),
+                bounds=self.bounds,
+            )
 
-        weights = minimize(
-            objective_function,
-            init_guess,
-            method="SLSQP",
-            options={
-                "disp": False,
-                "ftol": self.FTOL,
-                "maxiter": 100,
-            },
-            constraints=(weights_sum_to_1, cagr_is_target),
-            bounds=self.bounds,
-        )
-
-        # Calculate points of EF given optimal weights
-        if weights.success:
-            asset_labels = self.symbols if self.ticker_names else list(self.names.values())
-            point = dict(zip(asset_labels, weights.x))
-            point["CAGR"] = target_return
-            point["Risk"] = -weights.fun
-        else:
+            # Calculate points of EF given optimal weights
+            if weights.success:
+                asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+                point = dict(zip(asset_labels, weights.x))
+                point["CAGR"] = target_return
+                point["Risk"] = -weights.fun
+                point["FTOL"] = self.FTOL[i]
+                point["iter"] = weights.nit
+                break
+        if not weights.success:
             raise RecursionError(f"No solution found for target CAGR value: {target_return}.")
         return point
 
@@ -641,7 +648,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         }
 
     @property
-    def _min_ratio_asset(self) -> Optional[dict]:
+    def _min_ratio_asset(self) -> dict:
         """
         The asset with the minimum ratio between the CAGR (Compound Annual Growth Rate)
         and the risk for assets that are "to the left"
