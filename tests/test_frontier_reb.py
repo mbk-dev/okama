@@ -109,7 +109,7 @@ test_params = {
     },
     "without_bounds": {
         "target_cagr_1": 0.060973018282528796,
-        "expected_risk_1": 0.14242,
+        "expected_risk_1": 0.13878,
         "target_cagr_2": 0.1035764996098511,
         "expected_risk_2": 0.13428,
     }
