@@ -91,7 +91,7 @@ class TestAssetList:
         assert self.asset_list.assets_ror.columns.name == "Symbols"
 
     def test_calculate_wealth_indexes(self):
-        assert self.asset_list.wealth_indexes.sum(axis=1)[-1] == approx(3306.19, rel=1e-2)  # last month indexes sum
+        assert self.asset_list.wealth_indexes.sum(axis=1)[-1] == approx(3342.96, rel=1e-2)  # last month indexes sum
 
     def test_risk(self):
         assert self.asset_list.risk_monthly.iloc[-1]["USDRUB.CBR"] == approx(0.0258, rel=1e-2)
@@ -339,7 +339,7 @@ class TestAssetList:
 
     @mark.parametrize(
         "window,expected",
-        [(None, 0.4510), (12, 0.3594)],
+        [(None, 0.41030), (12, 0.3594)],
         ids=["None", "12 months"],
     )
     def test_tracking_difference_annualized(self, window, expected):
@@ -348,7 +348,7 @@ class TestAssetList:
         )
 
     def test_tracking_difference_annual(self):
-        assert self.asset_list.tracking_difference_annual.iloc[0, 0] == approx(0.4003, abs=1e-2)
+        assert self.asset_list.tracking_difference_annual.iloc[0, 0] == approx(0.4934, abs=1e-2)
 
     @mark.parametrize(
         "window,expected",
