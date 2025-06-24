@@ -3000,12 +3000,15 @@ class PortfolioDCF:
         """
         Find the largest withdrawals size for Monte Carlo simulation according to Cashflow Strategy.
 
-        It's possible to find the largest withdrawl with 2 kind of goals:
+        It's possible to find the largest withdrawl with 3 kind of goals:
 
         — 'maintain_balance_pv' to keep the purchasing power of the invesments after inflation
             for the whole period defined in Monte Carlo parameteres.
+        — 'maintain_balance_fv' to keep the nominal size of the invesments for the whole period
+            defined in Monte Carlo parameteres.
         — 'survival_period' to keep positive balance for a period defined by 'target_survival_period'.
-            The method works with IndexationStrategy and PercentageStrategy only.
+
+        The method works with IndexationStrategy and PercentageStrategy only.
 
         The withdrawal size defined in cash flow strategy must be negative.
 
@@ -3138,7 +3141,9 @@ class PortfolioDCF:
             elif self.cashflow_parameters.NAME == "fixed_percentage":
                 main_parameter = self.cashflow_parameters.percentage
             if goal in ["maintain_balance_fv", "maintain_balance_pv"]:
-                wealth_at_quantile = self.monte_carlo_wealth_pv.iloc[-1, :].quantile(percentile / 100)
+                print(f"the goal is {goal}")
+                s = self.monte_carlo_wealth_pv if goal == "maintain_balance_pv" else self.monte_carlo_wealth_fv
+                wealth_at_quantile = s.iloc[-1, :].quantile(percentile / 100)
                 condition = (wealth_at_quantile >= start_investment) and (sp_at_quantile == self.mc.period)
                 print(f'{wealth_at_quantile=:.2f}, {main_parameter=:.3f}')
                 error_rel = abs(wealth_at_quantile - start_investment) / start_investment
