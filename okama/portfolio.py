@@ -2356,7 +2356,7 @@ class Portfolio(make_asset_list.ListMaker):
         new_url += f"&first_date={self.first_date.strftime('%Y-%m-%d')}"
         new_url += f"&last_date={self.last_date.strftime('%Y-%m-%d')}"
         # TODO: change rebalancing strategy in the link
-        new_url += f"&rebal={self.rebalancing_strategy}"
+        new_url += f"&rebal={self.rebalancing_strategy.period}"
         new_url += f"&symbol={self.symbol}"
         return new_url
 
