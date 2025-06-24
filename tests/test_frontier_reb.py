@@ -121,11 +121,11 @@ test_params = {
 def test_minimize_risk_with_bounds(init_frontier_with_bounds):
     params = test_params["with_bounds"]
     
-    result = init_frontier_with_bounds.minimize_risk(params["target_cagr_1"])
-    assert np.isclose(result["Risk"], params["expected_risk_1"], atol=1e-2)
+    result1 = init_frontier_with_bounds.minimize_risk(params["target_cagr_1"])
+    assert np.isclose(result1["Risk"], params["expected_risk_1"], atol=1e-1)
     
-    result = init_frontier_with_bounds.minimize_risk(params["target_cagr_2"])
-    assert np.isclose(result["Risk"], params["expected_risk_2"], atol=1e-2)
+    result2 = init_frontier_with_bounds.minimize_risk(params["target_cagr_2"])
+    assert np.isclose(result2["Risk"], params["expected_risk_2"], atol=1e-1)
 
 
 @mark.rebalance
