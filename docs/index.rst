@@ -143,6 +143,7 @@ Assets & Portfolio
     okama.IndexationStrategy
     okama.PercentageStrategy
     okama.TimeSeriesStrategy
+    okama.Rebalance
 
 Efficient Frontier
 ==================
