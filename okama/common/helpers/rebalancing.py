@@ -39,18 +39,22 @@ class Rebalance:
     Attributes
     ----------
     period : {'none', 'month', 'quarter', 'half-year', 'year'}
-        The rebalancing period for the investment portfolio.
+        rebalancing period (rebalancing frequency) is predetermined time intervals when
+        the investor rebalances the portfolio.
+        If 'none' assets weights are not rebalanced.
 
     abs_deviation : float, optional
         The absolute deviation allowed for the assets weights in the portfolio.
         It is defined for an asset weight as an absolut value of: actual_weight - target_weight.
         It must be more than 0 (0%).
         Max value is 1 (100%).
+        if None the parameter is ignored.
 
     rel_deviation : float, optional
         The relative deviation allowed for the assets weights in the portfolio.
         It is defined for an asset weight as an absolut value of: actual_weight / target_weight - 1.
         it must be positive.
+        if None the parameter is ignored.
     """
 
     def __init__(

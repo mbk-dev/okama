@@ -60,14 +60,17 @@ class Portfolio(make_asset_list.ListMaker):
         The weight of an asset is the percent of an investment portfolio that corresponds to the asset.
         If weights = None an equally weighted portfolio is created (all weights are equal).
 
-    rebalancing_strategy : {'none', 'month', 'quarter', 'half-year', 'year'}, default 'month'
-        Rebalancing period (rebalancing frequency) is predetermined time intervals when
-        the investor rebalances the portfolio. If 'none' assets weights are not rebalanced.
+    rebalancing_strategy : Rebalance, default Rebalance(period='year', abs_deviation=None, rel_deviation=None)
+        Rebalancing strategy for an investment portfolio. The rebalancing strategy si defined by:
+        -period (rebalancing frequency): predetermined time intervals when the investor rebalances the portfolio.
+        If 'none' assets weights are not rebalanced.
+        -abs_deviation: the absolute deviation allowed for the assets weights in the portfolio.
+        -rel_deviation: the relative deviation allowed for the assets weights in the portfolio.
 
-    symbol : str, default None
+    symbol : str
         Text symbol of portfolio. It is similar to tickers but have a namespace information.
         Portfolio symbol must end with .PF (all_weather_portfolio.PF).
-        If None a random symbol is generated (portfolio_7802.PF).
+        If not defined a random symbol is generated (portfolio_7802.PF).
     """
 
     def __init__(
@@ -80,7 +83,7 @@ class Portfolio(make_asset_list.ListMaker):
         inflation: bool = True,
         weights: Optional[List[float]] = None,
         rebalancing_strategy: Rebalance = Rebalance(period="month"),
-        symbol: str = None,
+        symbol: str,
     ):
         super().__init__(
             assets,
@@ -3088,7 +3091,6 @@ class PortfolioDCF:
         ...    target_survival_period=25
         ...)
         >>> res
-        # TODO: update example results
         success                True
         withdrawal_abs   -917.96875
         withdrawal_rel     0.091797

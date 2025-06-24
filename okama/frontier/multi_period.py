@@ -56,10 +56,12 @@ class EfficientFrontierReb(asset_list.AssetList):
         Including inflation could limit available data (last_date, first_date)
         as the inflation data is usually published with a one-month delay.
 
-    rebalancing_period : {'year', 'none'}, default 'year'
-        Rebalancing period of the portfolios in the multi-period Efficient Frontier.
-        Portfolio is rebalanced every year if rebalancing_period='year'.
-        Portfolio is not rebalanced if rebalancing_period='none'
+    rebalancing_strategy : Rebalance, default Rebalance(period='year', abs_deviation=None, rel_deviation=None)
+        Rebalancing strategy for an investment portfolio. The rebalancing strategy si defined by:
+        -period (rebalancing frequency): predetermined time intervals when the investor rebalances the portfolio.
+        If 'none' assets weights are not rebalanced.
+        -abs_deviation: the absolute deviation allowed for the assets weights in the portfolio.
+        -rel_deviation: the relative deviation allowed for the assets weights in the portfolio.
 
     n_points : int, default 20
         Number of points in the Efficient Frontier.
@@ -977,9 +979,14 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         weights_df = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
 
+        args = dict(
+            period=self.rebalancing_strategy.period,
+            abs_deviation=self.rebalancing_strategy.abs_deviation,
+            rel_deviation=self.rebalancing_strategy.rel_deviation
+        )
         # Portfolio risk and cagr for each set of weights
         portfolios_ror = weights_df.aggregate(
-            Rebalance(period=self.rebalancing_period).return_ror_ts,
+            Rebalance(**args).return_ror_ts,
             ror=self.assets_ror,
         )
         random_portfolios = pd.DataFrame()
