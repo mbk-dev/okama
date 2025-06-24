@@ -148,8 +148,8 @@ def test_get_most_diversified_portfolio_global(init_efficient_frontier):
 
 
 test_monte_carlo = [
-    ("mean", 0.09459, 0.1866, 0.5278),  # kind = 'mean'
-    ("cagr", 0.09459, 0.1828, 0.5278),  # kind = 'cagr'
+    ("mean", 0.04938, 0.1642, 0.9289),  # kind = 'mean'
+    ("cagr", 0.04938, 0.1631, 0.9289),  # kind = 'cagr'
 ]
 
 

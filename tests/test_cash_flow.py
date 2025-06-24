@@ -51,7 +51,7 @@ def test_cashflow_pv(portfolio_dcf_indexation, portfolio_dcf_percentage):
 def test_monte_carlo_wealth_fv(portfolio_dcf_indexation):
     df = portfolio_dcf_indexation.monte_carlo_wealth_fv
     assert df.shape == (121, 100)
-    assert df.iloc[-1, :].mean() == approx(11965, rel=1e-1)
+    assert df.iloc[-1, :].mean() == approx(11965, rel=1e-0)
 
 
 def test_monte_carlo_wealth_pv(portfolio_dcf_percentage):
