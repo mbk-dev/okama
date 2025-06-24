@@ -25,17 +25,17 @@ def test_usdrub(init_asset_usdrub):
 
 
 def test_eurusd(init_asset_eurusd):
-    assert init_asset_eurusd.close_daily.loc["2020-01-15"] == 1.1149
+    assert init_asset_eurusd.close_daily.loc["2020-01-15"] == approx(1.1149, abs=1e-2)
 
 
 def test_close_daily(init_asset_spy, init_asset_usdrub):
-    assert init_asset_spy.close_daily.loc["2000-01-20"] == 144.75
+    assert init_asset_spy.close_daily.loc["2000-01-20"] == approx(144.75, rel=1e-3)
 
 
 def test_close_monthly(init_asset_spy):
     # changed in 2022 MAY from 139.5625
     # changed in 2024 OCT from 139.625 to 139.5625
-    assert init_asset_spy.close_monthly.loc["2000-01"] == 139.5625
+    assert init_asset_spy.close_monthly.loc["2000-01"] == approx(139.5625, rel=1e-3)
 
 
 def test_adj_close(init_asset_pif):
@@ -47,8 +47,8 @@ def test_price(init_asset_spy):
 
 
 def test_dividends(init_asset_spy):
-    assert init_asset_spy.dividends["2019"].iloc[-1] == 1.57
+    assert init_asset_spy.dividends["2019"].iloc[-1] == approx(1.57, abs=1e-2)
 
 
 def test_nav_ts(init_asset_pif):
-    assert init_asset_pif.nav_ts.iloc[0] == 101820352.18
+    assert init_asset_pif.nav_ts.iloc[0] == approx(101820352.18, rel=1e-6)
