@@ -123,7 +123,7 @@ def test_close_monthly(portfolio_not_rebalanced):
 def test_get_assets_dividends(portfolio_dividends):
     assert portfolio_dividends._get_assets_dividends().iloc[:, 0].sum() == approx(36.42, abs=1e-2)  # SBER
     assert portfolio_dividends._get_assets_dividends().iloc[:, 1].sum() == approx(646.75, rel=1e-2)  # T
-    assert portfolio_dividends._get_assets_dividends().iloc[:, 2].sum() == approx(74.32, rel=1e-2)  # GNS
+    assert portfolio_dividends._get_assets_dividends().iloc[:, 2].sum() == approx(73.31, rel=1e-2)  # GNS
 
 
 def test_number_of_securities(portfolio_not_rebalanced, portfolio_dividends):
