@@ -67,7 +67,7 @@ class Portfolio(make_asset_list.ListMaker):
         -abs_deviation: the absolute deviation allowed for the assets weights in the portfolio.
         -rel_deviation: the relative deviation allowed for the assets weights in the portfolio.
 
-    symbol : str
+    symbol : str, optional
         Text symbol of portfolio. It is similar to tickers but have a namespace information.
         Portfolio symbol must end with .PF (all_weather_portfolio.PF).
         If not defined a random symbol is generated (portfolio_7802.PF).
@@ -83,7 +83,7 @@ class Portfolio(make_asset_list.ListMaker):
         inflation: bool = True,
         weights: Optional[List[float]] = None,
         rebalancing_strategy: Rebalance = Rebalance(period="month"),
-        symbol: str,
+        symbol: str = None,
     ):
         super().__init__(
             assets,

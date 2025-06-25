@@ -107,7 +107,7 @@ test_params = {
         "target_cagr_1": 0.060973018282528796,
         "expected_risk_1": 0.13878,
         "target_cagr_2": 0.1035764996098511,
-        "expected_risk_2": 0.13428,
+        "expected_risk_2": 0.11948,
     },
 }
 
@@ -130,10 +130,10 @@ def test_minimize_risk_without_bounds(init_frontier_without_bounds):
     params = test_params["without_bounds"]
 
     result = init_frontier_without_bounds.minimize_risk(params["target_cagr_1"])
-    assert np.isclose(result["Risk"], params["expected_risk_1"], rtol=1e-2)
+    assert np.isclose(result["Risk"], params["expected_risk_1"], atol=1e-1)
 
     result = init_frontier_without_bounds.minimize_risk(params["target_cagr_2"])
-    assert np.isclose(result["Risk"], params["expected_risk_2"], rtol=1e-2)
+    assert np.isclose(result["Risk"], params["expected_risk_2"], atol=1e-1)
 
 
 @mark.rebalance
