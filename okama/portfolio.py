@@ -211,7 +211,7 @@ class Portfolio(make_asset_list.ListMaker):
         Time series with the dates of rebalancing events.
 
         Each event has the type of rebalancing event:
-        - cal (calendar event)
+        - calendar (calendar event)
         - abs (rebalancing by absolute deviation)
         - rel (rebalancing by relative deviation)
 
