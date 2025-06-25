@@ -85,5 +85,5 @@ def test_find_the_largest_withdrawals_size(portfolio_dcf_indexation_small):
     assert r.withdrawal_abs == approx(-833.33, rel=1e-2)
     assert r.withdrawal_rel == approx(1, rel=1e-2)
     assert r.error_rel == approx(0, abs=1e-2)
-    assert isinstance(r.solutions) == pd.DataFrame
+    assert isinstance(r.solutions, pd.DataFrame)
     assert r.solutions.columns.tolist() == ["withdrawal_abs", "withdrawal_rel", "error_rel", "error_rel_change"]
