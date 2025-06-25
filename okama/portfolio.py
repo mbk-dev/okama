@@ -206,7 +206,21 @@ class Portfolio(make_asset_list.ListMaker):
         return pd.DataFrame(values, index=self.ror.index, columns=self.symbols)
 
     @property
-    def rebalancing_events(self):
+    def rebalancing_events(self) -> pd.DataFrame:
+        """
+        Time series with the dates of rebalancing events.
+
+        Each event has the type of rebalancing event:
+        - cal (calendar event)
+        - abs (rebalancing by absolute deviation)
+        - rel (rebalancing by relative deviation)
+
+        Returns
+        -------
+        DataFrame
+            Dates of rebalancing events time series.
+        """
+        # TODO: add examples
         return self.rebalancing_strategy.wealth_ts(target_weights=self.weights, ror=self.assets_ror).events
 
     @property
@@ -225,6 +239,7 @@ class Portfolio(make_asset_list.ListMaker):
         Rebalance
             Portfolio rebalancing strategy.
         """
+        # TODO: add examples
         return self._rebalancing_strategy
 
     @rebalancing_strategy.setter
