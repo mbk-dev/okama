@@ -35,6 +35,7 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
 
 - Investment portfolio constrained Markowitz Mean-Variance Analysis (MVA) and optimization
 - Rebalanced portfolio optimization with constraints (multi-period Efficient Frontier)
+- Advanced rebalancing strategies: Rebalancing-bands (threshold-based), Calendar-based or hybrid
 - Investment portfolios with complex contributions / withdrawals cash flows (DCF)
 - Monte Carlo Simulations for financial assets and investment portfolios
 - Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
@@ -134,7 +135,7 @@ ls = ['SPY.US', 'GLD.US']
 curr = 'USD'
 last_date='2020-10'
 # Rebalancing periods is one year (default value)
-frontier = ok.EfficientFrontierReb(ls, last_date=last_date, ccy=curr, rebalancing_period='year')
+frontier = ok.EfficientFrontierReb(ls, last_date=last_date, ccy=curr, rebalancing_strategy=ok.Rebalance(period='year'))
 frontier.names
 ```
 ![](../images/images/readmi06.jpg?raw=true) 
@@ -182,7 +183,7 @@ The plan for _okama_ is to add more functions that will be useful to investors a
 - Make complex withdrawals / contributions strategies in Portfolio class.
 - Add Black-Litterman asset allocation 
 - Accelerate optimization for multi-period Efficient Frontier: minimize_risk and maximize_risk methods of EfficientFrontierReb class.
-- Make a single EfficientFrontier class for all optimizations: single-period or multu-period with rebalancing period as a parameter.
+- Make a single EfficientFrontier class for all optimizations: single-period or multu-period with rebalancing strategy as a parameter.
 - Add different utility functions for optimizers: IRR, portfolio survival period, semi-deviation, VaR, CVaR, drawdowns etc.
 - Add more functions based on suggestion of users.
 
