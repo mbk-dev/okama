@@ -29,7 +29,7 @@ def test_repr(init_efficient_frontier_reb):
             rebalancing_abs_deviation=None,
             rebalancing_rel_deviation=None,
             bounds=((0, 1), (0, 1)),
-            inflation="USD.INFL"
+            inflation="USD.INFL",
         )
     )
     assert repr(init_efficient_frontier_reb) == repr(value)
@@ -54,17 +54,13 @@ def test_bounds_setter_valid_input(init_frontier_with_bounds):
 def test_bounds_setter_empty_input(init_frontier_without_bounds):
     frontier = init_frontier_without_bounds
     frontier.bounds = None
-    assert frontier.bounds == ((0.0, 1.0),) * len(frontier._assets)  
+    assert frontier.bounds == ((0.0, 1.0),) * len(frontier._assets)
 
 
 def test_bounds_setter_ef_points_reset(init_frontier_with_bounds):
     frontier = init_frontier_with_bounds
 
-    frontier._ef_points = pd.DataFrame({
-        'GLD.US': [0.25],
-        'PGJ.US': [0.25],
-        'VB.US': [0.25]
-    })
+    frontier._ef_points = pd.DataFrame({"GLD.US": [0.25], "PGJ.US": [0.25], "VB.US": [0.25]})
 
     frontier.bounds = ((0, 1), (0, 1), (0, 1))
 
@@ -112,7 +108,7 @@ test_params = {
         "expected_risk_1": 0.13878,
         "target_cagr_2": 0.1035764996098511,
         "expected_risk_2": 0.13428,
-    }
+    },
 }
 
 
@@ -120,10 +116,10 @@ test_params = {
 @mark.frontier
 def test_minimize_risk_with_bounds(init_frontier_with_bounds):
     params = test_params["with_bounds"]
-    
+
     result1 = init_frontier_with_bounds.minimize_risk(params["target_cagr_1"])
     assert np.isclose(result1["Risk"], params["expected_risk_1"], atol=1e-1)
-    
+
     result2 = init_frontier_with_bounds.minimize_risk(params["target_cagr_2"])
     assert np.isclose(result2["Risk"], params["expected_risk_2"], atol=1e-1)
 
@@ -135,7 +131,7 @@ def test_minimize_risk_without_bounds(init_frontier_without_bounds):
 
     result = init_frontier_without_bounds.minimize_risk(params["target_cagr_1"])
     assert np.isclose(result["Risk"], params["expected_risk_1"], rtol=1e-2)
-    
+
     result = init_frontier_without_bounds.minimize_risk(params["target_cagr_2"])
     assert np.isclose(result["Risk"], params["expected_risk_2"], rtol=1e-2)
 
@@ -143,11 +139,11 @@ def test_minimize_risk_without_bounds(init_frontier_without_bounds):
 @mark.rebalance
 @mark.frontier
 def test_minimize_risk_raises_error_when_no_solution(init_frontier_with_bounds):
-    target_cagr = 0.5 
-    
+    target_cagr = 0.5
+
     with pytest.raises(RecursionError) as exc_info:
         init_frontier_with_bounds.minimize_risk(target_cagr)
-    
+
     assert str(exc_info.value) == f"No solution found for target CAGR value: {target_cagr}."
 
 
@@ -161,7 +157,7 @@ def test_min_ratio_asset_when_not_none(init_frontier_with_not_none):
     expected_result = {
         "min_asset_cagr": approx(0.1959425614987127, abs=1e-2),
         "ticker_with_smallest_ratio": "SPY.US",
-        "list_position": 0
+        "list_position": 0,
     }
 
     assert result == expected_result
@@ -176,7 +172,7 @@ def test_convex_right_frontier(init_convex_frontier):
     expected_result = {
         "max_asset_cagr": approx(0.17520700138002665, abs=1e-2),
         "ticker_with_largest_cagr": "PGJ.US",
-        "list_position": 2
+        "list_position": 2,
     }
 
     assert result == expected_result
@@ -191,7 +187,7 @@ def test_nonconvex_right_frontier(init_nonconvex_frontier):
     expected_result = {
         "max_asset_cagr": approx(0.15691138904751512, abs=1e-2),
         "ticker_with_largest_cagr": "MCFTR.INDX",
-        "list_position": 4
+        "list_position": 4,
     }
 
     assert result == expected_result
@@ -202,8 +198,8 @@ def test_nonconvex_right_frontier(init_nonconvex_frontier):
 def test_maximize_risk_with_convex_right_frontier(init_convex_frontier):
     x = init_convex_frontier
     result = x._maximize_risk(0.17520700138002665)
-    
-    result_risk = result['Risk']
+
+    result_risk = result["Risk"]
     expected_risk = approx(0.30419612104254684, abs=1e-2)
 
     assert result_risk == expected_risk
@@ -214,11 +210,12 @@ def test_maximize_risk_with_convex_right_frontier(init_convex_frontier):
 def test_maximize_risk_with_nonconvex_right_frontier(init_nonconvex_frontier):
     x = init_nonconvex_frontier
     result = x._maximize_risk(0.15691138904751512)
-    
-    result_risk = result['Risk']
+
+    result_risk = result["Risk"]
     expected_risk = approx(0.28761107914313766, abs=1e-2)
 
     assert result_risk == expected_risk
+
 
 # TODO: add test for `get_monte_carlo`
 # TODO: add test for `plot_pair_ef`

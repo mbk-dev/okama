@@ -200,7 +200,6 @@ class Portfolio(make_asset_list.ListMaker):
             return self.rebalancing_strategy.assets_weights_ts(
                 ror=self.assets_ror,
                 target_weights=self.weights,
-
             )
         # Fast calculation
         values = np.tile(self.weights, (self.ror.shape[0], 1))
@@ -234,7 +233,7 @@ class Portfolio(make_asset_list.ListMaker):
             self._clear_cache()
             self._rebalancing_strategy = rebalancing_strategy
         else:
-            raise ValueError(f"rebalancing_strategy must be of type Rebalance")
+            raise ValueError("rebalancing_strategy must be of type Rebalance")
 
     @property
     def _condition_for_rebalancing(self) -> bool:
@@ -242,10 +241,11 @@ class Portfolio(make_asset_list.ListMaker):
         Verify whether assets weights are constant
         The weights are constant only if the period is 'month' and no conditional rebalancing.
         """
-        return (self.rebalancing_strategy.period != "month" or
-                self.rebalancing_strategy.abs_deviation is not None or
-                self.rebalancing_strategy.rel_deviation is not None)
-
+        return (
+            self.rebalancing_strategy.period != "month"
+            or self.rebalancing_strategy.abs_deviation is not None
+            or self.rebalancing_strategy.rel_deviation is not None
+        )
 
     @property
     def symbol(self) -> str:
@@ -2582,12 +2582,7 @@ class PortfolioDCF:
         wealth_df = ror_df.apply(
             helpers.Frame.get_wealth_indexes_with_cashflow,
             axis=0,
-            args=(
-                None,  # symbol
-                None,  # inflation_symbol
-                self.cashflow_parameters,
-                self.use_discounted_values
-            ),
+            args=(None, None, self.cashflow_parameters, self.use_discounted_values),  # symbol  # inflation_symbol
         )
         return wealth_df
 
@@ -2992,13 +2987,13 @@ class PortfolioDCF:
 
     def find_the_largest_withdrawals_size(
         self,
-            goal: str,
-            withdrawals_range: Tuple[float, float] = (0, 1),
-            target_survival_period: int = 25,
-            percentile: int = 20,
-            threshold: float = 0,
-            tolerance_rel: float = 0.10,
-            iter_max: int = 20
+        goal: str,
+        withdrawals_range: Tuple[float, float] = (0, 1),
+        target_survival_period: int = 25,
+        percentile: int = 20,
+        threshold: float = 0,
+        tolerance_rel: float = 0.10,
+        iter_max: int = 20,
     ) -> Result:
         """
         Find the largest withdrawals size for Monte Carlo simulation according to Cashflow Strategy.
@@ -3117,7 +3112,9 @@ class PortfolioDCF:
         if withdrawals_range[0] < 0 or withdrawals_range[1] > 1:
             raise ValueError("withdrawals_range[0] and withdrawals_range[1] must be in range form 0 to 1.")
         if target_survival_period > self.mc.period:
-            raise ValueError(f"target_survival_period must be less or equal than Monte Carlo simulation period ({self.mc.period}).")
+            raise ValueError(
+                f"target_survival_period must be less or equal than Monte Carlo simulation period ({self.mc.period})."
+            )
         if percentile > 100 or percentile < 0:
             raise ValueError("percentile must be between 0 and 100")
         if threshold > 1 or threshold < 0:
@@ -3125,13 +3122,17 @@ class PortfolioDCF:
         backup_obj = self.cashflow_parameters
         start_investment = self.cashflow_parameters.initial_investment
         if self.cashflow_parameters.NAME == "fixed_amount":
-            expected_max_withdrawal = - withdrawals_range[1] * start_investment / self.cashflow_parameters.periods_per_year
-            expected_min_withdrawal = - withdrawals_range[0] * start_investment / self.cashflow_parameters.periods_per_year
+            expected_max_withdrawal = (
+                -withdrawals_range[1] * start_investment / self.cashflow_parameters.periods_per_year
+            )
+            expected_min_withdrawal = (
+                -withdrawals_range[0] * start_investment / self.cashflow_parameters.periods_per_year
+            )
             self.cashflow_parameters.amount = expected_max_withdrawal
         elif self.cashflow_parameters.NAME == "fixed_percentage":
             expected_max_withdrawal = withdrawals_range[1]
             expected_min_withdrawal = withdrawals_range[0]
-            self.cashflow_parameters.percentage = - expected_max_withdrawal
+            self.cashflow_parameters.percentage = -expected_max_withdrawal
         else:
             raise ValueError("This method works with IndexationStrategy or PercentageStrategy only.")
         iter = 0
@@ -3147,27 +3148,35 @@ class PortfolioDCF:
                 s = self.monte_carlo_wealth_pv if goal == "maintain_balance_pv" else self.monte_carlo_wealth_fv
                 wealth_at_quantile = s.iloc[-1, :].quantile(percentile / 100)
                 condition = (wealth_at_quantile >= start_investment) and (sp_at_quantile == self.mc.period)
-                print(f'{wealth_at_quantile=:.2f}, {main_parameter=:.3f}')
+                print(f"{wealth_at_quantile=:.2f}, {main_parameter=:.3f}")
                 error_rel = abs(wealth_at_quantile - start_investment) / start_investment
             elif goal == "survival_period":
                 condition = sp_at_quantile >= target_survival_period
-                print(f'{sp_at_quantile=:.2f}, {main_parameter=:.3f}')
+                print(f"{sp_at_quantile=:.2f}, {main_parameter=:.3f}")
                 error_rel = abs(sp_at_quantile - target_survival_period) / target_survival_period
             else:
                 raise ValueError("The goal can be: maintain_balance_fv, maintain_balance_pv or survival_period.")
 
-            withdrawal_abs = main_parameter if self.cashflow_parameters.NAME == "fixed_amount" else main_parameter * start_investment / self.cashflow_parameters.periods_per_year
+            withdrawal_abs = (
+                main_parameter
+                if self.cashflow_parameters.NAME == "fixed_amount"
+                else main_parameter * start_investment / self.cashflow_parameters.periods_per_year
+            )
             solutions.at[iter, "withdrawal_abs"] = withdrawal_abs
-            withdrawal_rel = abs(main_parameter / start_investment * self.cashflow_parameters.periods_per_year) if self.cashflow_parameters.NAME == "fixed_amount" else abs(self.cashflow_parameters.percentage)
+            withdrawal_rel = (
+                abs(main_parameter / start_investment * self.cashflow_parameters.periods_per_year)
+                if self.cashflow_parameters.NAME == "fixed_amount"
+                else abs(self.cashflow_parameters.percentage)
+            )
             solutions.at[iter, "withdrawal_rel"] = withdrawal_rel
             solutions.at[iter, "error_rel"] = error_rel
             gradient = solutions.at[iter, "error_rel"] - solutions.at[iter - 1, "error_rel"] if iter != 0 else 0
             solutions.at[iter, "error_rel_change"] = gradient
 
-            print(f'{error_rel=:.3f}, {gradient=:.3f}')
+            print(f"{error_rel=:.3f}, {gradient=:.3f}")
 
             if error_rel < tolerance_rel:
-                print(f'solution found: {withdrawal_abs:.2f} or {withdrawal_rel * 100:.2f}% after {iter + 1} steps.')
+                print(f"solution found: {withdrawal_abs:.2f} or {withdrawal_rel * 100:.2f}% after {iter + 1} steps.")
                 result = Result(
                     success=True,
                     withdrawal_abs=withdrawal_abs,
@@ -3202,7 +3211,8 @@ class PortfolioDCF:
                 print(
                     f"Didn't found solution after {iter} steps. "
                     f"The closest withdrawal was {best_result_abs} or {best_result_rel * 100:.2f}% "
-                    f"with an error: {best_err_rel * 100:.2f}%")
+                    f"with an error: {best_err_rel * 100:.2f}%"
+                )
                 result = Result(
                     success=False,
                     withdrawal_abs=best_result_abs,

@@ -62,10 +62,7 @@ class ListMaker(ABC):
             self.assets_first_dates,
             self.assets_last_dates,
             self._assets_ror,
-        ) = self._make_list(
-            first_date=first_date,
-            last_date=last_date
-        ).values()
+        ) = self._make_list(first_date=first_date, last_date=last_date).values()
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
         self._assets_ror = self._assets_ror[self.first_date :]
@@ -115,9 +112,7 @@ class ListMaker(ABC):
                 )
             return asset_item
 
-        asset_obj_list = Parallel(n_jobs=-1, backend="threading")(
-            delayed(get_item)(s) for s in ls
-        )
+        asset_obj_list = Parallel(n_jobs=-1, backend="threading")(delayed(get_item)(s) for s in ls)
         return {obj.symbol: obj for obj in asset_obj_list}
 
     def _make_list(self, first_date, last_date) -> dict:
@@ -137,7 +132,7 @@ class ListMaker(ABC):
         df = pd.DataFrame()
         input_first_date = pd.to_datetime(first_date) if first_date else None
         input_last_date = pd.to_datetime(last_date) if last_date else None
-        for i, asset_item  in enumerate(self.asset_obj_dict.values()):
+        for i, asset_item in enumerate(self.asset_obj_dict.values()):
             # get asset own first and last dates
             asset_own_first_date = asset_item.first_date
             asset_own_last_date = asset_item.last_date
@@ -193,7 +188,6 @@ class ListMaker(ABC):
             own_last_dates_sorted=dict(own_last_dates_sorted),
             ror=df,
         )
-
 
     def _make_ror(self, list_asset: asset.Asset, base_currency_name: str) -> pd.Series:
         """

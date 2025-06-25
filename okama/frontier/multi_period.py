@@ -16,8 +16,9 @@ from okama.common.helpers.rebalancing import Rebalance
 
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class EfficientFrontierReb(asset_list.AssetList):
     """
@@ -81,7 +82,7 @@ class EfficientFrontierReb(asset_list.AssetList):
     For monthly rebalanced portfolios okama.EfficientFrontier class could be used.
     """
 
-    FTOL = (1e-06, 1e-05, 1e-3, 1e-02)  # tolerance sequence for the optimizer
+    _FTOL = (1e-06, 1e-05, 1e-3, 1e-02)  # tolerance sequence for the optimizer
 
     def __init__(
         self,
@@ -107,7 +108,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             ccy=ccy,
             inflation=inflation,
         )
-        
+
         self._bounds = None
         self.bounds = bounds
         self.rebalancing_strategy = rebalancing_strategy
@@ -165,9 +166,9 @@ class EfficientFrontierReb(asset_list.AssetList):
 
     @bounds.setter
     def bounds(self, bounds):
-        
-        self._ef_points = pd.DataFrame(dtype=float)     
-        
+
+        self._ef_points = pd.DataFrame(dtype=float)
+
         if bounds:
             if len(bounds) != len(self.symbols):
                 raise ValueError(
@@ -238,7 +239,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             self._clear_cache()
             self._rebalancing_strategy = rebalancing_strategy
         else:
-            raise ValueError(f"rebalancing_strategy must be of type Rebalance")
+            raise ValueError("rebalancing_strategy must be of type Rebalance")
 
     @property
     def ticker_names(self):
@@ -301,7 +302,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         args = dict(
             period=self.rebalancing_strategy.period,
             abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation
+            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
@@ -348,7 +349,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         args = dict(
             period=self.rebalancing_strategy.period,
             abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation
+            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
@@ -379,9 +380,9 @@ class EfficientFrontierReb(asset_list.AssetList):
         Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
         """
         args = dict(
-            period = self.rebalancing_strategy.period,
-            abs_deviation = self.rebalancing_strategy.abs_deviation,
-            rel_deviation = self.rebalancing_strategy.rel_deviation
+            period=self.rebalancing_strategy.period,
+            abs_deviation=self.rebalancing_strategy.abs_deviation,
+            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         ts = Rebalance(**args).return_ror_ts(self.gmv_monthly_weights, self.assets_ror)
         return ts.std(), ts.mean()
@@ -411,7 +412,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         args = dict(
             period=self.rebalancing_strategy.period,
             abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation
+            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         returns = Rebalance(**args).return_ror_ts(self.gmv_annual_weights, self.assets_ror)
         return (
@@ -445,7 +446,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         args = dict(
             period=self.rebalancing_strategy.period,
             abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation
+            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         n = self.assets_ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
@@ -466,7 +467,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             options={
                 "disp": False,
                 "maxiter": 100,
-                "ftol": self.FTOL[0],
+                "ftol": self._FTOL[0],
             },
             constraints=(weights_sum_to_1,),
             bounds=self.bounds,
@@ -486,7 +487,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         args = dict(
             period=self.rebalancing_strategy.period,
             abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation
+            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         ts = Rebalance(**args).return_ror_ts(weights, self.assets_ror)
         acc_return = (ts + 1.0).prod() - 1.0
@@ -513,24 +514,24 @@ class EfficientFrontierReb(asset_list.AssetList):
         >>> frontier.minimize_risk(0.107)
         {'SPY.US': 0.9810857623382343, 'AGG.US': 0.018914237661765643, 'CAGR': 0.107, 'Risk': 0.1549703673806012}
         """
-        
+
         n = self.assets_ror.shape[1]  # number of assets
-        init_guess = np.repeat(1/n, n)  # initial weights
-        
+        init_guess = np.repeat(1 / n, n)  # initial weights
+
         max_ratio_data = self._max_ratio_asset_right_to_max_cagr
 
         args = dict(
             period=self.rebalancing_strategy.period,
             abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation
+            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
-            
+
         if max_ratio_data is not None:
             # TODO: create other guesses for intermedeate points
             #  (remember the weights for solved points, GMV, global max)
-            init_guess = np.repeat(0, n) # clear weights
+            init_guess = np.repeat(0, n)  # clear weights
             init_guess[self._min_ratio_asset["list_position"]] = 1.0
-        
+
         def objective_function(w):
             # annual risk
             ts = Rebalance(**args).return_ror_ts(w, self.assets_ror)
@@ -552,7 +553,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 options={
                     "disp": False,
                     "maxiter": 80,
-                    "ftol": self.FTOL[i],
+                    "ftol": self._FTOL[i],
                 },
                 constraints=(weights_sum_to_1, cagr_is_target),
                 bounds=self.bounds,
@@ -564,7 +565,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 point = dict(zip(asset_labels, weights.x))
                 point["CAGR"] = target_value
                 point["Risk"] = weights.fun
-                point["FTOL"] = self.FTOL[i]
+                point["FTOL"] = self._FTOL[i]
                 point["iter"] = weights.nit
                 break
         if not weights.success:
@@ -590,7 +591,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         args = dict(
             period=self.rebalancing_strategy.period,
             abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation
+            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         if self._max_ratio_asset_right_to_max_cagr:
             init_guess[self._max_ratio_asset_right_to_max_cagr["list_position"]] = 1.0
@@ -616,7 +617,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 method="SLSQP",
                 options={
                     "disp": False,
-                    "ftol": self.FTOL[i],
+                    "ftol": self._FTOL[i],
                     "maxiter": 80,
                 },
                 constraints=(weights_sum_to_1, cagr_is_target),
@@ -629,7 +630,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 point = dict(zip(asset_labels, weights.x))
                 point["CAGR"] = target_return
                 point["Risk"] = -weights.fun
-                point["FTOL"] = self.FTOL[i]
+                point["FTOL"] = self._FTOL[i]
                 point["iter"] = weights.nit
                 break
         if not weights.success:
@@ -660,26 +661,26 @@ class EfficientFrontierReb(asset_list.AssetList):
         risk_monthly = self.assets_ror.std()
         mean_return = self.assets_ror.mean()
         risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
-        
+
         global_max_cagr = self.global_max_return_portfolio["CAGR"]
         global_max_risk = self.global_max_return_portfolio["Risk"]
 
         cagr_diff = global_max_cagr - cagr
-        risk_diff = global_max_risk - risk   
-            
-        if risk_diff is not None and (risk_diff == 0).any():  
+        risk_diff = global_max_risk - risk
+
+        if risk_diff is not None and (risk_diff == 0).any():
             risk_diff += 0.0001  # to avoid division by zero
-            
+
         ratio = cagr_diff / risk_diff
-        left_assets = risk_diff > 0  
+        left_assets = risk_diff > 0
 
         if left_assets.any():
             valid_ratios = ratio[left_assets]
-            min_ticker = valid_ratios.idxmin() 
+            min_ticker = valid_ratios.idxmin()
             return {
                 "min_asset_cagr": cagr[min_ticker],
                 "ticker_with_smallest_ratio": min_ticker,
-                "list_position": self.assets_ror.columns.get_loc(min_ticker)
+                "list_position": self.assets_ror.columns.get_loc(min_ticker),
             }
         else:
             right_assets = risk_diff < 0
@@ -688,15 +689,14 @@ class EfficientFrontierReb(asset_list.AssetList):
             return {
                 "min_asset_cagr": cagr[min_ticker],
                 "ticker_with_smallest_ratio": min_ticker,
-                "list_position": self.assets_ror.columns.get_loc(min_ticker)
+                "list_position": self.assets_ror.columns.get_loc(min_ticker),
             }
-
 
     @property
     def _max_ratio_asset_right_to_max_cagr(self) -> Optional[dict]:
         """
-        The asset with the maximum ratio between the CAGR 
-        (Compound Annual Growth Rate) and the risk for assets that are “to the right” 
+        The asset with the maximum ratio between the CAGR
+        (Compound Annual Growth Rate) and the risk for assets that are “to the right”
         of the portfolio with the maximum CAGR on the efficiency frontier.
         """
         cagr = helpers.Frame.get_cagr(self.assets_ror)
@@ -704,18 +704,18 @@ class EfficientFrontierReb(asset_list.AssetList):
         mean_return = self.assets_ror.mean()
         risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
         tolerance = 0.01
-        
+
         global_max_cagr = self.global_max_return_portfolio["CAGR"]
         global_max_risk = self.global_max_return_portfolio["Risk"]
-        
+
         global_max_cagr_is_not_asset = (cagr < global_max_cagr * (1 - tolerance)).all()
         if global_max_cagr_is_not_asset:
             cagr_diff = cagr - global_max_cagr
             risk_diff = risk - global_max_risk
-            
-            if risk_diff is not None and (risk_diff == 0).any():  
+
+            if risk_diff is not None and (risk_diff == 0).any():
                 risk_diff += 0.0001  # to avoid division by zero
-            
+
             ratio = cagr_diff / risk_diff
             right_assets = risk_diff > 0
 
@@ -725,9 +725,9 @@ class EfficientFrontierReb(asset_list.AssetList):
                 return {
                     "max_asset_cagr": cagr[max_ticker],
                     "ticker_with_largest_cagr": max_ticker,
-                    "list_position": self.assets_ror.columns.get_loc(max_ticker)
+                    "list_position": self.assets_ror.columns.get_loc(max_ticker),
                 }
-        return None                
+        return None
 
     @property
     def _max_annual_risk_asset(self) -> dict:
@@ -749,17 +749,17 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         min_ratio_data = self._min_ratio_asset
         max_ratio_data = self._max_ratio_asset_right_to_max_cagr
-            
+
         if min_ratio_data is not None and max_ratio_data is not None:
-            min_cagr = min_ratio_data.get('min_asset_cagr')
+            min_cagr = min_ratio_data.get("min_asset_cagr")
             max_cagr = self.global_max_return_portfolio["CAGR"]
             return np.linspace(min_cagr, max_cagr, self.n_points)
-        
+
         if self.full_frontier:
             min_cagr = helpers.Frame.get_cagr(self.assets_ror).min()
         else:
             min_cagr = self.gmv_annual_values[1]
-        
+
         max_cagr = self.global_max_return_portfolio["CAGR"]
         return np.linspace(min_cagr, max_cagr, self.n_points)
 
@@ -778,7 +778,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 number_of_points = round(self.n_points / k) + 1 if k > 1 else self.n_points
                 target_range = np.linspace(max_cagr, ticker_cagr, number_of_points)
                 return target_range[1:]  # skip the first point (max cagr) as it presents in the left part of the EF
-        return None  
+        return None
 
     @property
     def target_risk_range(self) -> np.ndarray:
@@ -908,7 +908,9 @@ class EfficientFrontierReb(asset_list.AssetList):
                 ef_points_records.append(row)
                 end_time = time.time()
                 if self.verbose:
-                    logger.info(f"right EF point #{i + 1}/{len(range_right)} is done in {end_time - start_time:.2f} sec.")
+                    logger.info(
+                        f"right EF point #{i + 1}/{len(range_right)} is done in {end_time - start_time:.2f} sec."
+                    )
                 return row
 
             ef_points_records += Parallel(n_jobs=-1)(
@@ -982,7 +984,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         args = dict(
             period=self.rebalancing_strategy.period,
             abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation
+            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         # Portfolio risk and cagr for each set of weights
         portfolios_ror = weights_df.aggregate(

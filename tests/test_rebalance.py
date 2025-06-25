@@ -12,15 +12,18 @@ def test_validate_period_failing():
     with pytest.raises(ValueError):
         ok.Rebalance(period="not existing")
 
+
 @mark.rebalance
 def test_validate_abs_deviation_big_failing():
     with pytest.raises(ValueError, match=r"Absolute deviation must be less or equal to 1."):
         ok.Rebalance(abs_deviation=1.5)
 
+
 @mark.rebalance
-def test_validate_abs_deviation_big_failing():
+def test_validate_abs_deviation_small_failing():
     with pytest.raises(ValueError, match=r"Absolute deviation must be positive."):
         ok.Rebalance(abs_deviation=-100)
+
 
 @mark.rebalance
 def test_validate_rel_deviation_failing():
@@ -71,6 +74,7 @@ def test_wealth_ts_rebalancing_conditional(portfolio_not_rebalanced, abs_d, rel_
         assert ws.events.iloc[-1] == exp3
         assert ws.events.index[-1] == pd.Period(exp4, freq="M")
 
+
 @mark.parametrize(
     "period, abs_d, rel_d, exp1, exp2, exp3, exp4",
     [
@@ -92,6 +96,7 @@ def test_wealth_ts_rebalancing_calendar(portfolio_not_rebalanced, period, abs_d,
         assert ws.events.iloc[-1] == exp3
         assert ws.events.index[-1] == pd.Period(exp4, freq="M")
 
+
 @mark.parametrize(
     "period, abs_d, rel_d, exp1, exp2",
     [
@@ -111,6 +116,7 @@ def test_assets_weights_ts(portfolio_not_rebalanced, period, abs_d, rel_d, exp1,
     assert weights_ts.shape[1] == len(target_weights)
     assert weights_ts.iloc[-1, 0] == approx(exp1, abs=1e-2)
     assert weights_ts.iloc[-1, 1] == approx(exp2, abs=1e-2)
+
 
 @mark.parametrize(
     "period, abs_d, rel_d, exp",

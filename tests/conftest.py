@@ -215,6 +215,7 @@ def portfolio_dcf_indexation(init_portfolio_dcf, init_mc_students):
     pf_dcf.use_discounted_values = False
     return pf_dcf
 
+
 @pytest.fixture(scope="function")
 def portfolio_dcf_indexation_small(init_portfolio_dcf, init_mc_normal_small):
     pf = ok.Portfolio(**init_portfolio_dcf[0])
@@ -224,7 +225,7 @@ def portfolio_dcf_indexation_small(init_portfolio_dcf, init_mc_normal_small):
     ind = ok.IndexationStrategy(pf)  # create IndexationStrategy linked to the portfolio
     ind.initial_investment = 10_000  # add initial investments size
     ind.frequency = "month"  # set cash flow frequency
-    ind.amount = -1_500 / 12   # set withdrawal size
+    ind.amount = -1_500 / 12  # set withdrawal size
     ind.indexation = "inflation"
     pf_dcf.cashflow_parameters = ind
     pf_dcf.use_discounted_values = False
@@ -252,10 +253,7 @@ def portfolio_dcf_time_series(init_portfolio_dcf, init_mc_students):
     pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
     pf_dcf.set_mc_parameters(**init_mc_students)
     # Cash Flow
-    d = {
-        "2018-02": 2_000,  # contribution
-        "2024-03": -4_000  # withdrawal
-    }
+    d = {"2018-02": 2_000, "2024-03": -4_000}  # contribution  # withdrawal
     ts = ok.TimeSeriesStrategy(pf)  # create TimeSeriesStrategy linked to the portfolio
     ts.time_series_dic = d  # use the dictionary to set cash flow
     ts.initial_investment = 1_000  # add initial investments size
@@ -362,7 +360,7 @@ def without_bounds_params():
         assets=["VOO.US", "GLD.US", "SCHA.US"],
         ccy="USD",
         first_date="2004-10",
-        last_date="2020-10",    
+        last_date="2020-10",
         rebalancing_strategy=ok.Rebalance(period="year"),
     )
 

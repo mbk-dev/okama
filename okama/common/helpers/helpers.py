@@ -82,57 +82,57 @@ class Float:
             random_numbers = np.random.rand(n, w_shape)
             # keepdims instead of transpose
             weights = random_numbers / random_numbers.sum(axis=1, keepdims=True)
-        
+
         # Case 2: custom bounds
         else:
             bounds_arr = np.array(bounds)
             mins = bounds_arr[:, 0]
             maxs = bounds_arr[:, 1]
-            
+
             weights = []
-            batch_size = min(1000, n) 
-            
+            batch_size = min(1000, n)
+
             while len(weights) < n:
-    
+
                 remaining = np.ones(batch_size)
                 indices = np.arange(w_shape)
                 batch_w = np.zeros((batch_size, w_shape))
                 valid_mask = np.ones(batch_size, dtype=bool)
-                
+
                 shuffled_indices = np.tile(indices, (batch_size, 1))
                 for i in range(batch_size):
                     np.random.shuffle(shuffled_indices[i])
-                
+
                 for i in range(w_shape - 1):
-    
+
                     idx = shuffled_indices[:, i]
                     low = mins[idx]
                     high = maxs[idx]
-                    
-                    future_mins = np.sum(mins[shuffled_indices[:, i+1:]], axis=1)
-                    future_maxs = np.sum(maxs[shuffled_indices[:, i+1:]], axis=1)
-                    
+
+                    future_mins = np.sum(mins[shuffled_indices[:, i + 1 :]], axis=1)
+                    future_maxs = np.sum(maxs[shuffled_indices[:, i + 1 :]], axis=1)
+
                     adjusted_low = np.maximum(low, remaining - future_maxs)
                     adjusted_high = np.minimum(high, remaining - future_mins)
-     
+
                     rand_vals = np.random.uniform(adjusted_low, adjusted_high)
-                    
+
                     batch_w[np.arange(batch_size), idx] = rand_vals
                     remaining -= rand_vals
-    
-                    valid_mask &= (adjusted_low <= adjusted_high)
-    
+
+                    valid_mask &= adjusted_low <= adjusted_high
+
                 last_idx = shuffled_indices[:, -1]
                 batch_w[np.arange(batch_size), last_idx] = remaining
                 valid_mask &= (mins[last_idx] <= remaining) & (remaining <= maxs[last_idx])
                 valid_mask &= np.all(batch_w >= 0, axis=1)
-    
+
                 valid_weights = batch_w[valid_mask]
                 weights.extend(valid_weights.tolist())
-       
+
                 if len(weights) >= n:
                     break
-        
+
         return pd.Series([np.array(w) for w in weights[:n]])
 
     @staticmethod
@@ -218,7 +218,7 @@ class Frame:
 
     @staticmethod
     def get_annual_return_ts_from_monthly(
-        ror_monthly: Union[pd.DataFrame, pd.Series]
+        ror_monthly: Union[pd.DataFrame, pd.Series],
     ) -> Union[pd.DataFrame, pd.Series]:
         """
         Annual Rate of Returns time series from monthly data.
@@ -264,9 +264,7 @@ class Frame:
         dcf_object.cashflow_parameters = cashflow_parameters
         amount = getattr(cashflow_parameters, "amount", None)
         period_initial_amount = (
-            dcf_object.initial_investment_pv
-            if use_discounted_values
-            else cashflow_parameters.initial_investment
+            dcf_object.initial_investment_pv if use_discounted_values else cashflow_parameters.initial_investment
         )
         period_initial_amount_cached = period_initial_amount
         if amount == 0:
@@ -318,7 +316,7 @@ class Frame:
                     if cashflow_parameters.NAME == "fixed_amount":
                         cashflow_value = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
                     elif cashflow_parameters.NAME == "fixed_percentage":
-                        cashflow_value = cashflow_parameters.percentage / periods_per_year  * period_initial_amount
+                        cashflow_value = cashflow_parameters.percentage / periods_per_year * period_initial_amount
                     else:
                         raise ValueError("Wrong cashflow_method value.")
                     period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
@@ -349,7 +347,10 @@ class Frame:
         if threshold > 1 or threshold < 0:
             raise ValueError("threshold must be in range from 0 to 1.")
         if threshold:
-            fv = wealth_series.iloc[0] * pd.Series(1.0 + discount_rate / 12, index=wealth_series.index).shift(1).cumprod()
+            fv = (
+                wealth_series.iloc[0]
+                * pd.Series(1.0 + discount_rate / 12, index=wealth_series.index).shift(1).cumprod()
+            )
             fv.iloc[0] = wealth_series.iloc[0]
             condition = wealth_series <= fv * threshold
         else:

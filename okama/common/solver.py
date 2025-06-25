@@ -27,6 +27,7 @@ class Result:
     solutions : pd.DataFrame
         The history of attempts to find solutions (withdrawal values and error level).
     """
+
     success: bool
     withdrawal_abs: float
     withdrawal_rel: float

@@ -1,7 +1,5 @@
-from numpy.testing import assert_allclose
 from pytest import approx
 import pandas as pd
-import numpy as np
 
 from okama.settings import DEFAULT_DISCOUNT_RATE
 
@@ -30,14 +28,18 @@ def test_wealth_index_with_assets(portfolio_dcf_percentage):
     # FV
     assert portfolio_dcf_percentage.wealth_index_with_assets.iloc[-1, 0] == approx(232477.6576, rel=1e-2)
 
+
 def test_survival_period_hist(portfolio_dcf_indexation):
     assert portfolio_dcf_indexation.survival_period_hist(threshold=0) == approx(5.1, rel=1e-2)
 
+
 def test_survival_date_hist(portfolio_dcf_indexation):
-    assert portfolio_dcf_indexation.survival_date_hist(threshold=0) == pd.Timestamp('2020-01-31 00:00:00')
+    assert portfolio_dcf_indexation.survival_date_hist(threshold=0) == pd.Timestamp("2020-01-31 00:00:00")
+
 
 def test_initial_investment_pv(portfolio_dcf_indexation):
     assert portfolio_dcf_indexation.initial_investment_pv == approx(7633.93, rel=1e-2)
+
 
 def test_initial_investment_fv(portfolio_dcf_percentage):
     assert portfolio_dcf_percentage.initial_investment_fv == approx(171594.5442, rel=1e-2)
@@ -59,11 +61,13 @@ def test_monte_carlo_wealth_pv(portfolio_dcf_percentage):
     assert df.shape == (121, 100)
     assert df.iloc[-1, :].mean() == approx(471464, rel=1e-1)
 
+
 # def test_plot_forecast_monte_carlo(portfolio_dcf_indexation):
 #     data = portfolio_dcf_indexation.plot_forecast_monte_carlo(backtest=False)
 #     axes_data = np.array(data)
 #     expected = np.array([[0, 0.042512], [0.02, 0.159596]])
 #     assert_allclose(axes_data, expected, atol=1e-2)
+
 
 def test_monte_carlo_survival_period(portfolio_dcf_percentage):
     s = portfolio_dcf_percentage.monte_carlo_survival_period()
@@ -73,13 +77,13 @@ def test_monte_carlo_survival_period(portfolio_dcf_percentage):
 
 def test_find_the_largest_withdrawals_size(portfolio_dcf_indexation_small):
     r = portfolio_dcf_indexation_small.find_the_largest_withdrawals_size(
-        goal = "survival_period",
+        goal="survival_period",
         target_survival_period=1,
         percentile=25,
     )
-    assert r.success == True
+    assert r.success is True
     assert r.withdrawal_abs == approx(-833.33, rel=1e-2)
     assert r.withdrawal_rel == approx(1, rel=1e-2)
     assert r.error_rel == approx(0, abs=1e-2)
-    assert type(r.solutions) == pd.DataFrame
+    assert isinstance(r.solutions) == pd.DataFrame
     assert r.solutions.columns.tolist() == ["withdrawal_abs", "withdrawal_rel", "error_rel", "error_rel_change"]
