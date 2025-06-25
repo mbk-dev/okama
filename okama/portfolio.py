@@ -3032,6 +3032,8 @@ class PortfolioDCF:
         - 'error_rel' - characterizes how accurately the goal is fulfilled.
         - 'solutions' - the history of attempts to find solutions (withdrawal values and error level).
 
+        The algorithm uses bisection method to find the largest withdrawals size.
+
         Returns
         -------
         Result
