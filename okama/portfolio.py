@@ -1,5 +1,5 @@
 from random import randint
-from typing import Optional, List, Dict, Union, Tuple
+from typing import Optional, List, Dict, Union, Tuple, Literal
 
 import numpy as np
 import pandas as pd
@@ -3002,7 +3002,7 @@ class PortfolioDCF:
 
     def find_the_largest_withdrawals_size(
         self,
-        goal: str,
+        goal: Literal['maintain_balance_pv', 'maintain_balance_fv', 'survival_period'],
         withdrawals_range: Tuple[float, float] = (0, 1),
         target_survival_period: int = 25,
         percentile: int = 20,
