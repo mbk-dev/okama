@@ -1,6 +1,8 @@
 import warnings
 
 import pandas as pd
+from matplotlib import pyplot as plt
+
 import okama as ok
 
 import os
@@ -21,22 +23,43 @@ pf = ok.Portfolio(
     symbol="My_portfolio.PF",
 )
 
-pc = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
+pf.dcf.use_discounted_values = True
+# # Percentage CF strategy
+# cf_strategy = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
+#
+# cf_strategy.initial_investment = 1_000  # initial investments size
+# cf_strategy.frequency = "year"  # withdrawals frequency
+# cf_strategy.percentage = -0.12
 
-pc.initial_investment = 10_000  # initial investments size
-pc.frequency = "year"  # withdrawals frequency
-pc.percentage = -0.12
+# Indexation CF strategy
+cf_strategy = ok.IndexationStrategy(pf)
+cf_strategy.initial_investment = 10_000_000
+cf_strategy.amount = -12_000 * 12
+cf_strategy.frequency = "year"
 
-pf.dcf.cashflow_parameters = pc  # assign the cash flow strategy to portfolio
+d = {
+    "2026-02": 10_000_000,
+    "2029-03": -20_000_000,
+}
+
+cf_strategy.time_series_dic = d
+
+pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to portfolio
 
 pf.dcf.set_mc_parameters(distribution="norm", period=30, number=400)  # simulation period in years
 
-result = pf.dcf.find_the_largest_withdrawals_size(
-    goal="maintain_balance_pv",  # The goal of the strategy in this case is to keep the portfolio's real balance (for the whole period)
-    percentile=25,  # The percentile of Monte Carlo result distribution where the goal is to be achieved. The 25th percentile is a negative scenario.
-    threshold=0.10,  # 10% - is the percentage of initial investments when the portfolio balance is considered voided.
-    iter_max=50,  # The maximum number of iterations to find the solution.
-    tolerance_rel=0.15,  # The allowed tolerance for the solution. The tolerance is the largest error for the achieved goal.
-)
+df = pf.dcf.monte_carlo_wealth_fv
 
-print(result.withdrawal_rel)
+df.plot(legend=False)
+plt.yscale('log')
+plt.show()
+
+sp = pf.dcf.monte_carlo_survival_period()
+print(sp.quantile(25 / 100), " years")
+
+wealth_pv = pf.dcf.monte_carlo_wealth_pv.iloc[-1].describe()
+wealth_fv = pf.dcf.monte_carlo_wealth_fv.iloc[-1].describe()
+
+print(f"{wealth_pv=}", f"{wealth_fv=}")
+
+

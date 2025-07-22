@@ -3367,6 +3367,8 @@ class CashFlow:
         self.frequency: Optional[str] = "none"
         self.initial_investment: float = 1000.0
         self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
+        self.time_series_dic = {}
+        self.time_series = pd.Series(dtype=float)
 
     @property
     def frequency(self) -> str:
@@ -3425,6 +3427,48 @@ class CashFlow:
                 raise ValueError("Initial investment must be positive.")
         self._clear_cf_cache()
         self._initial_investment = initial_investment
+
+    @property
+    def time_series_dic(self) -> dict:
+        """
+        Cash flow time series in form of dictionary.
+
+        Negative number corresponds to withdrawals, positive number corresponds to contributions.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
+        >>> # create simple dictionary with cash flow amounts and dates
+        >>> d = {"2018-02": 2_000, "2024-03": -4_000}
+        >>> ts = ok.TimeSeriesStrategy(pf)  # create TimeSeresStrategy linked to the portfolio
+        >>> ts.time_series_dic = d  # use the dictionary to set cash flow
+        >>> ts.initial_investment = 1_000  # add initial investments size (optional)
+        >>> # Assign the strategy to Portfolio
+        >>> pf.dcf.cashflow_parameters = ts
+        >>> # Plot wealth index with cash flow
+        >>> pf.dcf.wealth_index.plot()
+        >>> plt.show()
+        """
+        return self._time_series_dic
+
+    @time_series_dic.setter
+    def time_series_dic(self, time_series_dic):
+        self._clear_cf_cache()
+        if isinstance(time_series_dic, dict):
+            self._time_series_dic = time_series_dic
+        else:
+            raise TypeError("time_series_dic must be a dictionary.")
+        self._make_series_from_dic()
+
+    def _make_series_from_dic(self):
+        """
+        Create cash flow time series in form of Pandas.Series.
+        """
+        self.time_series = pd.Series(self._time_series_dic)
+        self.time_series.index = pd.to_datetime(self.time_series.index).to_period("M")
+        self.time_series.sort_index(inplace=True)
+        self.time_series.name = "cashflow_ts"
 
     def _clear_cf_cache(self):
         self.parent.dcf._monte_carlo_wealth = pd.DataFrame()
@@ -3629,8 +3673,6 @@ class TimeSeriesStrategy(CashFlow):
     ):
         super().__init__(parent)
         self.portfolio = self.parent
-        self.time_series_dic = {}
-        self.time_series = pd.Series(dtype=float)
 
     def __repr__(self):
         dic = {
@@ -3639,44 +3681,3 @@ class TimeSeriesStrategy(CashFlow):
             "Cash flow strategy": self.NAME,
         }
         return repr(pd.Series(dic))
-
-    @property
-    def time_series_dic(self) -> dict:
-        """
-        Cash flow time series in form of dictionary.
-
-        Negative number corresponds to withdrawals, positive number corresponds to contributions.
-
-        Examples
-        --------
-        >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
-        >>> # create simple dictionary with cash flow amounts and dates
-        >>> d = {"2018-02": 2_000, "2024-03": -4_000}
-        >>> ts = ok.TimeSeriesStrategy(pf)  # create TimeSeresStrategy linked to the portfolio
-        >>> ts.time_series_dic = d  # use the dictionary to set cash flow
-        >>> ts.initial_investment = 1_000  # add initial investments size (optional)
-        >>> # Assign the strategy to Portfolio
-        >>> pf.dcf.cashflow_parameters = ts
-        >>> # Plot wealth index with cash flow
-        >>> pf.dcf.wealth_index.plot()
-        >>> plt.show()
-        """
-        return self._time_series_dic
-
-    @time_series_dic.setter
-    def time_series_dic(self, time_series_dic):
-        self._clear_cf_cache()
-        if isinstance(time_series_dic, dict):
-            self._time_series_dic = time_series_dic
-        else:
-            raise TypeError("time_series_dic must be a dictionary.")
-        self._make_series_from_dic()
-
-    def _make_series_from_dic(self):
-        """
-        Create cash flow time series in form of Pandas.Series.
-        """
-        self.time_series = pd.Series(self._time_series_dic)
-        self.time_series.index = pd.to_datetime(self.time_series.index).to_period("M")
-        self.time_series.sort_index(inplace=True)

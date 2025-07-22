@@ -267,6 +267,22 @@ class Frame:
             dcf_object.initial_investment_pv if use_discounted_values else cashflow_parameters.initial_investment
         )
         period_initial_amount_cached = period_initial_amount
+        cash_flow_ts = dcf_object.cashflow_parameters.time_series
+        cashflow_iterate_condition = not (cash_flow_ts.empty or (cash_flow_ts == 0).all() )  # check if iteration needed
+        if cashflow_iterate_condition:
+            ror_cashflow_df = pd.concat([ror, cash_flow_ts], axis=1)
+            ror_cashflow_df.fillna(0, inplace=True)
+            cash_flow_ts = ror_cashflow_df["cashflow_ts"]  # cash flow monthly time series
+            if use_discounted_values:
+                # Vectorized discounting
+                n_rows = cash_flow_ts.shape[0]
+                discount_factors = (1.0 + dcf_object.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
+                cash_flow_ts = cash_flow_ts.div(discount_factors, axis=0)
+                # last_date = pf_object.last_date
+                # first_date = date.to_timestamp(how="End")
+                # period_length = Date.get_period_length(last_date, first_date)
+                # rate = dcf_object.discount_rate
+                # cashflow_ts_value = cashflow_ts_value / (1 + rate) ** period_length
         if amount == 0:
             wealth_index = Frame.get_wealth_indexes(ror, period_initial_amount)
         else:
@@ -292,27 +308,28 @@ class Frame:
                     elif cashflow_parameters.NAME == "fixed_percentage":
                         cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
                     elif cashflow_parameters.NAME == "time_series":
-                        try:
-                            cashflow = cashflow_parameters.time_series[date]
-                            if use_discounted_values:
-                                last_date = pf_object.last_date
-                                first_date = date.to_timestamp(how="End")
-                                period_length = Date.get_period_length(last_date, first_date)
-                                rate = dcf_object.discount_rate
-                                cashflow = cashflow / (1 + rate) ** period_length
-                        except KeyError:
-                            cashflow = 0
+                        cashflow = 0
                     else:
                         raise ValueError("Wrong cashflow strategy name value.")
-                    period_initial_amount = period_initial_amount * (r + 1) + cashflow
+                    period_initial_amount = period_initial_amount * (r + 1) + cashflow + cash_flow_ts[date]
                     date = row[0]
                     s[date] = period_initial_amount
             else:
                 pandas_frequency = settings.frequency_mapping[cashflow_parameters.frequency]
                 wealth_df = pd.DataFrame(dtype=float, columns=[portfolio_symbol])
-                for n, x in enumerate(ror.resample(rule=pandas_frequency, convention="start")):
-                    ror_df = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
-                    period_wealth_index = period_initial_amount * (1 + ror_df).cumprod()
+                for n, x in enumerate(ror_cashflow_df.resample(rule=pandas_frequency, convention="start")):
+                    ror_ts = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
+                    cashflow_ts_local = x[1].loc[:, "cashflow_ts"]
+                    if (cashflow_ts_local != 0).any():
+                        period_wealth_index = pd.Series(dtype=float, name=portfolio_symbol)
+                        for k, (date, r) in enumerate(ror_ts.items()):
+                            if k == 0:
+                                month_balance = period_initial_amount
+                            else:
+                                month_balance = month_balance * (r + 1) + cashflow_ts_local[date]
+                            period_wealth_index[date] = month_balance
+                    else:
+                        period_wealth_index = period_initial_amount * (1 + ror_ts).cumprod()
                     if cashflow_parameters.NAME == "fixed_amount":
                         cashflow_value = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
                     elif cashflow_parameters.NAME == "fixed_percentage":
