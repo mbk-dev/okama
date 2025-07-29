@@ -126,7 +126,6 @@ def get_cash_flow_fv(
     dcf_object = cashflow_parameters.parent.dcf
     dcf_object.cashflow_parameters = cashflow_parameters
     period_initial_amount = cashflow_parameters.initial_investment
-    period_initial_amount_cached = period_initial_amount
     cs_fv = pd.Series(dtype=float, name="cash_flow_fv")
     amount = getattr(cashflow_parameters, "amount", None)
     if isinstance(ror, pd.DataFrame):
@@ -160,7 +159,6 @@ def get_cash_flow_fv(
     periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
     if cashflow_parameters.frequency == "month" or cashflow_parameters.NAME == "time_series":
         # Fast Calculation
-        s = pd.Series(dtype=float, name=portfolio_symbol)
         for n, row in enumerate(ror.itertuples()):
             date = row[0]
             r = row[portfolio_position + 1]
@@ -174,13 +172,10 @@ def get_cash_flow_fv(
                 raise ValueError("Wrong cashflow strategy name value.")
             cs_value = cashflow + cash_flow_ts[date]
             period_initial_amount = period_initial_amount * (r + 1) + cs_value
-            date = row[0]
             cs_fv[date] = cs_value
-            s[date] = period_initial_amount
     else:
         # Slow Calculation
         pandas_frequency = settings.frequency_mapping[cashflow_parameters.frequency]
-        wealth_df = pd.DataFrame(dtype=float, columns=[portfolio_symbol])
         for n, x in enumerate(ror_cashflow_df.resample(rule=pandas_frequency, convention="start")):
             ror_ts = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
             cashflow_ts_local = x[1].loc[:, "cashflow_ts"].copy()
@@ -205,13 +200,20 @@ def get_cash_flow_fv(
             period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
             period_wealth_index.iloc[-1] = period_final_balance
             period_initial_amount = period_final_balance
-            wealth_df = pd.concat([None if wealth_df.empty else wealth_df, period_wealth_index], sort=False)
             cashflow_ts_local.iloc[-1] += cashflow_value
             cs_fv = pd.concat([None if cs_fv.empty else cs_fv, cashflow_ts_local], sort=False)
-        s = wealth_df.squeeze()
-    first_date = s.index[0]
-    first_wealth_index_date = first_date - 1  # set first date to one month earlie
-    s.loc[first_wealth_index_date] = period_initial_amount_cached
-    wealth_index = s
-    wealth_index.sort_index(ascending=True, inplace=True)
     return cs_fv
+
+
+def remove_negative_values(input_s: pd.Series) -> pd.Series:
+    if not isinstance(input_s, pd.Series):
+        raise TypeError("input_s must be a pd.Series")
+    s = input_s.copy()
+    condition = s <= 0
+    try:
+        survival_date = s[condition].index[0]
+        s[survival_date] = 0
+        s[s.index > survival_date] = np.nan
+    except IndexError:
+        pass
+    return s

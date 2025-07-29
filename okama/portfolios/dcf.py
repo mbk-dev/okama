@@ -129,8 +129,7 @@ class PortfolioDCF:
         self.mc.period = period
         self.mc.number = number
 
-    @property
-    def wealth_index_fv(self) -> pd.DataFrame:
+    def wealth_index(self, discounting: Literal["fv", "pv"], include_negative_values: bool = False) -> pd.DataFrame:
         """
         Wealth index Future Values (FV) time series for the portfolio with cash flow (contributions and
         withdrawals).
@@ -173,10 +172,24 @@ class PortfolioDCF:
                 task="backtest",
             )
             self._wealth_index_fv = self.parent._make_df_if_series(df)
-        return self._wealth_index_fv
+        if not include_negative_values:
+            wealth_index_fv = self._wealth_index_fv.copy()
+            wealth_index_fv_s = dcf_calculations.remove_negative_values(self._wealth_index_fv[self.parent.name])
+            wealth_index_fv[self.parent.name] = wealth_index_fv_s.fillna(0)
+        else:
+            wealth_index_fv = self._wealth_index_fv.copy()
+        if discounting == "fv":
+            return wealth_index_fv
+        elif discounting == "pv":
+            n_rows = wealth_index_fv.shape[0]
+            discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
+            wealth_index_pv = wealth_index_fv.div(discount_factors, axis=0)
+            return wealth_index_pv
+        else:
+            raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
-    @property
-    def cash_flow_ts_fv(self) -> pd.Series:
+
+    def cash_flow_ts(self, discounting: Literal["fv", "pv"], remove_if_wealth_index_negative: bool = True) -> pd.Series:
         """
         Wealth index Future Values (FV) time series for the portfolio with cash flow (contributions and
         withdrawals).
@@ -217,7 +230,20 @@ class PortfolioDCF:
                 task="backtest",
             )
             self._cash_flow_fv = df
-        return self._cash_flow_fv
+        if remove_if_wealth_index_negative:
+            cash_flow_fv = self._cash_flow_fv.copy()
+            wealth_index = self.wealth_index(discounting="fv", include_negative_values=False)
+            condition = wealth_index[self.parent.name] == 0
+            cash_flow_fv[condition] = 0
+        else:
+            cash_flow_fv = self._cash_flow_fv.copy()
+        if discounting == "fv":
+            return cash_flow_fv
+        elif discounting == "pv":
+            n_rows = cash_flow_fv.shape[0]
+            discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
+            cash_flow_fv = cash_flow_fv.div(discount_factors, axis=0)
+        return cash_flow_fv
 
     @property
     def cash_flow_ts_pv(self) -> pd.Series:
@@ -495,18 +521,7 @@ class PortfolioDCF:
                     "monte_carlo",  # calculate wealth index for Monte Carlo
                 ),
             )
-
-            def remove_negative_values(s: pd.Series) -> pd.Series:
-                condition = s <= 0
-                try:
-                    survival_date = s[condition].index[0]
-                    s[survival_date] = 0
-                    s[s.index > survival_date] = np.nan
-                except IndexError:
-                    pass
-                return s
-
-            df = df.apply(remove_negative_values, axis=0)
+            df = df.apply(dcf_calculations.remove_negative_values, axis=0)
             all_cells_are_nan = df.isna().all(axis=1)
             self._monte_carlo_wealth_fv = df[~all_cells_are_nan]
         return self._monte_carlo_wealth_fv
