@@ -45,11 +45,6 @@ def test_initial_investment_fv(portfolio_dcf_percentage):
     assert portfolio_dcf_percentage.initial_investment_fv == approx(171594.5442, rel=1e-2)
 
 
-def test_cashflow_pv(portfolio_dcf_indexation, portfolio_dcf_percentage):
-    assert portfolio_dcf_indexation.cashflow_pv == approx(-1145.08, rel=1e-2)
-    assert portfolio_dcf_percentage.cashflow_pv is None
-
-
 def test_monte_carlo_wealth_fv(portfolio_dcf_indexation):
     df = portfolio_dcf_indexation.monte_carlo_wealth_fv
     assert df.shape == (121, 100)

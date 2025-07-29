@@ -176,7 +176,7 @@ class PortfolioDCF:
         return self._wealth_index_fv
 
     @property
-    def cash_flow_fv(self) -> pd.DataFrame:
+    def cash_flow_ts_fv(self) -> pd.Series:
         """
         Wealth index Future Values (FV) time series for the portfolio with cash flow (contributions and
         withdrawals).
@@ -218,6 +218,44 @@ class PortfolioDCF:
             )
             self._cash_flow_fv = df
         return self._cash_flow_fv
+
+    @property
+    def cash_flow_ts_pv(self) -> pd.Series:
+        """
+        Wealth index Future Values (FV) time series for the portfolio with cash flow (contributions and
+        withdrawals).
+
+        Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
+        historical time period considering cash flows.
+
+        Accumulated inflation time series is added if `inflation=True` in the Portfolio.
+
+        If there is no cash flow, Wealth index is obtained from the accumulated return multiplicated
+        by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
+
+        Returns
+        -------
+            Time series of wealth index values for portfolio and accumulated inflation.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
+        >>> ind = ok.IndexationStrategy(pf)  # Set Cash Flow Strategy parameters
+        >>> ind.initial_investment = 100  # initial investments value
+        >>> ind.frequency = "year"  # withdrawals frequency
+        >>> ind.amount = -0.5 * 12  # initial withdrawals amount
+        >>> ind.indexation = "inflation"  # the indexation is equal to inflation
+        >>> pf.dcf.cashflow_parameters = ind  # assign the strategy to Portfolio
+        >>> pf.dcf.wealth_index_fv.plot()
+        >>> plt.show()
+        """
+        cf_fv = self.cash_flow_ts_fv.copy()
+        # Vectorized discounting
+        n_rows = cf_fv.shape[0]
+        discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
+        cf_pv = cf_fv.div(discount_factors, axis=0)
+        return cf_pv
 
     @property
     def wealth_index_fv_with_assets(self) -> pd.DataFrame:
@@ -408,39 +446,6 @@ class PortfolioDCF:
         else:
             return None
 
-    @property
-    def cashflow_pv(self) -> Optional[float]:
-        """
-        The discounted value (PV) of the cash flow amount (contributions/withdrawals) at the historical first date.
-
-        PV is defined by the discount rate and the cash flow amount:
-        cashflow_pv = amount / (1 + discount_rate) ** period_length
-
-        When cash flow 'amount' is not defined, `cashflow_pv` set to None.
-
-        Returns
-        -------
-        float, None
-            The discounted value (PV) of the cash flow amount at the historical first date.
-
-        Examples
-        --------
-        >>> # Get discounted PV value of of the cash flow amount for a portfolio with 20 years of history (at 2003-10).
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], ccy='USD', last_date="2024-10")
-        >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
-        >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
-        >>> ind.amount = -500  # set withdrawal size
-        >>> ind.frequency = "year"  # set withdrawal frequency
-        >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
-        >>> pf.dcf.discount_rate = 0.10  # define discount rate
-        >>> pf.dcf.cashflow_pv
-        -68.86557103941368
-        """
-        # TODO: remove
-        if hasattr(self.cashflow_parameters, "amount"):
-            return float(self.cashflow_parameters.amount / (1.0 + self.discount_rate) ** self.parent.period_length)
-        else:
-            return None
 
     @property
     def monte_carlo_wealth_fv(self) -> pd.DataFrame:
@@ -491,7 +496,7 @@ class PortfolioDCF:
                 ),
             )
 
-            def remove_negative_values(s):
+            def remove_negative_values(s: pd.Series) -> pd.Series:
                 condition = s <= 0
                 try:
                     survival_date = s[condition].index[0]

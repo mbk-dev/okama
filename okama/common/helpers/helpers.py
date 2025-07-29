@@ -12,7 +12,6 @@ from okama.common.error import (
     RollingWindowLengthBelowOneYearError,
     ShortPeriodLengthError,
 )
-from okama.portfolios.cashflow_strategies import CashFlow
 from okama import settings
 
 

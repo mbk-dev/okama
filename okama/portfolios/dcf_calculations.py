@@ -5,6 +5,7 @@ from typing import Union, Optional, Literal
 import pandas as pd
 import numpy as np
 
+import okama.common.helpers.helpers as helpers
 import okama.portfolios.cashflow_strategies as cf
 from okama import settings
 
@@ -104,7 +105,7 @@ def get_wealth_indexes_fv_with_cashflow(
     first_wealth_index_date = first_date - 1  # set first date to one month earlie
     s.loc[first_wealth_index_date] = period_initial_amount_cached
     if inflation_symbol:
-        cum_inflation = Frame.get_wealth_indexes(
+        cum_inflation = helpers.Frame.get_wealth_indexes(
             ror=ror.loc[:, inflation_symbol], initial_amount=period_initial_amount_cached
         )
         wealth_index = pd.concat([s, cum_inflation], axis="columns")

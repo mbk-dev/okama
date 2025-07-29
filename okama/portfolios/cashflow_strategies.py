@@ -53,6 +53,7 @@ class CashFlow:
         if frequency in settings.frequency_mapping.keys():
             self._clear_cf_cache()
             self._frequency = frequency
+            self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
         else:
             raise ValueError(f"frequency must be in {settings.frequency_mapping.keys()}")
 

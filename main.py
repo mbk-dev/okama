@@ -30,23 +30,23 @@ pf = ok.Portfolio(
     symbol="My_portfolio.PF",
 )
 pf.dcf.discount_rate = 0.09
-# # Percentage CF strategy
-# cf_strategy = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
+# Percentage CF strategy
+cf_strategy = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
+
+cf_strategy.initial_investment = 83_000_000  # initial investments size
+cf_strategy.frequency = "year"  # withdrawals frequency
+cf_strategy.percentage = -0.40
+
+# # Indexation CF strategy
+# cf_strategy = ok.IndexationStrategy(pf)
 #
-# cf_strategy.initial_investment = 1_000  # initial investments size
-# cf_strategy.frequency = "year"  # withdrawals frequency
-# cf_strategy.percentage = -0.12
-
-# Indexation CF strategy
-cf_strategy = ok.IndexationStrategy(pf)
-
-cf_strategy.initial_investment = 83_000_000
-cf_strategy.frequency = "year"
-cf_strategy.amount = 1_500_000 * 12
-cf_strategy.indexation = 0.09
+# cf_strategy.initial_investment = 83_000_000
+# cf_strategy.frequency = "year"
+# cf_strategy.amount = 1_500_000 * 12
+# cf_strategy.indexation = 0.09
 
 d = {
-    "2015-06": -3_500_000_000,
+    "2015-06": -35_000_000,
 }
 
 cf_strategy.time_series_dic = d
@@ -60,10 +60,12 @@ pf.dcf.set_mc_parameters(
     number=100
 )
 
-# wi = pf.dcf.wealth_index_fv
-cf = pf.dcf.cash_flow_fv.resample("Y").sum()
+wi = pf.dcf.wealth_index_fv
+# cf = pf.dcf.cash_flow_ts_pv.resample("Y").sum()
 
-cf.plot(kind="bar", legend=False)
+
+wi.plot(legend=False)
+# cf.plot(kind="bar", legend=False)
 plt.yscale('linear')  # linear or log
 plt.show()
 
