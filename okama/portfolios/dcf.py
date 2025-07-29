@@ -4,7 +4,6 @@ from typing import Optional, Literal, Tuple
 
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 
 import okama.portfolios.core as core
 import okama.portfolios.mc as mc
@@ -31,10 +30,6 @@ class PortfolioDCF:
         Cash flow discount rate required to calculate Present value (PV) or Future (FV) of cashflow.
         If not provided geometric mean of inflation is taken.
         For portfolios without inflation the default value from settings is used.
-
-    use_discounted_values: bool, default False
-        Defines whether to use discounted values in backtesting wealth indexes.
-        If True the initial investments and cashflow size are discounted.
     """
 
     def __init__(
@@ -56,7 +51,6 @@ class PortfolioDCF:
             "Monte Carlo distribution": self.mc.distribution,
             "Monte Carlo period": self.mc.period,
             "Cash flow strategy": self.cashflow_parameters.NAME if hasattr(self.cashflow_parameters, "NAME") else None,
-            "use_discounted_values": self.use_discounted_values,
             "discount_rate": self.discount_rate,
         }
         return repr(pd.Series(dic))
@@ -126,7 +120,6 @@ class PortfolioDCF:
         >>> ind.indexation = "inflation"
         >>> # Assign the strategy to Portfolio
         >>> pf.dcf.cashflow_parameters = ind
-        >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
         >>> # Plot wealth index with cash flow
         >>> pf.dcf.wealth_index_fv.plot()
         >>> plt.show()
@@ -598,7 +591,6 @@ class PortfolioDCF:
             if self.cashflow_parameters is None:
                 raise AttributeError("'cashflow_parameters' is not defined.")
             backup_obj = self.cashflow_parameters
-            self.use_discounted_values = False  # we need to start with not discounted values
             s1 = self.wealth_index_fv[self.parent.symbol]
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
