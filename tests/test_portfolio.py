@@ -68,11 +68,11 @@ def test_ror(portfolio_rebalanced_month):
 
 
 def test_wealth_index(portfolio_rebalanced_year):
-    assert portfolio_rebalanced_year.wealth_index.iloc[-1, 1] == approx(1310.60, rel=1e-2)
+    assert portfolio_rebalanced_year.wealth_index_fv.iloc[-1, 1] == approx(1310.60, rel=1e-2)
 
 
 def test_wealth_index_with_assets(portfolio_rebalanced_year, portfolio_no_inflation):
-    result = portfolio_rebalanced_year.wealth_index_with_assets.iloc[-1, :].values
+    result = portfolio_rebalanced_year.wealth_index_fv_with_assets.iloc[-1, :].values
     assert_allclose(np.array(result), np.array([2490.845572, 2079.757278, 2924.031272, 1315.8486]), rtol=1e-02)
 
 

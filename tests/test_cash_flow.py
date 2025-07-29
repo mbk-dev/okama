@@ -11,22 +11,22 @@ def test_dcf_discount_rate(portfolio_dcf, portfolio_dcf_no_inflation, portfolio_
 
 
 def test_wealth_index(portfolio_dcf_indexation):
-    assert portfolio_dcf_indexation.wealth_index.iloc[0, 0] == 10_000
-    assert portfolio_dcf_indexation.wealth_index.iloc[-1, 0] == approx(11047.67, rel=1e-2)
+    assert portfolio_dcf_indexation.wealth_index_fv.iloc[0, 0] == 10_000
+    assert portfolio_dcf_indexation.wealth_index_fv.iloc[-1, 0] == approx(11047.67, rel=1e-2)
 
 
 def test_wealth_index_time_series_strategy(portfolio_dcf_time_series):
-    assert portfolio_dcf_time_series.wealth_index.iloc[0, 0] == 1_000
-    assert portfolio_dcf_time_series.wealth_index.iloc[-1, 0] == approx(5214.73, rel=1e-2)
+    assert portfolio_dcf_time_series.wealth_index_fv.iloc[0, 0] == 1_000
+    assert portfolio_dcf_time_series.wealth_index_fv.iloc[-1, 0] == approx(5214.73, rel=1e-2)
 
 
 def test_wealth_index_with_assets(portfolio_dcf_percentage):
-    df = portfolio_dcf_percentage.wealth_index_with_assets
+    df = portfolio_dcf_percentage.wealth_index_fv_with_assets
     assert df.shape == (62, 4)
     # discounted initial investments
-    assert portfolio_dcf_percentage.wealth_index_with_assets.iloc[0, 0] == approx(76339.3156, rel=1e-2)
+    assert portfolio_dcf_percentage.wealth_index_fv_with_assets.iloc[0, 0] == approx(76339.3156, rel=1e-2)
     # FV
-    assert portfolio_dcf_percentage.wealth_index_with_assets.iloc[-1, 0] == approx(232477.6576, rel=1e-2)
+    assert portfolio_dcf_percentage.wealth_index_fv_with_assets.iloc[-1, 0] == approx(232477.6576, rel=1e-2)
 
 
 def test_survival_period_hist(portfolio_dcf_indexation):

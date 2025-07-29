@@ -4,6 +4,9 @@ import pytest
 import okama as ok
 from pathlib import Path
 
+import okama.portfolios.cashflow_strategies
+import okama.portfolios.dcf
+
 data_folder = Path(__file__).parent / "data"
 
 
@@ -176,7 +179,7 @@ def init_mc_normal_small():
 @pytest.fixture(scope="package")
 def portfolio_dcf(init_portfolio_dcf):
     pf = ok.Portfolio(**init_portfolio_dcf[0])
-    pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
+    pf_dcf = okama.portfolios.dcf.PortfolioDCF(pf, **init_portfolio_dcf[1])
     return pf_dcf
 
 
@@ -186,7 +189,7 @@ def portfolio_dcf_no_inflation(init_portfolio_dcf):
     values_list[0]["inflation"] = False
     # Create Portfolio
     pf = ok.Portfolio(**values_list[0])
-    pf_dcf = ok.PortfolioDCF(pf, **values_list[1])
+    pf_dcf = okama.portfolios.dcf.PortfolioDCF(pf, **values_list[1])
     return pf_dcf
 
 
@@ -196,17 +199,17 @@ def portfolio_dcf_discount_rate(init_portfolio_dcf):
     values_list[1]["discount_rate"] = 0.08
     # Create Portfolio
     pf = ok.Portfolio(**values_list[0])
-    pf_dcf = ok.PortfolioDCF(pf, **values_list[1])
+    pf_dcf = okama.portfolios.dcf.PortfolioDCF(pf, **values_list[1])
     return pf_dcf
 
 
 @pytest.fixture(scope="function")
 def portfolio_dcf_indexation(init_portfolio_dcf, init_mc_students):
     pf = ok.Portfolio(**init_portfolio_dcf[0])
-    pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
+    pf_dcf = okama.portfolios.dcf.PortfolioDCF(pf, **init_portfolio_dcf[1])
     pf_dcf.set_mc_parameters(**init_mc_students)
     # Cash Flow
-    ind = ok.IndexationStrategy(pf)  # create IndexationStrategy linked to the portfolio
+    ind = okama.portfolios.portfolio.cashflow_strategy.IndexationStrategy(pf)  # create IndexationStrategy linked to the portfolio
     ind.initial_investment = 10_000  # add initial investments size
     ind.frequency = "year"  # set cash flow frequency
     ind.amount = -1_500  # set withdrawal size
@@ -219,10 +222,10 @@ def portfolio_dcf_indexation(init_portfolio_dcf, init_mc_students):
 @pytest.fixture(scope="function")
 def portfolio_dcf_indexation_small(init_portfolio_dcf, init_mc_normal_small):
     pf = ok.Portfolio(**init_portfolio_dcf[0])
-    pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
+    pf_dcf = okama.portfolios.dcf.PortfolioDCF(pf, **init_portfolio_dcf[1])
     pf_dcf.set_mc_parameters(**init_mc_normal_small)
     # Cash Flow
-    ind = ok.IndexationStrategy(pf)  # create IndexationStrategy linked to the portfolio
+    ind = okama.portfolios.portfolio.cashflow_strategy.IndexationStrategy(pf)  # create IndexationStrategy linked to the portfolio
     ind.initial_investment = 10_000  # add initial investments size
     ind.frequency = "month"  # set cash flow frequency
     ind.amount = -1_500 / 12  # set withdrawal size
@@ -235,10 +238,10 @@ def portfolio_dcf_indexation_small(init_portfolio_dcf, init_mc_normal_small):
 @pytest.fixture(scope="function")
 def portfolio_dcf_percentage(init_portfolio_dcf, init_mc_students):
     pf = ok.Portfolio(**init_portfolio_dcf[0])
-    pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
+    pf_dcf = okama.portfolios.dcf.PortfolioDCF(pf, **init_portfolio_dcf[1])
     pf_dcf.set_mc_parameters(**init_mc_students)
     # Cash Flow
-    pc = ok.PercentageStrategy(pf)  # create IndexationStrategy linked to the portfolio
+    pc = okama.portfolios.portfolio.cashflow_strategy.PercentageStrategy(pf)  # create IndexationStrategy linked to the portfolio
     pc.initial_investment = 100_000  # add initial investments size
     pc.frequency = "half-year"  # set cash flow frequency
     pc.percentage = 0.04  # set withdrawal size
@@ -250,11 +253,11 @@ def portfolio_dcf_percentage(init_portfolio_dcf, init_mc_students):
 @pytest.fixture(scope="function")
 def portfolio_dcf_time_series(init_portfolio_dcf, init_mc_students):
     pf = ok.Portfolio(**init_portfolio_dcf[0])
-    pf_dcf = ok.PortfolioDCF(pf, **init_portfolio_dcf[1])
+    pf_dcf = okama.portfolios.dcf.PortfolioDCF(pf, **init_portfolio_dcf[1])
     pf_dcf.set_mc_parameters(**init_mc_students)
     # Cash Flow
     d = {"2018-02": 2_000, "2024-03": -4_000}  # contribution  # withdrawal
-    ts = ok.TimeSeriesStrategy(pf)  # create TimeSeriesStrategy linked to the portfolio
+    ts = okama.portfolios.portfolio.cashflow_strategy.TimeSeriesStrategy(pf)  # create TimeSeriesStrategy linked to the portfolio
     ts.time_series_dic = d  # use the dictionary to set cash flow
     ts.initial_investment = 1_000  # add initial investments size
     pf_dcf.cashflow_parameters = ts

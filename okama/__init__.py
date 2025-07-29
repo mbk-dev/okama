@@ -24,15 +24,12 @@ from importlib.metadata import version
 
 from okama.asset import Asset
 from okama.asset_list import AssetList
-from okama.portfolio import (
+from okama.portfolios.core import (
     Portfolio,
-    PortfolioDCF,
-    MonteCarlo,
-    CashFlow,
-    IndexationStrategy,
-    PercentageStrategy,
-    TimeSeriesStrategy,
 )
+from okama.portfolios.mc import MonteCarlo
+from okama.portfolios.dcf import PortfolioDCF
+from okama.portfolios.cashflow_strategies import CashFlow, IndexationStrategy, PercentageStrategy, TimeSeriesStrategy
 from okama.macro import Inflation, Rate, Indicator
 from okama.frontier.multi_period import EfficientFrontierReb
 from okama.frontier.single_period import EfficientFrontier

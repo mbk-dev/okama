@@ -7,23 +7,29 @@ import okama as ok
 
 import os
 
+import okama.portfolios.cashflow_strategies
 
 os.environ["PYTHONWARNINGS"] = "ignore::FutureWarning"
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
+rs = ok.Rebalance(
+    period="year",
+    abs_deviation=0.10,
+    rel_deviation=0.40
+)
+weights = [0.12, 0.21, 0.42, 0.25]
 pf = ok.Portfolio(
-    ["SPY.US", "AGG.US", "GLD.US"],
-    weights=[0.60, 0.35, 0.05],
-    ccy="USD",
+    ['RGBITR.INDX', 'RUCBTRNS.INDX', 'MCFTR.INDX', 'GC.COMM'],
+    weights=weights,
+    first_date='2014-06',
+    ccy="RUB",
     inflation=True,
-    last_date="2024-01",
-    rebalancing_strategy=ok.Rebalance(period="year"),
+    rebalancing_strategy=rs,
     symbol="My_portfolio.PF",
 )
-
-pf.dcf.use_discounted_values = True
+pf.dcf.discount_rate = 0.09
 # # Percentage CF strategy
 # cf_strategy = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
 #
@@ -33,33 +39,44 @@ pf.dcf.use_discounted_values = True
 
 # Indexation CF strategy
 cf_strategy = ok.IndexationStrategy(pf)
-cf_strategy.initial_investment = 10_000_000
-cf_strategy.amount = -12_000 * 12
+
+cf_strategy.initial_investment = 83_000_000
 cf_strategy.frequency = "year"
+cf_strategy.amount = 1_500_000 * 12
+cf_strategy.indexation = 0.09
 
 d = {
-    "2026-02": 10_000_000,
-    "2029-03": -20_000_000,
+    "2015-06": -3_500_000_000,
 }
 
 cf_strategy.time_series_dic = d
+cf_strategy.time_series_discounted_values = False
 
 pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to portfolio
 
-pf.dcf.set_mc_parameters(distribution="norm", period=30, number=400)  # simulation period in years
+pf.dcf.set_mc_parameters(
+    distribution="norm",
+    period=15,
+    number=100
+)
 
-df = pf.dcf.monte_carlo_wealth_fv
+# wi = pf.dcf.wealth_index_fv
+cf = pf.dcf.cash_flow_fv
 
-df.plot(legend=False)
+cf.plot(kind="bar", legend=False)
 plt.yscale('log')
 plt.show()
 
-sp = pf.dcf.monte_carlo_survival_period()
-print(sp.quantile(25 / 100), " years")
+# df = pf.dcf.monte_carlo_wealth_fv
+# print(df)
 
-wealth_pv = pf.dcf.monte_carlo_wealth_pv.iloc[-1].describe()
-wealth_fv = pf.dcf.monte_carlo_wealth_fv.iloc[-1].describe()
 
-print(f"{wealth_pv=}", f"{wealth_fv=}")
+# sp = pf.dcf.monte_carlo_survival_period()
+# print(sp.quantile(25 / 100), " years")
+
+# mc_wealth_pv = pf.dcf.monte_carlo_wealth_pv.iloc[-1].describe([.05, .10, .20, .50])
+# print(f"{mc_wealth_pv=}")
+
+# print(pf.dcf.wealth_index.iloc[-1, :])
 
 
