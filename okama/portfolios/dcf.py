@@ -8,6 +8,7 @@ import pandas as pd
 import okama.portfolios.core as core
 import okama.portfolios.mc as mc
 import okama.portfolios.cashflow_strategies as cf
+import okama.portfolios.dcf_calculations as dcf_calculations
 from okama import settings
 from okama.common import validators
 from okama.common.helpers import helpers
@@ -164,7 +165,7 @@ class PortfolioDCF:
         if self._wealth_index_fv.empty:
             df = self.parent._add_inflation()
             infl_symbol = self.parent.inflation if hasattr(self.parent, "inflation") else None
-            df = helpers.Frame.get_wealth_indexes_fv_with_cashflow(
+            df = dcf_calculations.get_wealth_indexes_fv_with_cashflow(
                 ror=df,
                 portfolio_symbol=self.parent.symbol,
                 inflation_symbol=infl_symbol,
@@ -209,7 +210,7 @@ class PortfolioDCF:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._cash_flow_fv.empty:
             df = self.parent.ror
-            df = helpers.Frame.get_cash_flow_fv(
+            df = dcf_calculations.get_cash_flow_fv(
                 ror=df,
                 portfolio_symbol=self.parent.symbol,
                 cashflow_parameters=self.cashflow_parameters,
@@ -256,7 +257,7 @@ class PortfolioDCF:
             ls.append(self.parent.inflation_ts)
         ror_df = pd.concat(ls, axis=1, join="inner", copy="false")
         wealth_df = ror_df.apply(
-            helpers.Frame.get_wealth_indexes_fv_with_cashflow,
+            dcf_calculations.get_wealth_indexes_fv_with_cashflow,
             axis=0,
             args=(None, None, self.cashflow_parameters, "backtest"),  # symbol  # inflation_symbol
         )
@@ -480,7 +481,7 @@ class PortfolioDCF:
                 distr=self.mc.distribution, years=self.mc.period, n=self.mc.number
             )
             df = return_ts.apply(
-                helpers.Frame.get_wealth_indexes_fv_with_cashflow,
+                dcf_calculations.get_wealth_indexes_fv_with_cashflow,
                 axis=0,
                 args=(
                     None,  # portfolio_symbol

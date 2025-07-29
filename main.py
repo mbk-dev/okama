@@ -61,10 +61,10 @@ pf.dcf.set_mc_parameters(
 )
 
 # wi = pf.dcf.wealth_index_fv
-cf = pf.dcf.cash_flow_fv
+cf = pf.dcf.cash_flow_fv.resample("Y").sum()
 
 cf.plot(kind="bar", legend=False)
-plt.yscale('log')
+plt.yscale('linear')  # linear or log
 plt.show()
 
 # df = pf.dcf.monte_carlo_wealth_fv

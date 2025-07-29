@@ -420,6 +420,8 @@ class EfficientFrontierReb(asset_list.AssetList):
             (returns + 1.0).prod() ** (settings._MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
         )
 
+    # TODO: add `get_tangency_portfolio` as in EfficientFrontier
+
     @property
     def global_max_return_portfolio(self) -> dict:
         """
@@ -502,6 +504,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         The objective function is Annualized risk (standard deviation) for rebalanced portfolio time series
         for the period from 'first_date' to 'last_date'.
+        TODO: add help for 'target_value' Parameter (in EfficientFrontier it's `target_return` consider changing).
 
         Returns
         -------

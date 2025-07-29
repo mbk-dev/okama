@@ -54,6 +54,8 @@ class MonteCarlo:
         }
         return repr(pd.Series(dic))
 
+    # TODO: add distribution parameters (return, risk etc)
+
     @property
     def distribution(self) -> str:
         """
