@@ -29,7 +29,7 @@ from okama.portfolios.core import (
 )
 from okama.portfolios.mc import MonteCarlo
 from okama.portfolios.dcf import PortfolioDCF
-from okama.portfolios.cashflow_strategies import CashFlow, IndexationStrategy, PercentageStrategy, TimeSeriesStrategy
+from okama.portfolios.cashflow_strategies import CashFlow, IndexationStrategy, PercentageStrategy, TimeSeriesStrategy, VanguardDynamicSpending
 from okama.macro import Inflation, Rate, Indicator
 from okama.frontier.multi_period import EfficientFrontierReb
 from okama.frontier.single_period import EfficientFrontier

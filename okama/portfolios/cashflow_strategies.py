@@ -337,8 +337,70 @@ class TimeSeriesStrategy(CashFlow):
 
     def __repr__(self):
         dic = {
-            "Portfolio symbol": self.parent.symbol,
+            "Portfolio symbol": self.portfolio.symbol,
             "Cash flow initial investment": self.initial_investment,
             "Cash flow strategy": self.NAME,
         }
         return repr(pd.Series(dic))
+
+
+class VanguardDynamicSpending(PercentageStrategy, IndexationStrategy):
+    NAME = "VDS"
+    def __init__(
+            self,
+            parent: core.Portfolio,
+            # frequency: int = 1,
+            # initial_investment: float,
+            # minimum_annual_withdrawal,
+            # maximum_annual_withdrawal,
+            # ceiling,
+            # floor,
+            # indexation,
+    ):
+        super().__init__(parent)
+        self.portfolio = self.parent
+        self.minimum_annual_withdrawal: float = None
+        self.maximum_annual_withdrawal: float = None
+        self.ceiling: float = None
+        self.floor: float = None
+
+    def __repr__(self):
+        dic = {
+            "Portfolio symbol": self.parent.symbol,
+            "Cash flow initial investment": self.initial_investment,
+            "Cash flow frequency": self.frequency,
+            "Cash flow strategy": self.NAME,
+            "Cash flow percentage": self.percentage,  # negative
+            "Minimum annual withdrawal": self.minimum_annual_withdrawal,  # negative
+            "Maximum annual withdrawal": self.maximum_annual_withdrawal,  # negative
+            "Ceiling": self.ceiling,  # positive
+            "Floor": self.floor,  # negative
+        }
+        return repr(pd.Series(dic))
+
+    def calculate_withdrawal_size(self, last_withdrawal: float, balance: float, number_of_months: int) -> float:
+        withdrawal_size_by_percentage = balance * self.percentage
+        ceiling = last_withdrawal * (1 + self.ceiling)
+        floor = last_withdrawal * (1 + self.floor)
+        min_indexed = self.minimum_annual_withdrawal * (1 + self.indexation) ** number_of_months
+        max_indexed = self.maximum_annual_withdrawal * (1 + self.indexation) ** number_of_months
+        if ceiling > max_indexed:
+            max_final = max_indexed
+        else:
+            max_final = ceiling
+        if floor < min_indexed:
+            min_final = min_indexed
+        else:
+            min_final = floor
+
+        if min_final <= withdrawal_size_by_percentage <= max_final:
+            withdrawal = withdrawal_size_by_percentage
+        elif withdrawal_size_by_percentage > max_final:
+            withdrawal = max_final
+        elif withdrawal_size_by_percentage < min_final:
+            withdrawal = min_final
+        else:
+            raise ValueError('Wrong withdrawal size. Check the calculation.')
+        return withdrawal
+
+
