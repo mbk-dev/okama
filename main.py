@@ -60,14 +60,16 @@ pf.dcf.set_mc_parameters(
     number=100
 )
 
-wi = pf.dcf.wealth_index_fv
-# cf = pf.dcf.cash_flow_ts_pv.resample("Y").sum()
+# wi = pf.dcf.wealth_index(discounting="fv", include_negative_values=True)
+# cf = pf.dcf.cash_flow_ts(discounting="fv", remove_if_wealth_index_negative=False).resample("Y").sum()
+cf = pf.dcf.monte_carlo_cash_flow(discounting="fv", remove_if_wealth_index_negative=True)
+print(cf)
+
+# cf[0].plot(kind="bar", legend=False)
+# plt.yscale('linear')  # linear or log
+# plt.show()
 
 
-wi.plot(legend=False)
-# cf.plot(kind="bar", legend=False)
-plt.yscale('linear')  # linear or log
-plt.show()
 
 # df = pf.dcf.monte_carlo_wealth_fv
 # print(df)

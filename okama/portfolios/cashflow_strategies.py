@@ -106,7 +106,7 @@ class CashFlow:
         >>> # Assign the strategy to Portfolio
         >>> pf.dcf.cashflow_parameters = ts
         >>> # Plot wealth index with cash flow
-        >>> pf.dcf.wealth_index_fv.plot()
+        >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
         >>> plt.show()
         """
         return self._time_series_dic
@@ -130,9 +130,10 @@ class CashFlow:
         self.time_series.name = "cashflow_ts"
 
     def _clear_cf_cache(self):
-        self.parent.dcf._monte_carlo_wealth_fv = pd.DataFrame()
-        self.parent.dcf._wealth_index_fv = pd.DataFrame()
-        self.parent.dcf._cash_flow_fv = pd.DataFrame()
+        self.parent.dcf._monte_carlo_wealth_fv = pd.DataFrame(dtype=float)
+        self.parent.dcf._wealth_index_fv = pd.DataFrame(dtype=float)
+        self.parent.dcf._cash_flow_fv = pd.DataFrame(dtype=float)
+        self.parent.dcf._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
 
 
 class IndexationStrategy(CashFlow):
@@ -158,7 +159,7 @@ class IndexationStrategy(CashFlow):
     >>> pf.dcf.cashflow_parameters = ind
     >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
     >>> # Plot wealth index with cash flow
-    >>> pf.dcf.wealth_index_fv.plot()
+    >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
     >>> plt.show()
     """
 
@@ -251,7 +252,7 @@ class PercentageStrategy(CashFlow):
     >>> pf.dcf.cashflow_parameters = pc
     >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
     >>> # Plot wealth index with cash flow
-    >>> pf.dcf.wealth_index_fv.plot()
+    >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
     >>> plt.show()
     """
 
@@ -321,7 +322,7 @@ class TimeSeriesStrategy(CashFlow):
     >>> # Assign the strategy to Portfolio
     >>> pf.dcf.cashflow_parameters = ts
     >>> # Plot wealth index with cash flow
-    >>> pf.dcf.wealth_index_fv.plot()
+    >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
     >>> plt.show()
     """
 

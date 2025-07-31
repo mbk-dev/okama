@@ -42,6 +42,7 @@ class PortfolioDCF:
         self.discount_rate = discount_rate
         self._wealth_index_fv = pd.DataFrame(dtype=float)
         self._monte_carlo_wealth_fv = pd.DataFrame(dtype=float)
+        self._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
         self._cash_flow_fv = pd.Series(dtype=float, name="cash_flow_fv")
         self.mc = mc.MonteCarlo(self)
         self._cashflow_parameters: Optional[cf.CashFlow] = None
@@ -122,7 +123,7 @@ class PortfolioDCF:
         >>> # Assign the strategy to Portfolio
         >>> pf.dcf.cashflow_parameters = ind
         >>> # Plot wealth index with cash flow
-        >>> pf.dcf.wealth_index_fv.plot()
+        >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
         >>> plt.show()
         """
         self.mc.distribution = distribution
@@ -156,7 +157,7 @@ class PortfolioDCF:
         >>> ind.amount = -0.5 * 12  # initial withdrawals amount
         >>> ind.indexation = "inflation"  # the indexation is equal to inflation
         >>> pf.dcf.cashflow_parameters = ind  # assign the strategy to Portfolio
-        >>> pf.dcf.wealth_index_fv.plot()
+        >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
         >>> plt.show()
         """
         if self.cashflow_parameters is None:
@@ -178,9 +179,9 @@ class PortfolioDCF:
             wealth_index_fv[self.parent.name] = wealth_index_fv_s.fillna(0)
         else:
             wealth_index_fv = self._wealth_index_fv.copy()
-        if discounting == "fv":
+        if discounting.lower() == "fv":
             return wealth_index_fv
-        elif discounting == "pv":
+        elif discounting.lower() == "pv":
             n_rows = wealth_index_fv.shape[0]
             discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
             wealth_index_pv = wealth_index_fv.div(discount_factors, axis=0)
@@ -216,20 +217,19 @@ class PortfolioDCF:
         >>> ind.amount = -0.5 * 12  # initial withdrawals amount
         >>> ind.indexation = "inflation"  # the indexation is equal to inflation
         >>> pf.dcf.cashflow_parameters = ind  # assign the strategy to Portfolio
-        >>> pf.dcf.wealth_index_fv.plot()
+        >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
         >>> plt.show()
         """
         if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._cash_flow_fv.empty:
             df = self.parent.ror
-            df = dcf_calculations.get_cash_flow_fv(
+            self._cash_flow_fv = dcf_calculations.get_cash_flow_fv(
                 ror=df,
                 portfolio_symbol=self.parent.symbol,
                 cashflow_parameters=self.cashflow_parameters,
                 task="backtest",
             )
-            self._cash_flow_fv = df
         if remove_if_wealth_index_negative:
             cash_flow_fv = self._cash_flow_fv.copy()
             wealth_index = self.wealth_index(discounting="fv", include_negative_values=False)
@@ -237,51 +237,15 @@ class PortfolioDCF:
             cash_flow_fv[condition] = 0
         else:
             cash_flow_fv = self._cash_flow_fv.copy()
-        if discounting == "fv":
+        if discounting.lower() == "fv":
             return cash_flow_fv
-        elif discounting == "pv":
+        elif discounting.lower() == "pv":
             n_rows = cash_flow_fv.shape[0]
             discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
-            cash_flow_fv = cash_flow_fv.div(discount_factors, axis=0)
-        return cash_flow_fv
-
-    @property
-    def cash_flow_ts_pv(self) -> pd.Series:
-        """
-        Wealth index Future Values (FV) time series for the portfolio with cash flow (contributions and
-        withdrawals).
-
-        Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
-        historical time period considering cash flows.
-
-        Accumulated inflation time series is added if `inflation=True` in the Portfolio.
-
-        If there is no cash flow, Wealth index is obtained from the accumulated return multiplicated
-        by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
-
-        Returns
-        -------
-            Time series of wealth index values for portfolio and accumulated inflation.
-
-        Examples
-        --------
-        >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
-        >>> ind = ok.IndexationStrategy(pf)  # Set Cash Flow Strategy parameters
-        >>> ind.initial_investment = 100  # initial investments value
-        >>> ind.frequency = "year"  # withdrawals frequency
-        >>> ind.amount = -0.5 * 12  # initial withdrawals amount
-        >>> ind.indexation = "inflation"  # the indexation is equal to inflation
-        >>> pf.dcf.cashflow_parameters = ind  # assign the strategy to Portfolio
-        >>> pf.dcf.wealth_index_fv.plot()
-        >>> plt.show()
-        """
-        cf_fv = self.cash_flow_ts_fv.copy()
-        # Vectorized discounting
-        n_rows = cf_fv.shape[0]
-        discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
-        cf_pv = cf_fv.div(discount_factors, axis=0)
-        return cf_pv
+            cash_flow_pv = cash_flow_fv.div(discount_factors, axis=0)
+            return cash_flow_pv
+        else:
+            raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
     @property
     def wealth_index_fv_with_assets(self) -> pd.DataFrame:
@@ -406,7 +370,7 @@ class PortfolioDCF:
         >>> pf.dcf.survival_date_hist(threshold=0)
         Timestamp('2015-01-31 00:00:00')
         """
-        ws = self.wealth_index_fv.loc[:, self.parent.symbol]
+        ws = self.wealth_index(discounting="fv", include_negative_values=False).loc[:, self.parent.symbol]
         # TODO: change threshold to nominal value (idea)
         return helpers.Frame.get_survival_date(ws, self.discount_rate, threshold)
 
@@ -473,8 +437,11 @@ class PortfolioDCF:
             return None
 
 
-    @property
-    def monte_carlo_wealth_fv(self) -> pd.DataFrame:
+    def monte_carlo_wealth(
+            self,
+            discounting: Literal["fv", "pv"],
+            include_negative_values: bool = True
+    ) -> pd.DataFrame:
         """
         Portfolio not discounted random wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
 
@@ -511,7 +478,7 @@ class PortfolioDCF:
             return_ts = self.parent.monte_carlo_returns_ts(
                 distr=self.mc.distribution, years=self.mc.period, n=self.mc.number
             )
-            df = return_ts.apply(
+            self._monte_carlo_wealth_fv = return_ts.apply(
                 dcf_calculations.get_wealth_indexes_fv_with_cashflow,
                 axis=0,
                 args=(
@@ -521,49 +488,90 @@ class PortfolioDCF:
                     "monte_carlo",  # calculate wealth index for Monte Carlo
                 ),
             )
-            df = df.apply(dcf_calculations.remove_negative_values, axis=0)
-            all_cells_are_nan = df.isna().all(axis=1)
-            self._monte_carlo_wealth_fv = df[~all_cells_are_nan]
-        return self._monte_carlo_wealth_fv
+        if not include_negative_values:
+            wealth_index_fv = self._monte_carlo_wealth_fv.copy()
+            wealth_index_fv = wealth_index_fv.apply(dcf_calculations.remove_negative_values, axis=0)
+            # all_cells_are_nan = wealth_index_fv.isna().all(axis=1)
+            # monte_carlo_wealth_fv = wealth_index_fv[~all_cells_are_nan]
+            monte_carlo_wealth_fv = wealth_index_fv.fillna(0)
+        else:
+            monte_carlo_wealth_fv = self._monte_carlo_wealth_fv.copy()
+        if discounting.lower() == "fv":
+            return monte_carlo_wealth_fv
+        elif discounting.lower() == "pv":
+            n_rows = monte_carlo_wealth_fv.shape[0]
+            discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
+            monte_carlo_wealth_pv = monte_carlo_wealth_fv.div(discount_factors, axis=0)
+            return monte_carlo_wealth_pv
+        else:
+            raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
-    @property
-    def monte_carlo_wealth_pv(self) -> pd.DataFrame:
+
+    def monte_carlo_cash_flow(
+            self,
+            discounting: Literal["fv", "pv"],
+            remove_if_wealth_index_negative: bool = True
+    ) -> pd.DataFrame:
         """
-        Portfolio discounted random wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
+        Portfolio not discounted random wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
 
-        Random Monte Carlo simulation monthly time series are discounted using `discount_rate` parameter.
+        Monte Carlo simulation generates n random monthly time series (not discounted).
         Each wealth index is calculated with rate of return time series of a given distribution.
 
-        `discount_rate` parameter can be set in Portfolio.dcf.discount_rate.
-
-        Monte Carlo parameters are defined by Portfolio.dcf.set_mc_parameters() method.
+        First date of forecasted returns is portfolio last_date.
+        First value for the forecasted wealth indexes is the last historical portfolio index value. It is useful
+        for a chart with historical wealth index and forecasted values.
 
         Returns
         -------
         DataFrame
-            Table with random discounted wealth indexes monthly time series.
+            Table with n random wealth indexes monthly time series.
 
         Examples
         --------
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
-        >>> pc = ok.PercentageStrategy(pf)  # Define withdrawals strategy with fixed percentage
-        >>> pc.frequency = "year"  # set withdrawals frequency
-        >>> pc.percentage = -0.08  # investor would take 8% every year
-        >>> pf.dcf.cashflow_parameters = pc  # Assign the strategy to Portfolio
-        >>> pf.dcf.discount_rate = 0.05  # set dicount rate value to 5%
         >>> pf.dcf.set_mc_parameters(distribution="t", period=10, number=100)  # Set Monte Carlo parameters
-        >>> df = pf.dcf.monte_carlo_wealth_pv  # calculate discounted random wealth indexes
-        >>> df.plot()  # create a chart
-        >>> plt.legend("")  # no legend is required
+        >>> # set cash flow parameters
+        >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
+        >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
+        >>> ind.amount = -500  # set withdrawal size
+        >>> ind.frequency = "year"  # set withdrawal frequency
+        >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
+        >>> pf.dcf.monte_carlo_wealth_fv.plot()
+        >>> plt.legend("")  # don't show legend for each line
         >>> plt.show()
         """
-        wealth_df = self.monte_carlo_wealth_fv.copy()
-        # Vectorized discounting
-        n_rows = wealth_df.shape[0]
-        discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
-        wealth_df_pv = wealth_df.div(discount_factors, axis=0)
-        return wealth_df_pv
+        if self.cashflow_parameters is None:
+            raise AttributeError("'cashflow_parameters' is not defined.")
+        if self._monte_carlo_cash_flow_fv.empty:
+            return_ts = self.parent.monte_carlo_returns_ts(
+                distr=self.mc.distribution, years=self.mc.period, n=self.mc.number
+            )
+            self._monte_carlo_cash_flow_fv = return_ts.apply(
+                dcf_calculations.get_cash_flow_fv,
+                axis=0,
+                args=(
+                    self.parent.symbol,  # portfolio_symbol
+                    self.cashflow_parameters,
+                    "monte_carlo",  # task
+                ),
+            )
+        if remove_if_wealth_index_negative:
+            mc_cash_flow_fv = self._monte_carlo_cash_flow_fv.copy()
+            mc_wealth_index = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+            condition = mc_wealth_index == 0
+            mc_cash_flow_fv[condition] = 0
+        else:
+            mc_cash_flow_fv = self._monte_carlo_cash_flow_fv.copy()
+        if discounting.lower() == "fv":
+            return mc_cash_flow_fv
+        elif discounting.lower() == "pv":
+            n_rows = mc_cash_flow_fv.shape[0]
+            discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
+            return mc_cash_flow_fv.div(discount_factors, axis=0)
+        else:
+            raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
     def plot_forecast_monte_carlo(
         self,
@@ -612,7 +620,7 @@ class PortfolioDCF:
             if self.cashflow_parameters is None:
                 raise AttributeError("'cashflow_parameters' is not defined.")
             backup_obj = self.cashflow_parameters
-            s1 = self.wealth_index_fv[self.parent.symbol]
+            s1 = self.wealth_index(discounting="fv", include_negative_values=False)[self.parent.symbol]
             s1.plot(legend=None, figsize=figsize)
             last_backtest_value = s1.iloc[-1]
             if last_backtest_value > 0:

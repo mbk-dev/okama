@@ -11,13 +11,13 @@ def test_dcf_discount_rate(portfolio_dcf, portfolio_dcf_no_inflation, portfolio_
 
 
 def test_wealth_index(portfolio_dcf_indexation):
-    assert portfolio_dcf_indexation.wealth_index_fv.iloc[0, 0] == 10_000
-    assert portfolio_dcf_indexation.wealth_index_fv.iloc[-1, 0] == approx(11047.67, rel=1e-2)
+    assert portfolio_dcf_indexation.wealth_index(discounting="fv", include_negative_values=False).iloc[0, 0] == 10_000
+    assert portfolio_dcf_indexation.wealth_index(discounting="fv", include_negative_values=False).iloc[-1, 0] == approx(11047.67, rel=1e-2)
 
 
 def test_wealth_index_time_series_strategy(portfolio_dcf_time_series):
-    assert portfolio_dcf_time_series.wealth_index_fv.iloc[0, 0] == 1_000
-    assert portfolio_dcf_time_series.wealth_index_fv.iloc[-1, 0] == approx(5214.73, rel=1e-2)
+    assert portfolio_dcf_time_series.wealth_index(discounting="fv", include_negative_values=False).iloc[0, 0] == 1_000
+    assert portfolio_dcf_time_series.wealth_index(discounting="fv", include_negative_values=False).iloc[-1, 0] == approx(5214.73, rel=1e-2)
 
 
 def test_wealth_index_with_assets(portfolio_dcf_percentage):

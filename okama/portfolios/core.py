@@ -389,7 +389,7 @@ class Portfolio(make_asset_list.ListMaker):
         --------
         >>> import matplotlib.pyplot as plt
         >>> x = ok.Portfolio(['SPY.US', 'BND.US'])
-        >>> x.wealth_index_fv.plot()
+        >>> x.wealth_index(discounting="fv", include_negative_values=False).plot()
         >>> plt.show()
         """
         df = self._add_inflation()

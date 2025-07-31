@@ -35,7 +35,7 @@ class MonteCarlo:
     >>> pf.dcf.cashflow_parameters = ind
     >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
     >>> # Plot wealth index with cash flow
-    >>> pf.dcf.wealth_index_fv.plot()
+    >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
     >>> plt.show()
     """
 
@@ -113,4 +113,5 @@ class MonteCarlo:
         self._mc_number = mc_number
 
     def _clear_cf_cache(self):
-        self.parent._monte_carlo_wealth_fv = pd.DataFrame()
+        self.parent._monte_carlo_wealth_fv = pd.DataFrame(dtype=float)
+        self.parent._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
