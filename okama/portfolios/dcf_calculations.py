@@ -26,6 +26,7 @@ def get_wealth_indexes_fv_with_cashflow(
     dcf_object.cashflow_parameters = cashflow_parameters
     period_initial_amount = cashflow_parameters.initial_investment
     period_initial_amount_cached = period_initial_amount
+    last_regular_cash_flow = 0
     amount = getattr(cashflow_parameters, "amount", None)
     if isinstance(ror, pd.DataFrame):
         portfolio_position = ror.columns.get_loc(portfolio_symbol)
@@ -66,6 +67,12 @@ def get_wealth_indexes_fv_with_cashflow(
                 cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "time_series":
                 cashflow = 0
+            elif cashflow_parameters.NAME == "VDS":
+                cashflow = cashflow_parameters.calculate_withdrawal_size(
+                    last_withdrawal=last_regular_cash_flow if n > 0 else 0,
+                    balance=period_initial_amount,
+                    number_of_periods=n,
+                )
             else:
                 raise ValueError("Wrong cashflow strategy name value.")
             period_initial_amount = period_initial_amount * (r + 1) + cashflow + cash_flow_ts[date]
@@ -94,6 +101,12 @@ def get_wealth_indexes_fv_with_cashflow(
                 cashflow_value = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow_value = cashflow_parameters.percentage / periods_per_year * period_initial_amount
+            elif cashflow_parameters.NAME == "VDS":
+                cashflow_value = cashflow_parameters.calculate_withdrawal_size(
+                    last_withdrawal=last_regular_cash_flow if n > 0 else 0,
+                    balance=period_initial_amount,
+                    number_of_periods=n,
+                )
             else:
                 raise ValueError("Wrong cashflow_method value.")
             period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
@@ -126,6 +139,7 @@ def get_cash_flow_fv(
     dcf_object = cashflow_parameters.parent.dcf
     dcf_object.cashflow_parameters = cashflow_parameters
     period_initial_amount = cashflow_parameters.initial_investment
+    last_regular_cash_flow = 0
     cs_fv = pd.Series(dtype=float, name="cash_flow_fv")
     amount = getattr(cashflow_parameters, "amount", None)
     if isinstance(ror, pd.DataFrame):
@@ -162,14 +176,23 @@ def get_cash_flow_fv(
         for n, row in enumerate(ror.itertuples()):
             date = row[0]
             r = row[portfolio_position + 1]
+            # Calculate regular cash flow
             if cashflow_parameters.NAME == "fixed_amount":
                 cashflow = amount * (1 + cashflow_parameters.indexation / settings._MONTHS_PER_YEAR) ** n
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "time_series":
                 cashflow = 0
+            elif cashflow_parameters.NAME == "VDS":
+                cashflow = cashflow_parameters.calculate_withdrawal_size(
+                    last_withdrawal=last_regular_cash_flow if n > 0 else 0,
+                    balance=period_initial_amount,
+                    number_of_periods=n,
+                )
             else:
                 raise ValueError("Wrong cashflow strategy name value.")
+            # add Extra Withdrawals/Contributions
+            last_regular_cash_flow = cashflow
             cs_value = cashflow + cash_flow_ts[date]
             period_initial_amount = period_initial_amount * (r + 1) + cs_value
             cs_fv[date] = cs_value
@@ -179,7 +202,7 @@ def get_cash_flow_fv(
         for n, x in enumerate(ror_cashflow_df.resample(rule=pandas_frequency, convention="start")):
             ror_ts = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
             cashflow_ts_local = x[1].loc[:, "cashflow_ts"].copy()
-            # CashFlow inside period
+            # CashFlow inside period (Extra cash flow)
             if (cashflow_ts_local != 0).any():
                 period_wealth_index = pd.Series(dtype=float, name=portfolio_symbol)
                 for k, (date, r) in enumerate(ror_ts.items()):
@@ -190,11 +213,17 @@ def get_cash_flow_fv(
                     period_wealth_index[date] = month_balance
             else:
                 period_wealth_index = period_initial_amount * (1 + ror_ts).cumprod()
-            # CashFlow END period
+            # CashFlow END period (Regular Cash Flow)
             if cashflow_parameters.NAME == "fixed_amount":
                 cashflow_value = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow_value = cashflow_parameters.percentage / periods_per_year * period_initial_amount
+            elif cashflow_parameters.NAME == "VDS":
+                cashflow_value = cashflow_parameters.calculate_withdrawal_size(
+                    last_withdrawal=last_regular_cash_flow if n > 0 else 0,
+                    balance=period_initial_amount,
+                    number_of_periods=n,
+                )
             else:
                 raise ValueError("Wrong cashflow_method value.")
             period_final_balance = period_wealth_index.iloc[-1] + cashflow_value

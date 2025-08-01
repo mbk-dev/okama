@@ -90,6 +90,7 @@ class CashFlow:
     @property
     def time_series_dic(self) -> dict:
         """
+        # TODO: rename to extra_cashflow_ts
         Cash flow time series in form of dictionary.
 
         Negative number corresponds to withdrawals, positive number corresponds to contributions.
@@ -378,27 +379,43 @@ class VanguardDynamicSpending(PercentageStrategy, IndexationStrategy):
         }
         return repr(pd.Series(dic))
 
-    def calculate_withdrawal_size(self, last_withdrawal: float, balance: float, number_of_months: int) -> float:
-        withdrawal_size_by_percentage = balance * self.percentage
-        ceiling = last_withdrawal * (1 + self.ceiling)
-        floor = last_withdrawal * (1 + self.floor)
-        min_indexed = self.minimum_annual_withdrawal * (1 + self.indexation) ** number_of_months
-        max_indexed = self.maximum_annual_withdrawal * (1 + self.indexation) ** number_of_months
+    def calculate_withdrawal_size(self, last_withdrawal: float, balance: float, number_of_periods: int) -> float:
+        """
+        Calculate regular withdrawal size (Extra Withdrawals are not taken into account).
+        """
+        # All values are postive
+        withdrawal_size_by_percentage = balance * abs(self.percentage)
+        ceiling = abs(last_withdrawal) * (1 + self.ceiling)
+        floor = abs(last_withdrawal) * (1 + self.floor)
+        min_indexed = abs(self.minimum_annual_withdrawal) * (1 + self.indexation) ** number_of_periods
+        max_indexed = abs(self.maximum_annual_withdrawal) * (1 + self.indexation) ** number_of_periods
+        # Chek what limitation is actual
+        # Upper limit
         if ceiling > max_indexed:
             max_final = max_indexed
-        else:
+        elif min_indexed < ceiling <= max_indexed:
             max_final = ceiling
-        if floor < min_indexed:
+        else:
+            # ceiling = 0
+            max_final = max_indexed
+        # Lower limit
+        if floor > min_indexed:
+            min_final = floor
+        elif 0 < floor <= min_indexed:
             min_final = min_indexed
         else:
-            min_final = floor
-
+            # floor = 0
+            min_final = min_indexed
+        # Apply the limitation to the withdrawal
         if min_final <= withdrawal_size_by_percentage <= max_final:
-            withdrawal = withdrawal_size_by_percentage
+            withdrawal = - withdrawal_size_by_percentage
+            # print(f"withdrawal by percentage. Max: {max_final: .0f}, Min: {min_final: .0f}")
         elif withdrawal_size_by_percentage > max_final:
-            withdrawal = max_final
+            withdrawal = - max_final
+            # print(f"withdrawal by max_final. By percentage was {withdrawal_size_by_percentage: .0f}")
         elif withdrawal_size_by_percentage < min_final:
-            withdrawal = min_final
+            withdrawal = - min_final
+            # print(f"withdrawal by min_final. By percentage was {withdrawal_size_by_percentage: .0f}")
         else:
             raise ValueError('Wrong withdrawal size. Check the calculation.')
         return withdrawal
