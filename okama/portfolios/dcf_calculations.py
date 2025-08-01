@@ -85,7 +85,7 @@ def get_wealth_indexes_fv_with_cashflow(
         for n, x in enumerate(ror_cashflow_df.resample(rule=pandas_frequency, convention="start")):
             ror_ts = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
             cashflow_ts_local = x[1].loc[:, "cashflow_ts"].copy()
-            # CashFlow inside period
+            # CashFlow inside period (Extra withdrawals/contributions)
             if (cashflow_ts_local != 0).any():
                 period_wealth_index = pd.Series(dtype=float, name=portfolio_symbol)
                 for k, (date, r) in enumerate(ror_ts.items()):
@@ -246,3 +246,14 @@ def remove_negative_values(input_s: pd.Series) -> pd.Series:
     except IndexError:
         pass
     return s
+
+
+def discount_monthly_cash_flow(
+        cash_flow_fv: Union[pd.Series, pd.DataFrame],
+        annual_effective_discount_rate: float
+) -> Union[pd.Series, pd.DataFrame]:
+    number_of_months = cash_flow_fv.shape[0]
+    monlthly_discount_rate = (1 + annual_effective_discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
+    discount_factors = (1.0 + monlthly_discount_rate) ** np.arange(number_of_months)
+    cash_flow_pv = cash_flow_fv.div(discount_factors, axis=0)
+    return cash_flow_pv

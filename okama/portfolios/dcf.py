@@ -60,7 +60,7 @@ class PortfolioDCF:
     @property
     def discount_rate(self) -> float:
         """
-        Portfolio cash flow discount rate.
+        Annual effective discount rate for portfolio cash flow.
 
         Returns
         -------
@@ -182,13 +182,9 @@ class PortfolioDCF:
         if discounting.lower() == "fv":
             return wealth_index_fv
         elif discounting.lower() == "pv":
-            n_rows = wealth_index_fv.shape[0]
-            discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
-            wealth_index_pv = wealth_index_fv.div(discount_factors, axis=0)
-            return wealth_index_pv
+            return dcf_calculations.discount_monthly_cash_flow(wealth_index_fv, self.discount_rate)
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
-
 
     def cash_flow_ts(self, discounting: Literal["fv", "pv"], remove_if_wealth_index_negative: bool = True) -> pd.Series:
         """
@@ -240,10 +236,7 @@ class PortfolioDCF:
         if discounting.lower() == "fv":
             return cash_flow_fv
         elif discounting.lower() == "pv":
-            n_rows = cash_flow_fv.shape[0]
-            discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
-            cash_flow_pv = cash_flow_fv.div(discount_factors, axis=0)
-            return cash_flow_pv
+            return dcf_calculations.discount_monthly_cash_flow(cash_flow_fv, self.discount_rate)
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
@@ -499,10 +492,7 @@ class PortfolioDCF:
         if discounting.lower() == "fv":
             return monte_carlo_wealth_fv
         elif discounting.lower() == "pv":
-            n_rows = monte_carlo_wealth_fv.shape[0]
-            discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
-            monte_carlo_wealth_pv = monte_carlo_wealth_fv.div(discount_factors, axis=0)
-            return monte_carlo_wealth_pv
+            return dcf_calculations.discount_monthly_cash_flow(monte_carlo_wealth_fv, self.discount_rate)
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
@@ -567,9 +557,7 @@ class PortfolioDCF:
         if discounting.lower() == "fv":
             return mc_cash_flow_fv
         elif discounting.lower() == "pv":
-            n_rows = mc_cash_flow_fv.shape[0]
-            discount_factors = (1.0 + self.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
-            return mc_cash_flow_fv.div(discount_factors, axis=0)
+            return dcf_calculations.discount_monthly_cash_flow(mc_cash_flow_fv, self.discount_rate)
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
@@ -630,12 +618,12 @@ class PortfolioDCF:
                     years = months / settings._MONTHS_PER_YEAR
                     periods = years / settings.frequency_periods_per_year[self.cashflow_parameters.frequency]
                     self.cashflow_parameters.amount *= (1.0 + self.cashflow_parameters.indexation) ** periods
-                s2 = self.monte_carlo_wealth_fv
+                s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
                 for s in s2:
                     s2[s].plot(legend=None)
             self.cashflow_parameters = backup_obj
         else:
-            s2 = self.monte_carlo_wealth_fv
+            s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
             s2.plot(legend=None)
         self.cashflow_parameters._clear_cf_cache()
 
@@ -684,7 +672,7 @@ class PortfolioDCF:
         >>> s.quantile(50 / 100)
         np.float64(17.5)
         """
-        s2 = self.monte_carlo_wealth_fv
+        s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
         dates: pd.Series = helpers.Frame.get_survival_date(s2, self.discount_rate, threshold)
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
 

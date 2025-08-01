@@ -37,13 +37,13 @@ pf.dcf.discount_rate = 0.09
 # cf_strategy.frequency = "year"  # withdrawals frequency
 # cf_strategy.percentage = -0.40
 
-# # Indexation CF strategy
-# cf_strategy = ok.IndexationStrategy(pf)
-#
-# cf_strategy.initial_investment = 83_000_000
-# cf_strategy.frequency = "year"
-# cf_strategy.amount = 1_500_000 * 12
-# cf_strategy.indexation = 0.09
+# Indexation CF strategy
+cf_strategy = ok.IndexationStrategy(pf)
+
+cf_strategy.initial_investment = 10_000_000
+cf_strategy.frequency = "year"
+cf_strategy.amount = 10_000_000 * 0.05
+cf_strategy.indexation = 0.09
 
 # d = {
 #     "2015-06": -35_000_000,
@@ -52,16 +52,16 @@ pf.dcf.discount_rate = 0.09
 # cf_strategy.time_series_dic = d
 # cf_strategy.time_series_discounted_values = False
 
-# Fixed Percentage strategy
-cf_strategy = ok.VanguardDynamicSpending(pf)
-cf_strategy.initial_investment = 10_000_000
-cf_strategy.frequency = "year"
-cf_strategy.percentage = -0.15
-cf_strategy.indexation = 0.09
-cf_strategy.maximum_annual_withdrawal = 10_000_000 / 5  # 20%
-cf_strategy.minimum_annual_withdrawal = 10_000_000 / 10  # 10%
-cf_strategy.ceiling = 0.10
-cf_strategy.floor = -0.10
+# # VDS strategy
+# cf_strategy = ok.VanguardDynamicSpending(pf)
+# cf_strategy.initial_investment = 10_000_000
+# cf_strategy.frequency = "year"
+# cf_strategy.percentage = -0.15
+# cf_strategy.indexation = 0.09
+# cf_strategy.maximum_annual_withdrawal = 10_000_000 / 5  # 20%
+# cf_strategy.minimum_annual_withdrawal = 10_000_000 / 10  # 10%
+# cf_strategy.ceiling = 0.10
+# cf_strategy.floor = -0.10
 
 pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to portfolio
 
@@ -78,27 +78,28 @@ pf.dcf.set_mc_parameters(
     number=100
 )
 
-# wi = pf.dcf.wealth_index(discounting="fv", include_negative_values=False)
-# cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True).resample("Y").sum()
-wi = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=False)
-# cf = pf.dcf.monte_carlo_cash_flow(discounting="fv", remove_if_wealth_index_negative=True)
+wi = pf.dcf.wealth_index(discounting="pv", include_negative_values=False)
+cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True)
+# wi = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+# cf = pf.dcf.monte_carlo_cash_flow(discounting="pv", remove_if_wealth_index_negative=True)
 # print(cf)
 
 wi.plot(
     # kind="bar",
     legend=False
 )
-plt.yscale('log')  # linear or log
+plt.yscale('linear')  # linear or log
 plt.show()
 
-# cf.plot(
-#     kind="bar",
-#     legend=False
-# )
-# plt.yscale('linear')  # linear or log
-# plt.show()
+df = cf
+df[df != 0].plot(
+    kind="bar",
+    legend=False
+)
+plt.yscale('linear')  # linear or log
+plt.show()
 
-
+print(df[df != 0])
 
 # df = pf.dcf.monte_carlo_wealth_fv
 # print(df)
