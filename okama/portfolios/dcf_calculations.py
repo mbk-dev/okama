@@ -81,9 +81,12 @@ def get_wealth_indexes_fv_with_cashflow(
     else:
     # Slow Calculation
         pandas_frequency = cashflow_parameters._pandas_frequency
+        months_in_full_period = settings._MONTHS_PER_YEAR / cashflow_parameters.periods_per_year
         wealth_df = pd.DataFrame(dtype=float, columns=[portfolio_symbol])
         for n, x in enumerate(ror_cashflow_df.resample(rule=pandas_frequency, convention="start")):
             ror_ts = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
+            months_local = ror_ts.shape[0]
+            period_fraction = months_local / months_in_full_period  # 1 for a full period
             cashflow_ts_local = x[1].loc[:, "cashflow_ts"].copy()
             # CashFlow inside period (Extra withdrawals/contributions)
             if (cashflow_ts_local != 0).any():
@@ -109,6 +112,7 @@ def get_wealth_indexes_fv_with_cashflow(
                 )
             else:
                 raise ValueError("Wrong cashflow_method value.")
+            cashflow_value *= period_fraction  # adjust cash flow to the period length (months)
             period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
             period_wealth_index.iloc[-1] = period_final_balance
             period_initial_amount = period_final_balance
@@ -199,8 +203,11 @@ def get_cash_flow_fv(
     else:
         # Slow Calculation
         pandas_frequency = settings.frequency_mapping[cashflow_parameters.frequency]
+        months_in_full_period = settings._MONTHS_PER_YEAR / cashflow_parameters.periods_per_year
         for n, x in enumerate(ror_cashflow_df.resample(rule=pandas_frequency, convention="start")):
             ror_ts = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
+            months_local = ror_ts.shape[0]
+            period_fraction = months_local / months_in_full_period  # 1 for a full period
             cashflow_ts_local = x[1].loc[:, "cashflow_ts"].copy()
             # CashFlow inside period (Extra cash flow)
             if (cashflow_ts_local != 0).any():
@@ -226,6 +233,7 @@ def get_cash_flow_fv(
                 )
             else:
                 raise ValueError("Wrong cashflow_method value.")
+            cashflow_value *= period_fraction  # adjust cash flow to the period length (months)
             period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
             period_wealth_index.iloc[-1] = period_final_balance
             period_initial_amount = period_final_balance
