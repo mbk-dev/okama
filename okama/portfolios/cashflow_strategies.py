@@ -19,14 +19,21 @@ class CashFlow:
         Parent Portfolio instance.
     """
 
-    def __init__(self, parent: core.Portfolio):
+    def __init__(
+            self,
+            parent: core.Portfolio,
+            frequency: Optional[str] = "none",
+            initial_investment: float = 1000.0,
+            time_series_dic: dict = {},
+            time_series_discounted_values: bool = False
+    ):
         self.parent = parent
-        self.frequency: Optional[str] = "none"
-        self.initial_investment: float = 1000.0
+        self.frequency = frequency
+        self.initial_investment = initial_investment
         self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
-        self.time_series_dic = {}
+        self.time_series_dic = time_series_dic
         self.time_series = pd.Series(dtype=float)
-        self.time_series_discounted_values = False
+        self.time_series_discounted_values = time_series_discounted_values
 
     @property
     def frequency(self) -> str:
@@ -167,13 +174,25 @@ class IndexationStrategy(CashFlow):
     NAME = "fixed_amount"
 
     def __init__(
-        self,
-        parent: core.Portfolio,
+            self,
+            parent: core.Portfolio,
+            frequency: Optional[str] = "none",
+            initial_investment: float = 1000.0,
+            time_series_dic: dict = {},
+            time_series_discounted_values: bool = False,
+            amount: float = 0,
+            indexation: Optional[Union[str, float]] = None,
     ):
-        super().__init__(parent)
+        super().__init__(
+            parent,
+            frequency=frequency,
+            initial_investment=initial_investment,
+            time_series_dic=time_series_dic,
+            time_series_discounted_values=time_series_discounted_values
+        )
         self.portfolio = self.parent
-        self.amount: float = 0
-        self.indexation: Optional[Union[str, float]] = None
+        self.amount = amount
+        self.indexation = indexation
 
     def __repr__(self):
         dic = {
@@ -260,12 +279,23 @@ class PercentageStrategy(CashFlow):
     NAME = "fixed_percentage"
 
     def __init__(
-        self,
-        parent: core.Portfolio,
+            self,
+            parent: core.Portfolio,
+            frequency: Optional[str] = "none",
+            initial_investment: float = 1000.0,
+            time_series_dic: dict = {},
+            time_series_discounted_values: bool = False,
+            percentage: float = 0.0,
     ):
-        super().__init__(parent)
+        super().__init__(
+            parent,
+            frequency=frequency,
+            initial_investment=initial_investment,
+            time_series_dic=time_series_dic,
+            time_series_discounted_values=time_series_discounted_values
+        )
         self.portfolio = self.parent
-        self.percentage = 0
+        self.percentage = percentage
 
     def __repr__(self):
         dic = {
@@ -330,10 +360,20 @@ class TimeSeriesStrategy(CashFlow):
     NAME = "time_series"
 
     def __init__(
-        self,
-        parent: core.Portfolio,
+            self,
+            parent: core.Portfolio,
+            frequency: Optional[str] = "none",
+            initial_investment: float = 0,
+            time_series_dic: dict = {},
+            time_series_discounted_values: bool = False
     ):
-        super().__init__(parent)
+        super().__init__(
+            parent,
+            frequency=frequency,
+            initial_investment=initial_investment,
+            time_series_dic=time_series_dic,
+            time_series_discounted_values=time_series_discounted_values
+        )
         self.portfolio = self.parent
 
     def __repr__(self):
@@ -345,25 +385,37 @@ class TimeSeriesStrategy(CashFlow):
         return repr(pd.Series(dic))
 
 
-class VanguardDynamicSpending(PercentageStrategy, IndexationStrategy):
+class VanguardDynamicSpending(PercentageStrategy):
     NAME = "VDS"
     def __init__(
             self,
             parent: core.Portfolio,
-            # frequency: int = 1,
-            # initial_investment: float,
-            # minimum_annual_withdrawal,
-            # maximum_annual_withdrawal,
-            # ceiling,
-            # floor,
-            # indexation,
+            # frequency: Optional[str] = "year",
+            initial_investment: float = 1000.0,
+            time_series_dic: dict = {},
+            time_series_discounted_values: bool = False,
+            percentage: float = 0.0,
+            minimum_annual_withdrawal: float = None,
+            maximum_annual_withdrawal: float = None,
+            ceiling: float = None,
+            floor: float = None,
+            indexation: Optional[Union[str, float]] = None,
     ):
-        super().__init__(parent)
+        super().__init__(
+            parent=parent,
+            frequency="year",
+            initial_investment=initial_investment,
+            time_series_dic=time_series_dic,
+            time_series_discounted_values=time_series_discounted_values,
+            percentage=percentage,
+        )
         self.portfolio = self.parent
-        self.minimum_annual_withdrawal: float = None
-        self.maximum_annual_withdrawal: float = None
-        self.ceiling: float = None
-        self.floor: float = None
+        self.minimum_annual_withdrawal = minimum_annual_withdrawal
+        self.maximum_annual_withdrawal = maximum_annual_withdrawal
+        self.ceiling = ceiling
+        self.floor = floor
+        self.indexation = indexation
+        # self._frequency = "year"
 
     def __repr__(self):
         dic = {
@@ -376,14 +428,50 @@ class VanguardDynamicSpending(PercentageStrategy, IndexationStrategy):
             "Maximum annual withdrawal": self.maximum_annual_withdrawal,  # negative
             "Ceiling": self.ceiling,  # positive
             "Floor": self.floor,  # negative
+            "Indexation": self.indexation,
         }
         return repr(pd.Series(dic))
+
+    @property
+    def frequency(self):
+        return "year"
+
+    @frequency.setter
+    def frequency(self, value):
+        if value != "year":
+            raise AttributeError("In VDS the 'frequency' can only be equal to a year.")
+        else:
+            CashFlow.frequency.fset(self, "year")
+
+    @property
+    def indexation(self) -> float:
+        """
+        Indexation rate for Minimum annual withdrawal and Minimum annual withdrawal.
+
+        Returns
+        -------
+        float
+            Indexation rate.
+        """
+        return self._indexation
+
+    @indexation.setter
+    def indexation(self, indexation: Optional[float]):
+        if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
+            self._indexation = self.portfolio.get_cagr().loc[self.portfolio.inflation]
+        elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
+            raise ValueError("There is no information about historical inflation. Set inflation=True to calculate.")
+        elif indexation is None and not hasattr(self.portfolio, "inflation"):
+            self._indexation = settings.DEFAULT_DISCOUNT_RATE
+        else:
+            validators.validate_real("indexation", indexation)
+            self._indexation = indexation
 
     def calculate_withdrawal_size(self, last_withdrawal: float, balance: float, number_of_periods: int) -> float:
         """
         Calculate regular withdrawal size (Extra Withdrawals are not taken into account).
         """
-        # All values are postive
+        # All values are positive
         withdrawal_size_by_percentage = balance * abs(self.percentage)
         ceiling = abs(last_withdrawal) * (1 + self.ceiling)
         floor = abs(last_withdrawal) * (1 + self.floor)
@@ -419,5 +507,3 @@ class VanguardDynamicSpending(PercentageStrategy, IndexationStrategy):
         else:
             raise ValueError('Wrong withdrawal size. Check the calculation.')
         return withdrawal
-
-

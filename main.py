@@ -7,8 +7,6 @@ import okama as ok
 
 import os
 
-import okama.portfolios.cashflow_strategies
-
 os.environ["PYTHONWARNINGS"] = "ignore::FutureWarning"
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -30,12 +28,12 @@ pf = ok.Portfolio(
     symbol="My_portfolio.PF",
 )
 pf.dcf.discount_rate = 0.09
-# Percentage CF strategy
-cf_strategy = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
-
-cf_strategy.initial_investment = 83_000_000  # initial investments size
-cf_strategy.frequency = "year"  # withdrawals frequency
-cf_strategy.percentage = -0.09
+# # Percentage CF strategy
+# cf_strategy = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
+#
+# cf_strategy.initial_investment = 83_000_000  # initial investments size
+# cf_strategy.frequency = "year"  # withdrawals frequency
+# cf_strategy.percentage = -0.09
 
 # # Indexation CF strategy
 # cf_strategy = ok.IndexationStrategy(pf)
@@ -45,23 +43,25 @@ cf_strategy.percentage = -0.09
 # cf_strategy.amount = 10_000_000 * 0.05
 # cf_strategy.indexation = 0.09
 
-# d = {
-#     "2015-06": -35_000_000,
-# }
+d = {
+    "2015-06": -35_000_000,
+}
 #
 # cf_strategy.time_series_dic = d
 # cf_strategy.time_series_discounted_values = False
 
-# # VDS strategy
-# cf_strategy = ok.VanguardDynamicSpending(pf)
-# cf_strategy.initial_investment = 10_000_000
-# cf_strategy.frequency = "year"
-# cf_strategy.percentage = -0.15
-# cf_strategy.indexation = 0.09
-# cf_strategy.maximum_annual_withdrawal = 10_000_000 / 5  # 20%
-# cf_strategy.minimum_annual_withdrawal = 10_000_000 / 10  # 10%
-# cf_strategy.ceiling = 0.10
-# cf_strategy.floor = -0.10
+# VDS strategy
+cf_strategy = ok.VanguardDynamicSpending(pf, time_series_dic=d)
+cf_strategy.initial_investment = 10_000_000
+cf_strategy.frequency = "month"
+cf_strategy.percentage = -0.15
+cf_strategy.indexation = 0.09
+cf_strategy.maximum_annual_withdrawal = 10_000_000 / 5  # 20%
+cf_strategy.minimum_annual_withdrawal = 10_000_000 / 10  # 10%
+cf_strategy.ceiling = 0.10
+cf_strategy.floor = -0.10
+# cf_strategy.time_series_dic = d
+cf_strategy.time_series_discounted_values = False
 
 pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to portfolio
 
@@ -71,34 +71,35 @@ pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to por
 #     number_of_periods=1
 # )
 
-# print(w)
-pf.dcf.set_mc_parameters(
-    distribution="norm",
-    period=15,
-    number=100
-)
+# print(pf.dcf.cashflow_parameters)
+# # pf.dcf.set_mc_parameters(
+# #     distribution="norm",
+# #     period=15,
+# #     number=100
+# # )
+print(pf.dcf.cashflow_parameters.time_series_dic)
 
 # wi = pf.dcf.wealth_index(discounting="pv", include_negative_values=False)
 # cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True)
-wi = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=False)
-cf = pf.dcf.monte_carlo_cash_flow(discounting="pv", remove_if_wealth_index_negative=True)
+# wi = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+# cf = pf.dcf.monte_carlo_cash_flow(discounting="pv", remove_if_wealth_index_negative=True)
 
-wi.plot(
-    # kind="bar",
-    legend=False
-)
-plt.yscale('linear')  # linear or log
-plt.show()
+# wi.plot(
+#     # kind="bar",
+#     legend=False
+# )
+# plt.yscale('linear')  # linear or log
+# plt.show()
+#
+# df = cf[0]
+# df[df != 0].plot(
+#     kind="bar",
+#     legend=False
+# )
+# plt.yscale('linear')  # linear or log
+# plt.show()
 
-df = cf[0]
-df[df != 0].plot(
-    kind="bar",
-    legend=False
-)
-plt.yscale('linear')  # linear or log
-plt.show()
-
-print(df[df != 0])
+# print(df[df != 0])
 
 # df = pf.dcf.monte_carlo_wealth_fv
 # print(df)
