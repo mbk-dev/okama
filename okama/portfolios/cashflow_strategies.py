@@ -29,8 +29,8 @@ class CashFlow:
             time_series_discounted_values: bool = False
     ):
         self.parent = parent
-        self.frequency = frequency
-        self.initial_investment = initial_investment
+        self._frequency = frequency
+        self._initial_investment = initial_investment
         self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
         self.time_series_dic = time_series_dic
         self.time_series = pd.Series(dtype=float)
@@ -192,8 +192,8 @@ class IndexationStrategy(CashFlow):
             time_series_discounted_values=time_series_discounted_values
         )
         self.portfolio = self.parent
-        self.amount = amount
-        self.indexation = indexation
+        self._amount = amount
+        self._indexation = indexation
 
     def __repr__(self):
         dic = {
@@ -297,7 +297,7 @@ class PercentageStrategy(CashFlow):
             time_series_discounted_values=time_series_discounted_values
         )
         self.portfolio = self.parent
-        self.percentage = percentage
+        self._percentage = percentage
 
     def __repr__(self):
         dic = {
@@ -411,7 +411,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         self.portfolio = self.parent
         self._min_max_annual_withdrawals = min_max_annual_withdrawal
         self._floor_ceiling = floor_ceiling
-        self.indexation = indexation
+        self._indexation = indexation
 
     def __repr__(self):
         dic = {
