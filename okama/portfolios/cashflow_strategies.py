@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Optional, Union
 
 import pandas as pd
@@ -248,6 +249,7 @@ class IndexationStrategy(CashFlow):
             self._indexation = settings.DEFAULT_DISCOUNT_RATE
         else:
             validators.validate_real("indexation", indexation)
+            self._clear_cf_cache()
             self._indexation = indexation
 
 
@@ -390,15 +392,12 @@ class VanguardDynamicSpending(PercentageStrategy):
     def __init__(
             self,
             parent: core.Portfolio,
-            # frequency: Optional[str] = "year",
             initial_investment: float = 1000.0,
             time_series_dic: dict = {},
             time_series_discounted_values: bool = False,
             percentage: float = 0.0,
-            minimum_annual_withdrawal: float = None,
-            maximum_annual_withdrawal: float = None,
-            ceiling: float = None,
-            floor: float = None,
+            min_max_annual_withdrawal: Optional[tuple[float, float]] = None,
+            floor_ceiling: Optional[tuple[float, float]] = None,
             indexation: Optional[Union[str, float]] = None,
     ):
         super().__init__(
@@ -410,12 +409,9 @@ class VanguardDynamicSpending(PercentageStrategy):
             percentage=percentage,
         )
         self.portfolio = self.parent
-        self.minimum_annual_withdrawal = minimum_annual_withdrawal
-        self.maximum_annual_withdrawal = maximum_annual_withdrawal
-        self.ceiling = ceiling
-        self.floor = floor
+        self._min_max_annual_withdrawals = min_max_annual_withdrawal
+        self._floor_ceiling = floor_ceiling
         self.indexation = indexation
-        # self._frequency = "year"
 
     def __repr__(self):
         dic = {
@@ -424,7 +420,7 @@ class VanguardDynamicSpending(PercentageStrategy):
             "Cash flow frequency": self.frequency,
             "Cash flow strategy": self.NAME,
             "Cash flow percentage": self.percentage,  # negative
-            "Minimum annual withdrawal": self.minimum_annual_withdrawal,  # negative
+            "Minimum annual withdrawal": self.min_max_annual_withdrawals,  # negative
             "Maximum annual withdrawal": self.maximum_annual_withdrawal,  # negative
             "Ceiling": self.ceiling,  # positive
             "Floor": self.floor,  # negative
@@ -442,6 +438,46 @@ class VanguardDynamicSpending(PercentageStrategy):
             raise AttributeError("In VDS the 'frequency' can only be equal to a year.")
         else:
             CashFlow.frequency.fset(self, "year")
+
+    @property
+    def min_max_annual_withdrawals(self):
+        return self._min_max_annual_withdrawals
+
+    @min_max_annual_withdrawals.setter
+    def min_max_annual_withdrawals(self, value: Optional[tuple[float, float]]):
+        if not isinstance(value, tuple):
+            raise TypeError("min_max_annual_withdrawals must be a tuple (float, float).")
+        min_w = value[0]
+        max_w = value[1]
+        validators.validate_real("minimum annual withdrawal", min_w)
+        validators.validate_real("maximum annual withdrawal", max_w)
+        if min_w < 0:
+            raise ValueError("Min withdrawal cannot be negative.")
+        if max_w < 0:
+            raise ValueError("Max withdrawal cannot be negative.")
+        if min_w > max_w:
+            raise ValueError("Minimum withdrawal cannot be greater than maximum withdrawal.")
+        self._clear_cf_cache()
+        self._min_max_annual_withdrawals = value
+
+    @property
+    def floor_ceiling(self):
+        return self._floor_ceiling
+
+    @floor_ceiling.setter
+    def floor_ceiling(self, value: Optional[tuple[float, float]]):
+        if not isinstance(value, tuple):
+            raise TypeError("floor_ceiling must be a tuple (float, float).")
+        floor = value[0]
+        ceiling = value[1]
+        validators.validate_real("floor", floor)
+        validators.validate_real("ceiling", ceiling)
+        if floor > 0:
+            raise ValueError("Floor cannot be positive.")
+        if ceiling < 0:
+            raise ValueError("Ceiling cannot be negative.")
+        self._clear_cf_cache()
+        self._floor_ceiling = value
 
     @property
     def indexation(self) -> float:
@@ -465,6 +501,7 @@ class VanguardDynamicSpending(PercentageStrategy):
             self._indexation = settings.DEFAULT_DISCOUNT_RATE
         else:
             validators.validate_real("indexation", indexation)
+            self._clear_cf_cache()
             self._indexation = indexation
 
     def calculate_withdrawal_size(self, last_withdrawal: float, balance: float, number_of_periods: int) -> float:
@@ -473,27 +510,44 @@ class VanguardDynamicSpending(PercentageStrategy):
         """
         # All values are positive
         withdrawal_size_by_percentage = balance * abs(self.percentage)
-        ceiling = abs(last_withdrawal) * (1 + self.ceiling)
-        floor = abs(last_withdrawal) * (1 + self.floor)
-        min_indexed = abs(self.minimum_annual_withdrawal) * (1 + self.indexation) ** number_of_periods
-        max_indexed = abs(self.maximum_annual_withdrawal) * (1 + self.indexation) ** number_of_periods
+        if self.floor_ceiling is not None:
+            floor = self.floor_ceiling[0]
+            ceiling = self.floor_ceiling[1]
+            floor_indexed = abs(last_withdrawal) * (1 + floor)
+            ceiling_indexed = abs(last_withdrawal) * (1 + ceiling)
+        if self.min_max_annual_withdrawals is not None:
+            min_withdrawal = self.min_max_annual_withdrawals[0]
+            min_indexed = abs(min_withdrawal) * (1 + self.indexation) ** number_of_periods
+            max_withdrawal = self.maximum_annual_withdrawal[1]
+            max_indexed = abs(max_withdrawal) * (1 + self.indexation) ** number_of_periods
         # Chek what limitation is actual
-        # Upper limit
-        if ceiling > max_indexed:
-            max_final = max_indexed
-        elif min_indexed < ceiling <= max_indexed:
-            max_final = ceiling
-        else:
-            # ceiling = 0
-            max_final = max_indexed
-        # Lower limit
-        if floor > min_indexed:
-            min_final = floor
-        elif 0 < floor <= min_indexed:
+        if self.floor_ceiling is not None and self.min_max_annual_withdrawals is not None:
+            # Upper limit
+            if ceiling_indexed > max_indexed:
+                max_final = max_indexed
+            elif min_indexed < ceiling_indexed <= max_indexed:
+                max_final = ceiling_indexed
+            else:
+                # ceiling = 0
+                max_final = max_indexed
+            # Lower limit
+            if floor_indexed > min_indexed:
+                min_final = floor_indexed
+            elif 0 < floor_indexed <= min_indexed:
+                min_final = min_indexed
+            else:
+                # floor = 0
+                min_final = min_indexed
+        elif self.floor_ceiling is None and self.min_max_annual_withdrawals is not None:
             min_final = min_indexed
+            max_final = max_indexed
+        elif self.floor_ceiling is not None and self.min_max_annual_withdrawals is None:
+            min_final = floor_indexed
+            max_final = ceiling_indexed
         else:
-            # floor = 0
-            min_final = min_indexed
+            # no limits
+            min_final = -math.inf
+            max_final = math.inf
         # Apply the limitation to the withdrawal
         if min_final <= withdrawal_size_by_percentage <= max_final:
             withdrawal = - withdrawal_size_by_percentage

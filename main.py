@@ -53,13 +53,11 @@ d = {
 # VDS strategy
 cf_strategy = ok.VanguardDynamicSpending(pf, time_series_dic=d)
 cf_strategy.initial_investment = 10_000_000
-cf_strategy.frequency = "month"
+cf_strategy.frequency = "year"
 cf_strategy.percentage = -0.15
 cf_strategy.indexation = 0.09
-cf_strategy.maximum_annual_withdrawal = 10_000_000 / 5  # 20%
-cf_strategy.minimum_annual_withdrawal = 10_000_000 / 10  # 10%
-cf_strategy.ceiling = 0.10
-cf_strategy.floor = -0.10
+cf_strategy.min_max_annual_withdrawal = 10_000_000 / 5,  10_000_000 / 10 # 20%, 10%
+cf_strategy.floor_ceiling = -0.10, 0.20
 # cf_strategy.time_series_dic = d
 cf_strategy.time_series_discounted_values = False
 
