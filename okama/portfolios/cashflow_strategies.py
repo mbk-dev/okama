@@ -420,10 +420,10 @@ class VanguardDynamicSpending(PercentageStrategy):
             "Cash flow frequency": self.frequency,
             "Cash flow strategy": self.NAME,
             "Cash flow percentage": self.percentage,  # negative
-            "Minimum annual withdrawal": self.min_max_annual_withdrawals,  # negative
-            "Maximum annual withdrawal": self.maximum_annual_withdrawal,  # negative
-            "Ceiling": self.ceiling,  # positive
-            "Floor": self.floor,  # negative
+            "Minimum annual withdrawal": self.min_max_annual_withdrawals[0] if self.min_max_annual_withdrawals is not None else None,  # positive
+            "Maximum annual withdrawal": self.min_max_annual_withdrawals[1] if self.min_max_annual_withdrawals is not None else None,  # positive
+            "Floor": self.floor_ceiling[0] if self.floor_ceiling is not None else None,  # negative
+            "Ceiling": self.floor_ceiling[1] if self.floor_ceiling is not None else None,  # positive
             "Indexation": self.indexation,
         }
         return repr(pd.Series(dic))
@@ -472,10 +472,10 @@ class VanguardDynamicSpending(PercentageStrategy):
         ceiling = value[1]
         validators.validate_real("floor", floor)
         validators.validate_real("ceiling", ceiling)
-        if floor > 0:
-            raise ValueError("Floor cannot be positive.")
-        if ceiling < 0:
-            raise ValueError("Ceiling cannot be negative.")
+        if floor >= 0:
+            raise ValueError("Floor must be negative.")
+        if ceiling <= 0:
+            raise ValueError("Ceiling must be positive.")
         self._clear_cf_cache()
         self._floor_ceiling = value
 
@@ -518,7 +518,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         if self.min_max_annual_withdrawals is not None:
             min_withdrawal = self.min_max_annual_withdrawals[0]
             min_indexed = abs(min_withdrawal) * (1 + self.indexation) ** number_of_periods
-            max_withdrawal = self.maximum_annual_withdrawal[1]
+            max_withdrawal = self.min_max_annual_withdrawals[1]
             max_indexed = abs(max_withdrawal) * (1 + self.indexation) ** number_of_periods
         # Chek what limitation is actual
         if self.floor_ceiling is not None and self.min_max_annual_withdrawals is not None:
@@ -536,7 +536,7 @@ class VanguardDynamicSpending(PercentageStrategy):
             elif 0 < floor_indexed <= min_indexed:
                 min_final = min_indexed
             else:
-                # floor = 0
+                # floor_indexed & ceiling_indexed = 0 for the first withdrawal (last_withdrawal = 0)
                 min_final = min_indexed
         elif self.floor_ceiling is None and self.min_max_annual_withdrawals is not None:
             min_final = min_indexed
