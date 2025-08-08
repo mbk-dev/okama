@@ -275,6 +275,7 @@ class EfficientFrontierReb(asset_list.AssetList):
     def verbose(self, verbose: bool):
         if not isinstance(verbose, bool):
             raise ValueError("verbose should be True or False")
+        self._clear_cache()
         self._verbose = verbose
 
     @property

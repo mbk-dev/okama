@@ -187,16 +187,9 @@ def get_cash_flow_fv(
                 cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "time_series":
                 cashflow = 0
-            elif cashflow_parameters.NAME == "VDS":
-                cashflow = cashflow_parameters.calculate_withdrawal_size(
-                    last_withdrawal=last_regular_cash_flow if n > 0 else 0,
-                    balance=period_initial_amount,
-                    number_of_periods=n,
-                )
             else:
                 raise ValueError("Wrong cashflow strategy name value.")
             # add Extra Withdrawals/Contributions
-            last_regular_cash_flow = cashflow
             cs_value = cashflow + cash_flow_ts[date]
             period_initial_amount = period_initial_amount * (r + 1) + cs_value
             cs_fv[date] = cs_value
@@ -234,6 +227,7 @@ def get_cash_flow_fv(
             else:
                 raise ValueError("Wrong cashflow_method value.")
             cashflow_value *= period_fraction  # adjust cash flow to the period length (months)
+            last_regular_cash_flow = cashflow_value
             period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
             period_wealth_index.iloc[-1] = period_final_balance
             period_initial_amount = period_final_balance

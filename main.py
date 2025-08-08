@@ -43,23 +43,22 @@ pf.dcf.discount_rate = 0.09
 # cf_strategy.amount = 10_000_000 * 0.05
 # cf_strategy.indexation = 0.09
 
-d = {
-    "2015-06": -35_000_000,
-}
+# d = {
+#     "2015-06": -35_000_000,
+# }
 #
 # cf_strategy.time_series_dic = d
 # cf_strategy.time_series_discounted_values = False
 
 # VDS strategy
-cf_strategy = ok.VanguardDynamicSpending(pf, time_series_dic=d)
-cf_strategy.initial_investment = 10_000_000
-cf_strategy.frequency = "year"
-cf_strategy.percentage = -0.15
+cf_strategy = ok.VanguardDynamicSpending(pf)
+cf_strategy.initial_investment = 1_000_000
+cf_strategy.percentage = -0.08
 cf_strategy.indexation = 0.09
-cf_strategy.min_max_annual_withdrawal = 10_000_000 / 5,  10_000_000 / 10 # 20%, 10%
+# cf_strategy.min_max_annual_withdrawal = 10_000_000 / 5,  10_000_000 / 10 # 20%, 10%
 cf_strategy.floor_ceiling = -0.10, 0.20
 # cf_strategy.time_series_dic = d
-cf_strategy.time_series_discounted_values = False
+# cf_strategy.time_series_discounted_values = False
 
 pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to portfolio
 
@@ -75,13 +74,14 @@ pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to por
 # #     period=15,
 # #     number=100
 # # )
-print(pf.dcf.cashflow_parameters.time_series_dic)
+# print(pf.dcf.cashflow_parameters.time_series_dic)
 
 # wi = pf.dcf.wealth_index(discounting="pv", include_negative_values=False)
-# cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True)
+cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True).resample("Y").sum()
 # wi = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=False)
 # cf = pf.dcf.monte_carlo_cash_flow(discounting="pv", remove_if_wealth_index_negative=True)
-
+print(cf)
+print(cf.pct_change())
 # wi.plot(
 #     # kind="bar",
 #     legend=False
