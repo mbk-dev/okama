@@ -34,6 +34,8 @@ def get_wealth_indexes_fv_with_cashflow(
         # for Series
         portfolio_position = 0
         ror = ror.to_frame()
+    if cashflow_parameters.NAME == "CWID":
+        drawdowns = helpers.Frame.get_drawdowns(ror.iloc[:, portfolio_position])
     cash_flow_ts = dcf_object.cashflow_parameters.time_series
     # check if iteration needed
     cashflow_iterate_condition = not (cash_flow_ts.empty or (cash_flow_ts == 0).all())
@@ -67,12 +69,6 @@ def get_wealth_indexes_fv_with_cashflow(
                 cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "time_series":
                 cashflow = 0
-            elif cashflow_parameters.NAME == "VDS":
-                cashflow = cashflow_parameters.calculate_withdrawal_size(
-                    last_withdrawal=last_regular_cash_flow if n > 0 else 0,
-                    balance=period_initial_amount,
-                    number_of_periods=n,
-                )
             else:
                 raise ValueError("Wrong cashflow strategy name value.")
             period_initial_amount = period_initial_amount * (r + 1) + cashflow + cash_flow_ts[date]
@@ -88,6 +84,7 @@ def get_wealth_indexes_fv_with_cashflow(
             months_local = ror_ts.shape[0]
             period_fraction = months_local / months_in_full_period  # 1 for a full period
             cashflow_ts_local = x[1].loc[:, "cashflow_ts"].copy()
+            last_date = ror_ts.index[-1]
             # CashFlow inside period (Extra withdrawals/contributions)
             if (cashflow_ts_local != 0).any():
                 period_wealth_index = pd.Series(dtype=float, name=portfolio_symbol)
@@ -110,6 +107,15 @@ def get_wealth_indexes_fv_with_cashflow(
                     balance=period_initial_amount,
                     number_of_periods=n,
                 )
+            elif cashflow_parameters.NAME == "CWID":
+                regular_withdrawal = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
+                if drawdowns[last_date] < 0:
+                    cashflow_value = cashflow_parameters.calculate_withdrawal_size(
+                        drawdown=drawdowns[last_date],
+                        regular_withdrawal=regular_withdrawal,
+                    )
+                else:
+                    cashflow_value = regular_withdrawal
             else:
                 raise ValueError("Wrong cashflow_method value.")
             cashflow_value *= period_fraction  # adjust cash flow to the period length (months)
@@ -146,6 +152,8 @@ def get_cash_flow_fv(
     last_regular_cash_flow = 0
     cs_fv = pd.Series(dtype=float, name="cash_flow_fv")
     amount = getattr(cashflow_parameters, "amount", None)
+    if cashflow_parameters.NAME == "CWID":
+        drawdowns = helpers.Frame.get_drawdowns(ror)
     if isinstance(ror, pd.DataFrame):
         portfolio_position = ror.columns.get_loc(portfolio_symbol)
     else:
@@ -171,7 +179,7 @@ def get_cash_flow_fv(
         else:
             raise ValueError(f"Unknown task: {task}. It must be 'monte_carlo' or 'backtest'")
     else:
-        ror_cashflow_df = ror.to_frame() if not isinstance(ror, pd.DataFrame) else ror
+        ror_cashflow_df = ror
         ror_cashflow_df.loc[:, "cashflow_ts"] = 0
     cash_flow_ts = ror_cashflow_df["cashflow_ts"]  # cash flow monthly time series
     periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
@@ -202,6 +210,7 @@ def get_cash_flow_fv(
             months_local = ror_ts.shape[0]
             period_fraction = months_local / months_in_full_period  # 1 for a full period
             cashflow_ts_local = x[1].loc[:, "cashflow_ts"].copy()
+            last_date = ror_ts.index[-1]
             # CashFlow inside period (Extra cash flow)
             if (cashflow_ts_local != 0).any():
                 period_wealth_index = pd.Series(dtype=float, name=portfolio_symbol)
@@ -224,6 +233,15 @@ def get_cash_flow_fv(
                     balance=period_initial_amount,
                     number_of_periods=n,
                 )
+            elif cashflow_parameters.NAME == "CWID":
+                regular_withdrawal = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
+                if drawdowns[last_date] < 0:
+                    cashflow_value = cashflow_parameters.calculate_withdrawal_size(
+                        drawdown = drawdowns[last_date],
+                        regular_withdrawal = regular_withdrawal,
+                    )
+                else:
+                    cashflow_value = regular_withdrawal
             else:
                 raise ValueError("Wrong cashflow_method value.")
             cashflow_value *= period_fraction  # adjust cash flow to the period length (months)

@@ -197,6 +197,7 @@ class IndexationStrategy(CashFlow):
 
     def __repr__(self):
         dic = {
+            "Strategy name": self.NAME,
             "Portfolio symbol": self.parent.symbol,
             "Cash flow initial investment": self.initial_investment,
             "Cash flow frequency": self.frequency,
@@ -301,6 +302,7 @@ class PercentageStrategy(CashFlow):
 
     def __repr__(self):
         dic = {
+            "Strategy name": self.NAME,
             "Portfolio symbol": self.parent.symbol,
             "Cash flow initial investment": self.initial_investment,
             "Cash flow frequency": self.frequency,
@@ -380,6 +382,7 @@ class TimeSeriesStrategy(CashFlow):
 
     def __repr__(self):
         dic = {
+            "Strategy name": self.NAME,
             "Portfolio symbol": self.portfolio.symbol,
             "Cash flow initial investment": self.initial_investment,
             "Cash flow strategy": self.NAME,
@@ -419,6 +422,7 @@ class VanguardDynamicSpending(PercentageStrategy):
 
     def __repr__(self):
         dic = {
+            "Strategy name": self.NAME,
             "Portfolio symbol": self.parent.symbol,
             "Cash flow initial investment": self.initial_investment,
             "Cash flow frequency": self.frequency,
@@ -590,3 +594,88 @@ class VanguardDynamicSpending(PercentageStrategy):
         else:
             raise ValueError('Wrong withdrawal size. Check the calculation.')
         return withdrawal
+
+class CutWithdrawalsIfDrawdown(IndexationStrategy):
+    NAME = "CWID"
+    def __init__(
+            self,
+            parent: core.Portfolio,
+            initial_investment: float = 1000.0,
+            time_series_dic: dict = {},
+            time_series_discounted_values: bool = False,
+            amount: float = 0.0,
+            indexation: Optional[Union[str, float]] = None,
+            crash_threshold_reduction: list[tuple[float, float]] = [(.20, .40), (.50, 1)],
+    ):
+        super().__init__(
+            parent=parent,
+            frequency="year",
+            initial_investment=initial_investment,
+            time_series_dic=time_series_dic,
+            time_series_discounted_values=time_series_discounted_values,
+            amount=amount,
+        )
+        self._crash_threshold_reduction_series = None
+        self.portfolio = self.parent
+        self._indexation = indexation
+        self._crash_threshold_reduction = crash_threshold_reduction
+        self._crash_threshold_reduction_series = self.make_series_from_list(self.crash_threshold_reduction)
+
+    def __repr__(self):
+        dic = {
+            "Strategy name": self.NAME,
+            "Portfolio symbol": self.parent.symbol,
+            "Cash flow initial investment": self.initial_investment,
+            "Cash flow frequency": self.frequency,
+            "Cash flow strategy": self.NAME,
+            "Cash flow amount": self.amount,
+            "Cash flow indexation": self.indexation,
+            "Crash threshold reduction": self.crash_threshold_reduction
+        }
+        return repr(pd.Series(dic))
+
+    @property
+    def frequency(self):
+        return "year"
+
+    @frequency.setter
+    def frequency(self, value):
+        if value != "year":
+            raise AttributeError("In CWAC the 'frequency' can only be equal to a year.")
+        else:
+            CashFlow.frequency.fset(self, "year")
+
+    @property
+    def crash_threshold_reduction(self):
+        return self._crash_threshold_reduction
+
+    @crash_threshold_reduction.setter
+    def crash_threshold_reduction(self, value):
+        self._clear_cf_cache()
+        self._crash_threshold_reduction_series = self.make_series_from_list(value)
+        for threshold, reduction in self._crash_threshold_reduction_series.items():
+            validators.validate_real("threshold", threshold)
+            validators.validate_real("reduction", reduction)
+            if abs(threshold) >= 1 or threshold == 0:
+                raise ValueError('crash_threshold_reduction first values (threshold) must be in the interval (0, 1).')
+            if abs(reduction) > 1:
+                raise ValueError('crash_threshold_reduction second values (reductiuon) must be in the interval [0, 1].')
+        self._crash_threshold_reduction = value
+
+
+    def calculate_withdrawal_size(self, drawdown: float, regular_withdrawal: float) -> float:
+        """
+        Calculate regular withdrawal size (Extra Withdrawals are not taken into account).
+        """
+        withdrawal = abs(regular_withdrawal)
+        for threshold, reduction in self._crash_threshold_reduction_series.items():
+            if abs(drawdown) >= threshold:
+                withdrawal *= 1 - reduction
+                break
+        return - withdrawal
+
+    def make_series_from_list(self, l: list[tuple[float, float]]) -> pd.Series:
+        indices = [abs(index) for index, _ in l]
+        values = [abs(value) for _, value in l]
+        crash_series = pd.Series(values, index=indices)
+        return crash_series.sort_index(ascending=False)
