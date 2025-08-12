@@ -663,11 +663,11 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
         self._crash_threshold_reduction = value
 
 
-    def calculate_withdrawal_size(self, drawdown: float, regular_withdrawal: float) -> float:
+    def calculate_withdrawal_size(self, drawdown: float, withdrawal_without_drawdowns: float) -> float:
         """
         Calculate regular withdrawal size (Extra Withdrawals are not taken into account).
         """
-        withdrawal = abs(regular_withdrawal)
+        withdrawal = abs(withdrawal_without_drawdowns)
         for threshold, reduction in self._crash_threshold_reduction_series.items():
             if abs(drawdown) >= threshold:
                 withdrawal *= 1 - reduction

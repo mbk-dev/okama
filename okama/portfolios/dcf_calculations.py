@@ -234,14 +234,14 @@ def get_cash_flow_fv(
                     number_of_periods=n,
                 )
             elif cashflow_parameters.NAME == "CWID":
-                regular_withdrawal = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
+                withdrawal_without_drawdowns = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
                 if drawdowns[last_date] < 0:
                     cashflow_value = cashflow_parameters.calculate_withdrawal_size(
                         drawdown = drawdowns[last_date],
-                        regular_withdrawal = regular_withdrawal,
+                        withdrawal_without_drawdowns = withdrawal_without_drawdowns,
                     )
                 else:
-                    cashflow_value = regular_withdrawal
+                    cashflow_value = withdrawal_without_drawdowns
             else:
                 raise ValueError("Wrong cashflow_method value.")
             cashflow_value *= period_fraction  # adjust cash flow to the period length (months)
