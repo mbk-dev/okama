@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Optional, Literal, Tuple
 
-import numpy as np
 import pandas as pd
 
 import okama.portfolios.core as core
@@ -86,9 +85,12 @@ class PortfolioDCF:
         return self._cashflow_parameters
 
     @cashflow_parameters.setter
-    def cashflow_parameters(self, cashflow_parameters):
-        self.cashflow_parameters._clear_cf_cache()
-        self._cashflow_parameters = cashflow_parameters
+    def cashflow_parameters(self, cashflow_parameters: Optional[cf.CashFlow]):
+        if issubclass(cashflow_parameters, cf.CashFlow) or cashflow_parameters is None:
+            self.cashflow_parameters._clear_cf_cache()
+            self._cashflow_parameters = cashflow_parameters
+        else:
+            raise TypeError('cashflow_parameters must be a CashFlow instance or None')
 
     def set_mc_parameters(self, distribution: str, period: int, number: int):
         """
