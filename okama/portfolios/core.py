@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from random import randint
-from typing import Optional, List, Dict, Union, Tuple
+from typing import Optional, List, Dict, Union, Tuple, Literal
 
 import numpy as np
 import pandas as pd
@@ -474,10 +474,9 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.mean_return_annual
         0.09005826844072184
         """
-        return helpers.Float.annualize_return(self.mean_return_monthly)
+        return self.mean_return_monthly * settings._MONTHS_PER_YEAR
 
-    @property
-    def annual_return_ts(self) -> pd.Series:
+    def annual_return_ts(self, return_type: Literal["cagr", "arithmetic_mean"] = "cagr") -> pd.Series:
         """
         Calculate annual rate of return time series for portfolio.
 
@@ -501,7 +500,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.annual_return_ts.plot(kind='bar')
         >>> plt.show()
         """
-        return helpers.Frame.get_annual_return_ts_from_monthly(self.ror)
+        return helpers.Frame.get_annual_return_ts_from_monthly(self.ror, return_type)
 
     def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
         """

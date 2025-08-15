@@ -175,7 +175,7 @@ class Frame:
     def get_portfolio_mean_return(cls, weights: Union[list, np.array], ror: pd.DataFrame) -> float:
         # sourcery skip: assign-if-exp, reintroduce-else
         """
-        Computes mean return of a portfolio (monthly).
+        Computes mean return of a portfolio (monthly as ROR time series are monthly in okama).
         """
         # cls.weights_sum_is_one(weights)
         weights = np.asarray(weights)
@@ -218,11 +218,17 @@ class Frame:
     @staticmethod
     def get_annual_return_ts_from_monthly(
         ror_monthly: Union[pd.DataFrame, pd.Series],
+        return_type: Literal["cagr", "arithmetic_mean"] = "cagr"
     ) -> Union[pd.DataFrame, pd.Series]:
         """
         Annual Rate of Returns time series from monthly data.
         """
-        ts = ror_monthly.resample("A").apply(lambda x: np.prod(x + 1.0) - 1)
+        if return_type == "cagr":
+            ts = ror_monthly.resample("A").apply(lambda x: np.prod(x + 1.0) - 1)
+        elif return_type == "arithmetic_mean":
+            ts = ror_monthly.resample("A").sum()
+        else:
+            raise ValueError("Return type must be either cagr or arithmetic_mean.")
         if isinstance(ts, pd.Series):
             ts.rename(ror_monthly.name, inplace=True)
         return ts

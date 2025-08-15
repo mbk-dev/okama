@@ -8,6 +8,8 @@ import okama.common.helpers.ratios as ratios
 from okama.common.helpers import helpers
 from okama.common import make_asset_list
 
+from okama import settings
+
 
 class AssetList(make_asset_list.ListMaker):
     """
@@ -848,7 +850,7 @@ class AssetList(make_asset_list.ListMaker):
         dtype: float64
         """
         mean = self.assets_ror.mean()
-        return helpers.Float.annualize_return(mean)
+        return mean * settings._MONTHS_PER_YEAR
 
     @property
     def real_mean_return(self) -> pd.Series:
@@ -875,8 +877,8 @@ class AssetList(make_asset_list.ListMaker):
         if not hasattr(self, "inflation"):
             raise ValueError("Real Return is not defined. Set inflation=True to calculate.")
         df = pd.concat([self.assets_ror, self.inflation_ts], axis=1, join="inner", copy="false")
-        infl_mean = helpers.Float.annualize_return(self.inflation_ts.values.mean())
-        ror_mean = helpers.Float.annualize_return(df.loc[:, self.symbols].mean())
+        infl_mean = self.inflation_ts.values.mean() * settings._MONTHS_PER_YEAR
+        ror_mean = df.loc[:, self.symbols].mean() * settings._MONTHS_PER_YEAR
         return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
 
     @property
