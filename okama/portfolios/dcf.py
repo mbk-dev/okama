@@ -87,6 +87,7 @@ class PortfolioDCF:
 
     @cashflow_parameters.setter
     def cashflow_parameters(self, cashflow_parameters):
+        self.cashflow_parameters._clear_cf_cache()
         self._cashflow_parameters = cashflow_parameters
 
     def set_mc_parameters(self, distribution: str, period: int, number: int):

@@ -47,8 +47,8 @@ pf.dcf.discount_rate = 0.09
 cf_strategy = ok.CutWithdrawalsIfDrawdown(pf)
 
 cf_strategy.initial_investment = 10_000_000
-cf_strategy.frequency = "year"
-cf_strategy.amount = -10_000_000 * 0.05
+cf_strategy.frequency = "none"
+cf_strategy.amount = -10_000_000 * 0.05 / 12
 cf_strategy.indexation = 0.09
 cf_strategy.crash_threshold_reduction = [
     (.10, .20),
@@ -91,6 +91,7 @@ pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to por
 
 # wi = pf.dcf.wealth_index(discounting="pv", include_negative_values=False)
 cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True).resample("Y").sum()
+# cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True)
 # wi = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=False)
 # cf = pf.dcf.monte_carlo_cash_flow(discounting="pv", remove_if_wealth_index_negative=True)
 # print(cf)
@@ -102,7 +103,7 @@ cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True)
 # plt.yscale('linear')  # linear or log
 # plt.show()
 #
-# df = cf[0]
+df = cf[0]
 cf.plot(
     kind="bar",
     legend=False

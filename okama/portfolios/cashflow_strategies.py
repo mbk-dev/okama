@@ -366,14 +366,13 @@ class TimeSeriesStrategy(CashFlow):
     def __init__(
             self,
             parent: core.Portfolio,
-            frequency: Optional[str] = "none",
             initial_investment: float = 0,
             time_series_dic: dict = {},
             time_series_discounted_values: bool = False
     ):
         super().__init__(
             parent,
-            frequency=frequency,
+            frequency="none",
             initial_investment=initial_investment,
             time_series_dic=time_series_dic,
             time_series_discounted_values=time_series_discounted_values
@@ -600,6 +599,7 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
     def __init__(
             self,
             parent: core.Portfolio,
+            frequency: Optional[str] = "year",
             initial_investment: float = 1000.0,
             time_series_dic: dict = {},
             time_series_discounted_values: bool = False,
@@ -609,7 +609,7 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
     ):
         super().__init__(
             parent=parent,
-            frequency="year",
+            frequency=frequency,
             initial_investment=initial_investment,
             time_series_dic=time_series_dic,
             time_series_discounted_values=time_series_discounted_values,
@@ -633,17 +633,6 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
             "Crash threshold reduction": self.crash_threshold_reduction
         }
         return repr(pd.Series(dic))
-
-    @property
-    def frequency(self):
-        return "year"
-
-    @frequency.setter
-    def frequency(self, value):
-        if value != "year":
-            raise AttributeError("In CWAC the 'frequency' can only be equal to a year.")
-        else:
-            CashFlow.frequency.fset(self, "year")
 
     @property
     def crash_threshold_reduction(self):

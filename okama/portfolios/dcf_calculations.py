@@ -43,7 +43,8 @@ def get_wealth_indexes_fv_with_cashflow(
         ror_cashflow_df = ror.assign(cashflow_ts=cash_flow_ts)
         ror_cashflow_df.fillna(0, inplace=True)
         n_rows = ror.shape[0]
-        discount_factors = (1.0 + dcf_object.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
+        monthly_discount_rate = (1 + dcf_object.discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
+        discount_factors = (1.0 + monthly_discount_rate) ** np.arange(n_rows)
         if task == 'backtest':
             if dcf_object.cashflow_parameters.time_series_discounted_values:
                 ror_cashflow_df.loc[:, "cashflow_ts"] = ror_cashflow_df.loc[:, "cashflow_ts"].mul(discount_factors, axis=0)
@@ -53,10 +54,12 @@ def get_wealth_indexes_fv_with_cashflow(
         else:
             raise ValueError(f"Unknown task: {task}. It must be 'monte_carlo' or 'backtest'")
     else:
-        ror_cashflow_df = ror.to_frame() if not isinstance(ror, pd.DataFrame) else ror
+        ror_cashflow_df = ror
         ror_cashflow_df.loc[:, "cashflow_ts"] = 0
     cash_flow_ts = ror_cashflow_df["cashflow_ts"]  # cash flow monthly time series
     periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
+    if hasattr(cashflow_parameters, "indexation") and cashflow_parameters.frequency != "none":
+        indexation_per_period = (1 + cashflow_parameters.indexation) ** (1 / periods_per_year) - 1
     if cashflow_parameters.frequency == "month" or cashflow_parameters.NAME == "time_series":
     # Fast Calculation
         s = pd.Series(dtype=float, name=portfolio_symbol)
@@ -64,17 +67,26 @@ def get_wealth_indexes_fv_with_cashflow(
             date = row[0]
             r = row[portfolio_position + 1]
             if cashflow_parameters.NAME == "fixed_amount":
-                cashflow = amount * (1 + cashflow_parameters.indexation / settings._MONTHS_PER_YEAR) ** n
+                cashflow = amount * (1 + indexation_per_period) ** n
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "time_series":
                 cashflow = 0
+            elif cashflow_parameters.NAME == "CWID":
+                withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
+                if drawdowns[date] < 0:
+                    cashflow = cashflow_parameters.calculate_withdrawal_size(
+                        drawdown=drawdowns[date],
+                        withdrawal_without_drawdowns=withdrawal_without_drawdowns,
+                    )
+                else:
+                    cashflow = withdrawal_without_drawdowns
             else:
                 raise ValueError("Wrong cashflow strategy name value.")
             period_initial_amount = period_initial_amount * (r + 1) + cashflow + cash_flow_ts[date]
             date = row[0]
             s[date] = period_initial_amount
-    else:
+    elif cashflow_parameters.frequency != "month" and cashflow_parameters.frequency != "none":
     # Slow Calculation
         pandas_frequency = cashflow_parameters._pandas_frequency
         months_in_full_period = settings._MONTHS_PER_YEAR / cashflow_parameters.periods_per_year
@@ -98,7 +110,7 @@ def get_wealth_indexes_fv_with_cashflow(
                 period_wealth_index = period_initial_amount * (1 + ror_ts).cumprod()
             # CashFlow END period
             if cashflow_parameters.NAME == "fixed_amount":
-                cashflow_value = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
+                cashflow_value = amount * (1 + indexation_per_period) ** n
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow_value = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "VDS":
@@ -108,14 +120,14 @@ def get_wealth_indexes_fv_with_cashflow(
                     number_of_periods=n,
                 )
             elif cashflow_parameters.NAME == "CWID":
-                regular_withdrawal = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
+                withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[last_date] < 0:
                     cashflow_value = cashflow_parameters.calculate_withdrawal_size(
                         drawdown=drawdowns[last_date],
-                        regular_withdrawal=regular_withdrawal,
+                        withdrawal_without_drawdowns=withdrawal_without_drawdowns,
                     )
                 else:
-                    cashflow_value = regular_withdrawal
+                    cashflow_value = withdrawal_without_drawdowns
             else:
                 raise ValueError("Wrong cashflow_method value.")
             cashflow_value *= period_fraction  # adjust cash flow to the period length (months)
@@ -124,6 +136,10 @@ def get_wealth_indexes_fv_with_cashflow(
             period_initial_amount = period_final_balance
             wealth_df = pd.concat([None if wealth_df.empty else wealth_df, period_wealth_index], sort=False)
         s = wealth_df.squeeze()
+    elif cashflow_parameters.frequency == "none":
+        s = helpers.Frame.get_wealth_indexes(
+            ror=ror.loc[:, portfolio_symbol], initial_amount=period_initial_amount_cached
+        )
     first_date = s.index[0]
     first_wealth_index_date = first_date - 1  # set first date to one month earlie
     s.loc[first_wealth_index_date] = period_initial_amount_cached
@@ -167,7 +183,8 @@ def get_cash_flow_fv(
         ror_cashflow_df = ror.assign(cashflow_ts=cash_flow_ts)
         ror_cashflow_df.fillna(0, inplace=True)
         n_rows = ror.shape[0]
-        discount_factors = (1.0 + dcf_object.discount_rate / settings._MONTHS_PER_YEAR) ** np.arange(n_rows)
+        monthly_discount_rate = (1 + dcf_object.discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
+        discount_factors = (1.0 + monthly_discount_rate) ** np.arange(n_rows)
         if task == 'backtest':
             if dcf_object.cashflow_parameters.time_series_discounted_values:
                 ror_cashflow_df.loc[:, "cashflow_ts"] = ror_cashflow_df.loc[:, "cashflow_ts"].mul(discount_factors,
@@ -183,6 +200,8 @@ def get_cash_flow_fv(
         ror_cashflow_df.loc[:, "cashflow_ts"] = 0
     cash_flow_ts = ror_cashflow_df["cashflow_ts"]  # cash flow monthly time series
     periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
+    if hasattr(cashflow_parameters, "indexation") and cashflow_parameters.frequency != "none":
+        indexation_per_period = (1 + cashflow_parameters.indexation) ** (1 / periods_per_year) - 1
     if cashflow_parameters.frequency == "month" or cashflow_parameters.NAME == "time_series":
         # Fast Calculation
         for n, row in enumerate(ror.itertuples()):
@@ -190,18 +209,27 @@ def get_cash_flow_fv(
             r = row[portfolio_position + 1]
             # Calculate regular cash flow
             if cashflow_parameters.NAME == "fixed_amount":
-                cashflow = amount * (1 + cashflow_parameters.indexation / settings._MONTHS_PER_YEAR) ** n
+                cashflow = amount * (1 + indexation_per_period) ** n
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "time_series":
                 cashflow = 0
+            elif cashflow_parameters.NAME == "CWID":
+                withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
+                if drawdowns[date] < 0:
+                    cashflow = cashflow_parameters.calculate_withdrawal_size(
+                        drawdown = drawdowns[date],
+                        withdrawal_without_drawdowns = withdrawal_without_drawdowns,
+                    )
+                else:
+                    cashflow = withdrawal_without_drawdowns
             else:
                 raise ValueError("Wrong cashflow strategy name value.")
             # add Extra Withdrawals/Contributions
             cs_value = cashflow + cash_flow_ts[date]
             period_initial_amount = period_initial_amount * (r + 1) + cs_value
             cs_fv[date] = cs_value
-    else:
+    elif cashflow_parameters.frequency != "month" and cashflow_parameters.frequency != "none":
         # Slow Calculation
         pandas_frequency = settings.frequency_mapping[cashflow_parameters.frequency]
         months_in_full_period = settings._MONTHS_PER_YEAR / cashflow_parameters.periods_per_year
@@ -224,7 +252,7 @@ def get_cash_flow_fv(
                 period_wealth_index = period_initial_amount * (1 + ror_ts).cumprod()
             # CashFlow END period (Regular Cash Flow)
             if cashflow_parameters.NAME == "fixed_amount":
-                cashflow_value = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
+                cashflow_value = amount * (1 + indexation_per_period) ** n
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow_value = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "VDS":
@@ -234,7 +262,7 @@ def get_cash_flow_fv(
                     number_of_periods=n,
                 )
             elif cashflow_parameters.NAME == "CWID":
-                withdrawal_without_drawdowns = amount * (1 + cashflow_parameters.indexation / periods_per_year) ** n
+                withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[last_date] < 0:
                     cashflow_value = cashflow_parameters.calculate_withdrawal_size(
                         drawdown = drawdowns[last_date],
@@ -251,6 +279,8 @@ def get_cash_flow_fv(
             period_initial_amount = period_final_balance
             cashflow_ts_local.iloc[-1] += cashflow_value
             cs_fv = pd.concat([None if cs_fv.empty else cs_fv, cashflow_ts_local], sort=False)
+    elif cashflow_parameters.frequency == "none":
+        cs_fv = pd.Series([0] * len(ror.index), index=ror.index)  # all zeroes
     return cs_fv
 
 
