@@ -86,8 +86,10 @@ class PortfolioDCF:
 
     @cashflow_parameters.setter
     def cashflow_parameters(self, cashflow_parameters: Optional[cf.CashFlow]):
-        if issubclass(cashflow_parameters, cf.CashFlow) or cashflow_parameters is None:
+        if isinstance(cashflow_parameters, cf.CashFlow):
+            self._cashflow_parameters = cashflow_parameters
             self.cashflow_parameters._clear_cf_cache()
+        elif cashflow_parameters is None:
             self._cashflow_parameters = cashflow_parameters
         else:
             raise TypeError('cashflow_parameters must be a CashFlow instance or None')
