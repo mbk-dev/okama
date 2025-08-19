@@ -94,7 +94,13 @@ class PortfolioDCF:
         else:
             raise TypeError('cashflow_parameters must be a CashFlow instance or None')
 
-    def set_mc_parameters(self, distribution: str, period: int, number: int):
+    def set_mc_parameters(
+            self,
+            distribution: str = "norm",
+            parameters: Optional[tuple] = None,
+            period: int = 1,
+            number: int = 100
+    ):
         """
         Add Monte Carlo simulation parameters to PortfolioDCF.
 
@@ -132,6 +138,7 @@ class PortfolioDCF:
         >>> plt.show()
         """
         self.mc.distribution = distribution
+        self.mc.distribution_parameters = parameters
         self.mc.period = period
         self.mc.number = number
 
@@ -478,7 +485,7 @@ class PortfolioDCF:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._monte_carlo_wealth_fv.empty:
             return_ts = self.parent.monte_carlo_returns_ts(
-                distr=self.mc.distribution, years=self.mc.period, n=self.mc.number
+                distr=self.mc.distribution, parameters = self.mc.distribution_parameters, years=self.mc.period, n=self.mc.number
             )
             self._monte_carlo_wealth_fv = return_ts.apply(
                 dcf_calculations.get_wealth_indexes_fv_with_cashflow,

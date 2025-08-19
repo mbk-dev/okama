@@ -1336,10 +1336,10 @@ class Portfolio(make_asset_list.ListMaker):
         description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # CVAR
         if self.pl.years >= 1:
-            row = {self.symbol: self.get_cvar_historic()}
+            row = {self.symbol: self.get_cvar_historic(level=1)}
             row.update(
                 period=self._pl_txt,
-                property="CVAR",
+                property="CVAR (α=1)",
             )
             description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
         # max drawdowns
@@ -1558,7 +1558,13 @@ class Portfolio(make_asset_list.ListMaker):
         ts_index = pd.period_range(start_period, end_period, freq="M")
         return period_months, ts_index
 
-    def monte_carlo_returns_ts(self, distr: str = "norm", years: int = 1, n: int = 100) -> pd.DataFrame:
+    def monte_carlo_returns_ts(
+            self,
+            distr: str = "norm",
+            parameters: Optional[tuple] = None,
+            years: int = 1,
+            n: int = 100
+    ) -> pd.DataFrame:
         """
         Generate portfolio monthly rate of return time series with Monte Carlo simulation.
 
@@ -1608,13 +1614,23 @@ class Portfolio(make_asset_list.ListMaker):
         period_months, ts_index = self._forecast_preparation(years)
         # random returns
         if distr == "norm":
-            random_returns = np.random.normal(self.mean_return_monthly, self.risk_monthly.iloc[-1], (period_months, n))
+            parameters = self.mean_return_monthly, self.risk_monthly.iloc[-1] if parameters is None else parameters
+            random_returns = np.random.normal(parameters[0], parameters[1], (period_months, n))
         elif distr == "lognorm":
-            std, loc, scale = scipy.stats.lognorm.fit(self.ror)
+            std, loc, scale = scipy.stats.lognorm.fit(self.ror) if parameters is None else parameters
             random_returns = scipy.stats.lognorm(std, loc=loc, scale=scale).rvs(size=[period_months, n])
         elif distr == "t":
-            df, loc, scale = scipy.stats.t.fit(self.ror)
-            random_returns = scipy.stats.t(loc=loc, scale=scale, df=df).rvs(size=[period_months, n])
+            if parameters is None or all(x is None for x in parameters):
+                v, loc, scale = scipy.stats.t.fit(self.ror)
+            else:
+                if None in parameters:
+                    v, loc, scale = scipy.stats.t.fit(self.ror)
+                    v = parameters[0] if parameters[0] is not None else v
+                    loc = parameters[1] if parameters[1] is not None else loc
+                    scale = parameters[2] if parameters[2] is not None else scale
+                else:
+                    v, loc, scale = parameters
+            random_returns = scipy.stats.t(loc=loc, scale=scale, df=v).rvs(size=[period_months, n])
         else:
             raise ValueError('"distr" must be "norm" (default), "lognorm" or "t".')
         return pd.DataFrame(data=random_returns, index=ts_index)

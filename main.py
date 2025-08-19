@@ -89,6 +89,13 @@ pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to por
 # # )
 # print(pf.dcf.cashflow_parameters._crash_threshold_reduction_series)
 
+pf.dcf.set_mc_parameters(
+    distribution="t",
+    parameters=(3, None, None),
+    period=100,
+    number=1_000,
+)
+
 # wi = pf.dcf.wealth_index(discounting="pv", include_negative_values=False)
 cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True).resample("Y").sum()
 # cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True)
@@ -103,7 +110,7 @@ cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True)
 # plt.yscale('linear')  # linear or log
 # plt.show()
 #
-df = cf[0]
+# df = cf[0]
 cf.plot(
     kind="bar",
     legend=False

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 import pandas as pd
 
 from okama.common import validators
@@ -42,6 +44,7 @@ class MonteCarlo:
     def __init__(self, parent: dcf.PortfolioDCF):
         self.parent = parent
         self._distribution: str = "norm"
+        self._distribution_parameters: Optional[tuple] = None
         self._period: int = 25
         self._mc_number: int = 100
 
@@ -53,8 +56,6 @@ class MonteCarlo:
             "Monte Carlo number": self.number,
         }
         return repr(pd.Series(dic))
-
-    # TODO: add distribution parameters (return, risk etc)
 
     @property
     def distribution(self) -> str:
@@ -77,6 +78,16 @@ class MonteCarlo:
         validators.validate_distribution(distribution)
         self._clear_cf_cache()
         self._distribution = distribution
+
+    @property
+    def distribution_parameters(self) -> tuple:
+        return self._distribution_parameters
+
+    @distribution_parameters.setter
+    def distribution_parameters(self, parameters):
+        # TODO: add validation
+        self._clear_cf_cache()
+        self._distribution_parameters = parameters
 
     @property
     def period(self) -> int:
