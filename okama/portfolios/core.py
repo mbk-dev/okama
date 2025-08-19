@@ -1614,10 +1614,27 @@ class Portfolio(make_asset_list.ListMaker):
         period_months, ts_index = self._forecast_preparation(years)
         # random returns
         if distr == "norm":
-            parameters = self.mean_return_monthly, self.risk_monthly.iloc[-1] if parameters is None else parameters
-            random_returns = np.random.normal(parameters[0], parameters[1], (period_months, n))
+            if parameters is None or all(x is None for x in parameters):
+                mu, std = self.mean_return_monthly, self.risk_monthly.iloc[-1]
+            else:
+                if None in parameters:
+                    mu, std = self.mean_return_monthly, self.risk_monthly.iloc[-1]
+                    mu = parameters[0] if parameters[0] is not None else mu
+                    std = parameters[1] if parameters[1] is not None else std
+                else:
+                    mu, std = parameters
+            random_returns = np.random.normal(mu, std, (period_months, n))
         elif distr == "lognorm":
-            std, loc, scale = scipy.stats.lognorm.fit(self.ror) if parameters is None else parameters
+            if parameters is None or all(x is None for x in parameters):
+                std, loc, scale = scipy.stats.lognorm.fit(self.ror) if parameters is None else parameters
+            else:
+                if None in parameters:
+                    std, loc, scale = scipy.stats.lognorm.fit(self.ror) if parameters is None else parameters
+                    std = parameters[0] if parameters[0] is not None else std
+                    loc = parameters[1] if parameters[1] is not None else loc
+                    scale = parameters[2] if parameters[2] is not None else scale
+                else:
+                    std, loc, scale = parameters
             random_returns = scipy.stats.lognorm(std, loc=loc, scale=scale).rvs(size=[period_months, n])
         elif distr == "t":
             if parameters is None or all(x is None for x in parameters):
