@@ -36,6 +36,8 @@ matplotlib = ">=3.5.1"
 requests = "*"
 joblib = "*"
 pandas-stubs = "*"
+arch = "^7.2.0"
+statsmodels = "^0.14.5"
 
 [tool.poetry.group.test]
 optional = false
