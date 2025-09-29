@@ -278,6 +278,8 @@ class EfficientFrontierReb(asset_list.AssetList):
         self._clear_cache()
         self._verbose = verbose
 
+    # TODO: add get_most_diversified_portfolio (as in EfficientFronier)
+
     @property
     def gmv_monthly_weights(self) -> np.ndarray:
         """

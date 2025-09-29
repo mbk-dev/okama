@@ -89,15 +89,15 @@ pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to por
 # # )
 # print(pf.dcf.cashflow_parameters._crash_threshold_reduction_series)
 
-pf.dcf.set_mc_parameters(
-    distribution="t",
-    parameters=(3, None, None),
-    period=100,
-    number=1_000,
-)
+# pf.dcf.set_mc_parameters(
+#     distribution="t",
+#     parameters=(3, None, None),
+#     period=100,
+#     number=1_000,
+# )
 
 # wi = pf.dcf.wealth_index(discounting="pv", include_negative_values=False)
-cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True).resample("Y").sum()
+# cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True).resample("Y").sum()
 # cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True)
 # wi = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=False)
 # cf = pf.dcf.monte_carlo_cash_flow(discounting="pv", remove_if_wealth_index_negative=True)
@@ -111,12 +111,12 @@ cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True)
 # plt.show()
 #
 # df = cf[0]
-cf.plot(
-    kind="bar",
-    legend=False
-)
-plt.yscale('linear')  # linear or log
-plt.show()
+# cf.plot(
+#     kind="bar",
+#     legend=False
+# )
+# plt.yscale('linear')  # linear or log
+# plt.show()
 
 # print(df[df != 0])
 
@@ -132,4 +132,14 @@ plt.show()
 
 # print(pf.dcf.wealth_index.iloc[-1, :])
 
+
+# pf.dcf.mc.plot_qq(bootstrap_size_var=2000, zoom_to_left_tail=50, figsize=(10, 10))
+pf.dcf.set_mc_parameters(
+    distribution="norm",
+    distribution_parameters=(2, None),
+    period=100,
+    mc_number=1_000,
+)
+pf.dcf.mc.plot_hist_fit(bins=100)
+plt.show()
 

@@ -97,9 +97,9 @@ class PortfolioDCF:
     def set_mc_parameters(
             self,
             distribution: str = "norm",
-            parameters: Optional[tuple] = None,
+            distribution_parameters: Optional[tuple] = None,
             period: int = 1,
-            number: int = 100
+            mc_number: int = 100
     ):
         """
         Add Monte Carlo simulation parameters to PortfolioDCF.
@@ -113,10 +113,19 @@ class PortfolioDCF:
             -'lognorm' for lognormal distribution
             -'t' for Student's (t-distribution)
 
+        distribution_parameters: tuple, default None
+            Distribution parameters to generate random rate of return.
+            (mean, standard deviation) for normal distribution.
+            (shape, loc, scale) for lognormal distribution.
+            (df, loc, scale) for Student distribution.
+            Put None in place of any parameter if you want it to be determined automatically by scipy.stat.fit
+            like (3, None, None) for Student's t distribution with degrees of freedom (df) equal to 3
+            and automatic values for loc and scale.
+
         period: int
             Forecast period for portfolio wealth index time series (in years).
 
-        number: int
+        mc_number: int
             Number of random wealth indexes to generate with Monte Carlo simulation.
 
         Examples
@@ -124,7 +133,7 @@ class PortfolioDCF:
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
         >>> # Set Monte Carlo parameters
-        >>> pf.dcf.set_mc_parameters(distribution="lognorm", period=10, number=100)
+        >>> pf.dcf.set_mc_parameters(distribution="lognorm", period=10, mc_number=100)
         >>> # Set the cash flow strategy. It's required to generate random wealth indexes.
         >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investments size
@@ -138,9 +147,9 @@ class PortfolioDCF:
         >>> plt.show()
         """
         self.mc.distribution = distribution
-        self.mc.distribution_parameters = parameters
+        self.mc.distribution_parameters = distribution_parameters
         self.mc.period = period
-        self.mc.number = number
+        self.mc.mc_number = mc_number
 
     def wealth_index(self, discounting: Literal["fv", "pv"], include_negative_values: bool = False) -> pd.DataFrame:
         """
@@ -470,7 +479,7 @@ class PortfolioDCF:
         --------
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
-        >>> pf.dcf.set_mc_parameters(distribution="t", period=10, number=100)  # Set Monte Carlo parameters
+        >>> pf.dcf.set_mc_parameters(distribution="t", period=10, mc_number=100)  # Set Monte Carlo parameters
         >>> # set cash flow parameters
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
@@ -537,7 +546,7 @@ class PortfolioDCF:
         --------
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
-        >>> pf.dcf.set_mc_parameters(distribution="t", period=10, number=100)  # Set Monte Carlo parameters
+        >>> pf.dcf.set_mc_parameters(distribution="t", period=10, mc_number=100)  # Set Monte Carlo parameters
         >>> # set cash flow parameters
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
@@ -608,7 +617,7 @@ class PortfolioDCF:
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(assets=['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> # Set Monte Carlo parameters
-        >>> pf.dcf.set_mc_parameters(distribution="norm", period=50, number=200)
+        >>> pf.dcf.set_mc_parameters(distribution="norm", period=50, mc_number=200)
         >>> # set cash flow parameters
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
@@ -669,7 +678,7 @@ class PortfolioDCF:
         >>> pf.dcf.set_mc_parameters(
         ...        distribution="t",  # use Student's distribution (t-distribution)
         ...        period=50,  # make forecast for 50 years
-        ...        number=200  # create 200 randow wealth indexes
+        ...        mc_number=200  # create 200 randow wealth indexes
         ...    )
         >>> # Set Cash Flow parameters
         >>> pc = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
@@ -786,7 +795,7 @@ class PortfolioDCF:
         >>> pf.dcf.set_mc_parameters(
         ...    distribution="norm",
         ...    period=50,
-        ...    number=200
+        ...    mc_number=200
         ...)
         >>> res = pf.dcf.find_the_largest_withdrawals_size(
         ...    percentile=50,
