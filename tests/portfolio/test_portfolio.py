@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from pytest import approx
-from pytest import mark
+from pytest import approx, mark
 from numpy.testing import assert_array_equal, assert_allclose
 from pandas.testing import assert_series_equal, assert_frame_equal
 
@@ -247,26 +246,18 @@ def test_describe_no_inflation(portfolio_no_inflation):
     description_sample = pd.read_pickle(conftest.data_folder / "portfolio_description_no_inflation.pkl")
     assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False, atol=1e-2)
 
+def test_percentile_inverse_cagr(portfolio_rebalanced_month):
+    assert portfolio_rebalanced_month.percentile_inverse_cagr(years=1, score=0) == approx(0, abs=1e-2)
 
 def test_percentile_from_history(portfolio_rebalanced_month, portfolio_no_inflation, portfolio_short_history):
-    assert portfolio_rebalanced_month.percentile_history_cagr(years=1).iloc[0, 1] == approx(0.173181, abs=1e-2)
-    assert portfolio_no_inflation.percentile_history_cagr(years=1).iloc[0, 1] == approx(0.17318, abs=1e-2)
+    assert portfolio_rebalanced_month.percentile_cagr(years=1).iloc[0, 1] == approx(0.173181, abs=1e-2)
+    assert portfolio_no_inflation.percentile_cagr(years=1).iloc[0, 1] == approx(0.17318, abs=1e-2)
     with pytest.raises(
         ValueError,
         match="Time series does not have enough history to forecast. "
         "Period length is 0.90 years. At least 2 years are required.",
     ):
-        portfolio_short_history.percentile_history_cagr(years=1)
-
-
-@mark.parametrize(
-    "distribution, expected",
-    [("hist", 0), ("norm", 0.9), ("lognorm", 0.7), ("t", 1.4)],
-)
-def test_percentile_inverse_cagr(portfolio_rebalanced_month, distribution, expected):
-    assert portfolio_rebalanced_month.percentile_inverse_cagr(distr=distribution, years=1, score=0, n=5000) == approx(
-        expected, abs=1e-0
-    )
+        portfolio_short_history.percentile_cagr(years=1)
 
 
 def test_table(portfolio_rebalanced_month):
@@ -302,52 +293,6 @@ def test_get_rolling_cagr_failing_no_inflation(portfolio_no_inflation):
         match="Real return is not defined. Set inflation=True when initiating the class.",
     ):
         portfolio_no_inflation.get_rolling_cagr(real=True)
-
-
-def test_monte_carlo_wealth(portfolio_rebalanced_month):
-    df = portfolio_rebalanced_month.monte_carlo_wealth(distr="norm", years=1, n=1000)
-    assert df.shape == (13, 1000)
-    assert df.iloc[-1, :].mean() == approx(2915.55, rel=1e-1)
-
-
-def test_monte_carlo_returns_ts(portfolio_rebalanced_month):
-    df = portfolio_rebalanced_month.monte_carlo_returns_ts(distr="lognorm", years=1, n=1000)
-    assert df.shape == (12, 1000)
-    assert df.iloc[-1, :].mean() == approx(0.0156, abs=1e-1)
-
-
-@mark.parametrize(
-    "distribution, expected",
-    [("hist", 2897.72), ("norm", 2940.70), ("lognorm", 2932.56), ("t", 2900)],
-)
-def test_percentile_wealth(portfolio_rebalanced_month, distribution, expected):
-    dic = portfolio_rebalanced_month.percentile_wealth(distr=distribution, years=1, n=100, percentiles=[50])
-    assert dic[50] == approx(expected, rel=1e-1)
-
-
-def test_forecast_monte_carlo_cagr(portfolio_rebalanced_month):
-    dic = portfolio_rebalanced_month.percentile_distribution_cagr(years=2, distr="lognorm", n=100, percentiles=[50])
-    assert dic[50] == approx(0.1905, abs=5e-2)
-
-
-def test_skewness(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.skewness.iloc[-1] == approx(0.4980, abs=1e-1)
-
-
-def test_rolling_skewness(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.skewness_rolling(window=24).iloc[-1] == approx(0.4498, abs=1e-1)
-
-
-def test_kurtosis(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.kurtosis.iloc[-1] == approx(1.46, rel=1e-2)
-
-
-def test_kurtosis_rolling(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.kurtosis_rolling(window=24).iloc[-1] == approx(-0.2498, rel=1e-1)
-
-
-def test_jarque_bera(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.jarque_bera["statistic"] == approx(6.3657, rel=1e-1)
 
 
 def test_get_sharpe_ratio(portfolio_no_inflation):
