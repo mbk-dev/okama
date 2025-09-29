@@ -4,6 +4,8 @@ import numbers
 import operator
 from typing import Optional, Any
 
+from okama import settings
+
 
 def validate_integer(
     arg_name: str,
@@ -97,9 +99,25 @@ def validate_real(arg_name: str, arg_value: Any) -> None:
         raise TypeError(f"{arg_name} should be a Real number.")
 
 
-def validate_distribution(distribution: Any):
+def validate_distribution(distribution: Any) -> None:
     """
     Validate that `distribution` has one of allowed values.
     """
-    if distribution not in ["norm", "lognorm", "t"]:
-        raise ValueError('distribution must be "norm" (default), "lognorm" or "t".')
+    if distribution not in settings.distributions:
+        raise ValueError(f'distribution must be in {settings.distributions}.')
+
+def validate_distribution_parameters(distr: str, param: tuple) -> None:
+    if not isinstance(param, (list, tuple)):
+        raise ValueError(f"The parameter is neither a list nor a tuple. Its type is: {type(param)}")
+    match distr:
+        case "norm":
+            if len(param) != 2:
+                raise ValueError("The parameters for Normal distribution must be of length 2 (mu, sigma).")
+        case "lognorm":
+            if len(param) != 3:
+                raise ValueError("The parameters for Lognormal distribution must be of length 3 (shape, loc, scale).")
+        case "t":
+            if len(param) != 3:
+                raise ValueError("The parameters for Student's T-distribution must be of length 3 (df, loc, scale).")
+        case _:
+            raise ValueError("Unknown distribution.")
