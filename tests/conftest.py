@@ -1,11 +1,17 @@
+import socket
+
 import pytest
 import okama as ok
 from pathlib import Path
 
 data_folder = Path(__file__).parent / "data"
 
+@pytest.fixture(autouse=True)
+def no_network(monkeypatch):
+    def fake_socket(*args, **kwargs):
+        raise AssertionError("Network calls are disabled during tests!")
 
-
+    monkeypatch.setattr(socket, "socket", fake_socket)
 
 # Macro
 @pytest.fixture(scope="function")
