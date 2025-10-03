@@ -44,6 +44,7 @@ optional = false
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
+pytest-mock = "*"
 black = {extras = ["jupyter"], version = "*"}
 pytest-xdist = "*"
 flake8 = "*"

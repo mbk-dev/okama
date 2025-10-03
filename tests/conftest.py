@@ -1,103 +1,10 @@
-from copy import deepcopy
-
 import pytest
 import okama as ok
 from pathlib import Path
 
-import okama.portfolios.cashflow_strategies
-import okama.portfolios.dcf
-
 data_folder = Path(__file__).parent / "data"
 
 
-# Asset
-@pytest.fixture(scope="module")
-def init_asset_spy():
-    return ok.Asset(symbol="SPY.US")
-
-
-@pytest.fixture(scope="module")
-def init_asset_eurusd():
-    return ok.Asset(symbol="EURUSD.FX")
-
-
-@pytest.fixture(scope="module")
-def init_asset_berkshire():
-    return ok.Asset(symbol="BRK.A.US")
-
-
-@pytest.fixture(scope="module")
-def init_asset_pif():
-    return ok.Asset(symbol="0165-70287767.PIF")
-
-
-@pytest.fixture(scope="module")
-def init_asset_usdrub():
-    return ok.Asset(symbol="RUB.FX")
-
-
-# Asset List
-@pytest.fixture(scope="class")
-def assets_from_db():
-    return ["USDRUB.CBR", "MCFTR.INDX"]
-
-
-@pytest.fixture(scope="class")
-def _init_asset_list(request, portfolio_short_history, portfolio_dividends, assets_from_db) -> None:
-    request.cls.asset_list_with_portfolio = ok.AssetList(
-        assets=[portfolio_short_history] + assets_from_db,
-        ccy="USD",
-    )
-
-    request.cls.asset_list_with_portfolio_dividends = ok.AssetList(
-        assets=[portfolio_dividends] + assets_from_db,
-        ccy="USD",
-    )
-
-    request.cls.asset_list = ok.AssetList(
-        assets=assets_from_db,
-        ccy="RUB",
-        first_date="2019-01",
-        last_date="2020-01",
-        inflation=True,
-    )
-    request.cls.asset_list_lt = ok.AssetList(
-        assets=assets_from_db,
-        ccy="RUB",
-        first_date="2003-03",
-        last_date="2020-01",
-        inflation=True,
-    )
-    request.cls.asset_list_st = ok.AssetList(
-        assets=assets_from_db,
-        ccy="RUB",
-        first_date="2019-01",
-        last_date="2019-05",
-        inflation=False,
-    )
-    request.cls.asset_list_no_infl = ok.AssetList(
-        assets=assets_from_db,
-        ccy="RUB",
-        first_date="2019-01",
-        last_date="2020-01",
-        inflation=False,
-    )
-    request.cls.currencies = ok.AssetList(
-        ["RUBUSD.FX", "EURUSD.FX", "CNYUSD.FX"],
-        ccy="USD",
-        first_date="2019-01",
-        last_date="2020-01",
-        inflation=True,
-    )
-    request.cls.spy = ok.AssetList(first_date="2000-01", last_date="2002-01", inflation=True)
-    request.cls.spy_rub = ok.AssetList(first_date="2000-01", last_date="2002-01", inflation=True, ccy="RUB")
-    request.cls.real_estate = ok.AssetList(
-        assets=["RUS_SEC.RE", "MOW_PR.RE"],
-        ccy="RUB",
-        first_date="2010-01",
-        last_date="2015-01",
-        inflation=True,
-    )
 
 
 # Macro

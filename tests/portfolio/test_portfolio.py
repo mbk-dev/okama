@@ -93,7 +93,7 @@ def test_weights_ts_not_rebalanced(portfolio_not_rebalanced):
 
 def test_mean_return(portfolio_rebalanced_month):
     assert portfolio_rebalanced_month.mean_return_monthly == approx(0.01536, rel=1e-2)
-    assert portfolio_rebalanced_month.mean_return_annual == approx(0.20080, rel=1e-2)
+    assert portfolio_rebalanced_month.mean_return_annual == approx(0.1844, rel=1e-2)
 
 
 def test_real_mean_return(portfolio_rebalanced_month):

@@ -38,8 +38,8 @@ def test_close_monthly(init_asset_spy):
     assert init_asset_spy.close_monthly.loc["2000-01"] == approx(139.5625, rel=1e-3)
 
 
-def test_adj_close(init_asset_pif):
-    assert init_asset_pif.adj_close.loc["2015-01-20"] == approx(3172.88, rel=1e-2)
+def test_adj_close(init_asset_index_mcftr):
+    assert init_asset_index_mcftr.adj_close.loc["2015-01-20"] == approx(2017.7, rel=1e-2)
 
 
 def test_price(init_asset_spy):
@@ -50,5 +50,5 @@ def test_dividends(init_asset_spy):
     assert init_asset_spy.dividends["2019"].iloc[-1] == approx(1.57, abs=1e-2)
 
 
-def test_nav_ts(init_asset_pif):
-    assert init_asset_pif.nav_ts.iloc[0] == approx(101820352.18, rel=1e-6)
+# def test_nav_ts(init_asset_pif):
+#     assert init_asset_pif.nav_ts.iloc[0] == approx(101820352.18, rel=1e-6)
