@@ -50,7 +50,7 @@ class API:
         session.mount("https://", adapter)
         session.mount("http://", adapter)
         try:
-            r = session.get(request_url, params=params, verify=False, timeout=cls.default_timeout)
+            r = session.get(request_url, params=params, verify=True, timeout=cls.default_timeout)
             r.raise_for_status()
         except requests.exceptions.HTTPError as errh:
             if r.status_code == 404:
