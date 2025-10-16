@@ -179,15 +179,19 @@ class Rebalance:
                         initial_allocation = end_period_weights * end_period_balance
                 assets_wealth_indexes_local = initial_allocation * (1 + df).cumprod()
                 if calculate_assets_wealth_indexes:
-                    assets_wealth_indexes = pd.concat(
-                        [assets_wealth_indexes_local, assets_wealth_indexes],
-                        verify_integrity=True,
-                        sort=False,
-                    )
+                    if assets_wealth_indexes.empty:
+                        assets_wealth_indexes = assets_wealth_indexes_local.copy()
+                    else:
+                        assets_wealth_indexes = pd.concat(
+                            [assets_wealth_indexes_local, assets_wealth_indexes],
+                            verify_integrity=True,
+                            sort=False,
+                        )
                 wealth_index_local = assets_wealth_indexes_local.sum(axis=1)
-                portfolio_wealth_index = pd.concat(
-                    [None if portfolio_wealth_index.empty else portfolio_wealth_index, wealth_index_local], sort=False
-                )
+                if portfolio_wealth_index.empty:
+                    portfolio_wealth_index = wealth_index_local.copy()
+                else:
+                    portfolio_wealth_index = pd.concat([portfolio_wealth_index, wealth_index_local], sort=False)
                 end_period_balance = portfolio_wealth_index.iloc[-1]
                 if rebalancing_by_condition_needed:
                     end_period_weights = assets_wealth_indexes_local.iloc[-1].divide(
@@ -228,7 +232,10 @@ class Rebalance:
                 assets_wealth_indexes_local.rename(date, inplace=True)
             if calculate_assets_wealth_indexes:
                 row = pd.DataFrame(assets_wealth_indexes_local).T
-                assets_wealth_indexes = pd.concat([assets_wealth_indexes, row])
+                if assets_wealth_indexes.empty:
+                    assets_wealth_indexes = row.copy()
+                else:
+                    assets_wealth_indexes = pd.concat([assets_wealth_indexes, row])
             portfolio_wealth_index_local = assets_wealth_indexes_local.sum()
             portfolio_wealth_index[date] = portfolio_wealth_index_local
             # Check if rebalancing required
