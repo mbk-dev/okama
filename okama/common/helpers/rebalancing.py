@@ -159,6 +159,9 @@ class Rebalance:
         else:  # Calendar rebalancing
             rebalancing_by_condition_needed = self.abs_deviation or self.rel_deviation
             rebalancing_condition = False
+            # accumulate chunks and concatenate once after the loop
+            pw_chunks: list[pd.Series] = []
+            awi_chunks: list[pd.DataFrame] = [] if calculate_assets_wealth_indexes else None
             for n, x in enumerate(ror.resample(rule=self._pandas_frequency, convention="start")):
                 df = x[1]  # select ror part of the grouped data
                 if n == 0:
@@ -179,20 +182,13 @@ class Rebalance:
                         initial_allocation = end_period_weights * end_period_balance
                 assets_wealth_indexes_local = initial_allocation * (1 + df).cumprod()
                 if calculate_assets_wealth_indexes:
-                    if assets_wealth_indexes.empty:
-                        assets_wealth_indexes = assets_wealth_indexes_local.copy()
-                    else:
-                        assets_wealth_indexes = pd.concat(
-                            [assets_wealth_indexes_local, assets_wealth_indexes],
-                            verify_integrity=True,
-                            sort=False,
-                        )
+                    # collect asset wealth index chunks for later concatenation
+                    awi_chunks.append(assets_wealth_indexes_local.copy())
                 wealth_index_local = assets_wealth_indexes_local.sum(axis=1)
-                if portfolio_wealth_index.empty:
-                    portfolio_wealth_index = wealth_index_local.copy()
-                else:
-                    portfolio_wealth_index = pd.concat([portfolio_wealth_index, wealth_index_local], sort=False)
-                end_period_balance = portfolio_wealth_index.iloc[-1]
+                # collect portfolio wealth index chunks for later concatenation
+                pw_chunks.append(wealth_index_local.copy())
+                # use local last value instead of relying on concatenated series
+                end_period_balance = wealth_index_local.iloc[-1]
                 if rebalancing_by_condition_needed:
                     end_period_weights = assets_wealth_indexes_local.iloc[-1].divide(
                         wealth_index_local.iloc[-1], axis=0
@@ -200,6 +196,10 @@ class Rebalance:
                     rebalancing_condition, condition_abs = self._check_if_rebalancing_required(
                         assets_wealth_indexes_local, wealth_index_local, target_weights
                     )
+            # perform single concatenation outside the loop
+            portfolio_wealth_index = pd.concat(pw_chunks, sort=False) if pw_chunks else portfolio_wealth_index
+            if calculate_assets_wealth_indexes and awi_chunks:
+                assets_wealth_indexes = pd.concat(awi_chunks, verify_integrity=True, sort=False)
         # set value for the first date
         portfolio_wealth_index.loc[first_wealth_index_date] = initial_inv
         portfolio_wealth_index.sort_index(ascending=True, inplace=True)
@@ -218,6 +218,7 @@ class Rebalance:
         assets_wealth_indexes_local = pd.DataFrame(columns=ror.columns, dtype="float64")
         assets_wealth_indexes = pd.DataFrame(columns=ror.columns, dtype="float64")
         events_ts = pd.Series(dtype="float64")
+        awi_rows = [] if calculate_assets_wealth_indexes else None
         for n, row in enumerate(ror.itertuples()):
             date = row[0]
             r = pd.Series(row[1:], index=ror.columns, name=date)
@@ -231,17 +232,17 @@ class Rebalance:
                 assets_wealth_indexes_local *= 1 + r
                 assets_wealth_indexes_local.rename(date, inplace=True)
             if calculate_assets_wealth_indexes:
-                row = pd.DataFrame(assets_wealth_indexes_local).T
-                if assets_wealth_indexes.empty:
-                    assets_wealth_indexes = row.copy()
-                else:
-                    assets_wealth_indexes = pd.concat([assets_wealth_indexes, row])
+                # collect rows for a single concat after the loop
+                awi_rows.append(pd.DataFrame(assets_wealth_indexes_local).T)
             portfolio_wealth_index_local = assets_wealth_indexes_local.sum()
             portfolio_wealth_index[date] = portfolio_wealth_index_local
             # Check if rebalancing required
             rebalancing_condition, condition_abs = self._check_if_rebalancing_required(
                 assets_wealth_indexes_local, portfolio_wealth_index_local, target_weights
             )
+        # perform single concatenation outside the loop
+        if calculate_assets_wealth_indexes and awi_rows:
+            assets_wealth_indexes = pd.concat(awi_rows, sort=False)
         return portfolio_wealth_index, assets_wealth_indexes, events_ts
 
     def _check_if_rebalancing_required(
