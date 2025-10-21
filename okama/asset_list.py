@@ -294,8 +294,9 @@ class AssetList(make_asset_list.ListMaker):
         ----------
         time_frame : int, default 12
             Time period size in months
+
         level : int, default 1
-            Confidence level in percents. Default value is 1%.
+            Confidence level in percents (1 - 100%). Default value is 1%.
 
         Returns
         -------
@@ -1570,8 +1571,8 @@ class AssetList(make_asset_list.ListMaker):
         -------
         DataFrame
             Returns test statistic and the p-value for the hypothesis test.
-            large Jarque-Bera statistics and tiny p-value indicate that null hypothesis (H0) is rejected and
-            the time series are not normally distributed.
+            Large Jarque-Bera statistics and tiny p-value (< 0.05) indicate that null hypothesis (H0) is rejected and
+            the time series is not normally distributed.
             Low statistic numbers correspond to normal distribution.
 
         See Also
@@ -1618,7 +1619,7 @@ class AssetList(make_asset_list.ListMaker):
         -------
         DataFrame
             Returns test statistic and the p-value for the hypothesis test.
-            Large test statistics and tiny p-value indicate that null hypothesis (H0) is rejected.
+            Large test statistics and tiny p-value (< 0.05) indicate that null hypothesis (H0) is rejected.
 
         Examples
         --------

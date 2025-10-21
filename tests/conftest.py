@@ -13,27 +13,6 @@ def no_network(monkeypatch):
 
     monkeypatch.setattr(socket, "socket", fake_socket)
 
-# Macro
-@pytest.fixture(scope="function")
-def _init_inflation(request):
-    request.cls.infl_rub = ok.Inflation(symbol="RUB.INFL", last_date="2001-01")
-    request.cls.infl_usd = ok.Inflation(symbol="USD.INFL", last_date="1923-01")
-    request.cls.infl_eur = ok.Inflation(symbol="EUR.INFL", last_date="2006-02")
-    request.cls.infl_usd_less_year = ok.Inflation(symbol="USD.INFL", first_date="2006-01", last_date="2006-11")
-
-
-@pytest.fixture(scope="class")
-def _init_rates(request):
-    request.cls.rates_rub = ok.Rate(symbol="RUS_RUB.RATE", first_date="2015-01", last_date="2020-02")
-    request.cls.rates_cbr_rate = ok.Rate(symbol="RUS_CBR.RATE", first_date="2015-01", last_date="2020-02")
-    request.cls.rates_ruonia = ok.Rate(symbol="RUONIA.RATE", first_date="2015-01", last_date="2020-02")
-
-
-@pytest.fixture(scope="class")
-def _init_indicator(request):
-    request.cls.cape10_usd = ok.Indicator(symbol="USA_CAPE10.RATIO", first_date="2021-01", last_date="2022-02")
-
-
 # Efficient Frontier Single Period
 @pytest.fixture(scope="module")
 def init_efficient_frontier_values1():

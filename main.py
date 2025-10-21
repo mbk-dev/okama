@@ -1,4 +1,4 @@
-import warnings
+# import warnings
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -8,26 +8,28 @@ import okama as ok
 import os
 
 os.environ["PYTHONWARNINGS"] = "ignore::FutureWarning"
-warnings.simplefilter(action="ignore", category=FutureWarning)
+# warnings.simplefilter(action="ignore", category=FutureWarning)
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
-rs = ok.Rebalance(
-    period="year",
-    # abs_deviation=0.10,
-    # rel_deviation=0.40
+# weights_div = [.07, 0.08,      .10,       .35,        .15,              .05,    .20]
+reb = ok.Rebalance(period='year', abs_deviation=None, rel_deviation=None)
+assets = ['SBGB.MOEX', 'BOND.MOEX', 'OBLG.MOEX', 'EQMX.MOEX', 'GC.COMM', 'BTC-USD.CC', 'RUS_PR.RE']
+
+portf_div = ok.Portfolio(
+    assets,
+    ccy='RUB',
+    # weights=weights_div,
+    symbol="portf_div.PF",
+    rebalancing_strategy=reb,
+    inflation=True
 )
-weights = [0, 0, 1, 0]
-pf = ok.Portfolio(
-    ['RGBITR.INDX', 'RUCBTRNS.INDX', 'MCFTR.INDX', 'GC.COMM'],
-    weights=weights,
-    # first_date='2014-06',
-    ccy="RUB",
-    inflation=True,
-    rebalancing_strategy=rs,
-    symbol="My_portfolio.PF",
-)
-pf.dcf.discount_rate = 0.09
+
+print(portf_div.describe())
+
+
+
+# pf.dcf.discount_rate = 0.09
 # # Percentage CF strategy
 # cf_strategy = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
 #
@@ -35,26 +37,36 @@ pf.dcf.discount_rate = 0.09
 # cf_strategy.frequency = "year"  # withdrawals frequency
 # cf_strategy.percentage = -0.09
 
-# # Indexation CF strategy
+# Indexation CF strategy
 # cf_strategy = ok.IndexationStrategy(pf)
 #
 # cf_strategy.initial_investment = 10_000_000
 # cf_strategy.frequency = "year"
 # cf_strategy.amount = 10_000_000 * 0.05
 # cf_strategy.indexation = 0.09
+#
+# pf.dcf.cashflow_parameters = cf_strategy
+#
+# pf.dcf.mc.period = 50
+# pf.dcf.mc.number = 100
+# pf.dcf.mc.distribution = "norm"
+
+
+# print(pf.dcf.monte_carlo_survival_period().describe())
+
 
 # Cut Whithdrawals if Drawdown CWID strategy
-cf_strategy = ok.CutWithdrawalsIfDrawdown(pf)
-
-cf_strategy.initial_investment = 10_000_000
-cf_strategy.frequency = "none"
-cf_strategy.amount = -10_000_000 * 0.05 / 12
-cf_strategy.indexation = 0.09
-cf_strategy.crash_threshold_reduction = [
-    (.10, .20),
-    (.20, .50),
-    (.40, 1),
-]
+# cf_strategy = ok.CutWithdrawalsIfDrawdown(pf)
+#
+# cf_strategy.initial_investment = 10_000_000
+# cf_strategy.frequency = "none"
+# cf_strategy.amount = -10_000_000 * 0.05 / 12
+# cf_strategy.indexation = 0.09
+# cf_strategy.crash_threshold_reduction = [
+#     (.10, .20),
+#     (.20, .50),
+#     (.40, 1),
+# ]
 
 # d = {
 #     "2015-06": -35_000_000,
@@ -73,7 +85,7 @@ cf_strategy.crash_threshold_reduction = [
 # # cf_strategy.time_series_dic = d
 # # cf_strategy.time_series_discounted_values = False
 
-pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to portfolio
+# pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to portfolio
 
 # w = cf_strategy.calculate_withdrawal_size(
 #     last_withdrawal=0,
@@ -134,12 +146,12 @@ pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to por
 
 
 # pf.dcf.mc.plot_qq(bootstrap_size_var=2000, zoom_to_left_tail=50, figsize=(10, 10))
-pf.dcf.set_mc_parameters(
-    distribution="norm",
-    distribution_parameters=(2, None),
-    period=100,
-    mc_number=1_000,
-)
-pf.dcf.mc.plot_hist_fit(bins=100)
-plt.show()
+# pf.dcf.set_mc_parameters(
+#     distribution="norm",
+#     distribution_parameters=(2, None),
+#     period=100,
+#     mc_number=1_000,
+# )
+# pf.dcf.mc.plot_hist_fit(bins=100)
+# plt.show()
 

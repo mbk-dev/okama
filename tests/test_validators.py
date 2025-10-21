@@ -4,6 +4,7 @@ Tests the validator functions
 
 import pytest
 
+from okama import settings
 from okama.common import validators
 
 
@@ -92,3 +93,62 @@ def test_validate_real_valid():
 def test_validate_real_type_error():
     with pytest.raises(TypeError):
         validators.validate_real("arg", "not a number")
+
+
+# validate_distribution
+@pytest.mark.parametrize("distr", list(settings.distributions))
+def test_validate_distribution_valid(distr):
+    validators.validate_distribution(distr)
+
+
+def test_validate_distribution_invalid():
+    with pytest.raises(ValueError) as ex:
+        validators.validate_distribution("invalid")
+    msg = str(ex.value)
+    assert "distribution must be in" in msg
+    # Ensure at least one known option is mentioned in the message
+    assert "norm" in msg
+
+
+# validate_distribution_parameters
+
+def test_validate_distribution_parameters_type_error():
+    with pytest.raises(ValueError) as ex:
+        validators.validate_distribution_parameters("norm", 123)
+    assert "neither a list nor a tuple" in str(ex.value)
+
+
+def test_validate_distribution_parameters_norm_valid():
+    validators.validate_distribution_parameters("norm", (0, 1))
+
+
+def test_validate_distribution_parameters_norm_wrong_len():
+    with pytest.raises(ValueError) as ex:
+        validators.validate_distribution_parameters("norm", (0,))
+    assert "Normal distribution" in str(ex.value)
+
+
+def test_validate_distribution_parameters_lognorm_valid():
+    validators.validate_distribution_parameters("lognorm", (0.5, 0, 1))
+
+
+def test_validate_distribution_parameters_lognorm_wrong_len():
+    with pytest.raises(ValueError) as ex:
+        validators.validate_distribution_parameters("lognorm", (0.5, 0))
+    assert "Lognormal distribution" in str(ex.value)
+
+
+def test_validate_distribution_parameters_t_valid():
+    validators.validate_distribution_parameters("t", (10, 0, 1))
+
+
+def test_validate_distribution_parameters_t_wrong_len():
+    with pytest.raises(ValueError) as ex:
+        validators.validate_distribution_parameters("t", (10, 0))
+    assert "T-distribution" in str(ex.value)
+
+
+def test_validate_distribution_parameters_unknown_distribution():
+    with pytest.raises(ValueError) as ex:
+        validators.validate_distribution_parameters("gamma", (1, 2, 3))
+    assert str(ex.value) == "Unknown distribution."
