@@ -74,6 +74,9 @@ class PortfolioDCF:
         self._monte_carlo_wealth_fv = pd.DataFrame()
         if discount_rate is None and hasattr(self.parent, "inflation"):
             self._discount_rate = helpers.Frame.get_cagr(self.parent.inflation_ts)
+            if self._discount_rate is None:
+                # if time series is too short (<12 month) CAGR is not defined
+                self._discount_rate = settings.DEFAULT_DISCOUNT_RATE
         elif discount_rate is None and not hasattr(self.parent, "inflation"):
             self._discount_rate = settings.DEFAULT_DISCOUNT_RATE
         else:
@@ -493,9 +496,7 @@ class PortfolioDCF:
         if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._monte_carlo_wealth_fv.empty:
-            return_ts = self.parent.monte_carlo_returns_ts(
-                distr=self.mc.distribution, parameters = self.mc.distribution_parameters, years=self.mc.period, n=self.mc.number
-            )
+            return_ts = self.parent.mc.monte_carlo_returns_ts()
             self._monte_carlo_wealth_fv = return_ts.apply(
                 dcf_calculations.get_wealth_indexes_fv_with_cashflow,
                 axis=0,

@@ -189,7 +189,8 @@ class Frame:
         Return Compound Annual Rate of Return (CAGR) for each asset given returns time series DataFrame.
         """
         if ror.shape[0] < 12:
-            return pd.Series({x: None for x in ror.columns})  # CAGR is not defined for periods < 1 year
+            # CAGR is not defined for periods < 1 year. Return None or Series with NaNs.
+            return pd.Series({x: None for x in ror.columns}) if isinstance(ror, pd.DataFrame) else None
         return ((ror + 1.0).prod()) ** (settings._MONTHS_PER_YEAR / ror.shape[0]) - 1.0
 
     @staticmethod
@@ -360,13 +361,14 @@ class Frame:
         return df
 
     @staticmethod
-    def skewness(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
+    def skewness(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
         """
         Calculate expanding skewness.
         The shape of time series should be at least 12. In the opposite case empty time series is returned.
         """
-        sk = ror.expanding(min_periods=1).skew()
-        return sk.iloc[settings._MONTHS_PER_YEAR :]
+        sk = ror.expanding(min_periods=12).skew()
+        sk.dropna(inplace=True)
+        return sk
 
     @staticmethod
     def skewness_rolling(ror: Union[pd.DataFrame, pd.Series], window: int = 60) -> Union[pd.Series, float]:
@@ -385,8 +387,9 @@ class Frame:
         Calculate expanding Fisher (normalized) kurtosis time series.
         Kurtosis should be close to zero for normal distribution.
         """
-        kt = ror.expanding(min_periods=1).kurt()
-        return kt.iloc[settings._MONTHS_PER_YEAR :]
+        kt = ror.expanding(min_periods=12).kurt()
+        kt.dropna(inplace=True)
+        return kt
 
     @staticmethod
     def kurtosis_rolling(ror: Union[pd.Series, pd.DataFrame], window: int = 60):
