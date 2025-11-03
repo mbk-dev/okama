@@ -25,7 +25,7 @@ portf_div = ok.Portfolio(
     inflation=True
 )
 
-print(portf_div.describe())
+print(portf_div.mean_return_monthly)
 
 
 

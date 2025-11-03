@@ -454,7 +454,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf
         0.0001803312727272665
         """
-        return helpers.Frame.get_portfolio_mean_return(self.weights, self.assets_ror)
+        return self.ror.mean()
 
     @property
     def mean_return_annual(self) -> float:

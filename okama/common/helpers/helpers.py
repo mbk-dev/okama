@@ -173,11 +173,11 @@ class Frame:
 
     @classmethod
     def get_portfolio_mean_return(cls, weights: Union[list, np.array], ror: pd.DataFrame) -> float:
-        # sourcery skip: assign-if-exp, reintroduce-else
         """
-        Computes mean return of a portfolio (monthly as ROR time series are monthly in okama).
+        Computes arithmetic mean return of a portfolio return (monthly as ROR time series are monthly in okama).
+
+        WARNING: This function is correct only for monthly rebalancing strategy (or for single asset portfolio)..
         """
-        # cls.weights_sum_is_one(weights)
         weights = np.asarray(weights)
         if isinstance(ror.mean(), float):  # required for a single asset portfolio
             return ror.mean()
