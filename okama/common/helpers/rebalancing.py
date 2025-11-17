@@ -263,11 +263,17 @@ class Rebalance:
         weights_difference_abs = weights_difference_abs.abs()
         weights_difference_rel = weights.divide(target_weights_s, axis=0) - 1
         weights_difference_rel = weights_difference_rel.abs()
-        condition_abs = False if self.abs_deviation is None else (weights_difference_abs > self.abs_deviation).any()
-        condition_rel = False if self.rel_deviation is None else (weights_difference_rel > self.rel_deviation).any()
-        rebalancing_condition = (
-            condition_abs or condition_rel
-        )  # Determined at the end, as it is not needed during the first run.
+        # Ensure Python bools for downstream identity checks in tests
+        condition_abs_np = (
+            (weights_difference_abs > self.abs_deviation).any() if self.abs_deviation is not None else False
+        )
+        condition_rel_np = (
+            (weights_difference_rel > self.rel_deviation).any() if self.rel_deviation is not None else False
+        )
+        condition_abs = bool(condition_abs_np)
+        condition_rel = bool(condition_rel_np)
+        # Determined at the end, as it is not needed during the first run.
+        rebalancing_condition = bool(condition_abs or condition_rel)
         return rebalancing_condition, condition_abs
 
     def assets_weights_ts(self, target_weights: list, ror: pd.DataFrame) -> pd.DataFrame:
@@ -307,7 +313,12 @@ class Rebalance:
         pd.Series
             The monthly rate of return time series of rebalanced portfolio.
         """
+        # Calculate wealth index using wealth_ts (which includes an initial pre-first-period point)
         wealth_index = self.wealth_ts(target_weights, ror).portfolio_wealth_index
-        ror = wealth_index.pct_change()
-        ror.dropna(inplace=True)
-        return ror
+        # Align behavior with manual baseline: start pct_change from the first input ror date,
+        # so the first period in ror.index will be NaN and then dropped.
+        first_ror_date = ror.index[0]
+        wealth_index_aligned = wealth_index.loc[wealth_index.index >= first_ror_date]
+        portfolio_ror = wealth_index_aligned.pct_change()
+        portfolio_ror.dropna(inplace=True)
+        return portfolio_ror
