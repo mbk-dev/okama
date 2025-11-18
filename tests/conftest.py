@@ -3,6 +3,11 @@ import socket
 import pytest
 import okama as ok
 from pathlib import Path
+import numpy as np
+import pandas as pd
+
+# Helper classes for Asset/currency mocks
+from tests.asset_list.conftest import _FakeAsset, _FakeCurrencyAsset
 
 data_folder = Path(__file__).parent / "data"
 
@@ -196,3 +201,40 @@ def init_rebalance_no_rebalancing():
         abs_deviation=None,
         rel_deviation=None,
     )
+
+
+# Global synthetic_env fixture available to all tests
+@pytest.fixture
+def synthetic_env(mocker):
+    """Three assets over 24 months with deterministic correlation (global fixture).
+
+    Makes the synthetic_env fixture available to all tests under tests/.
+    Patches ListMaker._get_asset_obj_dict and the currency Asset to remove external dependencies.
+    """
+    rng = np.random.default_rng(12345)
+    idx = pd.period_range("2020-01", periods=24, freq="M")
+
+    a1 = pd.Series(rng.normal(0.01 / 12, 0.05, size=len(idx)), index=idx, name="IDX.US")
+    a2 = pd.Series(rng.normal(0.008 / 12, 0.04, size=len(idx)), index=idx, name="A.US")
+    a3_noise = rng.normal(0, 0.02, size=len(idx))
+    a3 = pd.Series(0.5 * a1.values + a3_noise, index=idx, name="B.US")
+
+    fake_assets = {
+        "IDX.US": _FakeAsset("IDX.US", a1, currency="USD", name="Index"),
+        "A.US": _FakeAsset("A.US", a2, currency="USD", name="Asset A"),
+        "B.US": _FakeAsset("B.US", a3, currency="USD", name="Asset B"),
+    }
+
+    m_get_dict = mocker.patch(
+        "okama.common.make_asset_list.ListMaker._get_asset_obj_dict", return_value=fake_assets
+    )
+    m_currency_asset = mocker.patch(
+        "okama.common.make_asset_list.asset.Asset", side_effect=_FakeCurrencyAsset
+    )
+
+    yield {
+        "index": idx,
+        "series": {k: v for k, v in [("IDX.US", a1), ("A.US", a2), ("B.US", a3)]},
+        "m_get_dict": m_get_dict,
+        "m_currency_asset": m_currency_asset,
+    }
