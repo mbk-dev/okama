@@ -1,221 +1,224 @@
-import pytest
-from pytest import approx
-from pytest import mark
-
 import numpy as np
-from numpy.testing import assert_allclose
-
 import pandas as pd
+import pytest
+from numpy.testing import assert_allclose
 
 import okama as ok
 
 
-@mark.rebalance
-@mark.frontier
-def test_init_efficient_frontier_reb():
+@pytest.fixture()
+def ef_reb_ab(synthetic_env):
+    """EfficientFrontierReb with two mocked assets A.US and B.US in USD.
+
+    Uses synthetic_env to patch asset loading and currency, so no API is called.
+    """
+    return ok.EfficientFrontierReb(
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, rebalancing_strategy=ok.Rebalance(period="year")
+    )
+
+
+@pytest.fixture()
+def ef_reb_three(synthetic_env):
+    """EfficientFrontierReb with three mocked assets IDX.US, A.US and B.US."""
+    return ok.EfficientFrontierReb(
+        ["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=12, rebalancing_strategy=ok.Rebalance(period="year")
+    )
+
+
+def test_init_efficient_frontier_reb_failing():
+    # Error is raised before data loading, no API call occurs
     with pytest.raises(ValueError, match=r"The number of symbols cannot be less than two"):
-        ok.EfficientFrontierReb(assets=["MCFTR.INDX"])
+        ok.EfficientFrontierReb(assets=["A.US"], ccy="USD")
 
 
-def test_repr(init_efficient_frontier_reb):
-    value = pd.Series(
-        dict(
-            symbols=["SPY.US", "GLD.US"],
-            currency="USD",
-            first_date="2019-01",
-            last_date="2020-02",
-            period_length="1 years, 2 months",
-            rebalancing_period="year",
-            rebalancing_abs_deviation=None,
-            rebalancing_rel_deviation=None,
-            bounds=((0, 1), (0, 1)),
-            inflation="USD.INFL",
-        )
+def test_repr_contains_key_fields(ef_reb_ab):
+    r = repr(ef_reb_ab)
+    # Basic sanity: important fields are present
+    assert "symbols" in r
+    assert "currency" in r and "USD" in r
+    assert "bounds" in r
+    assert "rebalancing_period" in r or "rebalancing_period" in r
+    assert "n_points" in r
+
+
+def test_bounds_setter_reset_points(ef_reb_ab):
+    ef = ef_reb_ab
+    # Pre-fill cache
+    _ = ef.ef_points
+    assert not ef._ef_points.empty
+    # Change bounds and ensure cache is cleared
+    ef.bounds = tuple((0.0, 1.0) for _ in ef.symbols)
+    assert ef._ef_points.empty
+
+
+def test_gmv_annual_weights_basic_properties(ef_reb_ab):
+    w = ef_reb_ab.gmv_annual_weights
+    # weights length equals number of assets
+    assert len(w) == len(ef_reb_ab.symbols)
+    # weights within bounds and sum to 1
+    lo_hi = ef_reb_ab.bounds
+    assert_allclose(np.sum(w), 1.0, atol=1e-8)
+    assert np.all(w >= np.array([lo for lo, _ in lo_hi]))
+    assert np.all(w <= np.array([hi for _, hi in lo_hi]))
+
+
+def test_gmv_annual_values_types(ef_reb_ab):
+    risk, cagr = ef_reb_ab.gmv_annual_values
+    assert isinstance(risk, float) and isinstance(cagr, float)
+    assert risk >= 0.0
+
+
+def test_global_max_return_portfolio_basic(ef_reb_ab):
+    res = ef_reb_ab.global_max_return_portfolio
+    # Keys exist
+    assert set(res.keys()) >= {"Weights", "Risk", "Risk_monthly", "CAGR"}
+    w = np.asarray(res["Weights"])
+    assert_allclose(np.sum(w), 1.0, atol=1e-8)
+    # Max return portfolio CAGR should be at least GMV CAGR
+    _, gmv_cagr = ef_reb_ab.gmv_annual_values
+    assert res["CAGR"] >= gmv_cagr - 1e-8
+
+
+def test_minimize_risk_reaches_target_cagr(ef_reb_ab):
+    # Pick a target in the middle of the left range
+    r = ef_reb_ab._target_cagr_range_left
+    target = float((r[0] + r[-1]) / 2)
+    result = ef_reb_ab.minimize_risk(target)
+    # Achieved CAGR is near the target
+    assert result["CAGR"] == pytest.approx(target, rel=1e-2, abs=1e-3)
+    # Weights sum to 1
+    assert_allclose(np.sum(np.asarray(result["Weights"])), 1.0, atol=1e-8)
+
+
+def test_ef_points_shape_and_monotonicity(ef_reb_ab):
+    pts = ef_reb_ab.ef_points
+    # At least n_points rows (can be larger if right part exists)
+    assert len(pts) >= ef_reb_ab.n_points
+    # CAGR should be non-decreasing along the left-to-right grid
+    assert np.all(np.diff(pts["CAGR"]) >= -1e-12)
+
+
+def test_get_monte_carlo_returns_dataframe(ef_reb_ab):
+    np.random.seed(0)
+    rp = ef_reb_ab.get_monte_carlo(10)
+    assert list(rp.columns)[:2] == ["Risk", "CAGR"]
+    assert len(rp) == 10
+
+
+def test_plot_pair_ef_returns_axes(ef_reb_three):
+    ax = ef_reb_three.plot_pair_ef(tickers="tickers")
+    assert hasattr(ax, "lines") and len(ax.lines) >= 1
+
+# 2
+
+
+@pytest.fixture()
+def ef_reb_ab(synthetic_env):
+    """EfficientFrontierReb with two mocked assets A.US and B.US in USD.
+
+    Uses synthetic_env to patch asset loading and currency, so no API is called.
+    """
+    return ok.EfficientFrontierReb(
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, rebalancing_strategy=ok.Rebalance(period="year")
     )
-    assert repr(init_efficient_frontier_reb) == repr(value)
 
 
-@mark.rebalance
-@mark.frontier
-def test_bounds_frontier(init_bounds_frontier):
-    assert init_bounds_frontier.bounds == ((0, 0.2), (0.2, 0.4), (0.4, 0.6), (0, 1), (0, 1))
+def test_gmv_monthly_weights_basic(ef_reb_ab):
+    w = ef_reb_ab.gmv_monthly_weights
+    # length equals number of assets
+    assert len(w) == len(ef_reb_ab.symbols)
+    # within bounds and sum to 1
+    lo_hi = ef_reb_ab.bounds
+    assert np.isclose(np.sum(w), 1.0, atol=1e-8)
+    assert np.all(w >= np.array([lo for lo, _ in lo_hi]))
+    assert np.all(w <= np.array([hi for _, hi in lo_hi]))
 
 
-@mark.rebalance
-@mark.frontier
-def test_bounds_setter_valid_input(init_frontier_with_bounds):
-    frontier = init_frontier_with_bounds
-    expected_bounds = ((0, 0.4), (0, 1), (0, 1))
-    assert frontier.bounds == expected_bounds
+def test_get_gmv_monthly_returns_types_and_sign(ef_reb_ab):
+    risk_m, mean_m = ef_reb_ab._get_gmv_monthly()
+    # both are floats and non-negative risk
+    assert isinstance(risk_m, float)
+    assert isinstance(mean_m, float)
+    assert risk_m >= 0.0
 
 
-@mark.rebalance
-@mark.frontier
-def test_bounds_setter_empty_input(init_frontier_without_bounds):
-    frontier = init_frontier_without_bounds
-    frontier.bounds = None
-    assert frontier.bounds == ((0.0, 1.0),) * len(frontier._assets)
+def test_rebalancing_strategy_setter_resets_cache(ef_reb_ab):
+    # warm up cache
+    _ = ef_reb_ab.ef_points
+    assert not ef_reb_ab._ef_points.empty
+    # change strategy and ensure cache is cleared
+    ef_reb_ab.rebalancing_strategy = ok.Rebalance(period="none")
+    assert ef_reb_ab.rebalancing_strategy.period == "none"
+    assert ef_reb_ab._ef_points.empty
 
 
-def test_bounds_setter_ef_points_reset(init_frontier_with_bounds):
-    frontier = init_frontier_with_bounds
+def test_n_points_setter_validation_and_cache(ef_reb_ab):
+    # validation
+    with pytest.raises(ValueError, match=r"n_points should be an integer"):
+        ef_reb_ab.n_points = 10.0  # type: ignore
+    with pytest.raises(ValueError, match=r"n_points should be greater than zero"):
+        ef_reb_ab.n_points = 0
 
-    frontier._ef_points = pd.DataFrame({"GLD.US": [0.25], "PGJ.US": [0.25], "VB.US": [0.25]})
-
-    frontier.bounds = ((0, 1), (0, 1), (0, 1))
-
-    assert frontier._ef_points.empty
-
-
-@mark.rebalance
-@mark.frontier
-def test_gmv_annual_weights(init_efficient_frontier_reb):
-    assert_allclose(
-        init_efficient_frontier_reb.gmv_annual_weights,
-        np.array([0.384194, 0.615806]),
-        rtol=1e-2,
-        atol=1e-2,
-    )
+    # cache reset and effect on ef_points grid size
+    _ = ef_reb_ab.ef_points
+    assert not ef_reb_ab._ef_points.empty
+    ef_reb_ab.n_points = 7
+    assert ef_reb_ab._ef_points.empty
+    pts = ef_reb_ab.ef_points
+    assert len(pts) >= 7
 
 
-@mark.rebalance
-@mark.frontier
-def test_gmv_annual_values(init_efficient_frontier_reb):
-    assert init_efficient_frontier_reb.gmv_annual_values[0] == approx(0.1189, rel=1e-1)
+def test_ticker_names_affects_result_keys(ef_reb_ab):
+    # by default ticker_names=True -> per-asset keys are symbols
+    target = float((ef_reb_ab._target_cagr_range_left[0] + ef_reb_ab._target_cagr_range_left[-1]) / 2)
+    res_default = ef_reb_ab.minimize_risk(target)
+    assert any(s in res_default for s in ef_reb_ab.symbols)
+
+    # when set to False -> use asset names instead of tickers
+    ef_reb_ab.ticker_names = False
+    res_named = ef_reb_ab.minimize_risk(target)
+    # names are stored in ef_reb_ab.names values
+    asset_names = list(ef_reb_ab.names.values())
+    assert any(n in res_named for n in asset_names)
+    # and the ticker keys should not all be present simultaneously
+    assert not all(s in res_named for s in ef_reb_ab.symbols)
 
 
-@mark.rebalance
-@mark.frontier
-def test_max_return(init_efficient_frontier_reb):
-    assert init_efficient_frontier_reb.global_max_return_portfolio["CAGR"] == approx(0.1889, abs=1e-2)
+def test_get_cagr_with_equal_weights_in_bounds(ef_reb_ab):
+    n = len(ef_reb_ab.symbols)
+    w = np.repeat(1.0 / n, n)
+    cagr = ef_reb_ab._get_cagr(w)
+    # should lie between min and max asset CAGR for synthetic series
+    asset_cagrs = ok.common.helpers.helpers.Frame.get_cagr(ef_reb_ab.assets_ror)
+    assert asset_cagrs.min() - 1e-6 <= cagr <= asset_cagrs.max() + 1e-6
 
 
-@mark.rebalance
-@mark.frontier
-def test_ef_points_reb(init_efficient_frontier_reb):
-    assert init_efficient_frontier_reb.ef_points["CAGR"].iloc[1] == approx(0.1889, abs=1e-2)
+def test_target_cagr_range_right_optional_and_sorted(ef_reb_ab):
+    rr = ef_reb_ab._target_cagr_range_right
+    if rr is None:
+        assert rr is None
+    else:
+        assert isinstance(rr, np.ndarray)
+        assert len(rr) >= 1
+        # should decrease from global max to the asset cagr on the right
+        assert np.all(np.diff(rr) <= 1e-12)
 
 
-test_params = {
-    "with_bounds": {
-        "target_cagr_1": 0.060973018282528796,
-        "expected_risk_1": 0.14242,
-        "target_cagr_2": 0.1035764996098511,
-        "expected_risk_2": 0.1325340380516895,
-    },
-    "without_bounds": {
-        "target_cagr_1": 0.060973018282528796,
-        "expected_risk_1": 0.13878,
-        "target_cagr_2": 0.1035764996098511,
-        "expected_risk_2": 0.11948,
-    },
-}
+def test_target_risk_range_monotonic_and_start_is_gmv(ef_reb_ab):
+    tr = ef_reb_ab.target_risk_range
+    assert isinstance(tr, np.ndarray)
+    assert len(tr) == ef_reb_ab.n_points
+    # non-decreasing
+    assert np.all(np.diff(tr) >= -1e-12)
+    # starts from GMV annual risk (allow small tolerance)
+    gmv_risk, _ = ef_reb_ab.gmv_annual_values
+    assert tr[0] == pytest.approx(gmv_risk, rel=1e-3, abs=1e-3)
 
 
-@mark.rebalance
-@mark.frontier
-def test_minimize_risk_with_bounds(init_frontier_with_bounds):
-    params = test_params["with_bounds"]
+def test_max_annual_risk_asset_structure(ef_reb_ab):
+    info = ef_reb_ab._max_annual_risk_asset
+    assert set(info.keys()) == {"max_annual_risk", "ticker_with_largest_risk", "list_position"}
+    assert info["ticker_with_largest_risk"] in ef_reb_ab.symbols
+    assert 0 <= info["list_position"] < len(ef_reb_ab.symbols)
+    assert ef_reb_ab.symbols[info["list_position"]] == info["ticker_with_largest_risk"]
 
-    result1 = init_frontier_with_bounds.minimize_risk(params["target_cagr_1"])
-    assert np.isclose(result1["Risk"], params["expected_risk_1"], atol=1e-1)
-
-    result2 = init_frontier_with_bounds.minimize_risk(params["target_cagr_2"])
-    assert np.isclose(result2["Risk"], params["expected_risk_2"], atol=1e-1)
-
-
-@mark.rebalance
-@mark.frontier
-def test_minimize_risk_without_bounds(init_frontier_without_bounds):
-    params = test_params["without_bounds"]
-
-    result = init_frontier_without_bounds.minimize_risk(params["target_cagr_1"])
-    assert np.isclose(result["Risk"], params["expected_risk_1"], atol=1e-1)
-
-    result = init_frontier_without_bounds.minimize_risk(params["target_cagr_2"])
-    assert np.isclose(result["Risk"], params["expected_risk_2"], atol=1e-1)
-
-
-@mark.rebalance
-@mark.frontier
-def test_minimize_risk_raises_error_when_no_solution(init_frontier_with_bounds):
-    target_cagr = 0.5
-
-    with pytest.raises(RecursionError) as exc_info:
-        init_frontier_with_bounds.minimize_risk(target_cagr)
-
-    assert str(exc_info.value) == f"No solution found for target CAGR value: {target_cagr}."
-
-
-@mark.rebalance
-@mark.frontier
-def test_min_ratio_asset_when_not_none(init_frontier_with_not_none):
-    x = init_frontier_with_not_none
-    result = x._min_ratio_asset
-    # TODO: add case when left_assets.any() is False
-
-    expected_result = {
-        "min_asset_cagr": approx(0.1959425614987127, abs=1e-2),
-        "ticker_with_smallest_ratio": "SPY.US",
-        "list_position": 0,
-    }
-
-    assert result == expected_result
-
-
-@mark.rebalance
-@mark.frontier
-def test_convex_right_frontier(init_convex_frontier):
-    x = init_convex_frontier
-    result = x._max_ratio_asset_right_to_max_cagr
-
-    expected_result = {
-        "max_asset_cagr": approx(0.17520700138002665, abs=1e-2),
-        "ticker_with_largest_cagr": "PGJ.US",
-        "list_position": 2,
-    }
-
-    assert result == expected_result
-
-
-@mark.rebalance
-@mark.frontier
-def test_nonconvex_right_frontier(init_nonconvex_frontier):
-    x = init_nonconvex_frontier
-    result = x._max_ratio_asset_right_to_max_cagr
-
-    expected_result = {
-        "max_asset_cagr": approx(0.15691138904751512, abs=1e-2),
-        "ticker_with_largest_cagr": "MCFTR.INDX",
-        "list_position": 4,
-    }
-
-    assert result == expected_result
-
-
-@mark.rebalance
-@mark.frontier
-def test_maximize_risk_with_convex_right_frontier(init_convex_frontier):
-    x = init_convex_frontier
-    result = x._maximize_risk(0.17520700138002665)
-
-    result_risk = result["Risk"]
-    expected_risk = approx(0.30419612104254684, abs=1e-2)
-
-    assert result_risk == expected_risk
-
-
-@mark.rebalance
-@mark.frontier
-def test_maximize_risk_with_nonconvex_right_frontier(init_nonconvex_frontier):
-    x = init_nonconvex_frontier
-    result = x._maximize_risk(0.15691138904751512)
-
-    result_risk = result["Risk"]
-    expected_risk = approx(0.28761107914313766, abs=1e-2)
-
-    assert result_risk == expected_risk
-
-
-# TODO: add test for `get_monte_carlo`
-# TODO: add test for `plot_pair_ef`

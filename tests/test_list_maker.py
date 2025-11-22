@@ -3,7 +3,11 @@ import pytest
 
 import okama as ok
 from okama.common.make_asset_list import ListMaker
-from tests.asset_list.conftest import _FakeAsset, _FakeCurrencyAsset, _ListDefaults
+from tests.helpers.factories import (
+    FakeAsset as _FakeAsset,
+    FakeCurrencyAsset as _FakeCurrencyAsset,
+    ListDefaults as _ListDefaults,
+)
 
 
 class DummyList(ListMaker):
@@ -85,22 +89,33 @@ def test_validate_period_ok_and_fail(synthetic_env):
         lm._validate_period(3)
 
 
-def test_get_asset_obj_dict_raises_for_short_history(mocker):
-    # Prepare a mock for okama.common.make_asset_list.asset.Asset to return an object with short history
-    from collections import namedtuple
-
+def test_get_asset_obj_dict_raises_for_short_history():
+    """Test that _get_asset_obj_dict raises ShortPeriodLengthError for assets with insufficient history.
+    
+    This test directly calls the validation logic by importing the original module
+    to avoid interference from patches in other parallel tests (e.g., synthetic_env).
+    """
+    # Import the module directly to get the original unpatched version
+    import importlib
+    import okama.common.make_asset_list
+    # Force reload to ensure we get a fresh unpatched version
+    importlib.reload(okama.common.make_asset_list)
+    from okama.common.make_asset_list import ListMaker as UnpatchedListMaker
+    
     PL = ok.settings.PeriodLength
 
     class TinyAsset:
         def __init__(self, symbol: str):
             self.symbol = symbol
-            self.ror = pd.Series(dtype=float)
+            self.ror = pd.Series(dtype=float)  # Empty series (length 0)
             self.pl = PL(0, 2)  # 0 years and 2 months -> should raise ShortPeriodLengthError
 
-    mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=TinyAsset)
-
+    # Create a list with TinyAsset objects directly (instead of strings)
+    # This way we bypass the Asset(symbol) construction and use our test objects
+    tiny_assets = [TinyAsset("TINY1.US"), TinyAsset("TINY2.US")]
+    
     with pytest.raises(ok.common.error.ShortPeriodLengthError):
-        ListMaker._get_asset_obj_dict(["X.US"])  # staticmethod
+        UnpatchedListMaker._get_asset_obj_dict(tiny_assets)  # staticmethod
 
 
 @pytest.fixture()

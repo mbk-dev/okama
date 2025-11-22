@@ -1,4 +1,5 @@
 import socket
+import random
 
 import pytest
 import okama as ok
@@ -6,191 +7,75 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# Helper classes for Asset/currency mocks
-from tests.asset_list.conftest import _FakeAsset, _FakeCurrencyAsset
+# Helper classes and generators for Asset/currency mocks
+from tests.helpers.factories import (
+    FakeAsset,
+    FakeCurrencyAsset,
+    make_period_index,
+    make_ror_series,
+)
 
-data_folder = Path(__file__).parent / "data"
+@pytest.fixture(scope="session", autouse=True)
+def set_seed():
+    """Set deterministic seeds for numpy and random across the test session."""
+    np.random.seed(12345)
+    random.seed(12345)
 
-@pytest.fixture(autouse=True)
-def no_network(monkeypatch):
-    def fake_socket(*args, **kwargs):
+
+@pytest.fixture(scope="session", autouse=True)
+def block_network():
+    """Block network calls during tests to guarantee offline determinism."""
+    mp = pytest.MonkeyPatch()
+
+    def _deny(*args, **kwargs):
         raise AssertionError("Network calls are disabled during tests!")
 
-    monkeypatch.setattr(socket, "socket", fake_socket)
-
-# Efficient Frontier Single Period
-@pytest.fixture(scope="module")
-def init_efficient_frontier_values1():
-    return dict(
-        assets=["MCFTR.INDX", "RGBITR.INDX"],
-        ccy="RUB",
-        first_date="2018-11",
-        last_date="2020-02",
-        inflation=True,
-        n_points=2,
-    )
+    mp.setattr(socket, "socket", _deny)
+    # Optionally block other entry points if needed:
+    # import socket as _s
+    # mp.setattr(_s, "create_connection", _deny)
+    yield
+    mp.undo()
 
 
-@pytest.fixture(scope="module")
-def init_efficient_frontier_values2():
-    return dict(
-        assets=["SPY.US", "AGG.US", "GLD.US"],
-        ccy="USD",
-        first_date="2010-01",
-        last_date="2020-01",
-        inflation=True,
-        n_points=20,
-        full_frontier=True,
-    )
+@pytest.fixture(scope="session", autouse=True)
+def mock_macro():
+    """Patch macro data access for *.INFL symbols with synthetic deterministic series."""
+    from okama.api import data_queries as dq
 
+    mp = pytest.MonkeyPatch()
+    _orig_get_macro_ts = dq.QueryData.get_macro_ts
+    _orig_get_symbol_info = dq.QueryData.get_symbol_info
 
-@pytest.fixture(scope="module")
-def init_efficient_frontier(init_efficient_frontier_values1):
-    return ok.EfficientFrontier(**init_efficient_frontier_values1)
+    def _wrapped_get_macro_ts(symbol, first_date, last_date, period="M"):
+        if isinstance(symbol, str) and symbol.endswith(".INFL"):
+            idx = make_period_index(months=600, start="2000-01")
+            s = make_ror_series(symbol, idx, base=0.004, amp=0.0015)
+            if first_date or last_date:
+                s = s.loc[first_date:last_date]
+            if period != "M":
+                raise AssertionError("Only monthly period is supported in tests")
+            return s
+        return _orig_get_macro_ts(symbol, first_date, last_date, period=period)
 
+    def _wrapped_get_symbol_info(symbol):
+        if isinstance(symbol, str) and symbol.endswith(".INFL"):
+            ccy = symbol.split(".", 1)[0]
+            return {
+                "code": symbol,
+                "name": f"Inflation {symbol}",
+                "country": ccy,
+                "currency": ccy,
+                "type": "macro",
+                "exchange": "N/A",
+            }
+        return _orig_get_symbol_info(symbol)
 
-@pytest.fixture(scope="module")
-def init_efficient_frontier_bounds(init_efficient_frontier_values1):
-    bounds = ((0.0, 0.5), (0.0, 1.0))
-    return ok.EfficientFrontier(**init_efficient_frontier_values1, bounds=bounds)
+    mp.setattr(dq.QueryData, "get_macro_ts", staticmethod(_wrapped_get_macro_ts))
+    mp.setattr(dq.QueryData, "get_symbol_info", staticmethod(_wrapped_get_symbol_info))
+    yield
+    mp.undo()
 
-
-@pytest.fixture(scope="module")
-def init_efficient_frontier_three_assets(init_efficient_frontier_values2):
-    return ok.EfficientFrontier(**init_efficient_frontier_values2)
-
-
-# Efficient Frontier Multi-Period
-@pytest.fixture(scope="module")
-def init_efficient_frontier_reb():
-    return ok.EfficientFrontierReb(
-        assets=["SPY.US", "GLD.US"],
-        ccy="USD",
-        first_date="2019-01",
-        last_date="2020-02",
-        rebalancing_strategy=ok.Rebalance(period="year"),
-        bounds=((0, 1), (0, 1)),
-        inflation=True,
-        n_points=2,
-        full_frontier=False,
-    )
-
-
-@pytest.fixture(scope="module")
-def bounds_frontier_params():
-    return dict(
-        assets=["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"],
-        ccy="USD",
-        first_date="2019-01",
-        last_date="2020-02",
-        rebalancing_strategy=ok.Rebalance(period="year"),
-        bounds=((0, 0.2), (0.2, 0.4), (0.4, 0.6), (0, 1), (0, 1)),
-        inflation=True,
-    )
-
-
-@pytest.fixture(scope="function")
-def without_bounds_params():
-    return dict(
-        assets=["VOO.US", "GLD.US", "SCHA.US"],
-        ccy="USD",
-        first_date="2004-10",
-        last_date="2020-10",
-        rebalancing_strategy=ok.Rebalance(period="year"),
-    )
-
-
-@pytest.fixture(scope="function")
-def with_bounds_params():
-    return dict(
-        assets=["VOO.US", "GLD.US", "SCHA.US"],
-        ccy="USD",
-        first_date="2004-10",
-        last_date="2020-10",
-        rebalancing_strategy=ok.Rebalance(period="year"),
-        bounds=((0, 0.4), (0, 1), (0, 1)),
-    )
-
-
-@pytest.fixture(scope="module")
-def _min_ratio_asset_when_none_params():
-    return dict(
-        assets=["SPY.US", "GLD.US"],
-        ccy="USD",
-        last_date="2020-10",
-        rebalancing_strategy=ok.Rebalance(period="year"),
-    )
-
-
-@pytest.fixture(scope="module")
-def _min_ratio_asset_when_not_none_params():
-    return dict(
-        assets=["SPY.US", "MCFTR.INDX"],
-        ccy="RUB",
-        last_date="2025-03",
-        rebalancing_strategy=ok.Rebalance(period="year"),
-    )
-
-
-@pytest.fixture(scope="module")
-def convex_frontier_params():
-    return dict(
-        assets=["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"],
-        ccy="RUB",
-        first_date="2005-01",
-        last_date="2020-11",
-        rebalancing_strategy=ok.Rebalance(period="year"),
-        n_points=5,
-        verbose=True,
-    )
-
-
-@pytest.fixture(scope="module")
-def nonconvex_frontier_params():
-    return dict(
-        assets=["SPY.US", "GLD.US", "VB.US", "RGBITR.INDX", "MCFTR.INDX"],
-        ccy="RUB",
-        first_date="2004-12",
-        last_date="2020-12",
-        rebalancing_strategy=ok.Rebalance(period="year"),
-        n_points=5,
-        verbose=True,
-    )
-
-
-@pytest.fixture(scope="module")
-def init_bounds_frontier(bounds_frontier_params):
-    return ok.EfficientFrontierReb(**bounds_frontier_params)
-
-
-@pytest.fixture(scope="function")
-def init_frontier_without_bounds(without_bounds_params):
-    return ok.EfficientFrontierReb(**without_bounds_params)
-
-
-@pytest.fixture(scope="function")
-def init_frontier_with_bounds(with_bounds_params):
-    return ok.EfficientFrontierReb(**with_bounds_params)
-
-
-@pytest.fixture(scope="module")
-def init_frontier_with_none(_min_ratio_asset_when_none_params):
-    return ok.EfficientFrontierReb(**_min_ratio_asset_when_none_params)
-
-
-@pytest.fixture(scope="module")
-def init_frontier_with_not_none(_min_ratio_asset_when_not_none_params):
-    return ok.EfficientFrontierReb(**_min_ratio_asset_when_not_none_params)
-
-
-@pytest.fixture(scope="module")
-def init_convex_frontier(convex_frontier_params):
-    return ok.EfficientFrontierReb(**convex_frontier_params)
-
-
-@pytest.fixture(scope="module")
-def init_nonconvex_frontier(nonconvex_frontier_params):
-    return ok.EfficientFrontierReb(**nonconvex_frontier_params)
 
 
 # Rebalance
@@ -220,16 +105,45 @@ def synthetic_env(mocker):
     a3 = pd.Series(0.5 * a1.values + a3_noise, index=idx, name="B.US")
 
     fake_assets = {
-        "IDX.US": _FakeAsset("IDX.US", a1, currency="USD", name="Index"),
-        "A.US": _FakeAsset("A.US", a2, currency="USD", name="Asset A"),
-        "B.US": _FakeAsset("B.US", a3, currency="USD", name="Asset B"),
+        "IDX.US": FakeAsset("IDX.US", a1, currency="USD", name="Index"),
+        "A.US": FakeAsset("A.US", a2, currency="USD", name="Asset A"),
+        "B.US": FakeAsset("B.US", a3, currency="USD", name="Asset B"),
     }
 
+    # Return only requested symbols to keep shapes consistent with the user's input
+    def _filtered_get_dict(symbols):
+        """Return a dict with only the requested symbols/objects from fake_assets.
+
+        Supports both symbol strings and already constructed Asset-like objects
+        (with attribute `symbol`). This ensures that the number of assets in
+        assets_ror matches the number of symbols passed to EfficientFrontier
+        (and hence its bounds).
+        """
+        result = {}
+        for s in symbols:
+            # If we receive an already constructed fake asset object (e.g., from plot_pair_ef)
+            if hasattr(s, "symbol"):
+                # Only replace if the symbol is in our fake_assets, otherwise pass through
+                # This allows other tests to use custom asset objects for validation testing
+                if s.symbol in fake_assets:
+                    result[s.symbol] = s
+                else:
+                    # Pass through the original object for symbols not in fake_assets
+                    # This is needed for tests that create their own test objects
+                    from okama.common.make_asset_list import ListMaker
+                    # Call the original unmocked method
+                    original_result = ListMaker.__dict__['_get_asset_obj_dict'].__func__([s])
+                    result.update(original_result)
+            else:
+                # Otherwise, it's a symbol string -> take from our predefined fake_assets
+                result[s] = fake_assets[s]
+        return result
+
     m_get_dict = mocker.patch(
-        "okama.common.make_asset_list.ListMaker._get_asset_obj_dict", return_value=fake_assets
+        "okama.common.make_asset_list.ListMaker._get_asset_obj_dict", side_effect=_filtered_get_dict
     )
     m_currency_asset = mocker.patch(
-        "okama.common.make_asset_list.asset.Asset", side_effect=_FakeCurrencyAsset
+        "okama.common.make_asset_list.asset.Asset", side_effect=FakeCurrencyAsset
     )
 
     yield {

@@ -101,40 +101,12 @@ import pytest
 import numpy as np
 import pandas as pd
 
-
-class _ListDefaults:
-    def __init__(self):
-        # Minimal monthly ror series (PeriodIndex with monthly freq)
-        self.ror_index = pd.period_range("2020-01", "2020-03", freq="M")
-        self.ror_a = pd.Series([0.01, 0.02, 0.03], index=self.ror_index, name="A.US")
-        self.ror_b = pd.Series([0.00, -0.01, 0.02], index=self.ror_index, name="B.US")
-        self.first_ts = self.ror_index[0].to_timestamp()
-        self.last_ts = self.ror_index[-1].to_timestamp()
-
-
-class _FakeAsset:
-    """Minimal Asset-like object used in ListMaker patches."""
-
-    def __init__(self, symbol: str, ror: pd.Series, currency: str = "USD", name: str | None = None):
-        self.symbol = symbol
-        self.ticker = symbol.split(".")[0]
-        self.name = name or f"{self.ticker} name"
-        self.currency = currency
-        self.ror = ror
-        # first/last dates are taken from ror index
-        self.first_date = ror.index[0].to_timestamp()
-        self.last_date = ror.index[-1].to_timestamp()
-
-
-class _FakeCurrencyAsset:
-    def __init__(self, symbol: str):
-        # symbol expected like 'USD.FX'
-        self.symbol = symbol
-        self.ticker = symbol.split(".")[0]
-        self.currency = self.ticker  # base currency string
-        # Provide wide range so it doesn't constrain
-        self.first_date = pd.Timestamp("1990-01-01")
-        self.last_date = pd.Timestamp("2100-01-01")
+# Re-export helper classes for backward compatibility in tests
+from tests.helpers.factories import (
+    ListDefaults as _ListDefaults,
+    FakeAsset as _FakeAsset,
+    FakeCurrencyAsset as _FakeCurrencyAsset,
+)
 
 
 @pytest.fixture
@@ -163,35 +135,8 @@ def list_basic_patches(mocker):
     }
 
 
-@pytest.fixture
-def synthetic_env(mocker):
-    """Three assets over 24 months with controlled correlation for index metrics."""
-    rng = np.random.default_rng(12345)
-    idx = pd.period_range("2020-01", periods=24, freq="M")
-
-    a1 = pd.Series(rng.normal(0.01 / 12, 0.05, size=len(idx)), index=idx, name="IDX.US")
-    a2 = pd.Series(rng.normal(0.008 / 12, 0.04, size=len(idx)), index=idx, name="A.US")
-    a3_noise = rng.normal(0, 0.02, size=len(idx))
-    a3 = pd.Series(0.5 * a1.values + a3_noise, index=idx, name="B.US")
-
-    fake_assets = {
-        "IDX.US": _FakeAsset("IDX.US", a1, currency="USD", name="Index"),
-        "A.US": _FakeAsset("A.US", a2, currency="USD", name="Asset A"),
-        "B.US": _FakeAsset("B.US", a3, currency="USD", name="Asset B"),
-    }
-    m_get_dict = mocker.patch(
-        "okama.common.make_asset_list.ListMaker._get_asset_obj_dict", return_value=fake_assets
-    )
-    m_currency_asset = mocker.patch(
-        "okama.common.make_asset_list.asset.Asset", side_effect=_FakeCurrencyAsset
-    )
-
-    yield {
-        "index": idx,
-        "series": {k: v for k, v in [("IDX.US", a1), ("A.US", a2), ("B.US", a3)]},
-        "m_get_dict": m_get_dict,
-        "m_currency_asset": m_currency_asset,
-    }
+# Note: "synthetic_env" is now defined globally in tests/conftest.py.
+# If you need custom environment in asset_list tests, create a new fixture with a distinct name.
 
 
 @pytest.fixture

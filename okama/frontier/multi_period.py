@@ -130,6 +130,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             "rebalancing_rel_deviation": self.rebalancing_strategy.rel_deviation,
             "bounds": self.bounds,
             "inflation": self.inflation if hasattr(self, "inflation") else "None",
+            "n_points": self.n_points,
         }
         return repr(pd.Series(dic))
 
@@ -573,6 +574,9 @@ class EfficientFrontierReb(asset_list.AssetList):
                 point["Risk"] = weights.fun
                 point["FTOL"] = self._FTOL[i]
                 point["iter"] = weights.nit
+                # Provide unified access to weights similar to other methods
+                # Keep per-asset weights in the dict for backward compatibility
+                point["Weights"] = weights.x
                 break
         if not weights.success:
             raise RecursionError(f"No solution found for target CAGR value: {target_value}.")

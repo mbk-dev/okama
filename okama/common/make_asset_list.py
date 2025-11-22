@@ -106,12 +106,34 @@ class ListMaker(ABC):
     def _get_asset_obj_dict(ls: list) -> dict:
         def get_item(symbol):
             asset_item = symbol if hasattr(symbol, "symbol") and hasattr(symbol, "ror") else asset.Asset(symbol)
-            if asset_item.pl.years == 0 and asset_item.pl.months <= 2:
+            # Primary guard: use asset_item.pl when available
+            try:
+                if asset_item.pl.years == 0 and asset_item.pl.months <= 2:
+                    raise ShortPeriodLengthError(
+                        f"{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months."
+                    )
+            except AttributeError:
+                # Fallback guard: if pl is missing or malformed, use the length of ror series
+                pass
+
+            # Additional robust guard: ensure at least 3 monthly observations in ror
+            try:
+                ror_len = len(asset_item.ror)
+            except Exception:
+                ror_len = 0
+            # Only enforce if pl did not already trigger; allow both to be consistent
+            if ror_len < 3:
+                # Try to provide a meaningful months value in the message
+                months_msg = getattr(getattr(asset_item, "pl", None), "months", ror_len)
                 raise ShortPeriodLengthError(
-                    f"{asset_item.symbol} period length is {asset_item.pl.months}. It should be at least 3 months."
+                    f"{asset_item.symbol} period length is {months_msg}. It should be at least 3 months."
                 )
             return asset_item
 
+        # For a single item avoid parallel overhead and ensure exceptions propagate directly
+        if len(ls) == 1:
+            obj = get_item(ls[0])
+            return {obj.symbol: obj}
         asset_obj_list = Parallel(n_jobs=-1, backend="threading")(delayed(get_item)(s) for s in ls)
         return {obj.symbol: obj for obj in asset_obj_list}
 
@@ -298,7 +320,7 @@ class ListMaker(ABC):
         Rate of return monthly data is adjusted for inflation.
         """
         if not hasattr(self, "inflation"):
-            raise ValueError("Real return is not defined. Set inflation=True when initiating the class.")
+            raise ValueError("Real Return is not defined. Set inflation=True when initiating the class.")
         df = (1.0 + df).divide(1.0 + self.inflation_ts, axis=0) - 1.0
         df.drop(columns=[self.inflation], inplace=True)
         return df

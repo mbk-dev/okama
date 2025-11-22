@@ -234,6 +234,19 @@ def test_dividends_and_yield_pipeline(mocker):
     ror = pd.Series(0.0, index=idx, name="D.US")
 
     class _AssetWithDiv(_FakeAsset):
+        def __init__(self, symbol: str, ror: pd.Series, currency: str = "USD", name: str | None = None):
+            # Do NOT call super().__init__ because the base class assigns to
+            # `self.close_monthly`, which would conflict with the read-only
+            # property defined below. Here we only set the minimal attributes
+            # required by ListMaker/AssetList logic in tests.
+            self.symbol = symbol
+            self.ticker = symbol.split(".")[0]
+            self.name = name or f"{self.ticker} name"
+            self.currency = currency
+            self.ror = ror
+            self.first_date = ror.index[0].to_timestamp()
+            self.last_date = ror.index[-1].to_timestamp()
+
         @property
         def dividends(self):
             return pd.Series(1.0, index=idx, name=self.symbol)

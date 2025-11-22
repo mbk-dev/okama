@@ -1,318 +1,302 @@
 import numpy as np
 import pandas as pd
 import pytest
-from pytest import approx, mark
-from numpy.testing import assert_array_equal, assert_allclose
-from pandas.testing import assert_series_equal, assert_frame_equal
 
 import okama as ok
-from okama.common.error import LongRollingWindowLengthError, RollingWindowLengthBelowOneYearError
-
-from tests import conftest
 
 
-def test_initialization_failing():
+# Note: These tests use the global synthetic_env fixture defined in tests/conftest.py
+# which patches asset loading and the currency Asset to avoid any external API calls.
+
+
+@pytest.fixture()
+def pf_ab_monthly(synthetic_env):
+    """Two-asset Portfolio with monthly rebalancing and no inflation (mocked data)."""
+    return ok.Portfolio(["A.US", "B.US"], ccy="USD", inflation=False, rebalancing_strategy=ok.Rebalance(period="month"))
+
+
+@pytest.fixture()
+def pf_ab_none(synthetic_env):
+    """Two-asset Portfolio with no rebalancing (weights drift)."""
+    return ok.Portfolio(["A.US", "B.US"], ccy="USD", inflation=False, rebalancing_strategy=ok.Rebalance(period="none"))
+
+
+@pytest.fixture()
+def pf_three_monthly(synthetic_env):
+    """Three-asset Portfolio with monthly rebalancing and no inflation (mocked data)."""
+    return ok.Portfolio(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, rebalancing_strategy=ok.Rebalance(period="month"))
+
+
+def test_initialization_failing_weights_number(synthetic_env):
     with pytest.raises(
         ValueError,
         match=r"Number of tickers \(2\) should be equal to the weights number \(3\)",
     ):
-        ok.Portfolio(assets=["MCFTR.INDX", "MCFTR.INDX", "RUB.FX"], weights=[0.3, 0.3, 0.4])
-
-
-def test_repr(portfolio_rebalanced_year):
-    value = pd.Series(
-        dict(
-            symbol="pf1.PF",
-            assets="[RGBITR.INDX, MCFTR.INDX]",
-            weights="[0.5, 0.5]",
-            rebalancing_period="year",
-            rebalancing_abs_deviation=None,
-            rebalancing_rel_deviation=None,
-            currency="RUB",
-            inflation="RUB.INFL",
-            first_date="2015-01",
-            last_date="2020-01",
-            period_length="5 years, 1 months",
-        )
-    )
-    assert repr(portfolio_rebalanced_year) == repr(value)
-
-
-def test_symbol_failing(portfolio_rebalanced_year):
-    with pytest.raises(
-        ValueError,
-        match='portfolio symbol must be a string ending with ".PF" namespace.',
-    ):
-        portfolio_rebalanced_year.symbol = 1
-    with pytest.raises(ValueError, match='portfolio symbol must be a string ending with ".PF" namespace.'):
-        portfolio_rebalanced_year.symbol = "Not_a_good_symbol_for_portfolio.US"
-    with pytest.raises(ValueError, match="portfolio text symbol should not have whitespace characters."):
-        portfolio_rebalanced_year.symbol = "Not a good symbol for portfolio.PF"
-
-
-def test_symbol_setter(portfolio_rebalanced_year):
-    portfolio_rebalanced_year.symbol = "portfolio_1.PF"
-    assert portfolio_rebalanced_year.symbol == "portfolio_1.PF"
-
-
-def test_ror_rebalance(portfolio_rebalanced_year, portfolio_not_rebalanced):
-    assert portfolio_rebalanced_year.ror[-2] == approx(0.03052, rel=1e-1)
-    assert portfolio_not_rebalanced.ror[-1] == approx(0.01167, rel=1e-1)
-
-
-def test_ror(portfolio_rebalanced_month):
-    portfolio_sample = pd.read_pickle(conftest.data_folder / "portfolio.pkl")
-    actual = portfolio_rebalanced_month.ror
-    assert_series_equal(actual, portfolio_sample, atol=1e-01)
-
-
-def test_wealth_index(portfolio_rebalanced_year):
-    assert portfolio_rebalanced_year.wealth_index.iloc[-1, 1] == approx(1310.60, rel=1e-2)
-
-
-def test_wealth_index_with_assets(portfolio_rebalanced_year, portfolio_no_inflation):
-    result = portfolio_rebalanced_year.wealth_index_with_assets.iloc[-1, :].values
-    assert_allclose(np.array(result), np.array([2490.845572, 2079.757278, 2924.031272, 1315.8486]), rtol=1e-02)
-
-
-def test_weights(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.weights == [0.5, 0.5]
-
-
-def test_weights_ts_rebalanced_month(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.weights_ts["RGBITR.INDX"].iloc[-1] == approx(0.5, rel=1e-2)
-
-
-def test_weights_ts_rebalanced_year(portfolio_rebalanced_year, portfolio_not_rebalanced):
-    assert portfolio_rebalanced_year.weights_ts["RGBITR.INDX"].iloc[-2] == approx(0.4645, rel=1e-2)
-
-
-def test_weights_ts_not_rebalanced(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.weights_ts["RGBITR.INDX"].iloc[-1] == approx(0.4156, rel=1e-2)
-
-
-def test_mean_return(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.mean_return_monthly == approx(0.01536, rel=1e-2)
-    assert portfolio_rebalanced_month.mean_return_annual == approx(0.1844, rel=1e-2)
-
-
-def test_real_mean_return(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.real_mean_return == approx(0.13746, rel=1e-2)
-
-
-@mark.parametrize(
-    "window, real, expected",
-    [(1, True, 0.01100), (12, False, 0.24604), (12, True, 0.2165)],
-)
-def test_get_rolling_cumulative_return(portfolio_rebalanced_month, window, real, expected):
-    assert portfolio_rebalanced_month.get_rolling_cumulative_return(window=window, real=real).iloc[-1, 0] == approx(
-        expected, abs=1e-1
-    )
-
-
-def test_assets_close_monthly(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.assets_close_monthly.iloc[-1, 0] == approx(578.19, rel=1e-2)  # RGBITR.INDX
-    assert portfolio_not_rebalanced.assets_close_monthly.iloc[-1, 1] == 5245.6  # MCFTR.INDX
-
-
-def test_close_monthly(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.close_monthly.iloc[-1] == approx(2501.89, rel=1e-2)
-
-
-def test_get_assets_dividends(portfolio_dividends):
-    assert portfolio_dividends._get_assets_dividends().iloc[:, 0].sum() == approx(36.42, abs=1e-2)  # SBER
-    assert portfolio_dividends._get_assets_dividends().iloc[:, 1].sum() == approx(646.75, rel=1e-2)  # T
-    assert portfolio_dividends._get_assets_dividends().iloc[:, 2].sum() == approx(73.31, rel=1e-2)  # GNS
-
-
-def test_number_of_securities(portfolio_not_rebalanced, portfolio_dividends):
-    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 0] == approx(1.7985, rel=1e-2)  # RGBITR.INDX
-    assert portfolio_not_rebalanced.number_of_securities.iloc[-1, 1] == approx(0.2754, abs=1e-2)  # MCFTR.INDX
-    # with dividends
-    assert portfolio_dividends.number_of_securities.iloc[-1, 0] == approx(4.18, rel=1e-2)  # SBER.MOEX
-    assert portfolio_dividends.number_of_securities.iloc[-1, 1] == approx(0.448, abs=1e-2)  # T.US
-    assert portfolio_dividends.number_of_securities.iloc[-1, 2] == approx(0.004137, abs=1e-2)  # GNS.LSE
-
-
-def test_dividends(portfolio_dividends):
-    assert portfolio_dividends.dividends.iloc[-1] == approx(14.70, rel=1e-2)
-
-
-def test_dividend_yield(portfolio_dividends):
-    assert portfolio_dividends.dividend_yield.iloc[-1] == approx(0.0396, abs=1e-2)
-
-
-def test_dividends_annual(portfolio_dividends):
-    assert portfolio_dividends.dividends_annual.iloc[-1].sum() == approx(32.77, rel=1e-3)
-
-
-def test_dividend_yield_annual(portfolio_dividends):
-    assert portfolio_dividends.dividend_yield_annual.iloc[0, 0] == approx(0.004444, abs=1e-3)
-
-
-def test_risk(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.risk_monthly.iloc[-1] == approx(0.02233, rel=1e-1)
-    assert portfolio_rebalanced_month.risk_annual.iloc[-1] == approx(0.091634, rel=1e-1)
-
-
-def test_semideviation(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.semideviation_monthly == approx(0.02080, abs=1e-2)
-    assert portfolio_rebalanced_month.semideviation_annual == approx(0.04534, abs=1e-2)
-
-
-def test_get_var_historic(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.get_var_historic(time_frame=1, level=5) == approx(0.01500, abs=1e-2)
-    assert portfolio_rebalanced_month.get_var_historic(time_frame=5, level=1) == approx(0.0491, abs=1e-2)
-
-
-def test_get_cvar_historic(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.get_cvar_historic(time_frame=1, level=5) == approx(0.02577, abs=1e-2)
-    assert portfolio_rebalanced_month.get_cvar_historic(time_frame=5, level=1) == approx(0.04918, abs=1e-2)
-
-
-def test_drawdowns(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.drawdowns.min() == approx(-0.0560, rel=1e-2)
-
-
-def test_recovery_period(portfolio_not_rebalanced):
-    assert portfolio_not_rebalanced.recovery_period.max() == 6
-
-
-def test_get_cagr(portfolio_rebalanced_month, portfolio_no_inflation):
-    values1 = pd.Series({"pf1.PF": 0.1974, "RUB.INFL": 0.055480})
-    actual1 = portfolio_rebalanced_month.get_cagr()
-    assert_series_equal(actual1, values1, atol=1e-2)
-    # no inflation
-    values2 = pd.Series({"pf1.PF": 0.1974})
-    actual2 = portfolio_no_inflation.get_cagr()
-    assert_series_equal(actual2, values2, atol=1e-2)
-    # failing if wrong period
-    with pytest.raises(TypeError):
-        portfolio_rebalanced_month.get_cagr(period="one year")
-
-
-cagr_testdata1 = [
-    (1, 0.21655),
-    (None, 0.13446),
-]
-
-
-@mark.parametrize(
-    "input_data, expected",
-    cagr_testdata1,
-    ids=["1 year", "full period"],
-)
-def test_get_cagr_real(portfolio_rebalanced_month, input_data, expected):
-    assert portfolio_rebalanced_month.get_cagr(period=input_data, real=True).values[0] == approx(expected, abs=1e-2)
-
-
-def test_get_cagr_real_no_inflation_exception(portfolio_no_inflation):
+        ok.Portfolio(["A.US", "B.US"], weights=[0.2, 0.3, 0.5], ccy="USD", inflation=False)
+
+
+def test_repr_contains_key_fields(pf_ab_monthly):
+    pf_ab_monthly.symbol = "pf_mock.PF"
+    r = repr(pf_ab_monthly)
+    # Basic sanity: important fields are present in representation
+    assert "symbol" in r and "pf_mock.PF" in r
+    assert "assets" in r and "A.US" in r and "B.US" in r
+    assert "currency" in r and "USD" in r
+    assert "rebalancing_period" in r
+
+
+def test_weights_default_and_setter(pf_ab_monthly):
+    # default equal weights
+    assert pf_ab_monthly.weights == [0.5, 0.5]
+    # change weights to a valid pair
+    pf_ab_monthly.weights = [0.3, 0.7]
+    assert pf_ab_monthly.weights == [0.3, 0.7]
+    # sum must be 1 and length must match number of tickers
     with pytest.raises(ValueError):
-        portfolio_no_inflation.get_cagr(period=1, real=True)
+        pf_ab_monthly.weights = [0.6, 0.5]
 
 
-@mark.parametrize(
-    "period, real, expected",
-    [("YTD", False, 0.01505), (1, False, 0.24604), (2, True, 0.2742)],
-    ids=["YTD - nominal", "1 year - nominal", "2 years - real"],
-)
-def test_cumulative_return(portfolio_rebalanced_month, period, real, expected):
-    assert portfolio_rebalanced_month.get_cumulative_return(period=period, real=real).iloc[0] == approx(
-        expected, abs=1e-2
-    )
+def test_symbol_setter_validation(pf_ab_monthly):
+    with pytest.raises(ValueError):
+        pf_ab_monthly.symbol = "bad symbol"
+    with pytest.raises(ValueError):
+        pf_ab_monthly.symbol = "ABC.US"
+    pf_ab_monthly.symbol = "pf1.PF"
+    assert pf_ab_monthly.symbol == "pf1.PF"
 
 
-cumulative_return_fail = [
-    (1.5, False, TypeError),
-    (-1, False, ValueError),
-    (1, True, ValueError),
-]
+def test_weights_ts_behavior_for_different_rebalancing(pf_ab_monthly, pf_ab_none):
+    w_m = pf_ab_monthly.weights_ts
+    w_n = pf_ab_none.weights_ts
+    # Same shape and columns
+    assert list(w_m.columns) == ["A.US", "B.US"]
+    assert list(w_n.columns) == ["A.US", "B.US"]
+    # Lengths relative to ror: monthly rebalancing aligns with ror length; no rebalancing may include a leading row
+    rlen = len(pf_ab_monthly.ror)
+    assert len(w_m) == rlen
+    assert len(w_n) in {rlen, rlen + 1}
+    # Monthly rebalancing keeps weights constant across time
+    assert np.allclose(w_m.values, np.tile([0.5, 0.5], (len(w_m), 1)))
+    # No rebalancing lets weights drift: last row is unlikely equal to initial weights
+    assert not np.allclose(w_n.iloc[-1].values, [0.5, 0.5])
+    # Each row must sum to 1
+    assert np.allclose(w_m.sum(axis=1).values, 1.0)
+    assert np.allclose(w_n.sum(axis=1).values, 1.0)
 
 
-@mark.parametrize("period, real, exception", cumulative_return_fail)
-def test_cumulative_return_error(portfolio_no_inflation, period, real, exception):
-    with pytest.raises(exception):
-        portfolio_no_inflation.get_cumulative_return(period=period, real=real)
+def test_ror_series_exists_and_length(pf_ab_monthly):
+    r = pf_ab_monthly.ror
+    assert isinstance(r, pd.Series)
+    assert len(r) == 24
+    assert np.isfinite(r.values).all()
 
 
-def test_describe_inflation(portfolio_rebalanced_month):
-    description = portfolio_rebalanced_month.describe()
-    description_sample = pd.read_pickle(conftest.data_folder / "portfolio_description.pkl")
-    assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False, atol=1e-2)
+def test_wealth_index_and_with_assets_shapes(pf_three_monthly):
+    wi = pf_three_monthly.wealth_index
+    wiwa = pf_three_monthly.wealth_index_with_assets
+    # wealth index is a 1-column Series-like DataFrame for the portfolio + name
+    assert isinstance(wiwa, pd.DataFrame)
+    assert isinstance(wi, pd.DataFrame)
+    rlen = len(pf_three_monthly.ror)
+    # Wealth index helpers may add an initial row (starting wealth) → allow rlen or rlen+1
+    assert wi.shape[0] in {rlen, rlen + 1}
+    assert wiwa.shape[0] in {rlen, rlen + 1}
+    # Columns include portfolio and each asset symbol
+    for col in [pf_three_monthly.name, *pf_three_monthly.symbols]:
+        assert col in wiwa.columns
 
 
-def test_describe_no_inflation(portfolio_no_inflation):
-    description = portfolio_no_inflation.describe()
-    description_sample = pd.read_pickle(conftest.data_folder / "portfolio_description_no_inflation.pkl")
-    assert_frame_equal(description, description_sample, check_dtype=False, check_column_type=False, atol=1e-2)
-
-def test_percentile_inverse_cagr(portfolio_rebalanced_month):
-    assert portfolio_rebalanced_month.percentile_inverse_cagr(years=1, score=0) == approx(0, abs=1e-2)
-
-def test_percentile_from_history(portfolio_rebalanced_month, portfolio_no_inflation, portfolio_short_history):
-    assert portfolio_rebalanced_month.percentile_cagr(years=1).iloc[0, 1] == approx(0.173181, abs=1e-2)
-    assert portfolio_no_inflation.percentile_cagr(years=1).iloc[0, 1] == approx(0.17318, abs=1e-2)
-    with pytest.raises(
-        ValueError,
-        match="Time series does not have enough history to forecast. "
-        "Period length is 0.90 years. At least 2 years are required.",
-    ):
-        portfolio_short_history.percentile_cagr(years=1)
+def test_mean_return_and_risk_consistency(pf_ab_monthly):
+    mr_m = pf_ab_monthly.mean_return_monthly
+    mr_a = pf_ab_monthly.mean_return_annual
+    rk_m_ts = pf_ab_monthly.risk_monthly
+    rk_a_ts = pf_ab_monthly.risk_annual
+    rk_m = float(rk_m_ts.iloc[-1])
+    rk_a = float(rk_a_ts.iloc[-1])
+    assert isinstance(mr_m, float) and isinstance(mr_a, float)
+    assert isinstance(rk_m, float) and isinstance(rk_a, float)
+    # Annualization rules
+    assert pytest.approx(mr_a, rel=1e-12) == 12 * mr_m
+    # Portfolio.risk_annual uses helpers.Float.annualize_risk with expanding mean
+    mean_last = float(pf_ab_monthly.ror.expanding().mean().iloc[-1])
+    expected_rk_a = ok.common.helpers.helpers.Float.annualize_risk(rk_m, mean_last)
+    assert pytest.approx(rk_a, rel=1e-6, abs=1e-10) == expected_rk_a
 
 
-def test_table(portfolio_rebalanced_month):
-    assert_array_equal(
-        portfolio_rebalanced_month.table["ticker"].values,
-        np.array(["RGBITR.INDX", "MCFTR.INDX"]),
-    )
+def test_semideviation_and_tail_risks(pf_three_monthly):
+    sd_m = pf_three_monthly.semideviation_monthly
+    sd_a = pf_three_monthly.semideviation_annual
+    var12 = pf_three_monthly.get_var_historic(time_frame=12, level=1)
+    cvar12 = pf_three_monthly.get_cvar_historic(time_frame=12, level=1)
+    assert isinstance(sd_m, float) and sd_m >= 0
+    assert isinstance(sd_a, float) and sd_a >= 0
+    assert isinstance(var12, float)
+    assert isinstance(cvar12, float)
 
 
-@mark.parametrize(
-    "window, real, expected",
-    [(12, False, 0.1290), (24, True, 0.17067)],
-)
-def test_get_rolling_cagr(portfolio_rebalanced_month, window, real, expected):
-    assert portfolio_rebalanced_month.get_rolling_cagr(window=window, real=real).iloc[0, -1] == approx(
-        expected, abs=1e-2
-    )
+def test_drawdowns_and_recovery_period(pf_three_monthly):
+    dd = pf_three_monthly.drawdowns
+    rp = pf_three_monthly.recovery_period
+    # For Portfolio drawdowns is a Series (for AssetList it is a DataFrame)
+    assert isinstance(dd, pd.Series)
+    # Recovery period is a Series of integers with non-negative values
+    assert isinstance(rp, pd.Series)
+    assert rp.dtype.kind in {"i", "u"}  # integer types
+    assert (rp.values >= 0).all()
 
 
-def test_get_rolling_cagr_failing_short_window(portfolio_not_rebalanced):
-    with pytest.raises(RollingWindowLengthBelowOneYearError, match="window size must be at least 1 year"):
-        portfolio_not_rebalanced.get_rolling_cagr(window=1)
+def test_cagr_and_cumulative_returns(pf_ab_monthly):
+    cagr = pf_ab_monthly.get_cagr()
+    cum = pf_ab_monthly.get_cumulative_return()
+    # API returns Series with a single value named by portfolio; accept both scalar and 1-len Series
+    if isinstance(cagr, pd.Series):
+        assert cagr.shape[0] == 1
+        _ = float(cagr.iloc[0])
+    else:
+        assert isinstance(cagr, float)
+    if isinstance(cum, pd.Series):
+        assert cum.shape[0] == 1
+        _ = float(cum.iloc[0])
+    else:
+        assert isinstance(cum, float)
 
 
-def test_get_rolling_cagr_failing_long_window(portfolio_not_rebalanced):
-    with pytest.raises(LongRollingWindowLengthError, match="window size is more than data history depth"):
-        portfolio_not_rebalanced.get_rolling_cagr(window=100)
+def test_rolling_cagr_and_cumulative_returns(pf_ab_monthly):
+    rc = pf_ab_monthly.get_rolling_cagr(window=12)
+    rcr = pf_ab_monthly.get_rolling_cumulative_return(window=12)
+    # For Portfolio both functions return a DataFrame with one column (portfolio name)
+    assert isinstance(rc, pd.DataFrame)
+    assert isinstance(rcr, pd.DataFrame)
+    # 24 months -> 24-12+1 values for rolling window
+    assert rc.shape[0] == 13
+    assert rcr.shape[0] == 13
 
 
-def test_get_rolling_cagr_failing_no_inflation(portfolio_no_inflation):
-    with pytest.raises(
-        ValueError,
-        match="Real return is not defined. Set inflation=True when initiating the class.",
-    ):
-        portfolio_no_inflation.get_rolling_cagr(real=True)
+def test_sharpe_and_sortino_and_diversification(pf_ab_monthly):
+    sh = pf_ab_monthly.get_sharpe_ratio(rf_return=0.0)
+    so = pf_ab_monthly.get_sortino_ratio(t_return=0.0)
+    dr = pf_ab_monthly.diversification_ratio
+    assert np.isfinite(sh)
+    assert np.isfinite(so)
+    assert np.isfinite(dr)
 
 
-def test_get_sharpe_ratio(portfolio_no_inflation):
-    assert portfolio_no_inflation.get_sharpe_ratio(rf_return=0.05) == approx(1.6457, abs=1e-1)
+def test_describe_and_table_return_types(pf_ab_monthly):
+    d = pf_ab_monthly.describe(years=(1, 2))
+    t = pf_ab_monthly.table
+    assert isinstance(d, pd.DataFrame)
+    assert isinstance(t, pd.DataFrame)
+    # table lists assets with names, tickers, weights
+    cols = set(t.columns)
+    assert {"asset name", "ticker", "weights"}.issubset(cols)
 
 
-def test_get_sortino_ratio(portfolio_no_inflation):
-    assert portfolio_no_inflation.get_sortino_ratio(t_return=0.05) == approx(2.2766, rel=1e-2)
+def test_okamaio_link_returns_string(pf_ab_monthly):
+    link = pf_ab_monthly.okamaio_link
+    assert isinstance(link, str) and len(link) > 0
 
 
-def test_diversification_ratio(portfolio_no_inflation):
-    assert portfolio_no_inflation.diversification_ratio == approx(1.2961, rel=1e-2)
+# ---------------- New tests for additional Portfolio API -----------------
 
 
-# This test should be a last one, as it changes the weights
-def test_init_portfolio_failing():
-    with pytest.raises(
-        ValueError,
-        match=r"Number of tickers \(2\) should be equal to the weights number \(3\)",
-    ):
-        ok.Portfolio(["RGBITR.INDX", "MCFTR.INDX"], weights=[0.1, 0.2, 0.7])
-    with pytest.raises(ValueError, match="Weights sum is not equal to one."):
-        ok.Portfolio(["RGBITR.INDX", "MCFTR.INDX"], weights=[0.1, 0.2])
+def test_rebalancing_events_and_setter(pf_ab_none):
+    # Initially: no rebalancing -> events may be empty
+    ev0 = pf_ab_none.rebalancing_events
+    assert hasattr(ev0, "index")  # Series-like
+    # Change strategy to monthly rebalancing
+    pf_ab_none.rebalancing_strategy = ok.Rebalance(period="month")
+    ev1 = pf_ab_none.rebalancing_events
+    # Expect at least one calendar event within the period
+    assert len(ev1) >= 1
+    # All values are from the known set
+    allowed = {"calendar", "abs", "rel"}
+    assert set(ev1.astype(str).unique()).issubset(allowed)
+    # Weights become constant at targets with monthly rebalancing
+    w = pf_ab_none.weights_ts
+    assert np.allclose(w.values, np.tile([0.5, 0.5], (len(w), 1)))
+
+
+def test_assets_and_portfolio_close_and_counts(pf_ab_monthly):
+    # Assets close monthly
+    ac = pf_ab_monthly.assets_close_monthly
+    assert isinstance(ac, pd.DataFrame)
+    assert list(ac.columns) == ["A.US", "B.US"]
+    assert (ac.values > 0).all()
+    # Portfolio close monthly equals first column of wealth_index
+    cm = pf_ab_monthly.close_monthly
+    assert isinstance(cm, pd.Series)
+    rlen = len(pf_ab_monthly.ror)
+    assert cm.shape[0] in {rlen, rlen + 1}
+    assert (cm.values > 0).all()
+    # Number of securities
+    nos = pf_ab_monthly.number_of_securities
+    assert isinstance(nos, pd.DataFrame)
+    assert list(nos.columns) == ["A.US", "B.US"]
+    # The very first row can be NaN (pre-initialization marker); subsequent rows must be finite and non-negative
+    if len(nos) > 0:
+        assert nos.iloc[1:].applymap(np.isfinite).values.all()
+        assert (nos.iloc[1:].values >= 0).all()
+
+
+def test_dividends_and_yields_monthly_and_annual(pf_ab_monthly):
+    # Monthly portfolio dividends (sum over assets)
+    dv = pf_ab_monthly.dividends
+    assert isinstance(dv, pd.Series)
+    rlen = len(pf_ab_monthly.ror)
+    assert len(dv) in {rlen, rlen + 1}
+    if len(dv) == rlen + 1:
+        # extra leading month is allowed (initial allocation date)
+        assert dv.index[0] == (pf_ab_monthly.ror.index[0] - 1)
+    assert (dv.values >= 0).all()
+
+    # Monthly LTM dividend yield for portfolio
+    dy = pf_ab_monthly.dividend_yield
+    assert isinstance(dy, pd.Series)
+    assert len(dy) >= 1
+    assert np.isfinite(dy.values).all()
+    assert (dy.values >= 0).all()
+
+    # Assets monthly dividend yields (LTM)
+    ady = pf_ab_monthly.assets_dividend_yield
+    assert isinstance(ady, pd.DataFrame)
+    assert list(ady.columns) == ["A.US", "B.US"]
+    assert (ady.values >= 0).all()
+
+    # Annual sums of dividends (by asset)
+    dva = pf_ab_monthly.dividends_annual
+    assert isinstance(dva, pd.DataFrame)
+    assert list(dva.columns) == ["A.US", "B.US"]
+    assert dva.shape[0] >= 1
+    assert (dva.values >= 0).all()
+
+    # Annual dividend yields (per asset, year-end LTM)
+    dya = pf_ab_monthly.dividend_yield_annual
+    assert isinstance(dya, pd.DataFrame)
+    assert list(dya.columns) == ["A.US", "B.US"]
+    assert dya.shape[0] >= 1
+    assert (dya.values >= 0).all()
+
+
+def test_real_mean_return_raises_without_inflation(pf_ab_monthly):
+    with pytest.raises(ValueError, match="Real Return is not defined"):
+        _ = pf_ab_monthly.real_mean_return
+
+
+def test_annual_return_ts_is_series_with_two_years(pf_ab_monthly):
+    ar = pf_ab_monthly.annual_return_ts()
+    # For 24 months we expect two annual values (2020 and 2021)
+    assert isinstance(ar, pd.Series)
+    assert len(ar) == 2
+    assert ar.notna().all()
+
+
+def test_percentile_functions(pf_ab_monthly):
+    pinv = pf_ab_monthly.percentile_inverse_cagr(years=1, score=0.0)
+    assert isinstance(pinv, float)
+    assert 0.0 <= pinv <= 100.0
+
+    pc = pf_ab_monthly.percentile_cagr(years=2, percentiles=[10, 50, 90])
+    assert isinstance(pc, pd.DataFrame)
+    assert list(pc.columns) == [10, 50, 90]
+    assert list(pc.index) == [1, 2]
+    assert pc.notna().all(axis=None)

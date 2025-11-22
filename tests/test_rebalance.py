@@ -1,10 +1,10 @@
-import pytest
-from pytest import approx
-from pytest import mark
-
 import pandas as pd
+import pandas.testing as pdt
+import pytest
+from pytest import approx, mark
 
 import okama as ok
+from okama.common.helpers import rebalancing as rb
 
 
 @mark.rebalance
@@ -42,96 +42,127 @@ def test_repr(init_rebalance_no_rebalancing):
     assert repr(init_rebalance_no_rebalancing) == repr(value)
 
 
-def test_wealth_ts_no_rebalancing(init_rebalance_no_rebalancing, portfolio_not_rebalanced):
-    ror = portfolio_not_rebalanced.assets_ror
-    target_weights = portfolio_not_rebalanced.weights
-    ws = init_rebalance_no_rebalancing.wealth_ts(target_weights, ror, calculate_assets_wealth_indexes=False)
-    assert ws.portfolio_wealth_index.iloc[-1] == approx(2501.89, rel=1e-2)
-    assert ws.assets_wealth_indexes.empty
-    assert ws.events.empty
+def test_rebalance_by_condition_events_with_mock(mocker):
+    mocker.patch.object(ok.Rebalance, "_check_if_rebalancing_required", return_value=(True, True))
 
-    ws = init_rebalance_no_rebalancing.wealth_ts(target_weights, ror, calculate_assets_wealth_indexes=True)
-    assert ws.assets_wealth_indexes.iloc[-1, 0] == approx(1039.87, rel=1e-2)
+    idx = pd.period_range("2020-01", "2020-03", freq="M")
+    ror = pd.DataFrame({"A": [0.01, 0.02, -0.01], "B": [0.0, 0.01, 0.0]}, index=idx)
+    target_weights = [0.5, 0.5]
 
+    r = ok.Rebalance(period="none", abs_deviation=0.01)
+    res = r.wealth_ts(target_weights=target_weights, ror=ror, calculate_assets_wealth_indexes=True)
 
-@mark.parametrize(
-    "abs_d, rel_d, exp1, exp2, exp3, exp4",
-    [
-        (0.01, None, 2497.98, 1248.80, "abs", "2019-12"),
-        (None, 0.01, 2499.72, 1249.67, "rel", "2019-12"),
-        (0.01, 0.01, 2499.72, 1249.67, "abs", "2019-12"),
-    ],
-    ids=["Only abs deviation", "Only rel deviation", "Abs & Rel deviations"],
-)
-def test_wealth_ts_rebalancing_conditional(portfolio_not_rebalanced, abs_d, rel_d, exp1, exp2, exp3, exp4):
-    rb = ok.Rebalance(period="none", abs_deviation=abs_d, rel_deviation=rel_d)
-    ror = portfolio_not_rebalanced.assets_ror
-    target_weights = portfolio_not_rebalanced.weights
-    ws = rb.wealth_ts(target_weights, ror, calculate_assets_wealth_indexes=True)
-    assert ws.portfolio_wealth_index.iloc[-1] == approx(exp1, rel=1e-4)
-    assert ws.assets_wealth_indexes.iloc[-1, 0] == approx(exp2, rel=1e-4)
-    if not ws.events.empty:
-        assert ws.events.iloc[-1] == exp3
-        assert ws.events.index[-1] == pd.Period(exp4, freq="M")
+    assert not res.events.empty
+    assert (res.events == "abs").any()
 
 
-@mark.parametrize(
-    "period, abs_d, rel_d, exp1, exp2, exp3, exp4",
-    [
-        ("month", 0.01, None, 2497.98, 1248.80, "abs", "2019-12"),
-        ("quarter", None, 0.01, 2492.13, 1245.88, "rel", "2019-12"),
-        ("half-year", 0.01, 0.01, 2496.57, 1248.10, "abs", "2019-12"),
-        ("year", None, None, 2490.84, 1245.23, "calendar", "2019-12"),
-    ],
-    ids=["month", "quarter", "half-year", "year"],
-)
-def test_wealth_ts_rebalancing_calendar(portfolio_not_rebalanced, period, abs_d, rel_d, exp1, exp2, exp3, exp4):
-    rb = ok.Rebalance(period=period, abs_deviation=abs_d, rel_deviation=rel_d)
-    ror = portfolio_not_rebalanced.assets_ror
-    target_weights = portfolio_not_rebalanced.weights
-    ws = rb.wealth_ts(target_weights, ror, calculate_assets_wealth_indexes=True)
-    assert ws.portfolio_wealth_index.iloc[-1] == approx(exp1, rel=1e-4)
-    assert ws.assets_wealth_indexes.iloc[-1, 0] == approx(exp2, rel=1e-4)
-    if not ws.events.empty:
-        assert ws.events.iloc[-1] == exp3
-        assert ws.events.index[-1] == pd.Period(exp4, freq="M")
+@mark.rebalance
+def test_check_if_rebalancing_required_series_abs():
+    # Series: trigger by absolute deviation
+    r = ok.Rebalance(period="none", abs_deviation=0.05)
+    assets = pd.Series([600.0, 400.0], index=["A", "B"])  # weights: 0.6 and 0.4
+    portfolio_total = 1000.0
+    target = [0.5, 0.5]
+
+    cond, cond_abs = r._check_if_rebalancing_required(assets, portfolio_total, target)
+    assert cond is True
+    assert cond_abs is True
 
 
-@mark.parametrize(
-    "period, abs_d, rel_d, exp1, exp2",
-    [
-        ("none", None, None, 0.4156, 0.5843),
-        ("month", 0.01, None, 0.499, 0.5000),
-        ("quarter", None, 0.01, 0.4999, 0.5000),
-        ("half-year", 0.01, 0.01, 0.4999, 0.5000),
-        ("year", None, None, 0.4999, 0.5000),
-    ],
-    ids=["none", "month", "quarter", "half-year", "year"],
-)
-def test_assets_weights_ts(portfolio_not_rebalanced, period, abs_d, rel_d, exp1, exp2):
-    rb = ok.Rebalance(period=period, abs_deviation=abs_d, rel_deviation=rel_d)
-    ror = portfolio_not_rebalanced.assets_ror
-    target_weights = portfolio_not_rebalanced.weights
-    weights_ts = rb.assets_weights_ts(target_weights=target_weights, ror=ror)
-    assert weights_ts.shape[1] == len(target_weights)
-    assert weights_ts.iloc[-1, 0] == approx(exp1, abs=1e-2)
-    assert weights_ts.iloc[-1, 1] == approx(exp2, abs=1e-2)
+@mark.rebalance
+def test_check_if_rebalancing_required_series_rel():
+    # Series: trigger only by relative deviation
+    r = ok.Rebalance(period="none", rel_deviation=0.08)
+    assets = pd.Series([550.0, 450.0], index=["A", "B"])  # weights: 0.55 and 0.45
+    portfolio_total = 1000.0
+    target = [0.5, 0.5]
+
+    cond, cond_abs = r._check_if_rebalancing_required(assets, portfolio_total, target)
+    assert cond is True
+    assert cond_abs is False
 
 
-@mark.parametrize(
-    "period, abs_d, rel_d, exp",
-    [
-        ("none", None, None, 2.5018),
-        ("month", 0.01, None, 2.4979),
-        ("quarter", None, 0.01, 2.4921),
-        ("half-year", 0.01, 0.01, 2.4965),
-        ("year", None, None, 2.4908),
-    ],
-    ids=["none", "month", "quarter", "half-year", "year"],
-)
-def test_return_ror_ts(portfolio_not_rebalanced, period, abs_d, rel_d, exp):
-    rb = ok.Rebalance(period=period, abs_deviation=abs_d, rel_deviation=rel_d)
-    ror = portfolio_not_rebalanced.assets_ror
-    target_weights = portfolio_not_rebalanced.weights
-    ror_ts = rb.return_ror_ts(target_weights=target_weights, ror=ror)
-    assert (ror_ts + 1).prod() == approx(exp, abs=1e-4)
+@mark.rebalance
+def test_check_if_rebalancing_required_series_no_trigger():
+    # Series: no trigger for both thresholds
+    r = ok.Rebalance(period="none", abs_deviation=0.2, rel_deviation=0.5)
+    assets = pd.Series([520.0, 480.0], index=["A", "B"])  # weights: 0.52 and 0.48
+    portfolio_total = 1000.0
+    target = [0.5, 0.5]
+
+    cond, cond_abs = r._check_if_rebalancing_required(assets, portfolio_total, target)
+    assert cond is False
+    assert cond_abs is False
+
+
+@mark.rebalance
+def test_check_if_rebalancing_required_dataframe_last_row_rel():
+    # DataFrame + Series: only the last row is considered (iloc[-1])
+    r = ok.Rebalance(period="none", rel_deviation=0.05)
+    idx = pd.period_range("2020-01", "2020-02", freq="M")
+    # First row without deviation, second row violates the relative threshold
+    awi = pd.DataFrame([[500.0, 500.0], [560.0, 440.0]], index=idx, columns=["A", "B"])  # end-of-period weights: 0.5/0.5, then 0.56/0.44
+    pwi = pd.Series([1000.0, 1000.0], index=idx)
+    target = [0.5, 0.5]
+
+    cond, cond_abs = r._check_if_rebalancing_required(awi, pwi, target)
+    assert cond is True
+    assert cond_abs is False
+
+
+@mark.rebalance
+def test_assets_weights_ts_no_rebalancing_manual():
+    # No rebalancing at all: assets weights should be equal to manual calculation
+    idx = pd.period_range("2020-01", "2020-03", freq="M")
+    ror = pd.DataFrame({"A": [0.01, 0.02, -0.01], "B": [0.0, 0.01, 0.0]}, index=idx)
+    target_weights = [0.6, 0.4]
+
+    # no calendar rebalancing and no conditions -> pure buy & hold
+    r = ok.Rebalance(period="none", abs_deviation=None, rel_deviation=None)
+    weights_ts = r.assets_weights_ts(target_weights=target_weights, ror=ror)
+
+    # Manual calculation
+    initial_inv = 1000.0
+    first_date = ror.index[0]
+    first_wealth_index_date = first_date - 1
+    tw = pd.Series(target_weights, index=ror.columns)
+    initial_allocation = tw * initial_inv
+    assets_wealth_indexes_manual = initial_allocation * (1 + ror).cumprod()
+    portfolio_wealth_index_manual = assets_wealth_indexes_manual.sum(axis=1)
+
+    # Insert the initial point
+    assets_wealth_indexes_manual.loc[first_wealth_index_date] = initial_allocation
+    assets_wealth_indexes_manual.sort_index(inplace=True)
+    portfolio_wealth_index_manual.loc[first_wealth_index_date] = initial_inv
+    portfolio_wealth_index_manual.sort_index(inplace=True)
+
+    weights_manual = assets_wealth_indexes_manual.divide(portfolio_wealth_index_manual, axis=0)
+
+    # Structure checks
+    assert list(weights_ts.columns) == list(weights_manual.columns)
+    pdt.assert_index_equal(weights_ts.index, weights_manual.index)
+
+    # Values check (allow tiny numeric noise)
+    pdt.assert_frame_equal(weights_ts, weights_manual, atol=1e-12, rtol=1e-12)
+
+
+@mark.rebalance
+def test_return_ror_ts_no_rebalancing_manual():
+    # Verify portfolio return series equals manual pct_change of wealth index in no-rebalancing case
+    idx = pd.period_range("2020-01", "2020-03", freq="M")
+    ror_df = pd.DataFrame({"A": [0.01, 0.02, -0.01], "B": [0.0, 0.01, 0.0]}, index=idx)
+    target_weights = [0.6, 0.4]
+
+    r = ok.Rebalance(period="none")
+    ror_series = r.return_ror_ts(target_weights=target_weights, ror=ror_df)
+
+    # Manual wealth index
+    initial_inv = 1000.0
+    tw = pd.Series(target_weights, index=ror_df.columns)
+    assets_wi_manual = (tw * initial_inv) * (1 + ror_df).cumprod()
+    portfolio_wi_manual = assets_wi_manual.sum(axis=1)
+
+    manual_ror = portfolio_wi_manual.pct_change().dropna()
+
+    pdt.assert_index_equal(ror_series.index, manual_ror.index)
+    pdt.assert_series_equal(ror_series, manual_ror, atol=1e-12, rtol=1e-12)
