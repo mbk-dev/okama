@@ -521,7 +521,7 @@ class PortfolioDCF:
         if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._monte_carlo_wealth_fv.empty:
-            return_ts = self.parent.mc.monte_carlo_returns_ts()
+            return_ts = self.mc.monte_carlo_returns_ts
             self._monte_carlo_wealth_fv = return_ts.apply(
                 dcf_calculations.get_wealth_indexes_fv_with_cashflow,
                 axis=0,
@@ -586,9 +586,7 @@ class PortfolioDCF:
         if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._monte_carlo_cash_flow_fv.empty:
-            return_ts = self.parent.monte_carlo_returns_ts(
-                distr=self.mc.distribution, years=self.mc.period, n=self.mc.number
-            )
+            return_ts = self.mc.monte_carlo_returns_ts
             self._monte_carlo_cash_flow_fv = return_ts.apply(
                 dcf_calculations.get_cash_flow_fv,
                 axis=0,
@@ -598,13 +596,11 @@ class PortfolioDCF:
                     "monte_carlo",  # task
                 ),
             )
+        mc_cash_flow_fv = self._monte_carlo_cash_flow_fv.copy()
         if remove_if_wealth_index_negative:
-            mc_cash_flow_fv = self._monte_carlo_cash_flow_fv.copy()
             mc_wealth_index = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
             condition = mc_wealth_index == 0
             mc_cash_flow_fv[condition] = 0
-        else:
-            mc_cash_flow_fv = self._monte_carlo_cash_flow_fv.copy()
         if discounting.lower() == "fv":
             return mc_cash_flow_fv
         elif discounting.lower() == "pv":
@@ -656,27 +652,31 @@ class PortfolioDCF:
         """
         # TODO: return axe
         if backtest:
-            if self.cashflow_parameters is None:
-                raise AttributeError("'cashflow_parameters' is not defined.")
-            backup_obj = self.cashflow_parameters
-            s1 = self.wealth_index(discounting="fv", include_negative_values=False)[self.parent.symbol]
-            s1.plot(legend=None, figsize=figsize)
-            last_backtest_value = s1.iloc[-1]
-            if last_backtest_value > 0:
-                self.cashflow_parameters.initial_investment = last_backtest_value
-                if self.cashflow_parameters.NAME == "fixed_amount":
-                    months = helpers.Date.get_difference_in_months(self.parent.last_date, self.parent.first_date).n
-                    years = months / settings._MONTHS_PER_YEAR
-                    periods = years / settings.frequency_periods_per_year[self.cashflow_parameters.frequency]
-                    self.cashflow_parameters.amount *= (1.0 + self.cashflow_parameters.indexation) ** periods
-                s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
-                for s in s2:
-                    s2[s].plot(legend=None)
-            self.cashflow_parameters = backup_obj
+            self.plot_mc_with_backtest(figsize)
         else:
             s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
             s2.plot(legend=None)
         self.cashflow_parameters._clear_cf_cache()
+
+    def plot_mc_with_backtest(self, figsize):
+        if self.cashflow_parameters is None:
+            raise AttributeError("'cashflow_parameters' is not defined.")
+        backup_obj = self.cashflow_parameters
+        s1 = self.wealth_index(discounting="fv", include_negative_values=False)[self.parent.symbol]
+        s1.plot(legend=None, figsize=figsize)
+        last_backtest_value = s1.iloc[-1]
+        if last_backtest_value > 0:
+            self.cashflow_parameters.initial_investment = last_backtest_value
+            if self.cashflow_parameters.NAME == "fixed_amount":
+                # calculate the cash flow size after backtesting period
+                months = helpers.Date.get_difference_in_months(self.parent.last_date, self.parent.first_date).n
+                years = months / settings._MONTHS_PER_YEAR
+                periods = years / settings.frequency_periods_per_year[self.cashflow_parameters.frequency]
+                self.cashflow_parameters.amount *= (1.0 + self.cashflow_parameters.indexation) ** periods
+            s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+            for s in s2:
+                s2[s].plot(legend=None)
+        self.cashflow_parameters = backup_obj
 
     def monte_carlo_survival_period(self, threshold: float = 0) -> pd.Series:
         """
