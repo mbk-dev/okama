@@ -300,10 +300,14 @@ def remove_negative_values(input_s: pd.Series) -> pd.Series:
 
 def discount_monthly_cash_flow(
         cash_flow_fv: Union[pd.Series, pd.DataFrame],
-        annual_effective_discount_rate: float
+        annual_effective_discount_rate: float,
+        reverse: bool = False,
 ) -> Union[pd.Series, pd.DataFrame]:
     number_of_months = cash_flow_fv.shape[0]
     monlthly_discount_rate = (1 + annual_effective_discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
-    discount_factors = (1.0 + monlthly_discount_rate) ** np.arange(number_of_months)
+    if not reverse:
+        discount_factors = (1.0 + monlthly_discount_rate) ** np.arange(number_of_months)
+    else:
+        discount_factors = (1.0 + monlthly_discount_rate) ** np.arange(number_of_months)[::-1]
     cash_flow_pv = cash_flow_fv.div(discount_factors, axis=0)
     return cash_flow_pv

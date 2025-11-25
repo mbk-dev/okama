@@ -206,7 +206,7 @@ class PortfolioDCF:
         if discounting.lower() == "fv":
             return wealth_index_fv
         elif discounting.lower() == "pv":
-            return dcf_calculations.discount_monthly_cash_flow(wealth_index_fv, self.discount_rate)
+            return dcf_calculations.discount_monthly_cash_flow(wealth_index_fv, self.discount_rate, reverse=True)
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
@@ -260,7 +260,7 @@ class PortfolioDCF:
         if discounting.lower() == "fv":
             return cash_flow_fv
         elif discounting.lower() == "pv":
-            return dcf_calculations.discount_monthly_cash_flow(cash_flow_fv, self.discount_rate)
+            return dcf_calculations.discount_monthly_cash_flow(cash_flow_fv, self.discount_rate, reverse=True)
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
@@ -419,7 +419,8 @@ class PortfolioDCF:
         6574.643143611553
         """
         if hasattr(self.cashflow_parameters, "initial_investment"):
-            return self.cashflow_parameters.initial_investment / (1.0 + self.discount_rate) ** self.parent.period_length
+            monlthly_discount_rate = (1 + self.discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
+            return self.cashflow_parameters.initial_investment / (1.0 + monlthly_discount_rate) ** self.parent.ror.shape[0]
         else:
             return None
 
