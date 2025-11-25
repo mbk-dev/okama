@@ -134,6 +134,16 @@ def test_initial_investment_pv_and_fv(dcf_percentage_halfyear):
     assert dcf.initial_investment_fv == pytest.approx(expected_fv, rel=1e-12)
 
 
+def test_wealth_index_pv_less_than_fv(dcf_indexation_yearly):
+    """Test that wealth_index[0] with discounting='pv' is less than with discounting='fv'."""
+    dcf = dcf_indexation_yearly
+    # Get wealth index with both discounting methods
+    wi_fv = dcf.wealth_index(discounting="fv", include_negative_values=False)
+    wi_pv = dcf.wealth_index(discounting="pv", include_negative_values=False)
+    # First value with PV discounting should be less than with FV discounting
+    assert wi_pv.iloc[0, 0] < wi_fv.iloc[0, 0]
+
+
 def test_monte_carlo_wealth_shapes(dcf_indexation_yearly):
     dcf = dcf_indexation_yearly
     # Small MC for speed (set via properties to avoid distribution_parameters validation)
