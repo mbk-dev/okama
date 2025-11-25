@@ -80,7 +80,7 @@ class ListMaker(ABC):
             self.assets_first_dates.update({self.inflation: macro.Inflation(self.inflation).first_date})
             self.assets_last_dates.update({self.inflation: macro.Inflation(self.inflation).last_date})
         self._assets_ror: pd.DataFrame = self._assets_ror[self.first_date : self.last_date]
-        self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1)
+        self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=2)
         self.pl = settings.PeriodLength(
             self._assets_ror.shape[0] // settings._MONTHS_PER_YEAR,
             self._assets_ror.shape[0] % settings._MONTHS_PER_YEAR,
