@@ -107,6 +107,8 @@ def validate_distribution(distribution: Any) -> None:
         raise ValueError(f'distribution must be in {settings.distributions}.')
 
 def validate_distribution_parameters(distr: str, param: tuple) -> None:
+    if param is None:
+        return
     if not isinstance(param, (list, tuple)):
         raise ValueError(f"The parameter is neither a list nor a tuple. Its type is: {type(param)}")
     match distr:
