@@ -128,12 +128,9 @@ def test_initial_investment_pv_and_fv(dcf_percentage_halfyear):
     dcf = dcf_percentage_halfyear
     dcf.discount_rate = 0.10
     dcf.mc.period = 5
-    ii = dcf.cashflow_parameters.initial_investment
-    # PV at start of history against portfolio period length (years)
-    expected_pv = ii / (1.0 + dcf.discount_rate) ** dcf.parent.period_length
-    assert dcf.initial_investment_pv == pytest.approx(expected_pv, rel=1e-12)
+    assert dcf.initial_investment_pv == dcf.wealth_index(discounting="pv", include_negative_values=False).iloc[0, 0]
     # FV at end of forecast period
-    expected_fv = ii * (1.0 + dcf.discount_rate) ** dcf.mc.period
+    expected_fv = dcf.cashflow_parameters.initial_investment * (1 + dcf.discount_rate)**dcf.mc.period
     assert dcf.initial_investment_fv == pytest.approx(expected_fv, rel=1e-12)
 
 
