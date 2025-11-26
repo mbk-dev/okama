@@ -390,6 +390,95 @@ class EfficientFrontierReb(asset_list.AssetList):
         else:
             raise RecursionError("No solutions where found")
 
+    def get_tangency_portfolio(self, rf_return: float = 0, rate_of_return: str = "cagr") -> dict:
+        """
+        Calculate asset weights, risk and return values for tangency portfolio within given bounds.
+
+        Tangency portfolio or Maximum Sharpe Ratio (MSR) is the point on the Efficient Frontier where
+        Sharpe Ratio reaches its maximum.
+
+        The Sharpe ratio is the average annual return in excess of the risk-free rate
+        per unit of risk (annualized standard deviation).
+
+        Bounds are defined with 'bounds' property.
+
+        Parameters
+        ----------
+        rate_of_return : {cagr, mean_return}, default cagr
+            Use CAGR (Compound annual growth rate) or arithmetic mean of return to calculate Sharpe Ratio.
+
+        rf_return : float, default 0
+            Risk-free rate of return.
+
+        Returns
+        -------
+        dict
+             Weights of assets, risk and return of the tangency portfolio.
+
+        Examples
+        --------
+        >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+        >>> ef = ok.EfficientFrontierReb(assets=three_assets, ccy='USD', last_date='2022-06')
+        >>> ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
+        {'Weights': array([0.30672901, 0.        , 0.69327099]), 'Rate_of_return': 0.12265215404959617, 'Risk': 0.1882249366394522}
+
+        To calculate tangency portfolio parameters for arithmetic mean set rate_of_return='mean_return':
+
+        >>> ef.get_tangency_portfolio(rate_of_return="mean_return", rf_return=0.03)
+        {'Weights': array([2.95364739e-01, 1.08420217e-17, 7.04635261e-01]), 'Rate_of_return': 0.10654206521088283, 'Risk': 0.048279725208422115}
+        """
+        ror = self.assets_ror
+        n = self.assets_ror.shape[1]
+        init_guess = np.repeat(1 / n, n)
+
+        args = dict(
+            period=self.rebalancing_strategy.period,
+        )
+
+        def of_arithmetic_mean(w):
+            # Sharpe ratio with arithmetic mean
+            portfolio_ror = Rebalance(**args).return_ror_ts_ef(w, ror)
+            mean_return_monthly = portfolio_ror.mean()
+            risk_monthly = portfolio_ror.std()
+            of_arithmetic_mean.rate_of_return = helpers.Float.annualize_return(mean_return_monthly)
+            of_arithmetic_mean.risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
+            return -(of_arithmetic_mean.rate_of_return - rf_return) / of_arithmetic_mean.risk
+
+        def of_geometric_mean(w):
+            # Sharpe ratio with CAGR
+            portfolio_ror = Rebalance(**args).return_ror_ts_ef(w, ror)
+            mean_return_monthly = portfolio_ror.mean()
+            of_geometric_mean.rate_of_return = helpers.Frame.get_cagr(portfolio_ror)
+            # Risk
+            risk_monthly = portfolio_ror.std()
+            of_geometric_mean.risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
+            return -(of_geometric_mean.rate_of_return - rf_return) / of_geometric_mean.risk
+
+        if rate_of_return.lower() in {"cagr", "mean_return"}:
+            rate_of_return = rate_of_return.lower()
+        else:
+            raise ValueError("rate_of_return must be 'cagr' or 'mean_return'")
+
+        objective_function = of_geometric_mean if rate_of_return == "cagr" else of_arithmetic_mean
+        # construct the constraints
+        weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
+        weights = minimize(
+            objective_function,
+            init_guess,
+            method="SLSQP",
+            options={"disp": False},
+            constraints=(weights_sum_to_1,),
+            bounds=self.bounds,
+        )
+        if weights.success:
+            return {
+                "Weights": weights.x,
+                "Rate_of_return": objective_function.rate_of_return,
+                "Risk": objective_function.risk,
+            }
+        else:
+            raise RecursionError("No solutions where found")
+
     @property
     def gmv_monthly_weights(self) -> np.ndarray:
         """
@@ -1267,4 +1356,61 @@ class EfficientFrontierReb(asset_list.AssetList):
             ).ef_points
             ax.plot(ef["Risk"], ef["CAGR"])
         self.plot_assets(kind="cagr", tickers=tickers)
+        return ax
+
+    def plot_cml(self, rf_return: float = 0, figsize: Optional[tuple] = None):
+        """
+        Plot Capital Market Line (CML).
+
+        The Capital Market Line (CML) is the tangent line drawn from the point of the risk-free asset (volatility is
+        zero) to the point of tangency portfolio or Maximum Sharpe Ratio (MSR) point.
+
+        The slope of the CML is the Sharpe ratio of the tangency portfolio.
+
+        Parameters
+        ----------
+        rf_return : float, default 0
+            Risk-free rate of return.
+
+        figsize : (float, float), optional
+            Figure size: width, height in inches.
+            If None default matplotlib size is taken: [6.4, 4.8]
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+        >>> ef = ok.EfficientFrontierReb(assets=three_assets, ccy='USD', full_frontier=True)
+        >>> ef.plot_cml(rf_return=0.05)  # Risk-Free return is 5%
+        >>> plt.show
+        """
+        ef = self.ef_points
+        tg = self.get_tangency_portfolio(rf_return=rf_return, rate_of_return="cagr")
+        fig, ax = plt.subplots(figsize=figsize)
+
+        ax.plot(ef.Risk, ef["CAGR"], color="black")
+        ax.scatter(tg["Risk"], tg["Rate_of_return"], linewidth=0, color="green", zorder=10)
+        ax.annotate(
+            "MSR",
+            (tg["Risk"], tg["Rate_of_return"]),
+            textcoords="offset points",  # how to position the text
+            xytext=(-10, 10),  # distance from text to points (x,y)
+            ha="center",  # horizontal alignment can be left, right or center
+        )
+        # plot the line
+        x, y = [0, tg["Risk"]], [rf_return, tg["Rate_of_return"]]
+        ax.plot(x, y, linewidth=1)
+        # set the axis size
+        risk_monthly = self.assets_ror.std()
+        mean_return_monthly = self.assets_ror.mean()
+        risks = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
+        max_return = self.global_max_return_portfolio["CAGR"]
+        ax.set_ylim(0, max_return * 1.1)  # height is 10% more than max portfolio CAGR
+        ax.set_xlim(0, max(risks) * 1.1)  # width is 10% more than max risk
+        # plot the assets
+        self.plot_assets(kind="cagr")
         return ax
