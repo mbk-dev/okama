@@ -82,7 +82,7 @@ class EfficientFrontierReb(asset_list.AssetList):
     For monthly rebalanced portfolios okama.EfficientFrontier class could be used.
     """
 
-    _FTOL = (1e-06, 1e-05, 1e-3, 1e-02)  # tolerance sequence for the optimizer
+    _FTOL = (1e-06, 1e-05, 1e-3, 1e-02)  # possible tolerance values for the optimizer
 
     def __init__(
         self,
@@ -211,7 +211,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         self._ef_points = pd.DataFrame(dtype=float)  # renew EF points DataFrame
 
     @property
-    def rebalancing_strategy(self):
+    def rebalancing_strategy(self) -> Rebalance:
         """
         Return or set rebalancing period for multi-period Efficient Frontier.
 
@@ -237,6 +237,11 @@ class EfficientFrontierReb(asset_list.AssetList):
     @rebalancing_strategy.setter
     def rebalancing_strategy(self, rebalancing_strategy: Rebalance):
         if isinstance(rebalancing_strategy, Rebalance):
+            if rebalancing_strategy.abs_deviation is not None or rebalancing_strategy.rel_deviation is not None:
+                logger.warning(
+                    "Absolute and relative constraints (abs_deviation, rel_deviation) are not considered "
+                    "during portfolio optimization. Only the rebalancing period is used."
+                )
             self._clear_cache()
             self._rebalancing_strategy = rebalancing_strategy
         else:
@@ -305,15 +310,13 @@ class EfficientFrontierReb(asset_list.AssetList):
         ror = self.assets_ror
         args = dict(
             period=self.rebalancing_strategy.period,
-            abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
         # Set the objective function
         def objective_function(w):
-            risk = okama.common.helpers.rebalancing.Rebalance(**args).return_ror_ts(w, ror).std()
+            risk = okama.common.helpers.rebalancing.Rebalance(**args).return_ror_ts_ef(w, ror).std()
             return risk
 
         # construct the constraints
@@ -352,15 +355,13 @@ class EfficientFrontierReb(asset_list.AssetList):
         ror = self.assets_ror
         args = dict(
             period=self.rebalancing_strategy.period,
-            abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
         # Set the objective function
         def objective_function(w):
-            ts = Rebalance(**args).return_ror_ts(w, ror)
+            ts = Rebalance(**args).return_ror_ts_ef(w, ror)
             mean_return = ts.mean()
             risk = ts.std()
             return helpers.Float.annualize_risk(risk=risk, mean_return=mean_return)
@@ -385,10 +386,8 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         args = dict(
             period=self.rebalancing_strategy.period,
-            abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
-        ts = Rebalance(**args).return_ror_ts(self.gmv_monthly_weights, self.assets_ror)
+        ts = Rebalance(**args).return_ror_ts_ef(self.gmv_monthly_weights, self.assets_ror)
         return ts.std(), ts.mean()
 
     @property
@@ -415,10 +414,8 @@ class EfficientFrontierReb(asset_list.AssetList):
         """
         args = dict(
             period=self.rebalancing_strategy.period,
-            abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
-        returns = Rebalance(**args).return_ror_ts(self.gmv_annual_weights, self.assets_ror)
+        returns = Rebalance(**args).return_ror_ts_ef(self.gmv_annual_weights, self.assets_ror)
         return (
             helpers.Float.annualize_risk(returns.std(), returns.mean()),
             (returns + 1.0).prod() ** (settings._MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
@@ -451,8 +448,6 @@ class EfficientFrontierReb(asset_list.AssetList):
         ror = self.assets_ror
         args = dict(
             period=self.rebalancing_strategy.period,
-            abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         n = self.assets_ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
@@ -460,7 +455,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         # Set the objective function
         def objective_function(w):
             # Accumulated return for rebalanced portfolio time series
-            objective_function.returns = Rebalance(**args).return_ror_ts(w, ror)
+            objective_function.returns = Rebalance(**args).return_ror_ts_ef(w, ror)
             accumulated_return = (objective_function.returns + 1.0).prod() - 1.0
             return -accumulated_return
 
@@ -492,28 +487,42 @@ class EfficientFrontierReb(asset_list.AssetList):
     def _get_cagr(self, weights):
         args = dict(
             period=self.rebalancing_strategy.period,
-            abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
-        ts = Rebalance(**args).return_ror_ts(weights, self.assets_ror)
+        ts = Rebalance(**args).return_ror_ts_ef(weights, self.assets_ror)
         acc_return = (ts + 1.0).prod() - 1.0
         return (1.0 + acc_return) ** (settings._MONTHS_PER_YEAR / ts.shape[0]) - 1.0
 
     def minimize_risk(self, target_value: float) -> Dict[str, float]:
         """
-        Calculate the portfolio properties to minimize annualized value of risk at the target CAGR.
+        Calculate the portfolio properties to minimize annualized risk at the target CAGR.
 
-        Compound annual growth rate (CAGR) is the rate of return that would be required for an investment to grow from
-        its initial to its final value, assuming all incomes were reinvested.
+        This method finds the portfolio weights that minimize the annualized risk (standard deviation)
+        while achieving a specified target Compound Annual Growth Rate (CAGR).
 
-        The objective function is Annualized risk (standard deviation) for rebalanced portfolio time series
-        for the period from 'first_date' to 'last_date'.
-        TODO: add help for 'target_value' Parameter (in EfficientFrontier it's `target_return` consider changing).
+        The optimization is performed for a rebalanced portfolio over the period from 'first_date' to 'last_date'.
+        CAGR is the rate of return required for an investment to grow from its initial to its final value,
+        assuming all incomes were reinvested.
+
+        Parameters
+        ----------
+        target_value : float
+            Target Compound Annual Growth Rate (CAGR) for the portfolio.
+            Should be a decimal value (e.g., 0.107 for 10.7% annual return).
 
         Returns
         -------
         dict
-            Weights of assets, CAGR, annualized risk.
+            Dictionary containing:
+            - Asset weights (one key per asset symbol or name)
+            - 'CAGR': Target CAGR value
+            - 'Risk': Minimized annualized risk (standard deviation)
+            - 'Weights': Array of optimal weights
+            - 'iterations': Number of optimization iterations performed
+
+        Raises
+        ------
+        RecursionError
+            If no solution is found for the given target CAGR value.
 
         Examples
         --------
@@ -529,19 +538,15 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         args = dict(
             period=self.rebalancing_strategy.period,
-            abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
 
         if max_ratio_data is not None:
-            # TODO: create other guesses for intermedeate points
-            #  (remember the weights for solved points, GMV, global max)
             init_guess = np.repeat(0, n)  # clear weights
             init_guess[self._min_ratio_asset["list_position"]] = 1.0
 
         def objective_function(w):
             # annual risk
-            ts = Rebalance(**args).return_ror_ts(w, self.assets_ror)
+            ts = Rebalance(**args).return_ror_ts_ef(w, self.assets_ror)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             return helpers.Float.annualize_risk(risk_monthly, mean_return)
@@ -552,32 +557,29 @@ class EfficientFrontierReb(asset_list.AssetList):
             "type": "eq",
             "fun": lambda weights: target_value - self._get_cagr(weights),
         }
-        for i in range(4):
-            weights = minimize(
-                objective_function,
-                init_guess,
-                method="SLSQP",
-                options={
-                    "disp": False,
-                    "maxiter": 80,
-                    "ftol": self._FTOL[i],
-                },
-                constraints=(weights_sum_to_1, cagr_is_target),
-                bounds=self.bounds,
-            )
+        # for i in range(4):
+        weights = minimize(
+            objective_function,
+            init_guess,
+            method="SLSQP",
+            options={
+                "disp": False,
+                "maxiter": 80,
+                "ftol": self._FTOL[0],
+            },
+            constraints=(weights_sum_to_1, cagr_is_target),
+            bounds=self.bounds,
+        )
 
-            # Calculate points of EF given optimal weights
-            if weights.success:
-                asset_labels = self.symbols if self.ticker_names else list(self.names.values())
-                point = dict(zip(asset_labels, weights.x))
-                point["CAGR"] = target_value
-                point["Risk"] = weights.fun
-                point["FTOL"] = self._FTOL[i]
-                point["iter"] = weights.nit
-                # Provide unified access to weights similar to other methods
-                # Keep per-asset weights in the dict for backward compatibility
-                point["Weights"] = weights.x
-                break
+        # Calculate points of EF given optimal weights
+        if weights.success:
+            asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+            point = dict(zip(asset_labels, weights.x))
+            point["CAGR"] = target_value
+            point["Risk"] = weights.fun
+            point["Weights"] = weights.x
+            point["iterations"] = weights.nit
+            # break
         if not weights.success:
             raise RecursionError(f"No solution found for target CAGR value: {target_value}.")
         return point
@@ -589,26 +591,25 @@ class EfficientFrontierReb(asset_list.AssetList):
         The objective function is Annualized risk (standard deviation) for rebalanced portfolio time series
         for the period from 'first_date' to 'last_date'.
 
+        Parameters
+        ----------
+        target_return : float
+            Target CAGR value
+
         Returns
         -------
         dict
-            Weights of assets, CAGR, annualized risk.
+            Weights of assets, CAGR, annualized risk and technical optimization parameters.
         """
         n = self.assets_ror.shape[1]  # number of assets
 
-        init_guess = np.repeat(0, n)
-
         args = dict(
             period=self.rebalancing_strategy.period,
-            abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
-        if self._max_ratio_asset_right_to_max_cagr:
-            init_guess[self._max_ratio_asset_right_to_max_cagr["list_position"]] = 1.0
 
         def objective_function(w):
             # annual risk
-            ts = Rebalance(**args).return_ror_ts(w, self.assets_ror)
+            ts = Rebalance(**args).return_ror_ts_ef(w, self.assets_ror)
             risk_monthly = ts.std()
             mean_return = ts.mean()
             result = -helpers.Float.annualize_risk(risk_monthly, mean_return)
@@ -620,32 +621,55 @@ class EfficientFrontierReb(asset_list.AssetList):
             "type": "eq",
             "fun": lambda weights: target_return - self._get_cagr(weights),
         }
-        for i in range(4):
+
+        constraints = [weights_sum_to_1, cagr_is_target]
+
+        # Prepare initial guess hints
+        init_guesses = dict()
+        
+        # Hint 1: max ratio asset
+        if self._max_ratio_asset_right_to_max_cagr:
+            init_guess_1 = np.repeat(0, n)
+            init_guess_1[self._max_ratio_asset_right_to_max_cagr["list_position"]] = 1.0
+            init_guesses['max_ratio_asset_right_to_max_cagr'] = init_guess_1
+        
+        # Hint 2: Global max return portfolio
+        if hasattr(self, '_global_max_return_portfolio_weights'):
+            init_guesses['global_max_return_portfolio'] = self._global_max_return_portfolio_weights.copy()
+        else:
+            global_max = self.global_max_return_portfolio
+            init_guesses['global_max_return_portfolio'] = global_max["Weights"].copy()
+            self._global_max_return_portfolio_weights = global_max["Weights"].copy()  # caching result
+
+        solution = None
+        for init_guess_key, init_guess_value in init_guesses.items():
             weights = minimize(
                 objective_function,
-                init_guess,
+                init_guess_value,
                 method="SLSQP",
                 options={
                     "disp": False,
-                    "ftol": self._FTOL[i],
+                    "ftol": self._FTOL[0],
                     "maxiter": 80,
                 },
-                constraints=(weights_sum_to_1, cagr_is_target),
+                constraints=constraints,
                 bounds=self.bounds,
             )
 
             # Calculate points of EF given optimal weights
             if weights.success:
                 asset_labels = self.symbols if self.ticker_names else list(self.names.values())
-                point = dict(zip(asset_labels, weights.x))
-                point["CAGR"] = target_return
-                point["Risk"] = -weights.fun
-                point["FTOL"] = self._FTOL[i]
-                point["iter"] = weights.nit
+                solution = dict(zip(asset_labels, weights.x))
+                solution["CAGR"] = target_return
+                solution["Risk"] = -weights.fun
+                solution["Weights"] = weights.x
+                solution["iterations"] = weights.nit
+                solution["init_guess"] = init_guess_key
                 break
-        if not weights.success:
+        
+        if solution is None:
             raise RecursionError(f"No solution found for target CAGR value: {target_return}.")
-        return point
+        return solution
 
     @property
     def _max_cagr_asset(self) -> dict:
@@ -686,21 +710,16 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         if left_assets.any():
             valid_ratios = ratio[left_assets]
-            min_ticker = valid_ratios.idxmin()
-            return {
-                "min_asset_cagr": cagr[min_ticker],
-                "ticker_with_smallest_ratio": min_ticker,
-                "list_position": self.assets_ror.columns.get_loc(min_ticker),
-            }
         else:
             right_assets = risk_diff < 0
             valid_ratios = ratio[right_assets]
-            min_ticker = valid_ratios.idxmin()
-            return {
-                "min_asset_cagr": cagr[min_ticker],
-                "ticker_with_smallest_ratio": min_ticker,
-                "list_position": self.assets_ror.columns.get_loc(min_ticker),
-            }
+
+        min_ticker = valid_ratios.idxmin()
+        return {
+            "min_asset_cagr": cagr[min_ticker],
+            "ticker_with_smallest_ratio": min_ticker,
+            "list_position": self.assets_ror.columns.get_loc(min_ticker),
+        }
 
     @property
     def _max_ratio_asset_right_to_max_cagr(self) -> Optional[dict]:
@@ -919,7 +938,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 end_time = time.time()
                 if self.verbose:
                     logger.info(
-                        f"right EF point #{i + 1}/{len(range_right)} is done in {end_time - start_time:.2f} sec."
+                        f"right EF point #{i + 1}/{len(range_right)} is done in {end_time - start_time:.2f} sec, init guess: {row['init_guess']}."
                     )
                 return row
 
@@ -993,12 +1012,10 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         args = dict(
             period=self.rebalancing_strategy.period,
-            abs_deviation=self.rebalancing_strategy.abs_deviation,
-            rel_deviation=self.rebalancing_strategy.rel_deviation,
         )
         # Portfolio risk and cagr for each set of weights
         portfolios_ror = weights_df.aggregate(
-            Rebalance(**args).return_ror_ts,
+            Rebalance(**args).return_ror_ts_ef,
             ror=self.assets_ror,
         )
         random_portfolios = pd.DataFrame()
