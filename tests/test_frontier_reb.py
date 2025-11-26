@@ -8,7 +8,8 @@ import okama as ok
 
 @pytest.fixture()
 def ef_reb_ab(synthetic_env):
-    """EfficientFrontierReb with two mocked assets A.US and B.US in USD.
+    """
+    EfficientFrontierReb with two mocked assets A.US and B.US in USD.
 
     Uses synthetic_env to patch asset loading and currency, so no API is called.
     """
@@ -19,7 +20,9 @@ def ef_reb_ab(synthetic_env):
 
 @pytest.fixture()
 def ef_reb_three(synthetic_env):
-    """EfficientFrontierReb with three mocked assets IDX.US, A.US and B.US."""
+    """
+    EfficientFrontierReb with three mocked assets IDX.US, A.US and B.US.
+    """
     return ok.EfficientFrontierReb(
         ["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=12, rebalancing_strategy=ok.Rebalance(period="year")
     )
@@ -108,19 +111,6 @@ def test_get_monte_carlo_returns_dataframe(ef_reb_ab):
 def test_plot_pair_ef_returns_axes(ef_reb_three):
     ax = ef_reb_three.plot_pair_ef(tickers="tickers")
     assert hasattr(ax, "lines") and len(ax.lines) >= 1
-
-# 2
-
-
-@pytest.fixture()
-def ef_reb_ab(synthetic_env):
-    """EfficientFrontierReb with two mocked assets A.US and B.US in USD.
-
-    Uses synthetic_env to patch asset loading and currency, so no API is called.
-    """
-    return ok.EfficientFrontierReb(
-        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, rebalancing_strategy=ok.Rebalance(period="year")
-    )
 
 
 def test_gmv_monthly_weights_basic(ef_reb_ab):
@@ -221,4 +211,134 @@ def test_max_annual_risk_asset_structure(ef_reb_ab):
     assert info["ticker_with_largest_risk"] in ef_reb_ab.symbols
     assert 0 <= info["list_position"] < len(ef_reb_ab.symbols)
     assert ef_reb_ab.symbols[info["list_position"]] == info["ticker_with_largest_risk"]
+
+
+def test_verbose_property_setter(ef_reb_ab):
+    """Test verbose property getter and setter."""
+    # Default value from fixture
+    assert isinstance(ef_reb_ab.verbose, bool)
+    # Set new value and verify cache is cleared
+    _ = ef_reb_ab.ef_points
+    assert not ef_reb_ab._ef_points.empty
+    ef_reb_ab.verbose = True
+    assert ef_reb_ab.verbose is True
+    assert ef_reb_ab._ef_points.empty
+    # Test validation
+    with pytest.raises(ValueError, match=r"verbose should be True or False"):
+        ef_reb_ab.verbose = "true"  # type: ignore
+
+
+def test_full_frontier_parameter(synthetic_env):
+    """Test that full_frontier parameter is properly set."""
+    ef_full = ok.EfficientFrontierReb(
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, 
+        rebalancing_strategy=ok.Rebalance(period="year"), full_frontier=True
+    )
+    assert ef_full.full_frontier is True
+    
+    ef_partial = ok.EfficientFrontierReb(
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, 
+        rebalancing_strategy=ok.Rebalance(period="year"), full_frontier=False
+    )
+    assert ef_partial.full_frontier is False
+
+
+def test_max_cagr_asset_structure(ef_reb_ab):
+    """Test _max_cagr_asset property returns correct structure."""
+    info = ef_reb_ab._max_cagr_asset
+    assert set(info.keys()) == {"max_asset_cagr", "ticker_with_largest_cagr", "list_position"}
+    assert info["ticker_with_largest_cagr"] in ef_reb_ab.symbols
+    assert 0 <= info["list_position"] < len(ef_reb_ab.symbols)
+    assert ef_reb_ab.symbols[info["list_position"]] == info["ticker_with_largest_cagr"]
+    assert isinstance(info["max_asset_cagr"], (float, np.floating))
+
+
+def test_min_ratio_asset_structure(ef_reb_ab):
+    """Test _min_ratio_asset property returns correct structure."""
+    info = ef_reb_ab._min_ratio_asset
+    assert set(info.keys()) == {"min_asset_cagr", "ticker_with_smallest_ratio", "list_position"}
+    assert info["ticker_with_smallest_ratio"] in ef_reb_ab.symbols
+    assert 0 <= info["list_position"] < len(ef_reb_ab.symbols)
+    assert ef_reb_ab.symbols[info["list_position"]] == info["ticker_with_smallest_ratio"]
+
+
+def test_max_ratio_asset_right_to_max_cagr(ef_reb_ab):
+    """Test _max_ratio_asset_right_to_max_cagr property returns correct structure or None."""
+    info = ef_reb_ab._max_ratio_asset_right_to_max_cagr
+    if info is not None:
+        assert set(info.keys()) == {"max_asset_cagr", "ticker_with_largest_cagr", "list_position"}
+        assert info["ticker_with_largest_cagr"] in ef_reb_ab.symbols
+        assert 0 <= info["list_position"] < len(ef_reb_ab.symbols)
+
+
+def test_target_cagr_range_left_properties(ef_reb_ab):
+    """Test _target_cagr_range_left returns proper array."""
+    r = ef_reb_ab._target_cagr_range_left
+    assert isinstance(r, np.ndarray)
+    assert len(r) == ef_reb_ab.n_points
+    # Should be non-decreasing
+    assert np.all(np.diff(r) >= -1e-12)
+
+
+def test_bounds_validation(synthetic_env):
+    """Test bounds validation raises error for incorrect number of bounds."""
+    ef = ok.EfficientFrontierReb(
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year")
+    )
+    # Try to set bounds with wrong length
+    with pytest.raises(ValueError, match=r"The number of symbols .* and the length of bounds .* should be equal"):
+        ef.bounds = ((0.0, 0.5),)  # Only one bound for two assets
+
+
+def test_rebalancing_strategy_validation(synthetic_env):
+    """Test that rebalancing_strategy setter validates input type."""
+    ef = ok.EfficientFrontierReb(
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year")
+    )
+    with pytest.raises(ValueError, match=r"rebalancing_strategy must be of type Rebalance"):
+        ef.rebalancing_strategy = "year"  # type: ignore
+
+
+def test_ticker_names_validation(ef_reb_ab):
+    """Test ticker_names property validation."""
+    assert isinstance(ef_reb_ab.ticker_names, bool)
+    with pytest.raises(ValueError, match=r"tickers should be True or False"):
+        ef_reb_ab.ticker_names = "yes"  # type: ignore
+
+
+def test_get_monte_carlo_with_bounds(synthetic_env):
+    """Test get_monte_carlo respects bounds constraints."""
+    ef = ok.EfficientFrontierReb(
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+        bounds=((0.3, 0.7), (0.3, 0.7))
+    )
+    np.random.seed(42)
+    mc = ef.get_monte_carlo(n=5)
+    assert len(mc) == 5
+    assert "Risk" in mc.columns
+    assert "CAGR" in mc.columns
+
+
+def test_ef_points_caching(ef_reb_ab):
+    """Test that ef_points results are cached properly."""
+    # First call computes
+    pts1 = ef_reb_ab.ef_points
+    # Second call returns cached result
+    pts2 = ef_reb_ab.ef_points
+    assert pts1 is pts2  # Same object reference
+    pd.testing.assert_frame_equal(pts1, pts2)
+
+
+def test_minimize_risk_with_extreme_target(ef_reb_ab):
+    """Test minimize_risk with target at boundaries."""
+    # Test with target near GMV CAGR
+    _, gmv_cagr = ef_reb_ab.gmv_annual_values
+    result = ef_reb_ab.minimize_risk(gmv_cagr)
+    assert "CAGR" in result
+    assert "Risk" in result
+    assert "Weights" in result
+    assert result["CAGR"] == pytest.approx(gmv_cagr, rel=1e-2, abs=1e-3)
 
