@@ -342,3 +342,102 @@ def test_minimize_risk_with_extreme_target(ef_reb_ab):
     assert "Weights" in result
     assert result["CAGR"] == pytest.approx(gmv_cagr, rel=1e-2, abs=1e-3)
 
+
+def test_get_most_diversified_portfolio_has_expected_fields(ef_reb_ab):
+    """Test get_most_diversified_portfolio returns dict with required fields."""
+    dic = ef_reb_ab.get_most_diversified_portfolio()
+    # Check that all required fields are present
+    assert set(dic.keys()) >= {"Risk", "CAGR", "Diversification ratio"}
+    # Check that asset weights are present
+    assert any(symbol in dic for symbol in ef_reb_ab.symbols)
+    # Check types
+    assert isinstance(dic["Risk"], (float, np.floating))
+    assert isinstance(dic["CAGR"], (float, np.floating))
+    assert isinstance(dic["Diversification ratio"], (float, np.floating))
+
+
+def test_get_most_diversified_portfolio_with_target_return(ef_reb_ab):
+    """Test get_most_diversified_portfolio with specified target_return."""
+    # Get a target CAGR in the middle of the range
+    r = ef_reb_ab._target_cagr_range_left
+    target = float((r[0] + r[-1]) / 2)
+    dic = ef_reb_ab.get_most_diversified_portfolio(target_return=target)
+    # Check that CAGR is close to target
+    assert dic["CAGR"] == pytest.approx(target, rel=1e-2, abs=1e-3)
+    # Check that weights sum to 1
+    weights = [dic[s] for s in ef_reb_ab.symbols]
+    assert_allclose(np.sum(weights), 1.0, atol=1e-8)
+
+
+def test_get_most_diversified_portfolio_weights_sum_to_one(ef_reb_ab):
+    """Test that weights in MDP sum to 1."""
+    dic = ef_reb_ab.get_most_diversified_portfolio()
+    weights = [dic[s] for s in ef_reb_ab.symbols]
+    assert_allclose(np.sum(weights), 1.0, atol=1e-8)
+
+
+def test_get_most_diversified_portfolio_with_bounds(synthetic_env):
+    """Test get_most_diversified_portfolio respects bounds."""
+    ef = ok.EfficientFrontierReb(
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+        bounds=((0.3, 0.7), (0.3, 0.7))
+    )
+    dic = ef.get_most_diversified_portfolio()
+    # Check bounds are respected
+    for i, symbol in enumerate(ef.symbols):
+        lo, hi = ef.bounds[i]
+        assert lo <= dic[symbol] <= hi
+
+
+def test_mdp_points_basic_properties(ef_reb_three):
+    """Test mdp_points returns DataFrame with correct structure."""
+    mdp = ef_reb_three.mdp_points
+    # Expected number of points
+    assert len(mdp) == ef_reb_three.n_points
+    # Columns include required metrics
+    assert {"Risk", "CAGR", "Diversification ratio"}.issubset(set(mdp.columns))
+    # Weights columns are the asset symbols
+    weight_cols = [c for c in mdp.columns if c in ef_reb_three.symbols]
+    assert set(weight_cols) == set(ef_reb_three.symbols)
+    # Each row weights sum to 1 (within numerical tolerance)
+    s = mdp[weight_cols].sum(axis=1)
+    assert np.allclose(s.values, 1.0, atol=1e-8)
+
+
+def test_mdp_points_caching(ef_reb_ab):
+    """Test that mdp_points results are cached properly."""
+    # First call computes
+    pts1 = ef_reb_ab.mdp_points
+    # Second call returns cached result
+    pts2 = ef_reb_ab.mdp_points
+    assert pts1 is pts2  # Same object reference
+    pd.testing.assert_frame_equal(pts1, pts2)
+
+
+def test_mdp_points_cleared_on_bounds_change(ef_reb_ab):
+    """Test that mdp_points cache is cleared when bounds change."""
+    # Pre-fill cache
+    _ = ef_reb_ab.mdp_points
+    assert not ef_reb_ab._mdp_points.empty
+    # Change bounds and ensure cache is cleared
+    ef_reb_ab.bounds = ((0.2, 0.8), (0.2, 0.8))
+    assert ef_reb_ab._mdp_points.empty
+
+
+def test_mdp_points_cleared_on_n_points_change(ef_reb_ab):
+    """Test that mdp_points cache is cleared when n_points changes."""
+    # Pre-fill cache
+    _ = ef_reb_ab.mdp_points
+    assert not ef_reb_ab._mdp_points.empty
+    # Change n_points and ensure cache is cleared
+    ef_reb_ab.n_points = 15
+    assert ef_reb_ab._mdp_points.empty
+
+
+def test_mdp_points_cagr_monotonicity(ef_reb_ab):
+    """Test that CAGR values in mdp_points are non-decreasing."""
+    mdp = ef_reb_ab.mdp_points
+    # CAGR should be non-decreasing
+    assert np.all(np.diff(mdp["CAGR"]) >= -1e-12)
+

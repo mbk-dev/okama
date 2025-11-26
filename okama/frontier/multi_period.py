@@ -117,6 +117,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         self.verbose = verbose
         self.full_frontier = full_frontier
         self._ef_points = pd.DataFrame(dtype=float)
+        self._mdp_points = pd.DataFrame(dtype=float)
 
     def __repr__(self):
         dic = {
@@ -169,6 +170,7 @@ class EfficientFrontierReb(asset_list.AssetList):
     def bounds(self, bounds):
 
         self._ef_points = pd.DataFrame(dtype=float)
+        self._mdp_points = pd.DataFrame(dtype=float)
 
         if bounds:
             if len(bounds) != len(self.symbols):
@@ -209,6 +211,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
     def _clear_cache(self):
         self._ef_points = pd.DataFrame(dtype=float)  # renew EF points DataFrame
+        self._mdp_points = pd.DataFrame(dtype=float)  # renew MDP points DataFrame
 
     @property
     def rebalancing_strategy(self) -> Rebalance:
@@ -284,7 +287,108 @@ class EfficientFrontierReb(asset_list.AssetList):
         self._clear_cache()
         self._verbose = verbose
 
-    # TODO: add get_most_diversified_portfolio (as in EfficientFronier)
+    def get_most_diversified_portfolio(
+        self,
+        target_return: Optional[float] = None,
+    ) -> Dict[str, float]:
+        """
+        Calculate assets weights, annualized values for risk and return, Diversification ratio
+        for the most diversified portfolio given the target CAGR within given bounds.
+
+        The most diversified portfolio has the largest Diversification Ratio.
+
+        The Diversification Ratio is the ratio of the weighted average of assets risks divided by the portfolio risk.
+        In this case risk is the annualized standard deviation for the rate of return.
+
+        Returns
+        -------
+        dict
+             Weights of assets and annualized values for risk, CAGR and Diversification ratio of the most diversified portfolio.
+
+        Parameters
+        ----------
+        target_return : float, optional
+            Target Compound Annual Growth Rate (CAGR) for the portfolio. The optimization process looks for a portfolio 
+            with the target_return and largest Diversification ratio. If not specified global most diversified portfolio 
+            is obtained.
+
+        Examples
+        --------
+        >>> ls4 = ['SPY.US', 'AGG.US', 'VNQ.US', 'GLD.US']
+        >>> x = ok.EfficientFrontierReb(assets=ls4, ccy='USD', last_date='2021-12')
+        >>> x.get_most_diversified_portfolio()  # get a global most diversified portfolio
+        {'SPY.US': 0.19612726258395477,
+        'AGG.US': 0.649730553241489,
+        'VNQ.US': 0.020096313783052246,
+        'GLD.US': 0.13404587039150392,
+        'CAGR': 0.062355715886719176,
+        'Risk': 0.05510135025563423,
+        'Diversification ratio': 1.5665720501693001}
+
+        It is possible to get the most diversified portfolio for a given target CAGR.
+
+        >>> x.get_most_diversified_portfolio(target_return=0.10)
+        {'SPY.US': 0.3389762570274293,
+        'AGG.US': 0.12915657041748244,
+        'VNQ.US': 0.15083042115027034,
+        'GLD.US': 0.3810367514048179,
+        'CAGR': 0.09370688842211439,
+        'Risk': 0.11725067815643951,
+        'Diversification ratio': 1.4419864802150442}
+        """
+        ror = self.assets_ror
+        n = self.assets_ror.shape[1]
+        init_guess = np.repeat(1 / n, n)
+
+        args = dict(
+            period=self.rebalancing_strategy.period,
+        )
+
+        def objective_function(w):
+            # Diversification Ratio
+            assets_risk = ror.std()
+            assets_mean_return = self.assets_ror.mean()
+            assets_annualized_risk = helpers.Float.annualize_risk(assets_risk, assets_mean_return)
+            weights = np.asarray(w)
+            assets_sigma_weighted_sum = weights.T @ assets_annualized_risk
+
+            portfolio_ror = Rebalance(**args).return_ror_ts_ef(w, ror)
+            portfolio_mean_return_monthly = portfolio_ror.mean()
+            portfolio_risk_monthly = portfolio_ror.std()
+
+            objective_function.annual_risk = helpers.Float.annualize_risk(
+                portfolio_risk_monthly, portfolio_mean_return_monthly
+            )
+            return -assets_sigma_weighted_sum / objective_function.annual_risk
+
+        # construct the constraints
+        weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
+        cagr_is_target = {
+            "type": "eq",
+            "fun": lambda weights: target_return - self._get_cagr(weights),
+        }
+        constraints = (weights_sum_to_1,) if target_return is None else (weights_sum_to_1, cagr_is_target)
+
+        # set optimizer
+        weights = minimize(
+            objective_function,
+            init_guess,
+            method="SLSQP",
+            options={"disp": False},
+            constraints=constraints,
+            bounds=self.bounds,
+        )
+        if weights.success:
+            # CAGR calculation
+            cagr = self._get_cagr(weights.x)
+            asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+            point = {x: y for x, y in zip(asset_labels, weights.x)}
+            point["CAGR"] = cagr
+            point["Risk"] = objective_function.annual_risk
+            point["Diversification ratio"] = -weights.fun
+            return point
+        else:
+            raise RecursionError("No solutions where found")
 
     @property
     def gmv_monthly_weights(self) -> np.ndarray:
@@ -951,6 +1055,67 @@ class EfficientFrontierReb(asset_list.AssetList):
         if self.verbose:
             logger.info(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
         self._ef_points = df
+
+    @property
+    def mdp_points(self) -> pd.DataFrame:
+        """
+        Generate Most diversified portfolios frontier for rebalanced portfolios.
+
+        Each point on the Most diversified portfolios frontier is a rebalanced portfolio with optimized
+        Diversification ratio for a given CAGR.
+
+        The points are obtained through the constrained optimization process (optimization with bounds).
+        Bounds are defined with 'bounds' property.
+
+        Returns
+        -------
+        DataFrame
+            Table of weights and risk/return values for the Most Diversified Portfolios Frontier.
+            The columns:
+
+            - assets weights
+            - CAGR (geometric mean)
+            - Risk (standard deviation)
+            - Diversification ratio
+
+            All the values are annualized.
+
+        Examples
+        --------
+        >>> ls4 = ['SP500TR.INDX', 'MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+        >>> y = ok.EfficientFrontierReb(assets=ls4, ccy='RUB', last_date='2021-12', n_points=20)
+        >>> y.mdp_points  # print mdp weights, risk, CAGR and Diversification ratio
+                Risk      CAGR  Diversification ratio  ...    MCFTR.INDX   RGBITR.INDX  SP500TR.INDX
+        0   0.066040  0.092220               1.234567  ...  2.081668e-16  1.000000e+00  0.000000e+00
+        1   0.064299  0.093451               1.245678  ...  0.000000e+00  9.844942e-01  5.828671e-16
+        ...
+
+        To plot the Most diversification portfolios line use the DataFrame with the points data.
+        Additionally 'Plot.plot_assets()' can be used to show the assets in the chart.
+
+        >>> import matplotlib.pyplot as plt
+        >>> fig = plt.figure()
+        >>> # Plot the assets points
+        >>> y.plot_assets(kind='cagr')  # kind should be set to "cagr" as we take "CAGR" column from the mdp_points.
+        >>> ax = plt.gca()
+        >>> # Plot the Most diversified portfolios line
+        >>> df = y.mdp_points
+        >>> ax.plot(df['Risk'], df['CAGR'])  # we chose to plot CAGR which is geometric mean of return series
+        >>> # Set the axis labels and the title
+        >>> ax.set_title('Most diversified portfolios line')
+        >>> ax.set_xlabel('Risk (Standard Deviation)')
+        >>> ax.set_ylabel('Return (CAGR)')
+        >>> plt.show()
+        """
+        if self._mdp_points.empty:
+            target_cagrs = self._target_cagr_range_left
+            df = pd.DataFrame(dtype="float")
+            for x in target_cagrs:
+                row = self.get_most_diversified_portfolio(target_return=x)
+                df = pd.concat([df, pd.DataFrame(row, index=[0])], ignore_index=True)
+            df = helpers.Frame.change_columns_order(df, ["Risk", "CAGR"])
+            self._mdp_points = df
+        return self._mdp_points
 
     def get_monte_carlo(self, n: int = 100) -> pd.DataFrame:
         """
