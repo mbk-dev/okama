@@ -322,3 +322,77 @@ class Rebalance:
         portfolio_ror = wealth_index_aligned.pct_change()
         portfolio_ror.dropna(inplace=True)
         return portfolio_ror
+
+    def wealth_ts_ef(self, weights: list, ror: pd.DataFrame) -> pd.Series:
+        """
+        Calculate wealth index time series of rebalanced portfolio given returns time series of the assets.
+        
+        Simple version without conditional rebalancing (abs_deviation and rel_deviation are not used).
+        This method is used for efficient frontier optimization.
+        Default rebalancing period is a Year (end of year).
+        For not rebalanced portfolio set period to 'none'.
+
+        Parameters
+        ----------
+        weights : list of float
+            The target weights for assets in the portfolio.
+
+        ror : pd.DataFrame
+            Assets rate of return monthly time series.
+
+        Returns
+        -------
+        pd.Series
+            Wealth index time series.
+        """
+        initial_inv = 1000
+        weights_array = np.asarray(weights)
+        
+        if self.period == "none":  # Not rebalanced portfolio
+            inv_period_spread = weights_array * initial_inv
+            assets_wealth_indexes = inv_period_spread * (1 + ror).cumprod()
+            wealth_index = assets_wealth_indexes.sum(axis=1)
+        else:
+            # Collect chunks in a list for single concatenation
+            wealth_chunks = []
+            for x in ror.resample(rule=self._pandas_frequency, convention="start"):
+                df = x[1]  # select ror part of the grouped data
+                inv_period_spread = weights_array * initial_inv  # rebalancing
+                assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
+                wealth_index_local = assets_wealth_indexes.sum(axis=1)
+                wealth_chunks.append(wealth_index_local)
+                initial_inv = wealth_index_local.iloc[-1]
+            # Single concatenation outside the loop
+            wealth_index = pd.concat(wealth_chunks, sort=False)
+        return wealth_index
+
+    def return_ror_ts_ef(self, weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
+        """
+        Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
+        
+        Simple version without conditional rebalancing (abs_deviation and rel_deviation are not used).
+        This method is used for efficient frontier optimization.
+        Default rebalancing period is a Year (end of year).
+        For not rebalanced portfolio set period to 'none'.
+
+        Parameters
+        ----------
+        weights : list of float or np.ndarray
+            The target weights for assets in the portfolio.
+
+        ror : pd.DataFrame
+            Assets rate of return monthly time series.
+
+        Returns
+        -------
+        pd.Series
+            The monthly rate of return time series of rebalanced portfolio.
+        """
+        # define data of the first period
+        first_date = ror.index[0]
+        return_first_period = ror.iloc[0] @ weights
+
+        wealth_index = self.wealth_ts_ef(weights, ror)
+        portfolio_ror = wealth_index.pct_change()
+        portfolio_ror.loc[first_date] = return_first_period  # replaces NaN with the first period return
+        return portfolio_ror
