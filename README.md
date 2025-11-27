@@ -130,12 +130,13 @@ pf.dividend_yield.plot()
 ![](../images/images/readmi05.png?raw=true) 
 
 ### 3. Draw an Efficient Frontier for 2 popular ETF: SPY and GLD
+
 ```python
 ls = ['SPY.US', 'GLD.US']
 curr = 'USD'
-last_date='2020-10'
+last_date = '2020-10'
 # Rebalancing periods is one year (default value)
-frontier = ok.EfficientFrontierReb(ls, last_date=last_date, ccy=curr, rebalancing_strategy=ok.Rebalance(period='year'))
+frontier = ok.EfficientFrontier(ls, last_date=last_date, ccy=curr, rebalancing_strategy=ok.Rebalance(period='year'))
 frontier.names
 ```
 ![](../images/images/readmi06.jpg?raw=true) 
@@ -156,9 +157,10 @@ ax.plot(points.Risk, points.CAGR)
 <nowiki>*</nowiki> - *rebalancing period is one year*.
 
 ### 4. Get a Transition Map for allocations
+
 ```python
 ls = ['SPY.US', 'GLD.US', 'BND.US']
-map = ok.EfficientFrontier(ls, ccy='USD').plot_transition_map(x_axe='risk')
+map = ok.EfficientFrontierSingle(ls, ccy='USD').plot_transition_map(x_axe='risk')
 ```
 ![](../images/images/readmi08.jpg?v23-11-2020,raw=true "Transition map")  
 

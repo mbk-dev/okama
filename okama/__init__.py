@@ -31,8 +31,8 @@ from okama.portfolios.mc import MonteCarlo
 from okama.portfolios.dcf import PortfolioDCF
 from okama.portfolios.cashflow_strategies import CashFlow, IndexationStrategy, PercentageStrategy, TimeSeriesStrategy, VanguardDynamicSpending, CutWithdrawalsIfDrawdown
 from okama.macro import Inflation, Rate, Indicator
-from okama.frontier.multi_period import EfficientFrontierReb
-from okama.frontier.single_period import EfficientFrontier
+from okama.frontier.multi_period import EfficientFrontier
+from okama.frontier.single_period import EfficientFrontierSingle
 from okama.api.data_queries import QueryData
 from okama.api.search import search
 from okama.api.api_methods import API

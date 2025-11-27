@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-class EfficientFrontierReb(asset_list.AssetList):
+class EfficientFrontier(asset_list.AssetList):
     """
     Efficient Frontier with multi-period optimization.
 
@@ -153,7 +153,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         Examples
         --------
-        >>> two_assets = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> two_assets = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US'])
         >>> two_assets.bounds
         ((0.0, 1.0), (0.0, 1.0))
 
@@ -194,7 +194,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'BND.US'])
+        >>> frontier = ok.EfficientFrontier(['SPY.US', 'BND.US'])
         >>> frontier.n_points  # default number of points
         20
         """
@@ -229,7 +229,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'BND.US'])
+        >>> frontier = ok.EfficientFrontier(['SPY.US', 'BND.US'])
         >>> frontier.rebalancing_strategy  # default rebalancing period is one year
         'year'
 
@@ -315,7 +315,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         Examples
         --------
         >>> ls4 = ['SPY.US', 'AGG.US', 'VNQ.US', 'GLD.US']
-        >>> x = ok.EfficientFrontierReb(assets=ls4, ccy='USD', last_date='2021-12')
+        >>> x = ok.EfficientFrontier(assets=ls4, ccy='USD', last_date='2021-12')
         >>> x.get_most_diversified_portfolio()  # get a global most diversified portfolio
         {'SPY.US': 0.19612726258395477,
         'AGG.US': 0.649730553241489,
@@ -418,7 +418,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         Examples
         --------
         >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
-        >>> ef = ok.EfficientFrontierReb(assets=three_assets, ccy='USD', last_date='2022-06')
+        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', last_date='2022-06')
         >>> ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
         {'Weights': array([0.30672901, 0.        , 0.69327099]), 'Rate_of_return': 0.12265215404959617, 'Risk': 0.1882249366394522}
 
@@ -496,7 +496,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
         >>> frontier.gmv_monthly_weights
         array([0.0578446, 0.9421554])
         """
@@ -541,7 +541,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
         >>> frontier.gmv_monthly_weights
         array([0.05373824, 0.94626176])
         """
@@ -601,7 +601,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
         >>> frontier.gmv_annual_values
         (0.03695845106087943, 0.04418318557516887)
         """
@@ -634,7 +634,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
         >>> frontier.global_max_return_portfolio
         {'Weights': array([1., 0.]), 'CAGR': 0.10797159166196812, 'Risk': 0.1583011735798155, 'Risk_monthly': 0.0410282468594492}
         """
@@ -719,7 +719,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
         >>> frontier.minimize_risk(0.107)
         {'SPY.US': 0.9810857623382343, 'AGG.US': 0.018914237661765643, 'CAGR': 0.107, 'Risk': 0.1549703673806012}
         """
@@ -741,8 +741,8 @@ class EfficientFrontierReb(asset_list.AssetList):
             # annual risk
             ts = Rebalance(**args).return_ror_ts_ef(w, self.assets_ror)
             risk_monthly = ts.std()
-            mean_return = ts.mean()
-            return helpers.Float.annualize_risk(risk_monthly, mean_return)
+            objective_function.mean_return = ts.mean()
+            return helpers.Float.annualize_risk(risk_monthly, objective_function.mean_return)
 
         # construct the constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
@@ -769,6 +769,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             asset_labels = self.symbols if self.ticker_names else list(self.names.values())
             point = dict(zip(asset_labels, weights.x))
             point["CAGR"] = target_value
+            point["Mean return"] = objective_function.mean_return * settings._MONTHS_PER_YEAR
             point["Risk"] = weights.fun
             point["Weights"] = weights.x
             point["iterations"] = weights.nit
@@ -804,8 +805,8 @@ class EfficientFrontierReb(asset_list.AssetList):
             # annual risk
             ts = Rebalance(**args).return_ror_ts_ef(w, self.assets_ror)
             risk_monthly = ts.std()
-            mean_return = ts.mean()
-            result = -helpers.Float.annualize_risk(risk_monthly, mean_return)
+            objective_function.mean_return = ts.mean()
+            result = -helpers.Float.annualize_risk(risk_monthly, objective_function.mean_return)
             return result
 
         # construct the constraints
@@ -854,6 +855,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 asset_labels = self.symbols if self.ticker_names else list(self.names.values())
                 solution = dict(zip(asset_labels, weights.x))
                 solution["CAGR"] = target_return
+                solution["Mean return"] = objective_function.mean_return * settings._MONTHS_PER_YEAR
                 solution["Risk"] = -weights.fun
                 solution["Weights"] = weights.x
                 solution["iterations"] = weights.nit
@@ -1017,7 +1019,7 @@ class EfficientFrontierReb(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontierReb(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
         >>> frontier.target_risk_range
         array([0.03695845, 0.04334491, 0.04973137, 0.05611783, 0.06250429,
                0.06889075, 0.07527721, 0.08166367, 0.08805012, 0.09443658,
@@ -1056,7 +1058,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         --------
         >>> ls = ['SPY.US', 'GLD.US']
         >>> curr = 'USD'
-        >>> y = ok.EfficientFrontierReb(assets=ls,
+        >>> y = ok.EfficientFrontier(assets=ls,
         ...                             first_date='2004-12',
         ...                             last_date='2020-10',
         ...                             ccy=curr,
@@ -1139,7 +1141,7 @@ class EfficientFrontierReb(asset_list.AssetList):
                 delayed(compute_right_part_of_ef)(i, target_cagr) for i, target_cagr in enumerate(range_right)
             )
         df = pd.DataFrame.from_records(ef_points_records)
-        df = helpers.Frame.change_columns_order(df, ["Risk", "CAGR"])
+        df = helpers.Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
         main_end_time = time.time()
         if self.verbose:
             logger.info(f"Total time taken is {(main_end_time - main_start_time) / 60:.2f} min.")
@@ -1172,7 +1174,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         Examples
         --------
         >>> ls4 = ['SP500TR.INDX', 'MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
-        >>> y = ok.EfficientFrontierReb(assets=ls4, ccy='RUB', last_date='2021-12', n_points=20)
+        >>> y = ok.EfficientFrontier(assets=ls4, ccy='RUB', last_date='2021-12', n_points=20)
         >>> y.mdp_points  # print mdp weights, risk, CAGR and Diversification ratio
                 Risk      CAGR  Diversification ratio  ...    MCFTR.INDX   RGBITR.INDX  SP500TR.INDX
         0   0.066040  0.092220               1.234567  ...  2.081668e-16  1.000000e+00  0.000000e+00
@@ -1227,7 +1229,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         --------
         >>> ls_m = ['SPY.US', 'GLD.US', 'PGJ.US', 'RGBITR.INDX', 'MCFTR.INDX']
         >>> curr_rub = 'RUB'
-        >>> x = ok.EfficientFrontierReb(assets=ls_m,
+        >>> x = ok.EfficientFrontier(assets=ls_m,
         ...                             first_date='2005-01',
         ...                             last_date='2020-11',
         ...                             ccy=curr_rub,
@@ -1317,14 +1319,14 @@ class EfficientFrontierReb(asset_list.AssetList):
         >>> ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
         >>> curr = 'USD'
         >>> last_date = '2021-07'
-        >>> ef = ok.EfficientFrontierReb(ls4, ccy=curr, last_date=last_date)
+        >>> ef = ok.EfficientFrontier(ls4, ccy=curr, last_date=last_date)
         >>> ef.plot_pair_ef()
         >>> plt.show()
 
         It can be useful to plot the full Efficent Frontier (EF) with optimized 4 assets portfolios
         together with the EFs for each pair of assets.
 
-        >>> ef4 = ok.EfficientFrontierReb(assets=ls4, ccy=curr, n_points=100)
+        >>> ef4 = ok.EfficientFrontier(assets=ls4, ccy=curr, n_points=100)
         >>> df4 = ef4.ef_points
         >>> fig = plt.figure()
         >>> # Plot Efficient Frontier of every pair of assets. Optimized portfolios will have 2 assets.
@@ -1344,7 +1346,7 @@ class EfficientFrontierReb(asset_list.AssetList):
             index0 = self.symbols.index(sym_pair[0].symbol)
             index1 = self.symbols.index(sym_pair[1].symbol)
             bounds_pair = (self.bounds[index0], self.bounds[index1])
-            ef = EfficientFrontierReb(
+            ef = EfficientFrontier(
                 assets=sym_pair,
                 ccy=self.currency,
                 first_date=self.first_date,
@@ -1384,7 +1386,7 @@ class EfficientFrontierReb(asset_list.AssetList):
         --------
         >>> import matplotlib.pyplot as plt
         >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
-        >>> ef = ok.EfficientFrontierReb(assets=three_assets, ccy='USD', full_frontier=True)
+        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', full_frontier=True)
         >>> ef.plot_cml(rf_return=0.05)  # Risk-Free return is 5%
         >>> plt.show
         """

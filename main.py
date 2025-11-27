@@ -12,146 +12,29 @@ os.environ["PYTHONWARNINGS"] = "ignore::FutureWarning"
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
-# weights_div = [.07, 0.08,      .10,       .35,        .15,              .05,    .20]
-reb = ok.Rebalance(period='year', abs_deviation=None, rel_deviation=None)
-assets = ['SBGB.MOEX', 'BOND.MOEX', 'OBLG.MOEX', 'EQMX.MOEX', 'GC.COMM', 'BTC-USD.CC', 'RUS_PR.RE']
+ls_m = ["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"]
+curr_rub = "RUB"
 
-portf_div = ok.Portfolio(
-    assets,
-    ccy='RUB',
-    # weights=weights_div,
-    symbol="portf_div.PF",
-    rebalancing_strategy=reb,
-    inflation=True
+# x = ok.EfficientFrontier(
+#     assets=ls_m,
+#     first_date="2005-01",
+#     last_date="2020-11",
+#     ccy=curr_rub,
+#     # rebalancing_strategy=ok.Rebalance(period="year"),  # set rebalancing period to one year
+#     n_points=20,
+#     verbose=False,
+# )
+
+x = ok.EfficientFrontier(
+    assets=ls_m,
+    first_date="2005-01",
+    last_date="2020-11",
+    ccy=curr_rub,
+    n_points=40,
+    # rebalancing_strategy=ok.Rebalance(period="year"),  # set rebalancing period to one year
 )
 
-print(portf_div.mean_return_monthly)
+ef_points = x.ef_points
 
-
-
-# pf.dcf.discount_rate = 0.09
-# # Percentage CF strategy
-# cf_strategy = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
-#
-# cf_strategy.initial_investment = 83_000_000  # initial investments size
-# cf_strategy.frequency = "year"  # withdrawals frequency
-# cf_strategy.percentage = -0.09
-
-# Indexation CF strategy
-# cf_strategy = ok.IndexationStrategy(pf)
-#
-# cf_strategy.initial_investment = 10_000_000
-# cf_strategy.frequency = "year"
-# cf_strategy.amount = 10_000_000 * 0.05
-# cf_strategy.indexation = 0.09
-#
-# pf.dcf.cashflow_parameters = cf_strategy
-#
-# pf.dcf.mc.period = 50
-# pf.dcf.mc.number = 100
-# pf.dcf.mc.distribution = "norm"
-
-
-# print(pf.dcf.monte_carlo_survival_period().describe())
-
-
-# Cut Whithdrawals if Drawdown CWID strategy
-# cf_strategy = ok.CutWithdrawalsIfDrawdown(pf)
-#
-# cf_strategy.initial_investment = 10_000_000
-# cf_strategy.frequency = "none"
-# cf_strategy.amount = -10_000_000 * 0.05 / 12
-# cf_strategy.indexation = 0.09
-# cf_strategy.crash_threshold_reduction = [
-#     (.10, .20),
-#     (.20, .50),
-#     (.40, 1),
-# ]
-
-# d = {
-#     "2015-06": -35_000_000,
-# }
-#
-# cf_strategy.time_series_dic = d
-# cf_strategy.time_series_discounted_values = False
-
-# # VDS strategy
-# cf_strategy = ok.VanguardDynamicSpending(pf)
-# cf_strategy.initial_investment = 1_000_000
-# cf_strategy.percentage = -0.08
-# cf_strategy.indexation = 0.09
-# # cf_strategy.min_max_annual_withdrawal = 10_000_000 / 5,  10_000_000 / 10 # 20%, 10%
-# cf_strategy.floor_ceiling = -0.10, 0.20
-# # cf_strategy.time_series_dic = d
-# # cf_strategy.time_series_discounted_values = False
-
-# pf.dcf.cashflow_parameters = cf_strategy  # assign the cash flow strategy to portfolio
-
-# w = cf_strategy.calculate_withdrawal_size(
-#     last_withdrawal=0,
-#     balance=cf_strategy.initial_investment,
-#     number_of_periods=1
-# )
-
-# print(pf.dcf.cashflow_parameters)
-# # pf.dcf.set_mc_parameters(
-# #     distribution="norm",
-# #     period=15,
-# #     number=100
-# # )
-# print(pf.dcf.cashflow_parameters._crash_threshold_reduction_series)
-
-# pf.dcf.set_mc_parameters(
-#     distribution="t",
-#     parameters=(3, None, None),
-#     period=100,
-#     number=1_000,
-# )
-
-# wi = pf.dcf.wealth_index(discounting="pv", include_negative_values=False)
-# cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True).resample("Y").sum()
-# cf = pf.dcf.cash_flow_ts(discounting="pv", remove_if_wealth_index_negative=True)
-# wi = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=False)
-# cf = pf.dcf.monte_carlo_cash_flow(discounting="pv", remove_if_wealth_index_negative=True)
-# print(cf)
-# print(cf.pct_change())
-# wi.plot(
-#     # kind="bar",
-#     legend=False
-# )
-# plt.yscale('linear')  # linear or log
-# plt.show()
-#
-# df = cf[0]
-# cf.plot(
-#     kind="bar",
-#     legend=False
-# )
-# plt.yscale('linear')  # linear or log
-# plt.show()
-
-# print(df[df != 0])
-
-# df = pf.dcf.monte_carlo_wealth_fv
-# print(df)
-
-
-# sp = pf.dcf.monte_carlo_survival_period()
-# print(sp.quantile(25 / 100), " years")
-
-# mc_wealth_pv = pf.dcf.monte_carlo_wealth_pv.iloc[-1].describe([.05, .10, .20, .50])
-# print(f"{mc_wealth_pv=}")
-
-# print(pf.dcf.wealth_index.iloc[-1, :])
-
-
-# pf.dcf.mc.plot_qq(bootstrap_size_var=2000, zoom_to_left_tail=50, figsize=(10, 10))
-# pf.dcf.set_mc_parameters(
-#     distribution="norm",
-#     distribution_parameters=(2, None),
-#     period=100,
-#     mc_number=1_000,
-# )
-# pf.dcf.mc.plot_hist_fit(bins=100)
-# plt.show()
+print(ef_points[["Mean return", "CAGR"]])
 

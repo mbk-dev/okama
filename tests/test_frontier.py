@@ -12,19 +12,19 @@ def ef_ab(synthetic_env):
 
     Uses synthetic_env to patch asset loading and currency, so no API is called.
     """
-    return ok.EfficientFrontier(["A.US", "B.US"], ccy="USD", inflation=False, n_points=10)
+    return ok.EfficientFrontierSingle(["A.US", "B.US"], ccy="USD", inflation=False, n_points=10)
 
 
 @pytest.fixture()
 def ef_three(synthetic_env):
     """EfficientFrontier with three mocked assets IDX.US, A.US and B.US."""
-    return ok.EfficientFrontier(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=20)
+    return ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=20)
 
 
 def test_init_efficient_frontier_failing():
     # Does not hit API because the error is raised before base class initialization
     with pytest.raises(ValueError, match=r"The number of symbols cannot be less than two"):
-        ok.EfficientFrontier(assets=["A.US"])  # any one symbol
+        ok.EfficientFrontierSingle(assets=["A.US"])  # any one symbol
 
 
 def test_bounds_setter_failing(ef_ab):
@@ -45,10 +45,21 @@ def test_repr_contains_key_fields(ef_ab):
 
 
 def test_gmv_weights_basic_properties(ef_ab):
-    w = ef_ab.gmv_weights
+    w = ef_ab.gmv_monthly_weights
     # weights length equals number of assets
     assert len(w) == 2
     # weights are within bounds and sum to 1
+    lo_hi = ef_ab.bounds
+    assert_allclose(np.sum(w), 1.0, atol=1e-8)
+    assert np.all(w >= np.array([lo for lo, _ in lo_hi]))
+    assert np.all(w <= np.array([hi for _, hi in lo_hi]))
+
+
+def test_gmv_annual_weights_basic_properties(ef_ab):
+    w = ef_ab.gmv_annual_weights
+    # weights length equals number of assets
+    assert len(w) == len(ef_ab.symbols)
+    # weights within bounds and sum to 1
     lo_hi = ef_ab.bounds
     assert_allclose(np.sum(w), 1.0, atol=1e-8)
     assert np.all(w >= np.array([lo for lo, _ in lo_hi]))
@@ -155,8 +166,8 @@ def test_mdp_points_basic_properties(ef_three):
 
 def test_get_assets_tickers_modes(synthetic_env):
     """get_assets_tickers should return symbols when ticker_names=True and names when False."""
-    ef_symbols = ok.EfficientFrontier(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=10, ticker_names=True)
-    ef_names = ok.EfficientFrontier(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=10, ticker_names=False)
+    ef_symbols = ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=10, ticker_names=True)
+    ef_names = ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=10, ticker_names=False)
 
     # Tickers mode
     assert ef_symbols.get_assets_tickers() == ["IDX.US", "A.US", "B.US"]
@@ -174,7 +185,7 @@ def test_plot_pair_ef_raises_with_less_than_three_assets(ef_ab):
 def test_mean_return_range_when_full_frontier_false(ef_ab):
     """When full_frontier=False, the min is GMV monthly return, max is from optimize_return(max)."""
     # Recreate EF with full_frontier=False
-    ef = ok.EfficientFrontier(["A.US", "B.US"], ccy="USD", inflation=False, n_points=12, full_frontier=False)
+    ef = ok.EfficientFrontierSingle(["A.US", "B.US"], ccy="USD", inflation=False, n_points=12, full_frontier=False)
     rrange = ef.mean_return_range
     # First equals GMV monthly return
     gmv_ret = ef.gmv_monthly[1]

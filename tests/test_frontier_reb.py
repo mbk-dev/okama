@@ -13,7 +13,7 @@ def ef_reb_ab(synthetic_env):
 
     Uses synthetic_env to patch asset loading and currency, so no API is called.
     """
-    return ok.EfficientFrontierReb(
+    return ok.EfficientFrontier(
         ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, rebalancing_strategy=ok.Rebalance(period="year")
     )
 
@@ -23,7 +23,7 @@ def ef_reb_three(synthetic_env):
     """
     EfficientFrontierReb with three mocked assets IDX.US, A.US and B.US.
     """
-    return ok.EfficientFrontierReb(
+    return ok.EfficientFrontier(
         ["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=12, rebalancing_strategy=ok.Rebalance(period="year")
     )
 
@@ -31,7 +31,7 @@ def ef_reb_three(synthetic_env):
 def test_init_efficient_frontier_reb_failing():
     # Error is raised before data loading, no API call occurs
     with pytest.raises(ValueError, match=r"The number of symbols cannot be less than two"):
-        ok.EfficientFrontierReb(assets=["A.US"], ccy="USD")
+        ok.EfficientFrontier(assets=["A.US"], ccy="USD")
 
 
 def test_repr_contains_key_fields(ef_reb_ab):
@@ -230,13 +230,13 @@ def test_verbose_property_setter(ef_reb_ab):
 
 def test_full_frontier_parameter(synthetic_env):
     """Test that full_frontier parameter is properly set."""
-    ef_full = ok.EfficientFrontierReb(
+    ef_full = ok.EfficientFrontier(
         ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, 
         rebalancing_strategy=ok.Rebalance(period="year"), full_frontier=True
     )
     assert ef_full.full_frontier is True
     
-    ef_partial = ok.EfficientFrontierReb(
+    ef_partial = ok.EfficientFrontier(
         ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, 
         rebalancing_strategy=ok.Rebalance(period="year"), full_frontier=False
     )
@@ -282,7 +282,7 @@ def test_target_cagr_range_left_properties(ef_reb_ab):
 
 def test_bounds_validation(synthetic_env):
     """Test bounds validation raises error for incorrect number of bounds."""
-    ef = ok.EfficientFrontierReb(
+    ef = ok.EfficientFrontier(
         ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
         rebalancing_strategy=ok.Rebalance(period="year")
     )
@@ -293,7 +293,7 @@ def test_bounds_validation(synthetic_env):
 
 def test_rebalancing_strategy_validation(synthetic_env):
     """Test that rebalancing_strategy setter validates input type."""
-    ef = ok.EfficientFrontierReb(
+    ef = ok.EfficientFrontier(
         ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
         rebalancing_strategy=ok.Rebalance(period="year")
     )
@@ -310,7 +310,7 @@ def test_ticker_names_validation(ef_reb_ab):
 
 def test_get_monte_carlo_with_bounds(synthetic_env):
     """Test get_monte_carlo respects bounds constraints."""
-    ef = ok.EfficientFrontierReb(
+    ef = ok.EfficientFrontier(
         ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
         rebalancing_strategy=ok.Rebalance(period="year"),
         bounds=((0.3, 0.7), (0.3, 0.7))
@@ -378,7 +378,7 @@ def test_get_most_diversified_portfolio_weights_sum_to_one(ef_reb_ab):
 
 def test_get_most_diversified_portfolio_with_bounds(synthetic_env):
     """Test get_most_diversified_portfolio respects bounds."""
-    ef = ok.EfficientFrontierReb(
+    ef = ok.EfficientFrontier(
         ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
         rebalancing_strategy=ok.Rebalance(period="year"),
         bounds=((0.3, 0.7), (0.3, 0.7))
@@ -440,4 +440,107 @@ def test_mdp_points_cagr_monotonicity(ef_reb_ab):
     mdp = ef_reb_ab.mdp_points
     # CAGR should be non-decreasing
     assert np.all(np.diff(mdp["CAGR"]) >= -1e-12)
+
+
+def test_get_tangency_portfolio_has_expected_fields(ef_reb_ab):
+    """Test get_tangency_portfolio returns dict with required fields."""
+    result = ef_reb_ab.get_tangency_portfolio(rf_return=0.02)
+    # Check that all required fields are present
+    assert set(result.keys()) == {"Weights", "Rate_of_return", "Risk"}
+    # Check types
+    assert isinstance(result["Weights"], np.ndarray)
+    assert isinstance(result["Rate_of_return"], (float, np.floating))
+    assert isinstance(result["Risk"], (float, np.floating))
+    # Check weights length
+    assert len(result["Weights"]) == len(ef_reb_ab.symbols)
+
+
+def test_get_tangency_portfolio_weights_sum_to_one(ef_reb_ab):
+    """Test that weights in tangency portfolio sum to 1."""
+    result = ef_reb_ab.get_tangency_portfolio(rf_return=0.0)
+    assert_allclose(np.sum(result["Weights"]), 1.0, atol=1e-8)
+
+
+def test_get_tangency_portfolio_with_rate_of_return_cagr(ef_reb_ab):
+    """Test get_tangency_portfolio with rate_of_return='cagr'."""
+    result = ef_reb_ab.get_tangency_portfolio(rf_return=0.01, rate_of_return="cagr")
+    assert "Weights" in result
+    assert "Rate_of_return" in result
+    assert "Risk" in result
+    # Weights sum to 1
+    assert_allclose(np.sum(result["Weights"]), 1.0, atol=1e-8)
+
+
+def test_get_tangency_portfolio_with_rate_of_return_mean(ef_reb_ab):
+    """Test get_tangency_portfolio with rate_of_return='mean_return'."""
+    result = ef_reb_ab.get_tangency_portfolio(rf_return=0.01, rate_of_return="mean_return")
+    assert "Weights" in result
+    assert "Rate_of_return" in result
+    assert "Risk" in result
+    # Weights sum to 1
+    assert_allclose(np.sum(result["Weights"]), 1.0, atol=1e-8)
+
+
+def test_get_tangency_portfolio_respects_bounds(synthetic_env):
+    """Test get_tangency_portfolio respects bounds."""
+    ef = ok.EfficientFrontier(
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+        bounds=((0.2, 0.8), (0.2, 0.8))
+    )
+    result = ef.get_tangency_portfolio(rf_return=0.0)
+    # Check bounds are respected
+    for i, weight in enumerate(result["Weights"]):
+        lo, hi = ef.bounds[i]
+        assert lo - 1e-8 <= weight <= hi + 1e-8
+
+
+def test_get_tangency_portfolio_invalid_rate_of_return(ef_reb_ab):
+    """Test get_tangency_portfolio raises error for invalid rate_of_return."""
+    with pytest.raises(ValueError, match="rate_of_return must be"):
+        ef_reb_ab.get_tangency_portfolio(rf_return=0.0, rate_of_return="invalid")
+
+
+def test_get_tangency_portfolio_positive_sharpe_ratio(ef_reb_ab):
+    """Test that tangency portfolio has positive Sharpe ratio when rf_return is reasonable."""
+    rf = 0.02
+    result = ef_reb_ab.get_tangency_portfolio(rf_return=rf, rate_of_return="cagr")
+    # Sharpe ratio should be positive (rate of return > rf_return for optimal portfolio)
+    sharpe = (result["Rate_of_return"] - rf) / result["Risk"]
+    assert sharpe > 0 or np.isclose(sharpe, 0, atol=1e-6)
+
+
+def test_plot_cml_returns_axes(ef_reb_ab):
+    """Test plot_cml returns matplotlib axes object."""
+    ax = ef_reb_ab.plot_cml(rf_return=0.02)
+    assert hasattr(ax, "lines")
+    assert hasattr(ax, "collections")  # scatter plot creates collections
+
+
+def test_plot_cml_with_zero_rf_return(ef_reb_ab):
+    """Test plot_cml with zero risk-free return."""
+    ax = ef_reb_ab.plot_cml(rf_return=0.0)
+    assert ax is not None
+    # Check that plot has multiple elements (EF line, MSR point, CML line)
+    assert len(ax.lines) >= 2
+
+
+def test_plot_cml_with_custom_figsize(ef_reb_ab):
+    """Test plot_cml with custom figure size."""
+    ax = ef_reb_ab.plot_cml(rf_return=0.01, figsize=(10, 8))
+    fig = ax.get_figure()
+    # Check that figure size is approximately as requested
+    assert fig.get_figwidth() == pytest.approx(10, abs=0.1)
+    assert fig.get_figheight() == pytest.approx(8, abs=0.1)
+
+
+def test_plot_cml_has_expected_elements(ef_reb_ab):
+    """Test plot_cml creates expected plot elements."""
+    ax = ef_reb_ab.plot_cml(rf_return=0.02)
+    # Should have lines (EF curve + CML line)
+    assert len(ax.lines) >= 2
+    # Should have scatter points (MSR point)
+    assert len(ax.collections) >= 1
+    # Should have annotations (MSR label)
+    assert len(ax.texts) >= 1
 

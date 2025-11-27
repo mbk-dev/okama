@@ -11,7 +11,7 @@ from okama import asset_list
 from okama.common.helpers import helpers
 
 
-class EfficientFrontier(asset_list.AssetList):
+class EfficientFrontierSingle(asset_list.AssetList):
     """
     Efficient Frontier with classic Mean-Variance optimization.
 
@@ -127,7 +127,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> two_assets = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> two_assets = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US'])
         >>> two_assets.bounds
         ((0.0, 1.0), (0.0, 1.0))
 
@@ -156,7 +156,7 @@ class EfficientFrontier(asset_list.AssetList):
             self._bounds = ((0.0, 1.0),) * len(self.symbols)  # an N-tuple of 2-tuples
 
     @property
-    def gmv_weights(self) -> np.ndarray:
+    def gmv_monthly_weights(self) -> np.ndarray:
         """
         Calculate asset weights of the Global Minimum Volatility (GMV) portfolio within given bounds.
 
@@ -175,8 +175,8 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> two_assets = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
-        >>> two_assets.gmv_weights
+        >>> two_assets = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US'])
+        >>> two_assets.gmv_monthly_weights
         array([0.05474178, 0.94525822])
         """
         n = self.assets_ror.shape[1]
@@ -187,6 +187,51 @@ class EfficientFrontier(asset_list.AssetList):
             helpers.Frame.get_portfolio_risk,
             init_guess,
             args=(self.assets_ror,),
+            method="SLSQP",
+            options={"disp": False},
+            constraints=(weights_sum_to_1,),
+            bounds=self.bounds,
+        )
+        if weights.success:
+            return weights.x
+        else:
+            raise RecursionError("No solutions where found")
+
+    @property
+    def gmv_annual_weights(self) -> np.ndarray:
+        """
+        Calculate asset weights of the Global Minimum Volatility (GMV) portfolio. The objective function is
+        annualized risk (standard deviation of return).
+
+        Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
+        Along the Efficient Frontier, the left-most point is a portfolio with minimum risk when compared to
+        all possible portfolios of risky assets.
+
+        Returns
+        -------
+        numpy.ndarray
+            GMV portfolio assets weights.
+
+        Examples
+        --------
+        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US'])
+        >>> ef.gmv_annual_weights
+        array([0.05474178, 0.94525822])
+        """
+        n = self.assets_ror.shape[1]
+        init_guess = np.repeat(1 / n, n)
+
+        # Set the objective function
+        def objective_function(w: np.ndarray) -> float:
+            risk = helpers.Frame.get_portfolio_risk(w, self.assets_ror)
+            mean_return = helpers.Frame.get_portfolio_mean_return(w, self.assets_ror)
+            return helpers.Float.annualize_risk(risk=risk, mean_return=mean_return)
+
+        # construct the constraints
+        weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
+        weights = minimize(
+            objective_function,
+            init_guess,
             method="SLSQP",
             options={"disp": False},
             constraints=(weights_sum_to_1,),
@@ -217,13 +262,13 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'])
+        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'])
         >>> ef.gmv_monthly
         (0.01024946425526032, 0.0036740056018316597)
         """
         return (
-            helpers.Frame.get_portfolio_risk(self.gmv_weights, self.assets_ror),
-            helpers.Frame.get_portfolio_mean_return(self.gmv_weights, self.assets_ror),
+            helpers.Frame.get_portfolio_risk(self.gmv_monthly_weights, self.assets_ror),
+            helpers.Frame.get_portfolio_mean_return(self.gmv_monthly_weights, self.assets_ror),
         )
 
     @property
@@ -246,7 +291,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'])
+        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'])
         >>> ef.gmv_annualized
         (0.03697734994430258, 0.0449899573148429)
         """
@@ -283,7 +328,7 @@ class EfficientFrontier(asset_list.AssetList):
         Examples
         --------
         >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
-        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', last_date='2022-06')
+        >>> ef = ok.EfficientFrontierSingle(assets=three_assets, ccy='USD', last_date='2022-06')
         >>> ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
         {'Weights': array([0.30672901, 0.        , 0.69327099]), 'Mean_return': 0.12265215404959617, 'Risk': 0.1882249366394522}
 
@@ -370,7 +415,7 @@ class EfficientFrontier(asset_list.AssetList):
         Examples
         --------
         >>> ls4 = ['SPY.US', 'AGG.US', 'VNQ.US', 'GLD.US']
-        >>> x = ok.EfficientFrontier(assets=ls4, ccy='USD', last_date='2021-12')
+        >>> x = ok.EfficientFrontierSingle(assets=ls4, ccy='USD', last_date='2021-12')
         >>> x.get_most_diversified_portfolio()  # get a global most diversified portfolio
         {'SPY.US': 0.19612726258395477,
         'AGG.US': 0.649730553241489,
@@ -469,7 +514,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'])
+        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'])
         >>> ef.optimize_return(option='max')
         {'Weights': array([1.00000000e+00, 1.94289029e-16, 1.11022302e-16]), 'Mean_return_monthly': 0.009144, 'Risk_monthly': 0.041956276163975015}
 
@@ -565,7 +610,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'], last_date='2021-07')
+        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'], last_date='2021-07')
         >>> ef.minimize_risk(target_return=0.044, monthly_return=False)
         {'SPY.US': 0.03817252986735185,
         'AGG.US': 0.9618274701326482,
@@ -636,7 +681,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'], last_date='2021-07')
+        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'], last_date='2021-07')
         >>> ef.mean_return_range
         array([0.0033745 , 0.00367816, 0.00398182, 0.00428547, 0.00458913,
         0.00489279, 0.00519645, 0.00550011, 0.00580376, 0.00610742,
@@ -687,7 +732,7 @@ class EfficientFrontier(asset_list.AssetList):
         --------
         >>> assets = ['SPY.US', 'AGG.US', 'GLD.US']
         >>> last_date='2021-07'
-        >>> y = ok.EfficientFrontier(assets, last_date=last_date)
+        >>> y = ok.EfficientFrontierSingle(assets, last_date=last_date)
         >>> y.ef_points
                 Risk  Mean return      CAGR        AGG.US        GLD.US        SPY.US
         0   0.037707     0.041254  0.040579  1.000000e+00  9.278755e-09  2.220446e-16
@@ -767,7 +812,7 @@ class EfficientFrontier(asset_list.AssetList):
         Examples
         --------
         >>> ls4 = ['SP500TR.INDX', 'MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
-        >>> y = ok.EfficientFrontier(assets=ls4, ccy='RUB', last_date='2021-12', n_points=100)
+        >>> y = ok.EfficientFrontierSingle(assets=ls4, ccy='RUB', last_date='2021-12', n_points=100)
         >>> y.mdp_points  # print mdp weights, risk, mean return, CAGR and Diversification ratio
                 Risk  Mean return      CAGR  ...    MCFTR.INDX   RGBITR.INDX  SP500TR.INDX
         0   0.066040     0.094216  0.092220  ...  2.081668e-16  1.000000e+00  0.000000e+00
@@ -833,7 +878,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> assets = ['SPY.US', 'AGG.US', 'GLD.US']
         >>> last_date='2021-07'
         >>> base_currency = 'EUR'
-        >>> y = ok.EfficientFrontier(assets, ccy=base_currency, last_date=last_date)
+        >>> y = ok.EfficientFrontierSingle(assets, ccy=base_currency, last_date=last_date)
         >>> y.get_monte_carlo(n=10)  # generate 10 random portfolios
                Risk    Return    SPY.US    AGG.US    GLD.US
         0  0.099168  0.101667  0.470953  0.205227  0.323819
@@ -932,7 +977,7 @@ class EfficientFrontier(asset_list.AssetList):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'], ccy='USD', inflation=False)
+        >>> x = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'], ccy='USD', inflation=False)
         >>> x.plot_transition_map()
         >>> plt.show()
 
@@ -1003,14 +1048,14 @@ class EfficientFrontier(asset_list.AssetList):
         >>> ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
         >>> curr = 'USD'
         >>> last_date = '2021-07'
-        >>> ef = ok.EfficientFrontier(ls4, ccy=curr, last_date=last_date)
+        >>> ef = ok.EfficientFrontierSingle(ls4, ccy=curr, last_date=last_date)
         >>> ef.plot_pair_ef()
         >>> plt.show()
 
         It can be useful to plot the full Efficent Frontier (EF) with optimized 4 assets portfolios
         together with the EFs for each pair of assets.
 
-        >>> ef4 = ok.EfficientFrontier(assets=ls4, ccy=curr, n_points=100)
+        >>> ef4 = ok.EfficientFrontierSingle(assets=ls4, ccy=curr, n_points=100)
         >>> df4 = ef4.ef_points
         >>> fig = plt.figure()
         >>> # Plot Efficient Frontier of every pair of assets. Optimized portfolios will have 2 assets.
@@ -1030,7 +1075,7 @@ class EfficientFrontier(asset_list.AssetList):
             index0 = self.symbols.index(sym_pair[0].symbol)
             index1 = self.symbols.index(sym_pair[1].symbol)
             bounds_pair = (self.bounds[index0], self.bounds[index1])
-            ef = EfficientFrontier(
+            ef = EfficientFrontierSingle(
                 assets=sym_pair,
                 ccy=self.currency,
                 first_date=self.first_date,
@@ -1044,7 +1089,7 @@ class EfficientFrontier(asset_list.AssetList):
         self.plot_assets(kind="mean", tickers=tickers)
         return ax
 
-    def plot_cml(self, rf_return: float = 0, y_axe: str = "cagr", figsize: Optional[tuple] = None):
+    def plot_cml(self, rf_return: float = 0, y_axe: str = "cagr", figsize: Optional[tuple] = None) -> plt.axes:
         """
         Plot Capital Market Line (CML).
 
@@ -1075,7 +1120,7 @@ class EfficientFrontier(asset_list.AssetList):
         --------
         >>> import matplotlib.pyplot as plt
         >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
-        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', full_frontier=True)
+        >>> ef = ok.EfficientFrontierSingle(assets=three_assets, ccy='USD', full_frontier=True)
         >>> ef.plot_cml(rf_return=0.05, y_axe="cagr")  # Risk-Free return is 5%
         >>> plt.show
         """
