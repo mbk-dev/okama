@@ -1411,8 +1411,11 @@ class EfficientFrontier(asset_list.AssetList):
         mean_return_monthly = self.assets_ror.mean()
         risks = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
         max_return = self.global_max_return_portfolio["CAGR"]
-        ax.set_ylim(0, max_return * 1.1)  # height is 10% more than max portfolio CAGR
-        ax.set_xlim(0, max(risks) * 1.1)  # width is 10% more than max risk
+        min_cagr = self.get_cagr().min()
+        y_bottom = min(min_cagr, rf_return)
+        plot_margin = 0.10
+        ax.set_ylim(y_bottom * (1 - plot_margin), max_return * (1 + plot_margin))
+        ax.set_xlim(0, max(risks) * (1 + plot_margin))
         # plot the assets
         self.plot_assets(kind="cagr")
         return ax
