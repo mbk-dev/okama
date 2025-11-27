@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
+from matplotlib.axes import Axes
 
 from scipy.optimize import minimize
 
@@ -1284,7 +1285,7 @@ class EfficientFrontier(asset_list.AssetList):
             random_portfolios = pd.concat([random_portfolios, pd.DataFrame(row, index=[0])], ignore_index=True)
         return random_portfolios
 
-    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> plt.axes:
+    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> Axes:
         """
         Plot Efficient Frontier of every pair of assets.
 
@@ -1418,4 +1419,74 @@ class EfficientFrontier(asset_list.AssetList):
         ax.set_xlim(0, max(risks) * (1 + plot_margin))
         # plot the assets
         self.plot_assets(kind="cagr")
+        return ax
+
+    def plot_transition_map(self, x_axe: str = "risk", figsize: Optional[tuple] = None) -> Axes:
+        """
+        Plot Transition Map for optimized portfolios on the Efficient Frontier.
+
+        Transition Map shows the relation between asset weights and optimized portfolios properties:
+
+        - CAGR (Compound annual growth rate)
+        - Risk (annualized standard deviation of return)
+
+        Wights are displayed on the y-axis.
+        CAGR or Risk - on the x-axis.
+
+        Constrained optimization with weights bounds is available.
+
+        Returns
+        -------
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+
+        Parameters
+        ----------
+        x_axe : {'risk', 'cagr'}, default 'risk'
+            Show the relation between weights and CAGR (if 'cagr') or between weights and Risk (if 'risk').
+            CAGR or Risk are displayed on the x-axis.
+
+        figsize : (float, float), optional
+            Figure size: width, height in inches.
+            If None default matplotlib size is taken: [6.4, 4.8]
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> x = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'], ccy='USD', inflation=False)
+        >>> x.plot_transition_map()
+        >>> plt.show()
+
+        Transition Map with default setting show the relation between Risk (stanrd deviation) and assets weights for
+        optimized portfolios.
+        The same relation for CAGR can be shown setting x_axe='cagr'.
+
+        >>> x.plot_transition_map(x_axe='cagr')
+        >>> plt.show()
+        """
+        ef = self.ef_points
+        linestyle = itertools.cycle(("-", "--", ":", "-."))
+        if x_axe.lower() == "cagr":
+            xlabel = "CAGR (Compound Annual Growth Rate)"
+            x_axe = "CAGR"
+        elif x_axe.lower() == "risk":
+            xlabel = "Risk (volatility)"
+            x_axe = "Risk"
+        else:
+            raise ValueError("x_axe parameter must be 'cagr' or 'risk'.")
+        fig, ax = plt.subplots(figsize=figsize)
+        for i in ef:
+            if i not in (
+                "Risk",
+                "Mean return",
+                "CAGR",
+                "Weights",
+                "iterations",
+                "init_guess",
+            ):  # select only columns with tickers
+                ax.plot(ef[x_axe], ef.loc[:, i], linestyle=next(linestyle), label=i)
+        ax.set_xlim(ef[x_axe].min(), ef[x_axe].max())
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel("Weights of assets")
+        ax.legend(loc="upper left", frameon=False)
+        fig.tight_layout()
         return ax
