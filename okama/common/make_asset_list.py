@@ -5,6 +5,7 @@ from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 
 from okama import macro, asset, settings
 from okama.common import validators
@@ -436,7 +437,7 @@ class ListMaker(ABC):
         tickers: Union[str, list] = "tickers",
         pct_values: bool = False,
         xy_text: tuple = (0, 10),
-    ) -> plt.axes:
+    ) -> Axes:
         """
         Plot the assets points on the risk-return chart with annotations.
 

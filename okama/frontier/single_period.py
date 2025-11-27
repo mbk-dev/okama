@@ -4,6 +4,7 @@ from typing import Optional, Tuple, Dict, List, Union, Type
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 
 from scipy.optimize import minimize
 
@@ -940,7 +941,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
             random_portfolios = helpers.Frame.change_columns_order(random_portfolios, ["Risk", second_column])
         return random_portfolios
 
-    def plot_transition_map(self, x_axe: str = "risk", figsize: Optional[tuple] = None) -> plt.axes:
+    def plot_transition_map(self, x_axe: str = "risk", figsize: Optional[tuple] = None) -> Axes:
         """
         Plot Transition Map for optimized portfolios on the single period Efficient Frontier.
 
@@ -960,12 +961,6 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Parameters
         ----------
-        bounds : tuple of ((float, float),...)
-            Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
-            If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
-            bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
-            from 0 to 50%. The second asset has no limitations.
-
         x_axe : {'risk', 'cagr'}, default 'risk'
             Show the relation between weights and CAGR (if 'cagr') or between weights and Risk (if 'risk').
             CAGR or Risk are displayed on the x-axis.
@@ -1013,7 +1008,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         fig.tight_layout()
         return ax
 
-    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> plt.axes:
+    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> Axes:
         """
         Plot Efficient Frontier of every pair of assets.
 
@@ -1089,7 +1084,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         self.plot_assets(kind="mean", tickers=tickers)
         return ax
 
-    def plot_cml(self, rf_return: float = 0, y_axe: str = "cagr", figsize: Optional[tuple] = None) -> plt.axes:
+    def plot_cml(self, rf_return: float = 0, y_axe: str = "cagr", figsize: Optional[tuple] = None) -> Axes:
         """
         Plot Capital Market Line (CML).
 

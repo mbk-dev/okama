@@ -34,7 +34,7 @@ x = ok.EfficientFrontier(
     # rebalancing_strategy=ok.Rebalance(period="year"),  # set rebalancing period to one year
 )
 
-ef_points = x.ef_points
+x.plot_transition_map(x_axe="risk")
 
-print(ef_points[["Mean return", "CAGR"]])
+plt.show()
 
