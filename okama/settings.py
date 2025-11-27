@@ -25,4 +25,5 @@ distributions = (
 
 # From Pandas resamples alias: https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
 frequency_mapping = {"none": "none", "year": "Y", "half-year": "2Q", "quarter": "Q", "month": "M"}
+grouper_frequency_mapping = {"none": "none", "year": "YE", "half-year": "2QE", "quarter": "QE", "month": "ME"}
 frequency_periods_per_year = {"none": 0, "year": 1, "half-year": 2, "quarter": 4, "month": 12}

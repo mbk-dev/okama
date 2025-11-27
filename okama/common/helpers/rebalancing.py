@@ -109,6 +109,7 @@ class Rebalance:
         self._period = value
         self._validate_condition()
         self._pandas_frequency = settings.frequency_mapping[self.period]
+        self._pandas_frequency_grouper = settings.grouper_frequency_mapping[self.period]
 
     def wealth_ts(
         self, target_weights: list, ror: pd.DataFrame, calculate_assets_wealth_indexes: bool = False
@@ -353,17 +354,28 @@ class Rebalance:
             assets_wealth_indexes = inv_period_spread * (1 + ror).cumprod()
             wealth_index = assets_wealth_indexes.sum(axis=1)
         else:
-            # Collect chunks in a list for single concatenation
-            wealth_chunks = []
-            for x in ror.resample(rule=self._pandas_frequency, convention="start"):
-                df = x[1]  # select ror part of the grouped data
-                inv_period_spread = weights_array * initial_inv  # rebalancing
-                assets_wealth_indexes = inv_period_spread * (1 + df).cumprod()
-                wealth_index_local = assets_wealth_indexes.sum(axis=1)
-                wealth_chunks.append(wealth_index_local)
-                initial_inv = wealth_index_local.iloc[-1]
-            # Single concatenation outside the loop
-            wealth_index = pd.concat(wealth_chunks, sort=False)
+            # Fully vectorized approach without loops
+            period_grouper = pd.Grouper(freq=self._pandas_frequency_grouper, convention="start")
+            period_ids = ror.groupby(period_grouper).ngroup()
+            
+            growth_factors = 1 + ror
+            cumulative_growth_within_period = growth_factors.groupby(period_ids).cumprod()
+            
+            wealth_per_asset_normalized = weights_array * cumulative_growth_within_period
+            portfolio_wealth_normalized = wealth_per_asset_normalized.sum(axis=1)
+            
+            # Calculate ending wealth for each period (growth factor for that period)
+            period_ends = portfolio_wealth_normalized.groupby(period_ids).last()
+            
+            # Calculate cumulative multiplier for the START of each period
+            period_multipliers = period_ends.shift(1).fillna(1.0).cumprod()
+            
+            # Map multipliers back to the original time series
+            aligned_multipliers = period_ids.map(period_multipliers)
+            
+            # Calculate final wealth index
+            wealth_index = initial_inv * aligned_multipliers * portfolio_wealth_normalized
+            
         return wealth_index
 
     def return_ror_ts_ef(self, weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
