@@ -13,8 +13,6 @@ class API:
     Set of methods to get data from API.
     """
 
-    # TODO: introduce 'from' & 'to' for dates.
-
     api_url = "https://api.okama.io"
     default_timeout = 10  # seconds
 

@@ -95,7 +95,6 @@ class EfficientFrontierSingle(asset_list.AssetList):
         self.labels_are_tickers = ticker_names
         self._ef_points = pd.DataFrame(dtype=float)
         self._mdp_points = pd.DataFrame(dtype=float)
-        # TODO: add missing tests (might be problems when no bounds)
 
     def __repr__(self):
         dic = {

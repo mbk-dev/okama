@@ -621,8 +621,6 @@ class EfficientFrontier(asset_list.AssetList):
             (returns + 1.0).prod() ** (settings._MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
         )
 
-    # TODO: add `get_tangency_portfolio` as in EfficientFrontier
-
     @property
     def global_max_return_portfolio(self) -> dict:
         """
