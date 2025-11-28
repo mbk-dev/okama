@@ -52,7 +52,11 @@ class ListMaker(ABC):
     ):
         self._assets = list(dict.fromkeys(assets)) if assets else [settings.default_ticker]
         self._currency = asset.Asset(symbol=f"{ccy}.FX")
-        self.asset_obj_dict = ListMaker._get_asset_obj_dict(self._list_of_asset_like_objects)
+        self.asset_obj_dict = ListMaker._get_asset_obj_dict(
+            self._list_of_asset_like_objects,
+            first_date=first_date,
+            last_date=last_date,
+        )
         (
             self.first_date,
             self.last_date,
@@ -104,9 +108,17 @@ class ListMaker(ABC):
         return list(self.asset_obj_dict.values())[item]
 
     @staticmethod
-    def _get_asset_obj_dict(ls: list) -> dict:
+    def _get_asset_obj_dict(
+        ls: list,
+        first_date: Optional[str] = None,
+        last_date: Optional[str] = None,
+    ) -> dict:
         def get_item(symbol):
-            asset_item = symbol if hasattr(symbol, "symbol") and hasattr(symbol, "ror") else asset.Asset(symbol)
+            asset_item = (
+                symbol
+                if hasattr(symbol, "symbol") and hasattr(symbol, "ror")
+                else asset.Asset(symbol, first_date=first_date, last_date=last_date)
+            )
             # Primary guard: use asset_item.pl when available
             try:
                 if asset_item.pl.years == 0 and asset_item.pl.months <= 2:
