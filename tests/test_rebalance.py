@@ -7,25 +7,21 @@ import okama as ok
 from okama.common.helpers import rebalancing as rb
 
 
-@mark.rebalance
 def test_validate_period_failing():
     with pytest.raises(ValueError):
         ok.Rebalance(period="not existing")
 
 
-@mark.rebalance
 def test_validate_abs_deviation_big_failing():
     with pytest.raises(ValueError, match=r"Absolute deviation must be less or equal to 1."):
         ok.Rebalance(abs_deviation=1.5)
 
 
-@mark.rebalance
 def test_validate_abs_deviation_small_failing():
     with pytest.raises(ValueError, match=r"Absolute deviation must be positive."):
         ok.Rebalance(abs_deviation=-100)
 
 
-@mark.rebalance
 def test_validate_rel_deviation_failing():
     with pytest.raises(ValueError, match=r"Relative deviation must be positive."):
         ok.Rebalance(rel_deviation=-100)
@@ -56,7 +52,6 @@ def test_rebalance_by_condition_events_with_mock(mocker):
     assert (res.events == "abs").any()
 
 
-@mark.rebalance
 def test_check_if_rebalancing_required_series_abs():
     # Series: trigger by absolute deviation
     r = ok.Rebalance(period="none", abs_deviation=0.05)
@@ -69,7 +64,6 @@ def test_check_if_rebalancing_required_series_abs():
     assert cond_abs is True
 
 
-@mark.rebalance
 def test_check_if_rebalancing_required_series_rel():
     # Series: trigger only by relative deviation
     r = ok.Rebalance(period="none", rel_deviation=0.08)
@@ -82,7 +76,6 @@ def test_check_if_rebalancing_required_series_rel():
     assert cond_abs is False
 
 
-@mark.rebalance
 def test_check_if_rebalancing_required_series_no_trigger():
     # Series: no trigger for both thresholds
     r = ok.Rebalance(period="none", abs_deviation=0.2, rel_deviation=0.5)
@@ -95,7 +88,6 @@ def test_check_if_rebalancing_required_series_no_trigger():
     assert cond_abs is False
 
 
-@mark.rebalance
 def test_check_if_rebalancing_required_dataframe_last_row_rel():
     # DataFrame + Series: only the last row is considered (iloc[-1])
     r = ok.Rebalance(period="none", rel_deviation=0.05)
@@ -110,7 +102,6 @@ def test_check_if_rebalancing_required_dataframe_last_row_rel():
     assert cond_abs is False
 
 
-@mark.rebalance
 def test_assets_weights_ts_no_rebalancing_manual():
     # No rebalancing at all: assets weights should be equal to manual calculation
     idx = pd.period_range("2020-01", "2020-03", freq="M")
@@ -146,7 +137,6 @@ def test_assets_weights_ts_no_rebalancing_manual():
     pdt.assert_frame_equal(weights_ts, weights_manual, atol=1e-12, rtol=1e-12)
 
 
-@mark.rebalance
 def test_return_ror_ts_no_rebalancing_manual():
     # Verify portfolio return series equals manual pct_change of wealth index in no-rebalancing case
     idx = pd.period_range("2020-01", "2020-03", freq="M")

@@ -111,13 +111,22 @@ def synthetic_env(mocker):
     }
 
     # Return only requested symbols to keep shapes consistent with the user's input
-    def _filtered_get_dict(symbols):
+    def _filtered_get_dict(symbols, first_date=None, last_date=None):
         """Return a dict with only the requested symbols/objects from fake_assets.
 
         Supports both symbol strings and already constructed Asset-like objects
         (with attribute `symbol`). This ensures that the number of assets in
         assets_ror matches the number of symbols passed to EfficientFrontier
         (and hence its bounds).
+
+        Parameters
+        ----------
+        symbols : list
+            List of symbols or Asset-like objects.
+        first_date : str, optional
+            First date parameter (ignored in mock, kept for signature compatibility).
+        last_date : str, optional
+            Last date parameter (ignored in mock, kept for signature compatibility).
         """
         result = {}
         for s in symbols:
@@ -132,7 +141,9 @@ def synthetic_env(mocker):
                     # This is needed for tests that create their own test objects
                     from okama.common.make_asset_list import ListMaker
                     # Call the original unmocked method
-                    original_result = ListMaker.__dict__['_get_asset_obj_dict'].__func__([s])
+                    original_result = ListMaker.__dict__['_get_asset_obj_dict'].__func__(
+                        [s], first_date=first_date, last_date=last_date
+                    )
                     result.update(original_result)
             else:
                 # Otherwise, it's a symbol string -> take from our predefined fake_assets

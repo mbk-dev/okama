@@ -53,7 +53,7 @@ def _mc_offline_asset_patches():
             _cache[symbol] = FakeAsset(symbol, _series_for(symbol), currency="RUB" if symbol.endswith(".INDX") else "USD")
         return _cache[symbol]
 
-    def _filtered_get_dict(symbols):
+    def _filtered_get_dict(symbols, first_date=None, last_date=None):
         res = {}
         for s in symbols:
             if hasattr(s, "symbol"):
