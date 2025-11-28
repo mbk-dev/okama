@@ -57,9 +57,9 @@ class FakeAsset:
 class FakeCurrencyAsset:
     """Minimal currency Asset stub used by ListMaker during tests."""
 
-    def __init__(self, symbol: str):
+    def __init__(self, symbol: str, first_date: str | None = None, last_date: str | None = None):
         self.symbol = symbol
         self.ticker = symbol.split(".")[0]
         self.currency = self.ticker
-        self.first_date = pd.Timestamp("1990-01-01")
-        self.last_date = pd.Timestamp("2100-01-01")
+        self.first_date = pd.Timestamp(first_date) if first_date else pd.Timestamp("1990-01-01")
+        self.last_date = pd.Timestamp(last_date) if last_date else pd.Timestamp("2100-01-01")
