@@ -55,10 +55,17 @@ class API:
         except requests.exceptions.HTTPError as errh:
             if r.status_code == 404:
                 raise requests.exceptions.HTTPError(f"{symbol} is not found in the database.", 404) from errh
+            if r.status_code == 400:
+                raise requests.exceptions.HTTPError(
+                    f"Bad request for {symbol}: {r.text}",
+                    r.status_code,
+                    request_url,
+                ) from errh
             raise requests.exceptions.HTTPError(
                 f"HTTP error fetching data for {symbol}:",
                 r.status_code,
                 r.reason,
+                r.text,
                 request_url,
             ) from errh
         return r.text
