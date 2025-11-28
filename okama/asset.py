@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 import numpy as np
@@ -15,15 +15,39 @@ class Asset:
     ----------
     symbol: str, default 'SPY.US'
         Symbol is an asset ticker with a namespace after dot. The default value is 'SPY.US' (SPDR S&P 500 ETF Trust).
+
+    first_date : str, pd.Timestamp, None, default None
+        First date of the rate of return time series.
+        If None, the first available date will be used.
+
+    last_date : str, pd.Timestamp, None, default None
+        Last date of the rate of return time series.
+        If None, the last available date will be used.
     """
 
-    def __init__(self, symbol: str = settings.default_ticker):
+    def __init__(
+        self,
+        symbol: str = settings.default_ticker,
+        first_date: Union[str, pd.Timestamp, None] = None,
+        last_date: Union[str, pd.Timestamp, None] = None,
+    ):
         if symbol is None or len(str(symbol).strip()) == 0:
             raise ValueError("Symbol can not be empty")
         self._symbol = str(symbol).strip()
         self._check_namespace()
         self._get_symbol_data(symbol)
-        self.ror: pd.Series = data_queries.QueryData.get_ror(symbol)
+        self._first_date = first_date
+        self._last_date = last_date
+        self.ror: pd.Series = data_queries.QueryData.get_ror(
+            symbol,
+            first_date=first_date if first_date else "1913-01-01",
+            last_date=last_date if last_date else "2100-01-01",
+            period="M"
+        )
+        self._set_first_last_dates()
+
+    def _set_first_last_dates(self) -> None:
+        """Set first_date, last_date, period_length and pl attributes based on ror data."""
         self.first_date: pd.Timestamp = self.ror.index[0].to_timestamp()
         self.last_date: pd.Timestamp = self.ror.index[-1].to_timestamp()
         self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1)
