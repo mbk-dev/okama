@@ -90,7 +90,7 @@ def get_wealth_indexes_fv_with_cashflow(
     # Slow Calculation
         pandas_frequency = cashflow_parameters._pandas_frequency
         months_in_full_period = settings._MONTHS_PER_YEAR / cashflow_parameters.periods_per_year
-        wealth_df = pd.DataFrame(dtype=float, columns=[portfolio_symbol])
+        wealth_chunks = []  # Collect all chunks to concatenate once at the end
         for n, x in enumerate(ror_cashflow_df.resample(rule=pandas_frequency, convention="start")):
             ror_ts = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
             months_local = ror_ts.shape[0]
@@ -134,7 +134,8 @@ def get_wealth_indexes_fv_with_cashflow(
             period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
             period_wealth_index.iloc[-1] = period_final_balance
             period_initial_amount = period_final_balance
-            wealth_df = pd.concat([None if wealth_df.empty else wealth_df, period_wealth_index], sort=False)
+            wealth_chunks.append(period_wealth_index)
+        wealth_df = pd.concat(wealth_chunks, sort=False) if wealth_chunks else pd.DataFrame(dtype=float, columns=[portfolio_symbol])
         s = wealth_df.squeeze()
     elif cashflow_parameters.frequency == "none":
         s = helpers.Frame.get_wealth_indexes(
@@ -233,6 +234,7 @@ def get_cash_flow_fv(
         # Slow Calculation
         pandas_frequency = settings.frequency_mapping[cashflow_parameters.frequency]
         months_in_full_period = settings._MONTHS_PER_YEAR / cashflow_parameters.periods_per_year
+        cashflow_chunks = []  # Collect all chunks to concatenate once at the end
         for n, x in enumerate(ror_cashflow_df.resample(rule=pandas_frequency, convention="start")):
             ror_ts = x[1].iloc[:, portfolio_position]  # select ror part of the grouped data
             months_local = ror_ts.shape[0]
@@ -278,7 +280,8 @@ def get_cash_flow_fv(
             period_wealth_index.iloc[-1] = period_final_balance
             period_initial_amount = period_final_balance
             cashflow_ts_local.iloc[-1] += cashflow_value
-            cs_fv = pd.concat([None if cs_fv.empty else cs_fv, cashflow_ts_local], sort=False)
+            cashflow_chunks.append(cashflow_ts_local)
+        cs_fv = pd.concat(cashflow_chunks, sort=False) if cashflow_chunks else cs_fv
     elif cashflow_parameters.frequency == "none":
         cs_fv = pd.Series([0] * len(ror.index), index=ror.index)  # all zeroes
     return cs_fv

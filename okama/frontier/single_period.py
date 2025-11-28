@@ -777,10 +777,11 @@ class EfficientFrontierSingle(asset_list.AssetList):
         """
         if self._ef_points.empty:
             target_rs = self.mean_return_range
-            df = pd.DataFrame(dtype="float")
+            rows_list = []  # Collect all rows to concatenate once at the end
             for x in target_rs:
                 row = self.minimize_risk(x, monthly_return=True)
-                df = pd.concat([df, pd.DataFrame(row, index=[0])], ignore_index=True)
+                rows_list.append(row)
+            df = pd.DataFrame.from_records(rows_list)
             df = helpers.Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
             self._ef_points = df
         return self._ef_points
@@ -848,10 +849,11 @@ class EfficientFrontierSingle(asset_list.AssetList):
         """
         if self._mdp_points.empty:
             target_rs = self.mean_return_range
-            df = pd.DataFrame(dtype="float")
+            rows_list = []  # Collect all rows to concatenate once at the end
             for x in target_rs:
                 row = self.get_most_diversified_portfolio(target_return=x, monthly_return=True)
-                df = pd.concat([df, pd.DataFrame(row, index=[0])], ignore_index=True)
+                rows_list.append(row)
+            df = pd.DataFrame.from_records(rows_list)
             df = helpers.Frame.change_columns_order(df, ["Risk", "Mean return", "CAGR"])
             self._mdp_points = df
         return self._mdp_points
@@ -918,27 +920,27 @@ class EfficientFrontierSingle(asset_list.AssetList):
         weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
 
         # Portfolio risk and return for each set of weights
-        random_portfolios = pd.DataFrame(dtype=float)
+        points_list = []  # Collect all points to create DataFrame once at the end
+        second_column = "Return" if kind == "mean" else "CAGR"
+        asset_labels = self.get_assets_tickers()
         for weights in weights_series:
             risk_monthly = helpers.Frame.get_portfolio_risk(weights, self.assets_ror)
             mean_return_monthly = helpers.Frame.get_portfolio_mean_return(weights, self.assets_ror)
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
             mean_return = helpers.Float.annualize_return(mean_return_monthly)
-            second_column = "Return" if kind == "mean" else "CAGR"
 
-            asset_labels = self.get_assets_tickers()
             point = dict(zip(asset_labels, weights))
             point["Risk"] = risk
             if kind.lower() == "cagr":
                 cagr = helpers.Float.approx_return_risk_adjusted(mean_return, risk)
                 point["CAGR"] = cagr
-
             elif kind.lower() == "mean":
                 point["Return"] = mean_return
             else:
                 raise ValueError('kind should be "mean" or "cagr"')
-            random_portfolios = pd.concat([random_portfolios, pd.DataFrame(point, index=[0])], ignore_index=True)
-            random_portfolios = helpers.Frame.change_columns_order(random_portfolios, ["Risk", second_column])
+            points_list.append(point)
+        random_portfolios = pd.DataFrame.from_records(points_list)
+        random_portfolios = helpers.Frame.change_columns_order(random_portfolios, ["Risk", second_column])
         return random_portfolios
 
     def plot_transition_map(self, x_axe: str = "risk", figsize: Optional[tuple] = None) -> Axes:

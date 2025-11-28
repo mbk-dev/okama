@@ -601,7 +601,7 @@ class Index:
         The window should be in months.
         """
         check_rolling_window(window=window, ror=df, window_below_year=window_below_year)
-        output = pd.DataFrame()
+        results_list = []  # Collect all results to concatenate once at the end
         for start_date in df.index:
             end_date = start_date + window
             df_window = df.loc[start_date:end_date, :]
@@ -610,5 +610,6 @@ class Index:
             if period_length.n < window:
                 break
             windows_result = fn(df_window).iloc[-1, :]
-            output = pd.concat([output, windows_result.to_frame().T], copy=False)
+            results_list.append(windows_result.to_frame().T)
+        output = pd.concat(results_list, copy=False) if results_list else pd.DataFrame()
         return output

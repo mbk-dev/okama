@@ -425,7 +425,7 @@ class AssetList(make_asset_list.ListMaker):
         """
         cummax = self.wealth_indexes.cummax()
         growth = cummax.pct_change()[1:]
-        max_recovery_periods = pd.Series(dtype=int)
+        recovery_data = {}  # Collect data to create Series once at the end
         for name in self.symbols:
             namespace = name.split(".", 1)[-1]
             if namespace == "INFL":
@@ -436,9 +436,9 @@ class AssetList(make_asset_list.ListMaker):
             s2 = s1.groupby(s1_1).cumsum()
             # Max recovery period date should not be in the border (it's not recovered)
             max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.nan
-            ser = pd.Series(max_period, index=[name])
-            max_recovery_periods = pd.concat([max_recovery_periods, ser])
-        return max_recovery_periods
+            recovery_data[name] = max_period
+        # Use Int64 (nullable integer) to support NaN values
+        return pd.Series(recovery_data, dtype="Int64")
 
     def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
         """
@@ -1261,12 +1261,13 @@ class AssetList(make_asset_list.ListMaker):
         >>> al = ok.AssetList(['SP500TR.INDX', 'VOO.US', 'SPXS.LSE'], inflation=False)
         >>> al.tracking_difference_annual.plot(kind='bar')
         """
-        result = pd.DataFrame()
+        rows_list = []  # Collect all rows to concatenate once at the end
         for x in self.assets_ror.resample("Y"):
             df = x[1]
             wealth_index = helpers.Frame.get_wealth_indexes(df)
             row = helpers.Index.tracking_difference(wealth_index).iloc[[-1]]
-            result = pd.concat([result, row], ignore_index=False)
+            rows_list.append(row)
+        result = pd.concat(rows_list, ignore_index=False)
         result.index = result.index.asfreq("Y")
         return result
 

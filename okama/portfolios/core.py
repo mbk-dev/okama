@@ -727,25 +727,19 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf.assets_close_monthly.plot()
         >>> plt.show()
         """
-        assets_close_monthly = pd.DataFrame(dtype=float)
-        for i, x in enumerate(self.asset_obj_dict.values()):
-            if i == 0:  # required to use pd.concat below (df should not be empty).
-                assets_close_monthly = (
-                    x.close_monthly
-                    if x.currency == self.currency
-                    else self._adjust_price_to_currency_monthly(x.close_monthly, x.currency)
-                )
-                assets_close_monthly.rename(x.symbol, inplace=True)
-            else:
-                new = (
-                    x.close_monthly
-                    if x.currency == self.currency
-                    else self._adjust_price_to_currency_monthly(x.close_monthly, x.currency)
-                )
-                new.rename(x.symbol, inplace=True)
-                assets_close_monthly = pd.concat([assets_close_monthly, new], axis=1, join="inner", copy="false")
-        if isinstance(assets_close_monthly, pd.Series):
-            assets_close_monthly = assets_close_monthly.to_frame()
+        series_list = []  # Collect all series to concatenate once at the end
+        for x in self.asset_obj_dict.values():
+            series = (
+                x.close_monthly
+                if x.currency == self.currency
+                else self._adjust_price_to_currency_monthly(x.close_monthly, x.currency)
+            )
+            series = series.rename(x.symbol)
+            series_list.append(series)
+        if len(series_list) == 1:
+            assets_close_monthly = series_list[0].to_frame()
+        else:
+            assets_close_monthly = pd.concat(series_list, axis=1, join="inner", copy="false")
         assets_close_monthly = assets_close_monthly[self.first_date : self.last_date]
         return assets_close_monthly
 

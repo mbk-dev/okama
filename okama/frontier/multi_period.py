@@ -1201,10 +1201,11 @@ class EfficientFrontier(asset_list.AssetList):
         """
         if self._mdp_points.empty:
             target_cagrs = self._target_cagr_range_left
-            df = pd.DataFrame(dtype="float")
+            rows_list = []  # Collect all rows to concatenate once at the end
             for x in target_cagrs:
                 row = self.get_most_diversified_portfolio(target_return=x)
-                df = pd.concat([df, pd.DataFrame(row, index=[0])], ignore_index=True)
+                rows_list.append(row)
+            df = pd.DataFrame.from_records(rows_list)
             df = helpers.Frame.change_columns_order(df, ["Risk", "CAGR"])
             self._mdp_points = df
         return self._mdp_points
@@ -1275,14 +1276,15 @@ class EfficientFrontier(asset_list.AssetList):
             Rebalance(**args).return_ror_ts_ef,
             ror=self.assets_ror,
         )
-        random_portfolios = pd.DataFrame()
+        rows_list = []  # Collect all rows to create DataFrame once at the end
         for _, data in portfolios_ror.iterrows():
             risk_monthly = data.std()
             mean_return = data.mean()
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
             cagr = helpers.Frame.get_cagr(data)
             row = {"Risk": risk, "CAGR": cagr}
-            random_portfolios = pd.concat([random_portfolios, pd.DataFrame(row, index=[0])], ignore_index=True)
+            rows_list.append(row)
+        random_portfolios = pd.DataFrame.from_records(rows_list)
         return random_portfolios
 
     def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> Axes:

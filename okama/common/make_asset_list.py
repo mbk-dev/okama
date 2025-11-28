@@ -150,7 +150,7 @@ class ListMaker(ABC):
         asset_obj_list = Parallel(n_jobs=-1, backend="threading")(delayed(get_item)(s) for s in ls)
         return {obj.symbol: obj for obj in asset_obj_list}
 
-    def _make_list(self, first_date, last_date) -> dict:
+    def _make_list(self, first_date: Optional[str], last_date: Optional[str]) -> dict:
         """
         Make an asset list from a list of symbols.
         """
@@ -164,30 +164,31 @@ class ListMaker(ABC):
         last_dates: Dict[str, pd.Timestamp] = {}
         names: Dict[str, str] = {}
         currencies: Dict[str, str] = {}
-        df = pd.DataFrame()
         input_first_date = pd.to_datetime(first_date) if first_date else None
         input_last_date = pd.to_datetime(last_date) if last_date else None
-        for i, asset_item in enumerate(self.asset_obj_dict.values()):
+
+        # Collect all rate of return series first, then concatenate once (more efficient)
+        ror_series_list: List[pd.Series] = []
+        for asset_item in self.asset_obj_dict.values():
             # get asset own first and last dates
             asset_own_first_date = asset_item.first_date
             asset_own_last_date = asset_item.last_date
-            if i == 0:  # required to use pd.concat below (df should not be empty).
-                df = self._make_ror(asset_item, base_currency_ticker)
-            else:
-                new = self._make_ror(asset_item, base_currency_ticker)
-                df = pd.concat([df, new], axis=1, join="inner", copy="false")
+
+            ror_series = self._make_ror(asset_item, base_currency_ticker)
+            ror_series_list.append(ror_series)
+
             # get asset first and last dates after adjusting to the currency
-            asset_first_date = df.index[0].to_timestamp()
-            asset_last_date = df.index[-1].to_timestamp()
+            asset_first_date = ror_series.index[0].to_timestamp()
+            asset_last_date = ror_series.index[-1].to_timestamp()
+
             # check first and last dates
-            fd = [asset_first_date, input_first_date]
-            ld = [asset_last_date, input_last_date]
-            fd_max = max(x for x in fd if x is not None)
-            ld_min = min(x for x in ld if x is not None)
+            fd_max = max(x for x in [asset_first_date, input_first_date] if x is not None)
+            ld_min = min(x for x in [asset_last_date, input_last_date] if x is not None)
             if helpers.Date.get_difference_in_months(ld_min, fd_max).n < 2:
                 raise ShortPeriodLengthError(
-                    f"{asset_item.symbol} historical data period length is too short. " f"It must be at least 3 months."
+                    f"{asset_item.symbol} historical data period length is too short. It must be at least 3 months."
                 )
+
             # append data to dictionaries
             currencies[asset_item.symbol] = asset_item.currency
             names[asset_item.symbol] = asset_item.name
@@ -195,23 +196,31 @@ class ListMaker(ABC):
             last_dates[asset_item.symbol] = asset_last_date
             own_first_dates[asset_item.symbol] = asset_own_first_date
             own_last_dates[asset_item.symbol] = asset_own_last_date
+
+        # Concatenate all series at once (more efficient than repeated pd.concat in loop)
+        df = pd.concat(ror_series_list, axis=1, join="inner")
+
         first_dates[base_currency_ticker] = currency_first_date
         last_dates[base_currency_ticker] = currency_last_date
         own_last_dates[base_currency_ticker] = currency_last_date
         own_first_dates[base_currency_ticker] = currency_first_date
         currencies["asset list"] = base_currency_ticker
+
         # get first and last dates
         first_date_list = list(first_dates.values()) + [input_first_date]
         last_date_list = list(last_dates.values()) + [input_last_date]
         list_first_date = max(x for x in first_date_list if x is not None)
         list_last_date = min(x for x in last_date_list if x is not None)
-        # range of last and first dates not limeted by AssetList first_date & lastdate parameters
+
+        # range of last and first dates not limited by AssetList first_date & last_date parameters
         own_first_dates_sorted: list = sorted(own_first_dates.items(), key=lambda y: y[1])
         own_last_dates_sorted: list = sorted(own_last_dates.items(), key=lambda y: y[1])
+
         if isinstance(df, pd.Series):
             # required to convert Series to DataFrame for single asset list
             df = df.to_frame()
         df.columns.name = "Symbols"  # required for Plotly charts
+
         return dict(
             first_date=list_first_date,
             last_date=list_last_date,
@@ -244,7 +253,7 @@ class ListMaker(ABC):
         asset_mult = returns + 1.0
         currency_mult = asset_currency.ror + 1.0
         # join dataframes to have the same Time Series Index
-        df = pd.concat([asset_mult, currency_mult], axis=1, join="inner", copy="false")
+        df = pd.concat([asset_mult, currency_mult], axis=1, join="inner")
         currency_mult = df.iloc[:, -1]
         asset_mult = df.iloc[:, 0]
         x = asset_mult * currency_mult - 1.0
@@ -272,7 +281,7 @@ class ListMaker(ABC):
         Add inflation column to returns DataFrame.
         """
         if hasattr(self, "inflation"):
-            return pd.concat([self._assets_ror, self.inflation_ts], axis=1, join="inner", copy="false")
+            return pd.concat([self._assets_ror, self.inflation_ts], axis=1, join="inner")
         else:
             return self._assets_ror
 
