@@ -51,7 +51,7 @@ class ListMaker(ABC):
         inflation: bool = True,
     ):
         self._assets = list(dict.fromkeys(assets)) if assets else [settings.default_ticker]
-        self._currency = asset.Asset(symbol=f"{ccy}.FX")
+        self._currency = asset.Asset(symbol=f"{ccy}.FX", first_date=first_date, last_date=last_date)
         self.asset_obj_dict = ListMaker._get_asset_obj_dict(
             self._list_of_asset_like_objects,
             first_date=first_date,
@@ -75,15 +75,15 @@ class ListMaker(ABC):
             self.last_date = min(self.last_date, pd.to_datetime(last_date))
         if inflation:
             self.inflation: str = f"{ccy}.INFL"
-            self._inflation_instance = macro.Inflation(self.inflation, self.first_date, self.last_date)
+            self._inflation_instance = macro.Inflation(self.inflation, first_date, last_date)
             self.inflation_first_date: pd.Timestamp = self._inflation_instance.first_date
             self.inflation_last_date: pd.Timestamp = self._inflation_instance.last_date
             self.first_date = max(self.first_date, self.inflation_first_date)
             self.last_date = min(self.last_date, self.inflation_last_date)
             self.inflation_ts: pd.Series = self._inflation_instance.values_monthly.loc[self.first_date : self.last_date]
             # Add inflation to the date range dict
-            self.assets_first_dates.update({self.inflation: macro.Inflation(self.inflation).first_date})
-            self.assets_last_dates.update({self.inflation: macro.Inflation(self.inflation).last_date})
+            self.assets_first_dates.update({self.inflation: self.inflation_first_date})
+            self.assets_last_dates.update({self.inflation: self.inflation_last_date})
         self._assets_ror: pd.DataFrame = self._assets_ror[self.first_date : self.last_date]
         self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=2)
         self.pl = settings.PeriodLength(
@@ -241,7 +241,11 @@ class ListMaker(ABC):
         if asset_currency_name == base_currency_name:
             ror = list_asset.ror
         else:
-            asset_currency = asset.Asset(symbol=f"{asset_currency_name}{base_currency_name}.FX")
+            asset_currency = asset.Asset(
+                symbol=f"{asset_currency_name}{base_currency_name}.FX",
+                first_date=list_asset.first_date,
+                last_date=list_asset.last_date
+            )
             ror = self._adjust_ror_to_currency(returns=list_asset.ror, asset_currency=asset_currency)
         return ror
 
@@ -265,7 +269,7 @@ class ListMaker(ABC):
         Adjust monthly time series of dividends or close values to a base currency.
         """
         ccy_symbol = f"{asset_currency}{self.currency}.FX"
-        currency_rate = asset.Asset(ccy_symbol).close_monthly.to_frame()
+        currency_rate = asset.Asset(ccy_symbol, first_date=self.first_date, last_date=self.last_date).close_monthly.to_frame()
         merged = price.to_frame().join(currency_rate, how="left")
         if merged.isnull().values.any():
             # can happen if the first value is missing
