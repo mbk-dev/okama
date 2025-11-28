@@ -12,29 +12,7 @@ os.environ["PYTHONWARNINGS"] = "ignore::FutureWarning"
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
-ls_m = ["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"]
-curr_rub = "RUB"
+a = ok.Inflation('RUB.INFL' ,first_date="2000-01-01")
 
-# x = ok.EfficientFrontier(
-#     assets=ls_m,
-#     first_date="2005-01",
-#     last_date="2020-11",
-#     ccy=curr_rub,
-#     # rebalancing_strategy=ok.Rebalance(period="year"),  # set rebalancing period to one year
-#     n_points=20,
-#     verbose=False,
-# )
-
-x = ok.EfficientFrontier(
-    assets=ls_m,
-    first_date="2005-01",
-    last_date="2020-11",
-    ccy=curr_rub,
-    n_points=40,
-    # rebalancing_strategy=ok.Rebalance(period="year"),  # set rebalancing period to one year
-)
-
-x.plot_transition_map(x_axe="risk")
-
-plt.show()
+print(a)
 

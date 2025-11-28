@@ -1291,14 +1291,14 @@ class Portfolio(make_asset_list.ListMaker):
         8       Max drawdown  14 years, 3 months         -0.266915        NaN
         9  Max drawdown date  14 years, 3 months           2009-02        NaN
         """
-        description = pd.DataFrame()
+        rows_list = []
         dt0 = self.last_date
         df = self._add_inflation()
         # YTD return
         ytd_return = self.get_cumulative_return(period="YTD")
         row = ytd_return.to_dict()
         row.update(period="YTD", property="compound return")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
         # CAGR for a list of periods
         if self.pl.years >= 1:
             for i in years:
@@ -1308,14 +1308,14 @@ class Portfolio(make_asset_list.ListMaker):
                 else:
                     row = {x: None for x in df.columns} if hasattr(self, "inflation") else {self.symbol: None}
                 row.update(period=f"{i} years", property="CAGR")
-                description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+                rows_list.append(row)
             # CAGR for full period
             row = self.get_cagr(period=None).to_dict()
             row.update(
                 period=self._pl_txt,
                 property="CAGR",
             )
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            rows_list.append(row)
             # Mean rate of return (arithmetic mean)
             value = self.mean_return_annual
             row = {self.symbol: value}
@@ -1323,7 +1323,7 @@ class Portfolio(make_asset_list.ListMaker):
                 period=self._pl_txt,
                 property="Annualized mean return",
             )
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            rows_list.append(row)
             # Dividend Yield
             value = self.dividend_yield.iloc[-1]
             row = {self.symbol: value}
@@ -1331,11 +1331,11 @@ class Portfolio(make_asset_list.ListMaker):
                 period="LTM",
                 property="Dividend yield",
             )
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            rows_list.append(row)
         # risk (standard deviation)
         row = {self.symbol: self.risk_annual.iloc[-1]}
         row.update(period=self._pl_txt, property="Risk")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
         # CVAR
         if self.pl.years >= 1:
             row = {self.symbol: self.get_cvar_historic(level=1)}
@@ -1343,21 +1343,23 @@ class Portfolio(make_asset_list.ListMaker):
                 period=self._pl_txt,
                 property="CVAR (α=1)",
             )
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            rows_list.append(row)
         # max drawdowns
         row = {self.symbol: self.drawdowns.min()}
         row.update(
             period=self._pl_txt,
             property="Max drawdown",
         )
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
         # max drawdowns dates
         row = {self.symbol: self.drawdowns.idxmin()}
         row.update(
             period=self._pl_txt,
             property="Max drawdown date",
         )
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
+        # Create DataFrame from list of rows
+        description = pd.DataFrame(rows_list)
         if hasattr(self, "inflation"):
             description.rename(columns={self.inflation: "inflation"}, inplace=True)
         description = helpers.Frame.change_columns_order(description, ["property", "period", self.symbol])

@@ -744,14 +744,14 @@ class AssetList(make_asset_list.ListMaker):
         6                    Risk  17 years, 10 months  0.037796  0.158301       NaN
         7                    CVAR  17 years, 10 months  0.023107  0.399398       NaN
         """
-        description = pd.DataFrame()
+        rows_list = []
         dt0 = self.last_date
         df = self._add_inflation()
         # YTD return
         ytd_return = self.get_cumulative_return(period="YTD")
         row = ytd_return.to_dict()
         row.update(period="YTD", property="Compound return")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
         # CAGR for a list of periods
         if self.pl.years >= 1:
             for i in years:
@@ -761,39 +761,39 @@ class AssetList(make_asset_list.ListMaker):
                 else:
                     row = {x: None for x in df.columns}
                 row.update(period=f"{i} years", property="CAGR")
-                description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+                rows_list.append(row)
             # CAGR for full period
             row = self.get_cagr(period=None).to_dict()
             row.update(period=self._pl_txt, property="CAGR")
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            rows_list.append(row)
             # Mean rate of return (arithmetic mean)
             row = self.mean_return.to_dict()
             row.update(
                 period=self._pl_txt,
                 property="Annualized mean return",
             )
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            rows_list.append(row)
             # Dividend Yield
             row = self._assets_dividend_yield.iloc[-1].to_dict()
             row.update(period="LTM", property="Dividend yield")
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            rows_list.append(row)
         # risk for full period
         row = self.risk_annual.iloc[-1, :].to_dict()
         row.update(period=self._pl_txt, property="Risk")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
         # CVAR
         if self.pl.years >= 1:
             row = self.get_cvar_historic().to_dict()
             row.update(period=self._pl_txt, property="CVAR")
-            description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+            rows_list.append(row)
         # max drawdowns
         row = self.drawdowns.min().to_dict()
         row.update(period=self._pl_txt, property="Max drawdowns")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
         # max drawdowns dates
         row = self.drawdowns.idxmin().to_dict()
         row.update(period=self._pl_txt, property="Max drawdowns dates")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
         # inception dates
         row = {}
         for ti in self.symbols:
@@ -803,7 +803,7 @@ class AssetList(make_asset_list.ListMaker):
         row.update(period=None, property="Inception date")
         if hasattr(self, "inflation"):
             row.update({self.inflation: self.inflation_first_date.strftime("%Y-%m")})
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
         # last asset date
         row = {}
         for ti in self.symbols:
@@ -813,11 +813,13 @@ class AssetList(make_asset_list.ListMaker):
         row.update(period=None, property="Last asset date")
         if hasattr(self, "inflation"):
             row.update({self.inflation: self.inflation_last_date.strftime("%Y-%m")})
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
         # last data date
         row = {x: self.last_date.strftime("%Y-%m") for x in df.columns}
         row.update(period=None, property="Common last data date")
-        description = pd.concat([description, pd.DataFrame(row, index=[0])], ignore_index=True)
+        rows_list.append(row)
+        # Create DataFrame from list of rows
+        description = pd.DataFrame(rows_list)
         # rename columns
         if hasattr(self, "inflation"):
             description.rename(columns={self.inflation: "inflation"}, inplace=True)

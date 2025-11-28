@@ -225,9 +225,9 @@ class Frame:
         Annual Rate of Returns time series from monthly data.
         """
         if return_type.lower() == "cagr":
-            ts = ror_monthly.resample("A").apply(lambda x: np.prod(x + 1.0) - 1)
+            ts = ror_monthly.resample("Y").apply(lambda x: np.prod(x + 1.0) - 1)
         elif return_type.lower() == "arithmetic_mean":
-            ts = ror_monthly.resample("A").sum()
+            ts = ror_monthly.resample("Y").sum()
         else:
             raise ValueError("Return type must be either cagr or arithmetic_mean.")
         if isinstance(ts, pd.Series):
