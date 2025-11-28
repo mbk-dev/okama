@@ -39,8 +39,8 @@ class QueryData:
     @staticmethod
     def get_macro_ts(
         symbol: str,
-        first_date: Union[str, pd.Timestamp, None] = None,
-        last_date: Union[str, pd.Timestamp, None] = None,
+        first_date: Union[str, None] = None,
+        last_date: Union[str, None] = None,
         period: str = "M",
     ) -> pd.Series:
         """

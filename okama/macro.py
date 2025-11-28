@@ -59,16 +59,29 @@ class MacroABC(ABC):
     def _check_namespace(self):
         pass
 
-    def _set_first_last_dates(self):
-        self.first_date: pd.Timestamp = self.values_monthly.index[0].to_timestamp()
-        self.last_date: pd.Timestamp = self.values_monthly.index[-1].to_timestamp()
+    def _set_first_last_dates(self) -> None:
+        """
+        Set first_date and last_date attributes from values_monthly index.
+        
+        Converts Period index to Timestamp using 'start' parameter to ensure
+        the timestamp represents the beginning of the month.
+        """
+        self.first_date: pd.Timestamp = self.values_monthly.index[0].to_timestamp(how='start')
+        self.last_date: pd.Timestamp = self.values_monthly.index[-1].to_timestamp(how='start')
         self.pl = settings.PeriodLength(
             self.values_monthly.shape[0] // settings._MONTHS_PER_YEAR,
             self.values_monthly.shape[0] % settings._MONTHS_PER_YEAR,
         )
 
     def _get_values_monthly(self) -> pd.Series:
-        return data_queries.QueryData.get_macro_ts(self.symbol, self._first_date, self._last_date, period="M")
+        # Convert dates to text format without time
+        first_date_str = None if self._first_date is None else (
+            self._first_date.strftime("%Y-%m-%d") if isinstance(self._first_date, pd.Timestamp) else self._first_date
+        )
+        last_date_str = None if self._last_date is None else (
+            self._last_date.strftime("%Y-%m-%d") if isinstance(self._last_date, pd.Timestamp) else self._last_date
+        )
+        return data_queries.QueryData.get_macro_ts(self.symbol, first_date_str, last_date_str, period="M")
 
     def _get_symbol_data(self, symbol) -> None:
         x = data_queries.QueryData.get_symbol_info(symbol)

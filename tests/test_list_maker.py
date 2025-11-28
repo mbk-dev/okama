@@ -135,8 +135,8 @@ def _inflation_env_for_listmaker(mocker):
     class _FakeInflation:
         def __init__(self, symbol: str, first_date=None, last_date=None):
             self.symbol = symbol
-            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp()
-            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp()
+            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp(how='start')
+            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp(how='start')
             self.values_monthly = infl_monthly.to_period("M")
 
     mocker.patch("okama.common.make_asset_list.macro.Inflation", side_effect=_FakeInflation)

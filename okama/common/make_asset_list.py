@@ -178,8 +178,8 @@ class ListMaker(ABC):
             ror_series_list.append(ror_series)
 
             # get asset first and last dates after adjusting to the currency
-            asset_first_date = ror_series.index[0].to_timestamp()
-            asset_last_date = ror_series.index[-1].to_timestamp()
+            asset_first_date = ror_series.index[0].to_timestamp(how='start')
+            asset_last_date = ror_series.index[-1].to_timestamp(how='start')
 
             # check first and last dates
             fd_max = max(x for x in [asset_first_date, input_first_date] if x is not None)
@@ -366,7 +366,7 @@ class ListMaker(ABC):
                     continue
                 # Get dividend yield time series
                 div_yield = pd.Series(dtype=float)
-                div_monthly.index = div_monthly.index.to_timestamp()
+                div_monthly.index = div_monthly.index.to_timestamp(how='start')
                 for date in price_monthly_ts.index.to_timestamp(how="End"):
                     date0 = date - pd.DateOffset(months=12)  # last 12 months
                     ltm_div = div_monthly[date0:date].sum()

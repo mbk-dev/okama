@@ -213,8 +213,8 @@ def test_real_mean_return_with_mocked_inflation(mocker):
     class _FakeInflation:
         def __init__(self, symbol: str, first_date=None, last_date=None):
             self.symbol = symbol
-            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp()
-            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp()
+            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp(how='start')
+            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp(how='start')
             # Use PeriodIndex to align in _add_inflation (concat inner)
             self.values_monthly = infl_monthly.to_period("M")
 
@@ -244,8 +244,8 @@ def test_dividends_and_yield_pipeline(mocker):
             self.name = name or f"{self.ticker} name"
             self.currency = currency
             self.ror = ror
-            self.first_date = ror.index[0].to_timestamp()
-            self.last_date = ror.index[-1].to_timestamp()
+            self.first_date = ror.index[0].to_timestamp(how='start')
+            self.last_date = ror.index[-1].to_timestamp(how='start')
 
         @property
         def dividends(self):

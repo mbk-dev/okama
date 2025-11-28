@@ -882,6 +882,7 @@ class MonteCarlo:
         plt.tight_layout()
         plt.title(title)
         plt.show()
+        # TODO: change print by logger
         print(f"VaR  {alpha:.0%}: theor={var_theor:.6f}, emp={var_emp:.6f}, delta(emp-theor)={var_emp - var_theor:.6f}")
         print(f"CVAR {alpha:.0%}: theor={cvar_theor:.6f}, emp={cvar_emp:.6f}, delta(emp-theor)={cvar_emp - cvar_theor:.6f}")
         print(f'95% CI empiric VaR (bootstrap): [{var_ci[0]:.6f}, {var_ci[1]:.6f}]')

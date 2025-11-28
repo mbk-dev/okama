@@ -47,9 +47,14 @@ class Asset:
         self._set_first_last_dates()
 
     def _set_first_last_dates(self) -> None:
-        """Set first_date, last_date, period_length and pl attributes based on ror data."""
-        self.first_date: pd.Timestamp = self.ror.index[0].to_timestamp()
-        self.last_date: pd.Timestamp = self.ror.index[-1].to_timestamp()
+        """
+        Set first_date, last_date, period_length and pl attributes based on ror data.
+        
+        Converts Period index to Timestamp using 'start' parameter to ensure
+        the timestamp represents the beginning of the month.
+        """
+        self.first_date: pd.Timestamp = self.ror.index[0].to_timestamp(how='start')
+        self.last_date: pd.Timestamp = self.ror.index[-1].to_timestamp(how='start')
         self.period_length: float = round((self.last_date - self.first_date) / np.timedelta64(365, "D"), ndigits=1)
         self.pl = settings.PeriodLength(
             self.ror.shape[0] // settings._MONTHS_PER_YEAR,
