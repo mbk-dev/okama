@@ -119,6 +119,7 @@ class EfficientFrontier(asset_list.AssetList):
         self.full_frontier = full_frontier
         self._ef_points = pd.DataFrame(dtype=float)
         self._mdp_points = pd.DataFrame(dtype=float)
+        self._ror_cache: Dict[tuple, pd.Series] = {}  # Cache for portfolio return time series by weights
 
     def __repr__(self):
         dic = {
@@ -213,6 +214,34 @@ class EfficientFrontier(asset_list.AssetList):
     def _clear_cache(self):
         self._ef_points = pd.DataFrame(dtype=float)  # renew EF points DataFrame
         self._mdp_points = pd.DataFrame(dtype=float)  # renew MDP points DataFrame
+        self._ror_cache = {}  # clear portfolio return time series cache
+
+    def _get_portfolio_ror_ts(self, weights: np.ndarray) -> pd.Series:
+        """
+        Get portfolio return time series with caching based on weights.
+
+        This method caches the results of portfolio return calculations to avoid
+        redundant computations during optimization when the same weights are evaluated
+        multiple times (e.g., in objective function and constraints).
+
+        Parameters
+        ----------
+        weights : np.ndarray
+            Portfolio weights for each asset.
+
+        Returns
+        -------
+        pd.Series
+            Monthly rate of return time series for the rebalanced portfolio.
+        """
+        # Round weights to avoid floating point precision issues in cache keys
+        weights_key = tuple(np.round(weights, decimals=10))
+        
+        if weights_key not in self._ror_cache:
+            rebalance = Rebalance(period=self.rebalancing_strategy.period)
+            self._ror_cache[weights_key] = rebalance.return_ror_ts_ef(weights, self.assets_ror)
+        
+        return self._ror_cache[weights_key]
 
     @property
     def rebalancing_strategy(self) -> Rebalance:
@@ -341,10 +370,6 @@ class EfficientFrontier(asset_list.AssetList):
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
-
         def objective_function(w):
             # Diversification Ratio
             assets_risk = ror.std()
@@ -353,7 +378,7 @@ class EfficientFrontier(asset_list.AssetList):
             weights = np.asarray(w)
             assets_sigma_weighted_sum = weights.T @ assets_annualized_risk
 
-            portfolio_ror = Rebalance(**args).return_ror_ts_ef(w, ror)
+            portfolio_ror = self._get_portfolio_ror_ts(w)
             portfolio_mean_return_monthly = portfolio_ror.mean()
             portfolio_risk_monthly = portfolio_ror.std()
 
@@ -428,17 +453,12 @@ class EfficientFrontier(asset_list.AssetList):
         >>> ef.get_tangency_portfolio(rate_of_return="mean_return", rf_return=0.03)
         {'Weights': array([2.95364739e-01, 1.08420217e-17, 7.04635261e-01]), 'Rate_of_return': 0.10654206521088283, 'Risk': 0.048279725208422115}
         """
-        ror = self.assets_ror
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
-
         def of_arithmetic_mean(w):
             # Sharpe ratio with arithmetic mean
-            portfolio_ror = Rebalance(**args).return_ror_ts_ef(w, ror)
+            portfolio_ror = self._get_portfolio_ror_ts(w)
             mean_return_monthly = portfolio_ror.mean()
             risk_monthly = portfolio_ror.std()
             of_arithmetic_mean.rate_of_return = helpers.Float.annualize_return(mean_return_monthly)
@@ -447,7 +467,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         def of_geometric_mean(w):
             # Sharpe ratio with CAGR
-            portfolio_ror = Rebalance(**args).return_ror_ts_ef(w, ror)
+            portfolio_ror = self._get_portfolio_ror_ts(w)
             mean_return_monthly = portfolio_ror.mean()
             of_geometric_mean.rate_of_return = helpers.Frame.get_cagr(portfolio_ror)
             # Risk
@@ -501,16 +521,12 @@ class EfficientFrontier(asset_list.AssetList):
         >>> frontier.gmv_monthly_weights
         array([0.0578446, 0.9421554])
         """
-        ror = self.assets_ror
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
         # Set the objective function
         def objective_function(w):
-            risk = okama.common.helpers.rebalancing.Rebalance(**args).return_ror_ts_ef(w, ror).std()
+            risk = self._get_portfolio_ror_ts(w).std()
             return risk
 
         # construct the constraints
@@ -546,16 +562,12 @@ class EfficientFrontier(asset_list.AssetList):
         >>> frontier.gmv_monthly_weights
         array([0.05373824, 0.94626176])
         """
-        ror = self.assets_ror
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
         # Set the objective function
         def objective_function(w):
-            ts = Rebalance(**args).return_ror_ts_ef(w, ror)
+            ts = self._get_portfolio_ror_ts(w)
             mean_return = ts.mean()
             risk = ts.std()
             return helpers.Float.annualize_risk(risk=risk, mean_return=mean_return)
@@ -578,10 +590,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
         """
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
-        ts = Rebalance(**args).return_ror_ts_ef(self.gmv_monthly_weights, self.assets_ror)
+        ts = self._get_portfolio_ror_ts(self.gmv_monthly_weights)
         return ts.std(), ts.mean()
 
     @property
@@ -606,10 +615,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> frontier.gmv_annual_values
         (0.03695845106087943, 0.04418318557516887)
         """
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
-        returns = Rebalance(**args).return_ror_ts_ef(self.gmv_annual_weights, self.assets_ror)
+        returns = self._get_portfolio_ror_ts(self.gmv_annual_weights)
         return (
             helpers.Float.annualize_risk(returns.std(), returns.mean()),
             (returns + 1.0).prod() ** (settings._MONTHS_PER_YEAR / returns.shape[0]) - 1.0,
@@ -639,17 +645,13 @@ class EfficientFrontier(asset_list.AssetList):
         >>> frontier.global_max_return_portfolio
         {'Weights': array([1., 0.]), 'CAGR': 0.10797159166196812, 'Risk': 0.1583011735798155, 'Risk_monthly': 0.0410282468594492}
         """
-        ror = self.assets_ror
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
         n = self.assets_ror.shape[1]  # Number of assets
         init_guess = np.repeat(1 / n, n)
 
         # Set the objective function
         def objective_function(w):
             # Accumulated return for rebalanced portfolio time series
-            objective_function.returns = Rebalance(**args).return_ror_ts_ef(w, ror)
+            objective_function.returns = self._get_portfolio_ror_ts(w)
             accumulated_return = (objective_function.returns + 1.0).prod() - 1.0
             return -accumulated_return
 
@@ -678,11 +680,8 @@ class EfficientFrontier(asset_list.AssetList):
         }
         return point
 
-    def _get_cagr(self, weights):
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
-        ts = Rebalance(**args).return_ror_ts_ef(weights, self.assets_ror)
+    def _get_cagr(self, weights: np.ndarray) -> float:
+        ts = self._get_portfolio_ror_ts(weights)
         acc_return = (ts + 1.0).prod() - 1.0
         return (1.0 + acc_return) ** (settings._MONTHS_PER_YEAR / ts.shape[0]) - 1.0
 
@@ -730,17 +729,13 @@ class EfficientFrontier(asset_list.AssetList):
 
         max_ratio_data = self._max_ratio_asset_right_to_max_cagr
 
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
-
         if max_ratio_data is not None:
             init_guess = np.repeat(0, n)  # clear weights
             init_guess[self._min_ratio_asset["list_position"]] = 1.0
 
         def objective_function(w):
             # annual risk
-            ts = Rebalance(**args).return_ror_ts_ef(w, self.assets_ror)
+            ts = self._get_portfolio_ror_ts(w)
             risk_monthly = ts.std()
             objective_function.mean_return = ts.mean()
             return helpers.Float.annualize_risk(risk_monthly, objective_function.mean_return)
@@ -798,13 +793,9 @@ class EfficientFrontier(asset_list.AssetList):
         """
         n = self.assets_ror.shape[1]  # number of assets
 
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
-
         def objective_function(w):
             # annual risk
-            ts = Rebalance(**args).return_ror_ts_ef(w, self.assets_ror)
+            ts = self._get_portfolio_ror_ts(w)
             risk_monthly = ts.std()
             objective_function.mean_return = ts.mean()
             result = -helpers.Float.annualize_risk(risk_monthly, objective_function.mean_return)
@@ -1266,26 +1257,19 @@ class EfficientFrontier(asset_list.AssetList):
         >>> ax.legend()
         >>> plt.show()
         """
-        weights_df = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
-
-        args = dict(
-            period=self.rebalancing_strategy.period,
-        )
-        # Portfolio risk and cagr for each set of weights
-        portfolios_ror = weights_df.aggregate(
-            Rebalance(**args).return_ror_ts_ef,
-            ror=self.assets_ror,
-        )
+        weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
+        # Portfolio risk and cagr for each set of weights using cache
         rows_list = []  # Collect all rows to create DataFrame once at the end
-        for _, data in portfolios_ror.iterrows():
-            risk_monthly = data.std()
-            mean_return = data.mean()
+        for weights in weights_series:
+            # Use cached portfolio return time series calculation
+            portfolio_ror = self._get_portfolio_ror_ts(weights)
+            risk_monthly = portfolio_ror.std()
+            mean_return = portfolio_ror.mean()
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
-            cagr = helpers.Frame.get_cagr(data)
+            cagr = helpers.Frame.get_cagr(portfolio_ror)
             row = {"Risk": risk, "CAGR": cagr}
             rows_list.append(row)
-        random_portfolios = pd.DataFrame.from_records(rows_list)
-        return random_portfolios
+        return pd.DataFrame.from_records(rows_list)
 
     def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> Axes:
         """
