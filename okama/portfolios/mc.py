@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional
+import logging
 
 import pandas as pd
 import numpy as np
@@ -12,6 +13,9 @@ from okama import settings
 from okama.common import validators
 from okama.portfolios import dcf as dcf
 from okama.common.helpers import tails, helpers
+
+# Module-level logger
+logger = logging.getLogger(__name__)
 
 
 class MonteCarlo:
@@ -739,8 +743,6 @@ class MonteCarlo:
             ks_results.append(helpers.Frame.kstest_series(self.ror, distr=d))
         return pd.DataFrame(ks_results, index=settings.distributions)
 
-
-
     # Plots
     def plot_qq(
             self,
@@ -882,11 +884,21 @@ class MonteCarlo:
         plt.tight_layout()
         plt.title(title)
         plt.show()
-        # TODO: change print by logger
-        print(f"VaR  {alpha:.0%}: theor={var_theor:.6f}, emp={var_emp:.6f}, delta(emp-theor)={var_emp - var_theor:.6f}")
-        print(f"CVAR {alpha:.0%}: theor={cvar_theor:.6f}, emp={cvar_emp:.6f}, delta(emp-theor)={cvar_emp - cvar_theor:.6f}")
-        print(f'95% CI empiric VaR (bootstrap): [{var_ci[0]:.6f}, {var_ci[1]:.6f}]')
-        print(f'95% CI empiric CVaR (bootstrap): [{cvar_ci[0]:.6f}, {cvar_ci[1]:.6f}]')
+        # Log metrics using f-strings
+        logger.info(
+            f"VaR  {alpha:.0%}: theor={var_theor:.6f}, emp={var_emp:.6f}, delta(emp-theor)={(var_emp - var_theor):.6f}"
+        )
+        logger.info(
+            f"CVAR {alpha:.0%}: theor={cvar_theor:.6f}, emp={cvar_emp:.6f}, delta(emp-theor)={(cvar_emp - cvar_theor):.6f}"
+        )
+        # Log bootstrap confidence intervals only if they were computed
+        if bootstrap_size_var:
+            logger.info(
+                f"95% CI empiric VaR (bootstrap): [{var_ci[0]:.6f}, {var_ci[1]:.6f}]"
+            )
+            logger.info(
+                f"95% CI empiric CVaR (bootstrap): [{cvar_ci[0]:.6f}, {cvar_ci[1]:.6f}]"
+            )
 
     def plot_hist_fit(self, bins: int = None) -> None:
         """
