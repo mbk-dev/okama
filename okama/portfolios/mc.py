@@ -194,9 +194,9 @@ class MonteCarlo:
         self.parent._monte_carlo_wealth_fv = pd.DataFrame(dtype=float)
         self.parent._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
 
-    def model_risk(self, var_level: int = 5) -> dict:
+    def backtesting_error(self, var_level: int = 5) -> dict:
         """
-        Calculate model risk as the difference between empirical and theoretical
+        Calculate Backtesting Error as the difference between empirical and theoretical
         risk measures (VaR, CVaR) and arithmetic mean.
 
         Parameters

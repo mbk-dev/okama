@@ -107,7 +107,7 @@ def test_kstest_for_all_distributions(mc_students):
 
 
 def test_model_risk_structure(mc_students):
-    res = mc_students.model_risk(var_level=5)
+    res = mc_students.backtesting_error(var_level=5)
     assert set(res.keys()) == {"delta_arithmetic_mean", "delta_var", "delta_cvar"}
     for k in res:
         assert isinstance(res[k], float)
