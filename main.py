@@ -12,12 +12,9 @@ os.environ["PYTHONWARNINGS"] = "ignore::FutureWarning"
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
-ls = ["SPY.US", "BND.US", "GC.COMM", "EUR.FX"]
-currency = "EUR"  # base currency
+al = ["SP500TR.INDX", "VNQ.US", "GC.COMM", "USDEUR.FX"]
 
-# x = ok.Inflation("EUR.INFL", first_date="2019-01-01", last_date="2020-01-01")
+x = ok.AssetList(al, last_date="2025-11")  # first_date and last_date limits the Rate of Return time series
 
-x = ok.AssetList(first_date="2019-01-01", last_date="2020-01-01")  # first_date and last_date limits the Rate of Return time series
-
-print(x)
+print(x.kstest(distr="lognorm"))
 

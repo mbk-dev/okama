@@ -439,7 +439,11 @@ class Frame:
         if distr == "norm":
             kstest = scipy.stats.kstest(ror, distr, args=scipy.stats.norm.fit(ror))
         elif distr == "lognorm":
-            kstest = scipy.stats.kstest(ror, distr, args=scipy.stats.lognorm.fit(ror))
+            # For lognormal distribution we must use strictly positive data.
+            # Apply the test to gross returns (growth factors): R = 1 + r, and fit with floc=0.
+            gross = ror + 1.0
+            shape, loc, scale = scipy.stats.lognorm.fit(gross, floc=0)
+            kstest = scipy.stats.kstest(gross, distr, args=(shape, loc, scale))
         elif distr == "t":
             kstest = scipy.stats.kstest(ror, distr, args=scipy.stats.t.fit(ror))
         else:
