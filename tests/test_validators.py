@@ -148,6 +148,15 @@ def test_validate_distribution_parameters_t_wrong_len():
     assert "T-distribution" in str(ex.value)
 
 
+def test_validate_distribution_parameters_t_df_too_small():
+    # df <= 2 should raise ValueError
+    with pytest.raises(ValueError, match="Degrees of freedom \(df\) for Student's t-distribution must be > 2"):
+        validators.validate_distribution_parameters("t", (2, 0, 1))
+
+    with pytest.raises(ValueError, match="Degrees of freedom \(df\) for Student's t-distribution must be > 2"):
+        validators.validate_distribution_parameters("t", (1.5, 0, 1))
+
+
 def test_validate_distribution_parameters_unknown_distribution():
     with pytest.raises(ValueError) as ex:
         validators.validate_distribution_parameters("gamma", (1, 2, 3))

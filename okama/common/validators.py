@@ -121,5 +121,7 @@ def validate_distribution_parameters(distr: str, param: tuple) -> None:
         case "t":
             if len(param) != 3:
                 raise ValueError("The parameters for Student's T-distribution must be of length 3 (df, loc, scale).")
+            if param[0] is not None and param[0] <= 2:
+                raise ValueError("Degrees of freedom (df) for Student's t-distribution must be > 2.")
         case _:
             raise ValueError("Unknown distribution.")
