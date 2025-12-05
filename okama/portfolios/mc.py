@@ -99,11 +99,13 @@ class MonteCarlo:
             distribution type, parameters (raw and processed), forecast period, and
             number of scenarios.
         """
+        # Limit precision of resolved distribution parameters to two decimals for representation purposes
+        resolved_params = tuple(round(p, 2) for p in self.get_parameters_for_distribution())
         dic = {
             "Portfolio symbol": self.parent.parent.symbol,
             "Monte Carlo distribution": self.distribution,
             "Distribution parameters": self.distribution_parameters,
-            "Distribution parameters after resolving": self.get_parameters_for_distribution(),
+            "Distribution parameters after resolving": resolved_params,
             "Monte Carlo period": self.period,
             "Monte Carlo number": self.number,
         }
