@@ -814,7 +814,7 @@ class MonteCarlo:
             distribution = scipy.stats.t
             x10_theor = scipy.stats.t.ppf(p_zoom, df=parameters[0], loc=parameters[1], scale=parameters[2])
             x001_theor = scipy.stats.t.ppf(0.001, df=parameters[0], loc=parameters[1], scale=parameters[2])
-            title = f"QQ-plot: Student's t v={parameters[0]:.3f}, {parameters[1]=:.3f}, {parameters[2]=:.3f}"
+            title = f"QQ-plot: Student's t df={parameters[0]:.3f}, loc={parameters[1]:.3f}, scale={parameters[2]:.3f}"
         else:
             raise ValueError('distr should be "norm" (default), "lognorm" or "t".')
         var_theor = tails.var_theoretical(distr=distr, alpha=alpha, args=parameters)
