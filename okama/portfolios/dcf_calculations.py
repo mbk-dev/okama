@@ -60,13 +60,15 @@ def get_wealth_indexes_fv_with_cashflow(
     periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
     if hasattr(cashflow_parameters, "indexation") and cashflow_parameters.frequency != "none":
         indexation_per_period = (1 + cashflow_parameters.indexation) ** (1 / periods_per_year) - 1
-    if cashflow_parameters.frequency == "month" or cashflow_parameters.NAME == "time_series":
+    if cashflow_parameters.frequency == "month" or cashflow_parameters.frequency == "none":
     # Fast Calculation
         s = pd.Series(dtype=float, name=portfolio_symbol)
         for n, row in enumerate(ror.itertuples()):
             date = row[0]
             r = row[portfolio_position + 1]
-            if cashflow_parameters.NAME == "fixed_amount":
+            if cashflow_parameters.frequency == "none":
+                cashflow = 0
+            elif cashflow_parameters.NAME == "fixed_amount":
                 cashflow = amount * (1 + indexation_per_period) ** n
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
@@ -137,10 +139,6 @@ def get_wealth_indexes_fv_with_cashflow(
             wealth_chunks.append(period_wealth_index)
         wealth_df = pd.concat(wealth_chunks, sort=False) if wealth_chunks else pd.DataFrame(dtype=float, columns=[portfolio_symbol])
         s = wealth_df.squeeze()
-    elif cashflow_parameters.frequency == "none":
-        s = helpers.Frame.get_wealth_indexes(
-            ror=ror.iloc[:, portfolio_position], initial_amount=period_initial_amount_cached
-        )
     first_date = s.index[0]
     first_wealth_index_date = first_date - 1  # set first date to one month earlie
     s.loc[first_wealth_index_date] = period_initial_amount_cached
@@ -203,13 +201,15 @@ def get_cash_flow_fv(
     periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
     if hasattr(cashflow_parameters, "indexation") and cashflow_parameters.frequency != "none":
         indexation_per_period = (1 + cashflow_parameters.indexation) ** (1 / periods_per_year) - 1
-    if cashflow_parameters.frequency == "month" or cashflow_parameters.NAME == "time_series":
+    if cashflow_parameters.frequency == "month" or cashflow_parameters.frequency == "none":
         # Fast Calculation
         for n, row in enumerate(ror.itertuples()):
             date = row[0]
             r = row[portfolio_position + 1]
             # Calculate regular cash flow
-            if cashflow_parameters.NAME == "fixed_amount":
+            if cashflow_parameters.frequency == "none":
+                cashflow = 0
+            elif cashflow_parameters.NAME == "fixed_amount":
                 cashflow = amount * (1 + indexation_per_period) ** n
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
@@ -282,8 +282,6 @@ def get_cash_flow_fv(
             cashflow_ts_local.iloc[-1] += cashflow_value
             cashflow_chunks.append(cashflow_ts_local)
         cs_fv = pd.concat(cashflow_chunks, sort=False) if cashflow_chunks else cs_fv
-    elif cashflow_parameters.frequency == "none":
-        cs_fv = pd.Series([0] * len(ror.index), index=ror.index)  # all zeroes
     return cs_fv
 
 

@@ -62,7 +62,7 @@ class PortfolioDCF:
         self._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
         self._cash_flow_fv = pd.Series(dtype=float, name="cash_flow_fv")
         self.mc = mc.MonteCarlo(self)
-        self._cashflow_parameters: Optional[cf.CashFlow] = None
+        self._cashflow_parameters: Optional[cf.CashFlow] = cf.IndexationStrategy(parent=parent)
 
     def __repr__(self):
         dic = {
@@ -485,18 +485,27 @@ class PortfolioDCF:
 
     def monte_carlo_wealth(
             self,
-            discounting: Literal["fv", "pv"],
+            discounting: Literal["fv", "pv"] = "fv",
             include_negative_values: bool = True
     ) -> pd.DataFrame:
         """
-        Portfolio not discounted random wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
+        Calculate portfolio random wealth indexes with cash flows (withdrawals/contributions) using Monte Carlo simulation.
 
-        Monte Carlo simulation generates n random monthly time series (not discounted).
+        Monte Carlo simulation generates n random monthly time series.
         Each wealth index is calculated with rate of return time series of a given distribution.
 
         First date of forecasted returns is portfolio last_date.
         First value for the forecasted wealth indexes is the last historical portfolio index value. It is useful
         for a chart with historical wealth index and forecasted values.
+
+        Parameters
+        ----------
+        discounting : {'fv', 'pv'}, default 'fv'
+            'fv' - calculate Future Value (not discounted) wealth indexes.
+            'pv' - calculate Present Value (discounted) wealth indexes.
+        include_negative_values : bool, default True
+            If True, negative values in the wealth index are preserved.
+            If False, negative values are replaced with 0.
 
         Returns
         -------
@@ -514,7 +523,7 @@ class PortfolioDCF:
         >>> ind.amount = -500  # set withdrawal size
         >>> ind.frequency = "year"  # set withdrawal frequency
         >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
-        >>> pf.dcf.monte_carlo_wealth_fv.plot()
+        >>> pf.dcf.monte_carlo_wealth(discounting="fv").plot()
         >>> plt.legend("")  # don't show legend for each line
         >>> plt.show()
         """
@@ -652,13 +661,13 @@ class PortfolioDCF:
         """
         # TODO: return axe
         if backtest:
-            self.plot_mc_with_backtest(figsize)
+            self._plot_mc_with_backtest(figsize)
         else:
             s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
             s2.plot(legend=None)
         self.cashflow_parameters._clear_cf_cache()
 
-    def plot_mc_with_backtest(self, figsize):
+    def _plot_mc_with_backtest(self, figsize):
         if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
         backup_obj = self.cashflow_parameters
@@ -671,8 +680,9 @@ class PortfolioDCF:
                 # calculate the cash flow size after backtesting period
                 months = helpers.Date.get_difference_in_months(self.parent.last_date, self.parent.first_date).n
                 years = months / settings._MONTHS_PER_YEAR
-                periods = years / settings.frequency_periods_per_year[self.cashflow_parameters.frequency]
-                self.cashflow_parameters.amount *= (1.0 + self.cashflow_parameters.indexation) ** periods
+                if self.cashflow_parameters.frequency != "none":
+                    periods = years / settings.frequency_periods_per_year[self.cashflow_parameters.frequency]
+                    self.cashflow_parameters.amount *= (1.0 + self.cashflow_parameters.indexation) ** periods
             s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
             for s in s2:
                 s2[s].plot(legend=None)

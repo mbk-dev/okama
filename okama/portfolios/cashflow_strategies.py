@@ -20,6 +20,8 @@ class CashFlow:
         Parent Portfolio instance.
     """
 
+    NAME = "cash_flow"
+
     def __init__(
             self,
             parent: core.Portfolio,
@@ -32,8 +34,8 @@ class CashFlow:
         self._frequency = frequency
         self._initial_investment = initial_investment
         self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
-        self.time_series_dic = time_series_dic
         self.time_series = pd.Series(dtype=float)
+        self.time_series_dic = time_series_dic
         self.time_series_discounted_values = time_series_discounted_values
 
     @property
@@ -139,10 +141,11 @@ class CashFlow:
         self.time_series.name = "cashflow_ts"
 
     def _clear_cf_cache(self):
-        self.parent.dcf._monte_carlo_wealth_fv = pd.DataFrame(dtype=float)
-        self.parent.dcf._wealth_index_fv = pd.DataFrame(dtype=float)
-        self.parent.dcf._cash_flow_fv = pd.DataFrame(dtype=float)
-        self.parent.dcf._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
+        if hasattr(self.parent, "dcf"):
+            self.parent.dcf._monte_carlo_wealth_fv = pd.DataFrame(dtype=float)
+            self.parent.dcf._wealth_index_fv = pd.DataFrame(dtype=float)
+            self.parent.dcf._cash_flow_fv = pd.DataFrame(dtype=float)
+            self.parent.dcf._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
 
 
 class IndexationStrategy(CashFlow):
