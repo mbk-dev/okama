@@ -139,7 +139,7 @@ def get_wealth_indexes_fv_with_cashflow(
         s = wealth_df.squeeze()
     elif cashflow_parameters.frequency == "none":
         s = helpers.Frame.get_wealth_indexes(
-            ror=ror.loc[:, portfolio_symbol], initial_amount=period_initial_amount_cached
+            ror=ror.iloc[:, portfolio_position], initial_amount=period_initial_amount_cached
         )
     first_date = s.index[0]
     first_wealth_index_date = first_date - 1  # set first date to one month earlie
