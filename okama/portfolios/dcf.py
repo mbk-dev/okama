@@ -35,7 +35,7 @@ class WithdrawalGoal:
 class PortfolioDCF:
     """
     Class to access discounted cash flow (DCF) methods of Portfolio.
-    All methods can be used in Portfolio instances trough construction:
+    All methods can be used in Portfolio instances through construction:
     ```
     pf = Portfolio()
     pf.dcf.weatlh_index
@@ -84,7 +84,7 @@ class PortfolioDCF:
         float
             Cash flow discount rate.
         """
-        return float(self._discount_rate)
+        return self._discount_rate
 
     @discount_rate.setter
     def discount_rate(self, discount_rate: Optional[float]):
@@ -103,6 +103,14 @@ class PortfolioDCF:
 
     @property
     def cashflow_parameters(self) -> Optional[cf.CashFlow]:
+        """
+        Return the cash flow strategy parameters.
+
+        Returns
+        -------
+        CashFlow or None
+            The cash flow strategy parameters (CashFlow instance) or None if not defined.
+        """
         return self._cashflow_parameters
 
     @cashflow_parameters.setter
@@ -182,7 +190,7 @@ class PortfolioDCF:
         Accumulated inflation time series is added if `inflation=True` in the Portfolio.
 
         If there is no cash flow, Wealth index is obtained from the accumulated return multiplied
-        by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
+        by the initial investments. That is: initial_investment * (Accumulated_Return + 1)
 
         Parameters
         ----------
@@ -238,20 +246,24 @@ class PortfolioDCF:
 
     def cash_flow_ts(self, discounting: Literal["fv", "pv"], remove_if_wealth_index_negative: bool = True) -> pd.Series:
         """
-        Wealth index Future Values (FV) time series for the portfolio with cash flow (contributions and
-        withdrawals).
+        Cash flow Future Values (FV) or Present Values (PV) time series for the portfolio.
 
-        Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
-        historical time period considering cash flows.
+        The cash flow time series presents the values of contributions and withdrawals over
+        historical time period.
 
-        Accumulated inflation time series is added if `inflation=True` in the Portfolio.
-
-        If there is no cash flow, Wealth index is obtained from the accumulated return multiplicated
-        by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
+        Parameters
+        ----------
+        discounting : {'fv', 'pv'}
+            Type of discounting to apply:
+            - 'fv': Future Values - nominal values without discounting
+            - 'pv': Present Values - values discounted to present using the discount rate
+        remove_if_wealth_index_negative : bool, default True
+            If True, cash flow values are replaced with 0 when wealth index is negative (or zero).
 
         Returns
         -------
-            Time series of wealth index values for portfolio and accumulated inflation.
+        pd.Series
+            Time series of cash flow values for portfolio.
 
         Examples
         --------
@@ -263,7 +275,7 @@ class PortfolioDCF:
         >>> ind.amount = -0.5 * 12  # initial withdrawals amount
         >>> ind.indexation = "inflation"  # the indexation is equal to inflation
         >>> pf.dcf.cashflow_parameters = ind  # assign the strategy to Portfolio
-        >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
+        >>> pf.dcf.cash_flow_ts(discounting="fv", remove_if_wealth_index_negative=True).plot()
         >>> plt.show()
         """
         if self.cashflow_parameters is None:
@@ -297,11 +309,8 @@ class PortfolioDCF:
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
         historical time period. Accumulated inflation time series is added if `inflation=True` in the Portfolio.
 
-        Wealth index is obtained from the accumulated return multiplicated by the initial investments.
-        initial_amount_pv * (Acc_Return + 1)
-
-        If there is no cash flow, Wealth index is obtained from the accumulated return multiplicated
-        by the initial investments. That is: initial_amount_pv * (Acc_Return + 1)
+        If there is no cash flow, Wealth index is obtained from the accumulated return multiplied
+        by the initial investments. That is: initial_investment * (Accumulated_Return + 1)
 
         Returns
         -------
@@ -395,7 +404,7 @@ class PortfolioDCF:
         Returns
         -------
         pd.Timestamp
-            The portfolio survival date (longevity period) in years.
+            The portfolio survival date.
 
         Examples
         --------
@@ -424,8 +433,6 @@ class PortfolioDCF:
         """
         The discounted value (PV) of the initial investments at the historical first date.
 
-        The future value (FV) is defined by `initial_amount` parameter.
-
         Returns
         -------
         float, None
@@ -451,12 +458,7 @@ class PortfolioDCF:
     @property
     def initial_investment_fv(self) -> Optional[float]:
         """
-        The future value (FV) of the initial investments at the end of forecast period.
-
-        The forecast period is defined in Monte Carlo parameters ('period').
-
-        FV is defined by the discount rate and the initial investments:
-        initial_investment_fv = initial_investment * (1 + discount_rate) ** period
+        The future value (FV) of the initial investments at the historical first date.
 
         When 'initial_investment' parameter is not defined, `initial_investment_fv` set to None.
 
@@ -478,7 +480,7 @@ class PortfolioDCF:
         25937.424601000024
         """
         if hasattr(self.cashflow_parameters, "initial_investment"):
-            return float(self.cashflow_parameters.initial_investment * (1.0 + self.discount_rate) ** self.mc.period)
+            return self.cashflow_parameters.initial_investment
         else:
             return None
 
@@ -563,19 +565,26 @@ class PortfolioDCF:
             remove_if_wealth_index_negative: bool = True
     ) -> pd.DataFrame:
         """
-        Portfolio not discounted random wealth indexes with cash flows (withdrawals/contributions) by Monte Carlo simulation.
+        Calculate portfolio random cash flow (withdrawals/contributions) time series by Monte Carlo simulation.
 
-        Monte Carlo simulation generates n random monthly time series (not discounted).
-        Each wealth index is calculated with rate of return time series of a given distribution.
+        Monte Carlo simulation generates n random monthly time series of cash flows.
+        Each cash flow time series corresponds to a wealth index calculated with rate of return time series of a given distribution.
 
         First date of forecasted returns is portfolio last_date.
-        First value for the forecasted wealth indexes is the last historical portfolio index value. It is useful
-        for a chart with historical wealth index and forecasted values.
+
+        Parameters
+        ----------
+        discounting : {'fv', 'pv'}
+            Type of discounting to apply:
+            - 'fv': Future Values - nominal values without discounting
+            - 'pv': Present Values - values discounted to present using the discount rate
+        remove_if_wealth_index_negative : bool, default True
+            If True, cash flow values are replaced with 0 when wealth index is negative (or zero).
 
         Returns
         -------
         DataFrame
-            Table with n random wealth indexes monthly time series.
+            Table with n random cash flow monthly time series.
 
         Examples
         --------
@@ -588,7 +597,7 @@ class PortfolioDCF:
         >>> ind.amount = -500  # set withdrawal size
         >>> ind.frequency = "year"  # set withdrawal frequency
         >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
-        >>> pf.dcf.monte_carlo_wealth_fv.plot()
+        >>> pf.dcf.monte_carlo_cash_flow(discounting="fv").plot()
         >>> plt.legend("")  # don't show legend for each line
         >>> plt.show()
         """
@@ -632,8 +641,8 @@ class PortfolioDCF:
 
         Parameters
         ----------
-        backtest : bool, default 'True'
-            Include historical wealth index if 'True'.
+        backtest : bool, default True
+            Include historical wealth index if True.
 
         figsize : (float, float), optional
             Width, height in inches.
@@ -932,11 +941,6 @@ class PortfolioDCF:
 
         The algorithm uses bisection method to find the largest withdrawals size.
 
-        Returns
-        -------
-        Result
-            The result of finding solution process.
-
         Parameters
         ----------
         goal : {'maintain_balance_fv', 'maintain_balance_pv', 'survival_period'}
@@ -972,6 +976,11 @@ class PortfolioDCF:
 
         tolerance_rel : float, default 0.10
             The allowed tolerance for the solution. The tolerance is the largest error for the achieved goal.
+
+        Returns
+        -------
+        Result
+            The result of finding solution process.
 
         Examples
         --------
