@@ -38,10 +38,11 @@ _okama_ goes with **free** «end of day» historical stock markets data and macr
 - Advanced rebalancing strategies: Rebalancing-bands (threshold-based), Calendar-based or hybrid
 - Investment portfolios with complex contributions / withdrawals cash flows (DCF)
 - Monte Carlo Simulations for financial assets and investment portfolios
+- Forecasting with popular theoretical distributions: normal, lognormal and Student's (T)
+- Degrees of freedom optimization for Student's t-distribution to fit well at a given confidence level
+- Testing distributions on historical data
 - Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
 - Different financial ratios: CAPE10, Sharpe ratio, Sortino ratio, Diversification ratio 
-- Forecasting models according to normal, lognormal and other popular distributions
-- Testing distribution on historical data
 - Dividend yield and other dividend indicators for stocks
 - Backtesting and comparing historical performance of broad range of assets and indexes in multiple currencies
 - Methods to track the performance of index funds (ETF) and compare them with benchmarks
@@ -160,7 +161,7 @@ ax.plot(points.Risk, points.CAGR)
 
 ```python
 ls = ['SPY.US', 'GLD.US', 'BND.US']
-map = ok.EfficientFrontierSingle(ls, ccy='USD').plot_transition_map(x_axe='risk')
+ok.EfficientFrontier(ls, ccy='USD').plot_transition_map(x_axe='risk')
 ```
 ![](../images/images/readmi08.jpg?v23-11-2020,raw=true "Transition map")  
 
@@ -181,11 +182,8 @@ build with _okama_ package and [Dash (plotly)](https://github.com/plotly/dash) f
 
 The plan for _okama_ is to add more functions that will be useful to investors and asset managers.
 
-- Add Omega ratio to EfficientFrontier, EfficientFrontierReb and Portfolio classes.
-- Make complex withdrawals / contributions strategies in Portfolio class.
+- Add Omega ratio to EfficientFrontier and Portfolio classes.
 - Add Black-Litterman asset allocation 
-- Accelerate optimization for multi-period Efficient Frontier: minimize_risk and maximize_risk methods of EfficientFrontierReb class.
-- Make a single EfficientFrontier class for all optimizations: single-period or multu-period with rebalancing strategy as a parameter.
 - Add different utility functions for optimizers: IRR, portfolio survival period, semi-deviation, VaR, CVaR, drawdowns etc.
 - Add more functions based on suggestion of users.
 
