@@ -666,9 +666,9 @@ class VanguardDynamicSpending(PercentageStrategy):
             self._clear_cf_cache()
             self._indexation = indexation
 
-    def calculate_withdrawal_size(self, last_withdrawal: float, balance: float, number_of_periods: int) -> float:
+    def _calculate_withdrawal_size(self, last_withdrawal: float, balance: float, number_of_periods: int) -> float:
         """
-        Calculate regular withdrawal size (Extra Withdrawals are not taken into account).
+        Calculate regular withdrawal size (Extra Withdrawals are not taken into account). Used in helpers.
 
         Parameters
         ----------
@@ -829,9 +829,9 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
         self._crash_threshold_reduction = value
 
 
-    def calculate_withdrawal_size(self, drawdown: float, withdrawal_without_drawdowns: float) -> float:
+    def _calculate_withdrawal_size(self, drawdown: float, withdrawal_without_drawdowns: float) -> float:
         """
-        Calculate regular withdrawal size (Extra Withdrawals are not taken into account).
+        Calculate regular withdrawal size (Extra Withdrawals are not taken into account). Used in helpers.
 
         Parameters
         ----------

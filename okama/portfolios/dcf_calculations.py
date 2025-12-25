@@ -77,7 +77,7 @@ def get_wealth_indexes_fv_with_cashflow(
             elif cashflow_parameters.NAME == "CWID":
                 withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[date] < 0:
-                    cashflow = cashflow_parameters.calculate_withdrawal_size(
+                    cashflow = cashflow_parameters._calculate_withdrawal_size(
                         drawdown=drawdowns[date],
                         withdrawal_without_drawdowns=withdrawal_without_drawdowns,
                     )
@@ -116,7 +116,7 @@ def get_wealth_indexes_fv_with_cashflow(
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow_value = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "VDS":
-                cashflow_value = cashflow_parameters.calculate_withdrawal_size(
+                cashflow_value = cashflow_parameters._calculate_withdrawal_size(
                     last_withdrawal=last_regular_cash_flow if n > 0 else 0,
                     balance=period_initial_amount,
                     number_of_periods=n,
@@ -124,7 +124,7 @@ def get_wealth_indexes_fv_with_cashflow(
             elif cashflow_parameters.NAME == "CWID":
                 withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[last_date] < 0:
-                    cashflow_value = cashflow_parameters.calculate_withdrawal_size(
+                    cashflow_value = cashflow_parameters._calculate_withdrawal_size(
                         drawdown=drawdowns[last_date],
                         withdrawal_without_drawdowns=withdrawal_without_drawdowns,
                     )
@@ -218,7 +218,7 @@ def get_cash_flow_fv(
             elif cashflow_parameters.NAME == "CWID":
                 withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[date] < 0:
-                    cashflow = cashflow_parameters.calculate_withdrawal_size(
+                    cashflow = cashflow_parameters._calculate_withdrawal_size(
                         drawdown = drawdowns[date],
                         withdrawal_without_drawdowns = withdrawal_without_drawdowns,
                     )
@@ -258,7 +258,7 @@ def get_cash_flow_fv(
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow_value = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "VDS":
-                cashflow_value = cashflow_parameters.calculate_withdrawal_size(
+                cashflow_value = cashflow_parameters._calculate_withdrawal_size(
                     last_withdrawal=last_regular_cash_flow if n > 0 else 0,
                     balance=period_initial_amount,
                     number_of_periods=n,
@@ -266,7 +266,7 @@ def get_cash_flow_fv(
             elif cashflow_parameters.NAME == "CWID":
                 withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[last_date] < 0:
-                    cashflow_value = cashflow_parameters.calculate_withdrawal_size(
+                    cashflow_value = cashflow_parameters._calculate_withdrawal_size(
                         drawdown = drawdowns[last_date],
                         withdrawal_without_drawdowns = withdrawal_without_drawdowns,
                     )
