@@ -225,6 +225,7 @@ class IndexationStrategy(CashFlow):
             If True, values in time_series_dic are considered as discounted (PV). Default is False.
         amount : float, optional
             Amount of regular cash flow. Negative for withdrawals, positive for contributions. Default is 0.
+            The frequency of withdrawals or contributions is determined by the `frequency` parameter.
         indexation : str or float, optional
             Indexation rate (CAGR). Can be 'inflation' (if portfolio has inflation data) or a float value. Default is None.
         """
@@ -237,7 +238,9 @@ class IndexationStrategy(CashFlow):
         )
         self.portfolio = self.parent
         self._amount = amount
-        self._indexation = indexation
+        self.indexation = indexation
+
+        # TODO: check why default value for `initial_investments` changes in pf.dcf.cashflow_parameters (examples/10 forecasting.ipyng)
 
     def __repr__(self):
         dic = {
@@ -256,6 +259,8 @@ class IndexationStrategy(CashFlow):
         """
         Portfolio regular contributions or withdrawals size. Negative value corresponds to withdrawals.
         Positive value corresponds to contributions. Cash flow value is indexed each period by 'indexation'.
+
+        The frequency of withdrawals or contributions is determined by the `frequency` parameter.
 
         Returns
         -------
@@ -527,7 +532,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         self._adjust_min_max = adjust_min_max
         self._floor_ceiling = floor_ceiling
         self.adjust_floor_ceiling = adjust_floor_ceiling
-        self._indexation = indexation
+        self.indexation = indexation
 
     def __repr__(self):
         dic = {
@@ -768,6 +773,7 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
             If True, values in time_series_dic are considered as discounted (PV). Default is False.
         amount : float, optional
             Regular withdrawal amount (negative value) before reduction. Default is 0.0.
+            The frequency of withdrawals is determined by the `frequency` parameter.
         indexation : str or float, optional
             Indexation rate for the withdrawal amount. Default is None.
         crash_threshold_reduction : list[tuple[float, float]], optional
@@ -782,10 +788,10 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
             time_series_dic=time_series_dic,
             time_series_discounted_values=time_series_discounted_values,
             amount=amount,
+            indexation=indexation
         )
         self._crash_threshold_reduction_series = None
         self.portfolio = self.parent
-        self._indexation = indexation
         self._crash_threshold_reduction = crash_threshold_reduction
         self._crash_threshold_reduction_series = self.make_series_from_list(self.crash_threshold_reduction)
 
