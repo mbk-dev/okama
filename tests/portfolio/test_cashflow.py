@@ -95,6 +95,12 @@ def test_discount_rate_default_and_setter(pf_ab_monthly):
     assert pf_ab_monthly.dcf.discount_rate == pytest.approx(0.087, abs=1e-12)
 
 
+def test_indexation_strategy_default_indexation_when_no_inflation(pf_ab_monthly):
+    assert not hasattr(pf_ab_monthly, "inflation")
+    ind = ok.IndexationStrategy(pf_ab_monthly, indexation=None)
+    assert ind.indexation == DEFAULT_DISCOUNT_RATE
+
+
 def test_wealth_index_fv_with_indexation(dcf_indexation_yearly):
     wi = dcf_indexation_yearly.wealth_index(discounting="fv", include_negative_values=False)
     # Shape sanity: wealth index is monthly over the available history
@@ -265,4 +271,3 @@ def test_plot_forecast_monte_carlo_smoke(dcf_indexation_yearly):
     dcf.mc.number = 5
     # Function returns None; this is a smoke test to ensure no exceptions are raised
     dcf.plot_forecast_monte_carlo(backtest=False)
-
