@@ -182,7 +182,8 @@ class PortfolioDCF:
 
     def wealth_index(self, discounting: Literal["fv", "pv"], include_negative_values: bool = False) -> pd.DataFrame:
         """
-        Calculate wealth index time series for the portfolio with cash flow (contributions and withdrawals).
+        Calculate wealth index time series for the portfolio with cash flow (contributions and withdrawals)
+        using historical rate of returns.
 
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
         historical time period considering cash flows.
