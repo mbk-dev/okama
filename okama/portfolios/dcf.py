@@ -5,6 +5,7 @@ import logging
 from typing import Optional, Literal, Tuple
 
 import pandas as pd
+from matplotlib.axes import Axes
 
 import okama.portfolios.core as core
 import okama.portfolios.mc as mc
@@ -632,7 +633,7 @@ class PortfolioDCF:
         self,
         backtest: bool = True,
         figsize: Optional[tuple] = None,
-    ) -> None:
+    ) -> Axes:
         """
         Plot Monte Carlo simulation for portfolio future wealth indexes optionally together with historical wealth index.
 
@@ -652,7 +653,7 @@ class PortfolioDCF:
 
         Returns
         -------
-        None
+        Axes : 'matplotlib.axes._subplots.AxesSubplot'
 
         Examples
         --------
@@ -670,20 +671,20 @@ class PortfolioDCF:
         >>> plt.yscale("log")  # Y-axis has logarithmic scale
         >>> plt.show()
         """
-        # TODO: return axe
         if backtest:
-            self._plot_mc_with_backtest(figsize)
+            ax = self._plot_mc_with_backtest(figsize)
         else:
             s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
-            s2.plot(legend=None)
+            ax = s2.plot(legend=None, figsize=figsize)
         self.cashflow_parameters._clear_cf_cache()
+        return ax
 
-    def _plot_mc_with_backtest(self, figsize):
+    def _plot_mc_with_backtest(self, figsize: Optional[tuple] = None) -> Axes:
         if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
         original_cashflow = self.cashflow_parameters
         s1 = self.wealth_index(discounting="fv", include_negative_values=False)[self.parent.symbol]
-        s1.plot(legend=None, figsize=figsize)
+        ax = s1.plot(legend=None, figsize=figsize)
         last_backtest_value = s1.iloc[-1]
         if last_backtest_value > 0:
             temp_cashflow = copy.copy(original_cashflow)
@@ -699,9 +700,10 @@ class PortfolioDCF:
                         self.cashflow_parameters.amount *= (1.0 + self.cashflow_parameters.indexation) ** periods
                 s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
                 for s in s2:
-                    s2[s].plot(legend=None)
+                    s2[s].plot(legend=None, ax=ax)
             finally:
                 self.cashflow_parameters = original_cashflow
+        return ax
 
     def monte_carlo_survival_period(self, threshold: float = 0) -> pd.Series:
         """
