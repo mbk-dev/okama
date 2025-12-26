@@ -240,8 +240,6 @@ class IndexationStrategy(CashFlow):
         self._amount = amount
         self.indexation = indexation
 
-        # TODO: check why default value for `initial_investments` changes in pf.dcf.cashflow_parameters (examples/10 forecasting.ipyng)
-
     def __repr__(self):
         dic = {
             "Strategy name": self.NAME,
@@ -310,7 +308,17 @@ class PercentageStrategy(CashFlow):
     Parameters
     ----------
     parent : Portfolio
-        Parent Portfolio instance.
+        The parent Portfolio instance.
+    frequency : str, optional
+        Frequency of cash flows. Default is "none".
+    initial_investment : float, optional
+        Initial investment amount. Default is 1000.0.
+    time_series_dic : dict, optional
+        Dictionary with dates and cash flow values. Default is empty dict.
+    time_series_discounted_values : bool, optional
+        If True, values in time_series_dic are considered as discounted (PV). Default is False.
+    percentage : float, optional
+        Percentage of portfolio balance to be withdrawn or contributed. Negative for withdrawals. Default is 0.0.
 
     Examples
     --------
@@ -339,24 +347,6 @@ class PercentageStrategy(CashFlow):
             time_series_discounted_values: bool = False,
             percentage: float = 0.0,
     ):
-        """
-        Initialize the PercentageStrategy.
-
-        Parameters
-        ----------
-        parent : Portfolio
-            The parent Portfolio instance.
-        frequency : str, optional
-            Frequency of cash flows. Default is "none".
-        initial_investment : float, optional
-            Initial investment amount. Default is 1000.0.
-        time_series_dic : dict, optional
-            Dictionary with dates and cash flow values. Default is empty dict.
-        time_series_discounted_values : bool, optional
-            If True, values in time_series_dic are considered as discounted (PV). Default is False.
-        percentage : float, optional
-            Percentage of portfolio balance to be withdrawn or contributed. Negative for withdrawals. Default is 0.0.
-        """
         super().__init__(
             parent,
             frequency=frequency,
@@ -410,7 +400,13 @@ class TimeSeriesStrategy(CashFlow):
     Parameters
     ----------
     parent : Portfolio
-        Parent Portfolio instance.
+        The parent Portfolio instance.
+    initial_investment : float, optional
+        Initial investment amount. Default is 0.
+    time_series_dic : dict, optional
+        Dictionary with dates and cash flow values. Default is empty dict.
+    time_series_discounted_values : bool, optional
+        If True, values in time_series_dic are considered as discounted (PV). Default is False.
 
     Examples
     --------
@@ -437,20 +433,6 @@ class TimeSeriesStrategy(CashFlow):
             time_series_dic: dict = {},
             time_series_discounted_values: bool = False
     ):
-        """
-        Initialize the TimeSeriesStrategy.
-
-        Parameters
-        ----------
-        parent : Portfolio
-            The parent Portfolio instance.
-        initial_investment : float, optional
-            Initial investment amount. Default is 0.
-        time_series_dic : dict, optional
-            Dictionary with dates and cash flow values. Default is empty dict.
-        time_series_discounted_values : bool, optional
-            If True, values in time_series_dic are considered as discounted (PV). Default is False.
-        """
         super().__init__(
             parent,
             frequency="none",
@@ -477,6 +459,30 @@ class VanguardDynamicSpending(PercentageStrategy):
     The withdrawal amount is calculated as a percentage of the portfolio balance,
     but it is limited by a ceiling and a floor.
     The ceiling and floor are calculated based on the previous year's withdrawal amount.
+
+    Parameters
+    ----------
+    parent : Portfolio
+        The parent Portfolio instance.
+    initial_investment : float, optional
+        Initial investment amount. Default is 1000.0.
+    time_series_dic : dict, optional
+        Dictionary with dates and cash flow values. Default is empty dict.
+    time_series_discounted_values : bool, optional
+        If True, values in time_series_dic are considered as discounted (PV). Default is False.
+    percentage : float, optional
+        Percentage of portfolio balance to be withdrawn. Negative value. Default is 0.0.
+    min_max_annual_withdrawal : tuple[float, float], optional
+        Minimum and maximum annual withdrawal limits (positive values). Default is None.
+    adjust_min_max : bool, optional
+        If True, min and max limits are adjusted by indexation. Default is True.
+    floor_ceiling : tuple[float, float], optional
+        Floor and ceiling percentages relative to the previous year's withdrawal.
+        Example: (-0.025, 0.05) means floor is -2.5% and ceiling is +5%. Default is None.
+    adjust_floor_ceiling : bool, optional
+        If True, floor and ceiling are adjusted by indexation. Default is False.
+    indexation : str or float, optional
+        Indexation rate. Default is None.
     """
     NAME = "VDS"
     def __init__(
@@ -495,29 +501,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         """
         Initialize the VanguardDynamicSpending strategy.
 
-        Parameters
-        ----------
-        parent : Portfolio
-            The parent Portfolio instance.
-        initial_investment : float, optional
-            Initial investment amount. Default is 1000.0.
-        time_series_dic : dict, optional
-            Dictionary with dates and cash flow values. Default is empty dict.
-        time_series_discounted_values : bool, optional
-            If True, values in time_series_dic are considered as discounted (PV). Default is False.
-        percentage : float, optional
-            Percentage of portfolio balance to be withdrawn. Negative value. Default is 0.0.
-        min_max_annual_withdrawal : tuple[float, float], optional
-            Minimum and maximum annual withdrawal limits (positive values). Default is None.
-        adjust_min_max : bool, optional
-            If True, min and max limits are adjusted by indexation. Default is True.
-        floor_ceiling : tuple[float, float], optional
-            Floor and ceiling percentages relative to the previous year's withdrawal.
-            Example: (-0.025, 0.05) means floor is -2.5% and ceiling is +5%. Default is None.
-        adjust_floor_ceiling : bool, optional
-            If True, floor and ceiling are adjusted by indexation. Default is False.
-        indexation : str or float, optional
-            Indexation rate. Default is None.
+
         """
         super().__init__(
             parent=parent,
@@ -743,6 +727,28 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
     Withdrawal strategy that reduces the withdrawal amount if the portfolio drawdown exceeds a certain threshold.
 
     The reduction coefficients are defined in `crash_threshold_reduction` list of tuples.
+
+    Parameters
+    ----------
+    parent : Portfolio
+        The parent Portfolio instance.
+    frequency : str, optional
+        Frequency of cash flows. Default is "year".
+    initial_investment : float, optional
+        Initial investment amount. Default is 1000.0.
+    time_series_dic : dict, optional
+        Dictionary with dates and cash flow values. Default is empty dict.
+    time_series_discounted_values : bool, optional
+        If True, values in time_series_dic are considered as discounted (PV). Default is False.
+    amount : float, optional
+        Regular withdrawal amount (negative value) before reduction. Default is 0.0.
+        The frequency of withdrawals is determined by the `frequency` parameter.
+    indexation : str or float, optional
+        Indexation rate for the withdrawal amount. Default is None.
+    crash_threshold_reduction : list[tuple[float, float]], optional
+        List of tuples (threshold, reduction_coefficient).
+        Example: [(0.20, 0.40)] means if drawdown > 20%, reduce withdrawal by 40%.
+        Default is [(.20, .40), (.50, 1)].
     """
     NAME = "CWID"
     def __init__(
@@ -756,31 +762,6 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
             indexation: Optional[Union[str, float]] = None,
             crash_threshold_reduction: list[tuple[float, float]] = [(.20, .40), (.50, 1)],
     ):
-        """
-        Initialize the CutWithdrawalsIfDrawdown strategy.
-
-        Parameters
-        ----------
-        parent : Portfolio
-            The parent Portfolio instance.
-        frequency : str, optional
-            Frequency of cash flows. Default is "year".
-        initial_investment : float, optional
-            Initial investment amount. Default is 1000.0.
-        time_series_dic : dict, optional
-            Dictionary with dates and cash flow values. Default is empty dict.
-        time_series_discounted_values : bool, optional
-            If True, values in time_series_dic are considered as discounted (PV). Default is False.
-        amount : float, optional
-            Regular withdrawal amount (negative value) before reduction. Default is 0.0.
-            The frequency of withdrawals is determined by the `frequency` parameter.
-        indexation : str or float, optional
-            Indexation rate for the withdrawal amount. Default is None.
-        crash_threshold_reduction : list[tuple[float, float]], optional
-            List of tuples (threshold, reduction_coefficient).
-            Example: [(0.20, 0.40)] means if drawdown > 20%, reduce withdrawal by 40%.
-            Default is [(.20, .40), (.50, 1)].
-        """
         super().__init__(
             parent=parent,
             frequency=frequency,
@@ -811,7 +792,19 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
     @property
     def crash_threshold_reduction(self):
         """
-        List of tuples (threshold, reduction_coefficient).
+        List of tuples (threshold, reduction_coefficient) that define how much withdrawals are reduced
+        based on the portfolio drawdown depth.
+
+        Example
+        -------
+        crash_threshold_reduction = [
+            (.05, .20),
+            (.10, .40),
+            (.20, .50),
+            (.30, 1)
+        ]
+        If drawdown is 5%, reduce withdrawal by 20%; if 10%, reduce by 40%; if 20%, reduce by 50%.
+        If drawdown is 30% or more, withdrawals stop entirely (100% reduction).
         """
         return self._crash_threshold_reduction
 
