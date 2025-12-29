@@ -20,56 +20,51 @@ logger = logging.getLogger(__name__)
 
 class MonteCarlo:
     """
-    Monte Carlo simulation parameters for investment portfolio.
+    Monte Carlo simulation parameters for an investment portfolio.
 
     Parameters
     ----------
     parent : PortfolioDCF
-        Parent PortfolioDCF instance.
+        Parent `PortfolioDCF` instance.
 
-    distribution: str
-            The type of a distribution to generate random rate of return.
-            Allowed values for distribution:
-            -'norm' for normal distribution
-            -'lognorm' for lognormal distribution
-            -'t' for Student's (t-distribution)
+    distribution : {'norm', 'lognorm', 't'}, default 'norm'
+        Distribution used to generate random monthly rates of return.
 
-    distribution_parameters: tuple, default None
-        Distribution parameters to generate random rate of return.
-        (mean, standard deviation) for normal distribution.
-        (shape, loc, scale) for lognormal distribution.
-        (df, loc, scale) for Student distribution.
-        Put None in place of any parameter if you want it to be determined automatically by scipy.stat.fit
-        like (3, None, None) for Student's t distribution with degrees of freedom (df) equal to 3
-        and automatic values for loc and scale.
+        - 'norm' : Normal distribution.
+        - 'lognorm' : Lognormal distribution.
+        - 't' : Student's t-distribution.
 
-    period: int, default 25 years
-        Forecast period for portfolio wealth index time series (in years).
+    distribution_parameters : tuple or None, default None
+        Parameters for the selected distribution. The expected tuple structure depends on
+        `distribution`:
 
-    mc_number: int, default 100
-        Number of random scenarios to generate with Monte Carlo simulation.
+        - 'norm' : (mu, sigma)
+        - 'lognorm' : (shape, loc, scale)
+        - 't' : (df, loc, scale)
+
+        Any element can be `None` to indicate it should be inferred from the historical
+        returns (for example, `(3, None, None)` fixes `df=3` for the t-distribution and
+        estimates `loc` and `scale`).
+
+    period : int, default 25
+        Forecast horizon in years.
+
+    mc_number : int, default 100
+        Number of random scenarios to generate.
 
     Examples
     --------
+    >>> import okama as ok
     >>> import matplotlib.pyplot as plt
-    >>> pf = ok.Portfolio(first_date='2015-01', last_date='2024-10')  # create Portfolio with default parameters
-    >>> # Set Monte Carlo parameters
-    >>> pf.dcf.set_mc_parameters(
-    ... distribution='t',
-    ... period=10,
-    ... mc_number=100
-    ... )
-    >>> # Set the cash flow strategy. It's required to generate random wealth indexes.
-    >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
-    >>> ind.initial_investment = 10_000  # add initial investments size
-    >>> ind.frequency = 'year'  # set cash flow frequency
-    >>> ind.amount = -1_500  # set withdrawal size
+    >>> pf = ok.Portfolio(first_date='2015-01', last_date='2024-10')
+    >>> pf.dcf.set_mc_parameters(distribution='t', period=10, mc_number=100)
+    >>> ind = ok.IndexationStrategy(pf)
+    >>> ind.initial_investment = 10_000
+    >>> ind.frequency = 'year'
+    >>> ind.amount = -1_500
     >>> ind.indexation = 'inflation'
-    >>> # Assign the strategy to Portfolio
     >>> pf.dcf.cashflow_parameters = ind
-    >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
-    >>> # Plot wealth index with cash flow
-    >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
+    >>> pf.dcf.wealth_index(discounting='fv', include_negative_values=False).plot()
     >>> plt.show()
     """
 
@@ -114,12 +109,13 @@ class MonteCarlo:
     @property
     def distribution(self) -> str:
         """
-        The type of a distribution to generate random rate of return.
+        Distribution used to generate random monthly rates of return.
 
-        Allowed values for distribution:
-        -'norm' for normal distribution
-        -'lognorm' for lognormal distribution
-        -'t' for Student's (t-distribution)
+        Allowed values:
+
+        - 'norm' : Normal distribution.
+        - 'lognorm' : Lognormal distribution.
+        - 't' : Student's t-distribution.
 
         Returns
         -------
@@ -139,16 +135,16 @@ class MonteCarlo:
         Distribution parameters provided by the user for the selected distribution.
 
         The expected tuple structure depends on the current distribution:
-        - 'norm': (mu, sigma)
-        - 'lognorm': (shape, loc, scale)
-        - 't': (df, loc, scale)
+        - 'norm' : (mu, sigma)
+        - 'lognorm' : (shape, loc, scale)
+        - 't' : (df, loc, scale)
 
-        Any element can be None to indicate it should be inferred from data.
+        Any element can be `None` to indicate it should be inferred from historical returns.
 
         Returns
         -------
-        tuple
-            The raw distribution parameters as configured. May contain None values.
+        tuple or None
+            Raw distribution parameters as configured. May contain `None` values.
         """
         return self._distribution_parameters
 
@@ -203,7 +199,7 @@ class MonteCarlo:
 
         Parameters
         ----------
-        var_level: int, default=5
+        var_level : int, default 5
             Confidence level in percent for Value-at-Risk (VaR) and Conditional
             Value-at-Risk (CVaR). For example, 5 corresponds to 5% left tail.
 
@@ -250,24 +246,26 @@ class MonteCarlo:
 
     def optimize_df_for_students(self, var_level: int) -> float:
         """
-        Find the degrees of freedom for Student's t-distribution that best fit the empirical Value-at-Risk (VaR) and
-        Conditional Value-at-Risk (CVaR) at a given confidence level.
+        Find degrees of freedom for the t-distribution that best match empirical VaR and CVaR.
 
-        This method uses the scipy `minimize_scalar` function to minimize the squared difference
-        between the theoretical and empirical VaR and CVaR metrics of a return series. The optimization
-        bounds the degrees of freedom for the t-distribution between 2.1 and 50.
+        The method minimizes the squared error between theoretical and empirical VaR/CVaR
+        using `scipy.optimize.minimize_scalar` with bounds (2.1, 50).
 
-        Parameters:
+        Parameters
         ----------
-        var_level: int
-            The confidence level (in percentage) used for computing Value-at-Risk (VaR) and
-            Conditional Value-at-Risk (CVaR). Should be provided in the range 1-99.
+        var_level : int
+            Confidence level in percent for Value-at-Risk (VaR) and Conditional Value-at-Risk
+            (CVaR). Must be in [1, 99].
 
-        Returns:
+        Returns
         -------
         float
-            The optimized degrees of freedom for the Student's t-distribution that best fit
-            the empirical VaR and CVaR observed for the given `var_level`.
+            Estimated degrees of freedom for Student's t-distribution.
+
+        Raises
+        ------
+        ValueError
+            If `var_level` is outside [1, 99].
 
         """
         if not var_level in range(1, 100):
@@ -299,7 +297,7 @@ class MonteCarlo:
     def _get_params_for_lognormal(self) -> tuple[float, float, float]:
         parameters = self.distribution_parameters
         if parameters is None or all(x is None for x in parameters):
-            # Fit lognormal to r with loc fixed at -1 so support is (-1, ∞)
+            # Fit lognormal to r with loc fixed at -1 so support is (-1, infinity)
             shape, _, scale = scipy.stats.lognorm.fit(self.ror, floc=-1.0)
         else:
             if None in parameters:
@@ -426,34 +424,30 @@ class MonteCarlo:
         percentiles: list[int] = [10, 50, 90],
     ) -> dict[int, float]:
         """
-        Calculate percentiles for a given CAGR distribution.
+        Calculate percentiles for the simulated CAGR distribution.
 
-        CAGR - Compound Annual Growth Rate.
-        CAGR is calculated for each of n random returns time series of a given distribution. Random time series are
-        generated with Monte Carlo simulation.
-        CAGR time frame should not exceed 1/2 of portfolio history period length.
+        CAGR (Compound Annual Growth Rate) is calculated for each Monte Carlo return path.
 
         Parameters
         ----------
-        percentiles: list of int, default [10, 50, 90]
-            List of percentiles to be calculated.
+        percentiles : list[int], default [10, 50, 90]
+            Percentiles to compute (0-100).
 
         Returns
         -------
-        dict
-            Dictionary {Percentile: value}
+        dict[int, float]
+            Mapping `{percentile: value}`.
 
         Examples
         --------
+        >>> import okama as ok
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> pf.dcf.set_mc_parameters(distribution='norm', period=1)
         >>> pf.dcf.mc.percentile_distribution_cagr()
-        {10: -0.0329600265453808, 50: 0.08247141141668779, 90: 0.21338327078214836}
-        Forecast CAGR according to normal distribution within 1 year period.
+        {10: ..., 50: ..., 90: ...}
         >>> pf.dcf.set_mc_parameters(period=5)
         >>> pf.dcf.mc.percentile_distribution_cagr([5, 10, 20])
-        {10: 0.030625112922274055, 50: 0.08346815557550402, 90: 0.13902575176654647}
-        Forecast CAGR according to normal distribution within 5 year period.
+        {5: ..., 10: ..., 20: ...}
         """
         cagr_distr = self._get_cagr_distribution()
         results = {}
@@ -467,30 +461,31 @@ class MonteCarlo:
         score: float = 0,
     ) -> float:
         """
-        Compute the percentile rank of a score (CAGR value).
+        Compute the percentile rank of a CAGR value within the simulated distribution.
 
-        Percentile rank can be calculated for the given distribution type or for the historical distribution of CAGR.
+        The percentile rank is calculated from the Monte Carlo CAGR distribution produced by
+        the current Monte Carlo settings.
 
-        If percentile_inverse of, for example, 0% (CAGR value) is equal to 8% for 1 year time frame
-        it means that 8% of the CAGR values in the distribution are negative in 1 year periods. Or in other words
-        the probability of getting negative result after 1 year of investments is 8%.
+        For example, if the percentile rank for `score=0` is 8 for a 1-year horizon, it means
+        that 8% of simulated CAGR values are negative over 1-year periods.
 
         Parameters
         ----------
-        score: float, default 0
-            Score that is compared to the elements in CAGR array.
+        score : float, default 0
+            CAGR value to evaluate.
 
         Returns
         -------
         float
-            Percentile-position of score (0-100) relative to distribution.
+            Percentile rank (0-100).
 
         Examples
         --------
+        >>> import okama as ok
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> pf.dcf.set_mc_parameters(distribution='lognorm', period=1, mc_number=5000)
         >>> pf.dcf.mc.percentile_inverse_cagr(score=0)
-        18.08
+        ...
         The probability of getting negative result (score=0) in 1 year period for lognormal distribution.
         """
         cagr_distr = self._get_cagr_distribution()
@@ -508,7 +503,7 @@ class MonteCarlo:
         Returns
         -------
         Series
-            Expanding skewness time series
+            Rolling skewness time series.
 
         Examples
         --------
@@ -630,7 +625,7 @@ class MonteCarlo:
         Returns
         -------
         Series
-            Expanding kurtosis time series.
+            Rolling kurtosis time series.
 
         Examples
         --------
@@ -722,7 +717,7 @@ class MonteCarlo:
     @property
     def kstest_for_all_distributions(self) -> pd.DataFrame:
         """
-        Run Kolmogorov–Smirnov goodness-of-fit tests for all configured distributions.
+        Run Kolmogorov-Smirnov goodness-of-fit tests for all configured distributions.
 
         This property evaluates the KS test of the instance's return series against
         each distribution defined in the project's configured list of distributions
@@ -763,22 +758,23 @@ class MonteCarlo:
         Parameters
         ----------
         var_level : int, default 5
-            Confidence level for VAR and CVAR in percents. Default value is 5%.
+            Confidence level in percent for VaR and CVaR.
 
-        bootstrap_size_var: int, default 2000
-            The number of bootstrap resamples (replications) to draw from the distribution. Default value is 2000.
-            If 0 bostrap stripe is not drawn.
+        bootstrap_size_var : int, default 2000
+            Number of bootstrap resamples used to compute confidence intervals for empirical
+            VaR and CVaR. If 0, the bootstrap stripe is not drawn.
 
-        zoom_to_left_tail: int, default 20
-            Zoom the chart to the range [1, zoom_to_left_tail] of percentiles.
-            If 99 shows 100% chart.
+        zoom_to_left_tail : int or None, default 20
+            Zoom the plot to the left tail by limiting the view to the
+            [0.1%, `zoom_to_left_tail`%] percentile range. Must be in [1, 98]. Use `None`
+            to show the full range.
 
-        figsize : (float, float), optional
-            Width and height of plot in inches.
-            If None default matplotlib figsize value is used.
+        figsize : tuple[float, float], default None
+            Figure size in inches (width, height). If `None`, matplotlib default is used.
 
         Examples
         --------
+        >>> import okama as ok
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> pf.dcf.set_mc_parameters(distribution="t")
@@ -911,7 +907,7 @@ class MonteCarlo:
 
         Parameters
         ----------
-        bins : int, optional
+        bins : int, default None
             Number of histogram bins. If None, matplotlib will choose automatically.
 
         Examples

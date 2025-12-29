@@ -23,12 +23,12 @@ class CashFlow:
     NAME = "cash_flow"
 
     def __init__(
-            self,
-            parent: core.Portfolio,
-            frequency: Optional[str] = "none",
-            initial_investment: float = 1000.0,
-            time_series_dic: dict = {},
-            time_series_discounted_values: bool = False
+        self,
+        parent: core.Portfolio,
+        frequency: Optional[str] = "none",
+        initial_investment: float = 1000.0,
+        time_series_dic: dict = {},
+        time_series_discounted_values: bool = False,
     ):
         """
         Initialize the CashFlow strategy.
@@ -81,7 +81,9 @@ class CashFlow:
             self._frequency = frequency
             self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
         else:
-            raise ValueError(f"frequency must be in {settings.frequency_mapping.keys()}")
+            raise ValueError(
+                f"frequency must be in {settings.frequency_mapping.keys()}"
+            )
 
     @property
     def periods_per_year(self) -> int:
@@ -98,8 +100,10 @@ class CashFlow:
     @property
     def initial_investment(self) -> float:
         """
-        Portfolio initial investment FV size (at last_date).
+        Initial investment (FV) amount at the start of the calculation period.
 
+        For historical backtesting, this is the investment at `first_date`.
+        For Monte Carlo simulations, this is the investment at `last_date`.
         Initial investment must be positive.
 
         Returns
@@ -121,7 +125,6 @@ class CashFlow:
     @property
     def time_series_dic(self) -> dict:
         """
-        # TODO: rename to extra_cashflow_ts
         Cash flow time series in form of dictionary.
 
         Negative number corresponds to withdrawals, positive number corresponds to contributions.
@@ -141,6 +144,7 @@ class CashFlow:
         >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
         >>> plt.show()
         """
+        # TODO: rename to extra_cashflow_ts
         return self._time_series_dic
 
     @time_series_dic.setter
@@ -190,7 +194,6 @@ class IndexationStrategy(CashFlow):
     >>> ind.indexation = "inflation"
     >>> # Assign the strategy to Portfolio
     >>> pf.dcf.cashflow_parameters = ind
-    >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
     >>> # Plot wealth index with cash flow
     >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
     >>> plt.show()
@@ -199,14 +202,14 @@ class IndexationStrategy(CashFlow):
     NAME = "fixed_amount"
 
     def __init__(
-            self,
-            parent: core.Portfolio,
-            frequency: Optional[str] = "none",
-            initial_investment: float = 1000.0,
-            time_series_dic: dict = {},
-            time_series_discounted_values: bool = False,
-            amount: float = 0,
-            indexation: Optional[Union[str, float]] = None,
+        self,
+        parent: core.Portfolio,
+        frequency: Optional[str] = "none",
+        initial_investment: float = 1000.0,
+        time_series_dic: dict = {},
+        time_series_discounted_values: bool = False,
+        amount: float = 0,
+        indexation: Optional[Union[str, float]] = None,
     ):
         """
         Initialize the IndexationStrategy.
@@ -234,7 +237,7 @@ class IndexationStrategy(CashFlow):
             frequency=frequency,
             initial_investment=initial_investment,
             time_series_dic=time_series_dic,
-            time_series_discounted_values=time_series_discounted_values
+            time_series_discounted_values=time_series_discounted_values,
         )
         self.portfolio = self.parent
         self._amount = amount
@@ -292,7 +295,9 @@ class IndexationStrategy(CashFlow):
         if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
             self._indexation = self.portfolio.get_cagr().loc[self.portfolio.inflation]
         elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
-            raise ValueError("There is no information about historical inflation. Set inflation=True to calculate.")
+            raise ValueError(
+                "There is no information about historical inflation. Set inflation=True to calculate."
+            )
         elif indexation is None and not hasattr(self.portfolio, "inflation"):
             self._indexation = settings.DEFAULT_DISCOUNT_RATE
         else:
@@ -324,13 +329,12 @@ class PercentageStrategy(CashFlow):
     --------
     >>> import matplotlib.pyplot as plt
     >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
-    >>> pc = ok.PercentageStrategy(portf)  # create PercentageStrategy linked to the portfolio
+    >>> pc = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
     >>> pc.initial_investment = 10_000  # add initial investments size
     >>> pc.frequency = "year"  # set cash flow frequency
     >>> pc.percentage = -0.12  # set withdrawal percentage
     >>> # Assign the strategy to Portfolio
     >>> pf.dcf.cashflow_parameters = pc
-    >>> pf.dcf.use_discounted_values = False  # do not discount initial investment value
     >>> # Plot wealth index with cash flow
     >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
     >>> plt.show()
@@ -339,20 +343,20 @@ class PercentageStrategy(CashFlow):
     NAME = "fixed_percentage"
 
     def __init__(
-            self,
-            parent: core.Portfolio,
-            frequency: Optional[str] = "none",
-            initial_investment: float = 1000.0,
-            time_series_dic: dict = {},
-            time_series_discounted_values: bool = False,
-            percentage: float = 0.0,
+        self,
+        parent: core.Portfolio,
+        frequency: Optional[str] = "none",
+        initial_investment: float = 1000.0,
+        time_series_dic: dict = {},
+        time_series_discounted_values: bool = False,
+        percentage: float = 0.0,
     ):
         super().__init__(
             parent,
             frequency=frequency,
             initial_investment=initial_investment,
             time_series_dic=time_series_dic,
-            time_series_discounted_values=time_series_discounted_values
+            time_series_discounted_values=time_series_discounted_values,
         )
         self.portfolio = self.parent
         self._percentage = percentage
@@ -387,7 +391,9 @@ class PercentageStrategy(CashFlow):
         self._clear_cf_cache()
         validators.validate_real("percentage", percentage)
         if percentage < -1:
-            raise ValueError("Withdrawal Percentage must less or equal to the Initial investment (100%).")
+            raise ValueError(
+                "Withdrawal Percentage must less or equal to the Initial investment (100%)."
+            )
         self._percentage = percentage
 
 
@@ -427,18 +433,18 @@ class TimeSeriesStrategy(CashFlow):
     NAME = "time_series"
 
     def __init__(
-            self,
-            parent: core.Portfolio,
-            initial_investment: float = 0,
-            time_series_dic: dict = {},
-            time_series_discounted_values: bool = False
+        self,
+        parent: core.Portfolio,
+        initial_investment: float = 0,
+        time_series_dic: dict = {},
+        time_series_discounted_values: bool = False,
     ):
         super().__init__(
             parent,
             frequency="none",
             initial_investment=initial_investment,
             time_series_dic=time_series_dic,
-            time_series_discounted_values=time_series_discounted_values
+            time_series_discounted_values=time_series_discounted_values,
         )
         self.portfolio = self.parent
 
@@ -456,9 +462,14 @@ class VanguardDynamicSpending(PercentageStrategy):
     """
     Vanguard Dynamic Spending strategy.
 
-    The withdrawal amount is calculated as a percentage of the portfolio balance,
-    but it is limited by a ceiling and a floor.
-    The ceiling and floor are calculated based on the previous year's withdrawal amount.
+    The withdrawal amount is calculated as a percentage of the portfolio balance.
+
+    The `floor_ceiling` parameter limits the withdrawals relative to the
+    previous year's cash flow. 
+
+    The absolute withdrawal amount can be optionally limited with
+    `min_max_annual_withdrawal`. If `adjust_min_max=True`, these bounds are indexed
+    using `indexation`.
 
     Parameters
     ----------
@@ -473,30 +484,59 @@ class VanguardDynamicSpending(PercentageStrategy):
     percentage : float, optional
         Percentage of portfolio balance to be withdrawn. Negative value. Default is 0.0.
     min_max_annual_withdrawal : tuple[float, float], optional
-        Minimum and maximum annual withdrawal limits (positive values). Default is None.
+        Optional absolute min/max annual withdrawal amounts (positive values). Default is None.
     adjust_min_max : bool, optional
-        If True, min and max limits are adjusted by indexation. Default is True.
+        If True, min/max bounds are indexed using `indexation`. Default is True.
     floor_ceiling : tuple[float, float], optional
-        Floor and ceiling percentages relative to the previous year's withdrawal.
-        Example: (-0.025, 0.05) means floor is -2.5% and ceiling is +5%. Default is None.
+        Year-to-year withdrawal change limits relative to the previous year's withdrawal.
+        Example: (-0.025, 0.05) means the next withdrawal cannot be more than 2.5% lower
+        or 5% higher than the previous year's withdrawal. Default is None.
     adjust_floor_ceiling : bool, optional
-        If True, floor and ceiling are adjusted by indexation. Default is False.
+        If True, the previous year's withdrawal amount is indexed before applying
+        floor/ceiling limits. Default is False.
     indexation : str or float, optional
         Indexation rate. Default is None.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import okama as ok
+    >>> pf = ok.Portfolio(
+    ...     ["SPY.US", "BND.US"],
+    ...     weights=[.6, .4],
+    ...     first_date="2010-01",
+    ...     last_date="2024-10",
+    ...     ccy="USD",
+    ...     inflation=True
+    ... )
+    >>> vds = ok.VanguardDynamicSpending(
+    ...     parent=pf,
+    ...     initial_investment=1_000_000,
+    ...     percentage=-0.08,
+    ...     floor_ceiling=(-.025, .05),
+    ...     min_max_annual_withdrawal=(40_000, 100_000),
+    ...     adjust_min_max=True,
+    ...     indexation="inflation",
+    ... )
+    >>> pf.dcf.cashflow_parameters = vds
+    >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
+    >>> plt.show()
     """
+
     NAME = "VDS"
+
     def __init__(
-            self,
-            parent: core.Portfolio,
-            initial_investment: float = 1000.0,
-            time_series_dic: dict = {},
-            time_series_discounted_values: bool = False,
-            percentage: float = 0.0,
-            min_max_annual_withdrawal: Optional[tuple[float, float]] = None,
-            adjust_min_max: bool = True,
-            floor_ceiling: Optional[tuple[float, float]] = None,
-            adjust_floor_ceiling: bool = False,
-            indexation: Optional[Union[str, float]] = None,
+        self,
+        parent: core.Portfolio,
+        initial_investment: float = 1000.0,
+        time_series_dic: dict = {},
+        time_series_discounted_values: bool = False,
+        percentage: float = 0.0,
+        min_max_annual_withdrawal: Optional[tuple[float, float]] = None,
+        adjust_min_max: bool = True,
+        floor_ceiling: Optional[tuple[float, float]] = None,
+        adjust_floor_ceiling: bool = False,
+        indexation: Optional[Union[str, float]] = None,
     ):
         """
         Initialize the VanguardDynamicSpending strategy.
@@ -526,11 +566,19 @@ class VanguardDynamicSpending(PercentageStrategy):
             "Cash flow frequency": self.frequency,
             "Cash flow strategy": self.NAME,
             "Cash flow percentage": self.percentage,  # negative
-            "Minimum annual withdrawal": self.min_max_annual_withdrawals[0] if self.min_max_annual_withdrawals is not None else None,  # positive
-            "Maximum annual withdrawal": self.min_max_annual_withdrawals[1] if self.min_max_annual_withdrawals is not None else None,  # positive
+            "Minimum annual withdrawal": self.min_max_annual_withdrawals[0]
+            if self.min_max_annual_withdrawals is not None
+            else None,  # positive
+            "Maximum annual withdrawal": self.min_max_annual_withdrawals[1]
+            if self.min_max_annual_withdrawals is not None
+            else None,  # positive
             "Max and Min withdrawals are indexed": str(self.adjust_min_max),
-            "Floor": self.floor_ceiling[0] if self.floor_ceiling is not None else None,  # negative
-            "Ceiling": self.floor_ceiling[1] if self.floor_ceiling is not None else None,  # positive
+            "Floor": self.floor_ceiling[0]
+            if self.floor_ceiling is not None
+            else None,  # negative
+            "Ceiling": self.floor_ceiling[1]
+            if self.floor_ceiling is not None
+            else None,  # positive
             "Floor and Ceiling are indexed": str(self.adjust_floor_ceiling),
             "Indexation": self.indexation,
         }
@@ -560,7 +608,9 @@ class VanguardDynamicSpending(PercentageStrategy):
     @min_max_annual_withdrawals.setter
     def min_max_annual_withdrawals(self, value: Optional[tuple[float, float]]):
         if not isinstance(value, tuple):
-            raise TypeError("min_max_annual_withdrawals must be a tuple (float, float).")
+            raise TypeError(
+                "min_max_annual_withdrawals must be a tuple (float, float)."
+            )
         min_w = value[0]
         max_w = value[1]
         validators.validate_real("minimum annual withdrawal", min_w)
@@ -570,10 +620,11 @@ class VanguardDynamicSpending(PercentageStrategy):
         if max_w < 0:
             raise ValueError("Max withdrawal cannot be negative.")
         if min_w > max_w:
-            raise ValueError("Minimum withdrawal cannot be greater than maximum withdrawal.")
+            raise ValueError(
+                "Minimum withdrawal cannot be greater than maximum withdrawal."
+            )
         self._clear_cf_cache()
         self._min_max_annual_withdrawals = value
-
 
     @property
     def adjust_min_max(self):
@@ -642,7 +693,9 @@ class VanguardDynamicSpending(PercentageStrategy):
         if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
             self._indexation = self.portfolio.get_cagr().loc[self.portfolio.inflation]
         elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
-            raise ValueError("There is no information about historical inflation. Set inflation=True to calculate.")
+            raise ValueError(
+                "There is no information about historical inflation. Set inflation=True to calculate."
+            )
         elif indexation is None and not hasattr(self.portfolio, "inflation"):
             self._indexation = settings.DEFAULT_DISCOUNT_RATE
         else:
@@ -650,7 +703,9 @@ class VanguardDynamicSpending(PercentageStrategy):
             self._clear_cf_cache()
             self._indexation = indexation
 
-    def _calculate_withdrawal_size(self, last_withdrawal: float, balance: float, number_of_periods: int) -> float:
+    def _calculate_withdrawal_size(
+        self, last_withdrawal: float, balance: float, number_of_periods: int
+    ) -> float:
         """
         Calculate regular withdrawal size (Extra Withdrawals are not taken into account). Used in helpers.
 
@@ -672,14 +727,33 @@ class VanguardDynamicSpending(PercentageStrategy):
         withdrawal_size_by_percentage = balance * abs(self.percentage)
         if self.floor_ceiling is not None:
             floor, ceiling = self.floor_ceiling
-            floor_indexed = abs(last_withdrawal) * (1 + self.indexation) * (1 + floor) if self.adjust_floor_ceiling else abs(last_withdrawal) * (1 + floor)
-            ceiling_indexed = abs(last_withdrawal) * (1 + self.indexation) * (1 + ceiling) if self.adjust_floor_ceiling else abs(last_withdrawal) * (1 + ceiling)
+            floor_indexed = (
+                abs(last_withdrawal) * (1 + self.indexation) * (1 + floor)
+                if self.adjust_floor_ceiling
+                else abs(last_withdrawal) * (1 + floor)
+            )
+            ceiling_indexed = (
+                abs(last_withdrawal) * (1 + self.indexation) * (1 + ceiling)
+                if self.adjust_floor_ceiling
+                else abs(last_withdrawal) * (1 + ceiling)
+            )
         if self.min_max_annual_withdrawals is not None:
             min_withdrawal, max_withdrawal = self.min_max_annual_withdrawals
-            min_indexed = abs(min_withdrawal) * (1 + self.indexation) ** number_of_periods if self.adjust_min_max else abs(min_withdrawal)
-            max_indexed = abs(max_withdrawal) * (1 + self.indexation) ** number_of_periods if self.adjust_min_max else abs(max_withdrawal)
+            min_indexed = (
+                abs(min_withdrawal) * (1 + self.indexation) ** number_of_periods
+                if self.adjust_min_max
+                else abs(min_withdrawal)
+            )
+            max_indexed = (
+                abs(max_withdrawal) * (1 + self.indexation) ** number_of_periods
+                if self.adjust_min_max
+                else abs(max_withdrawal)
+            )
         # Chek what limitation is actual
-        if self.floor_ceiling is not None and self.min_max_annual_withdrawals is not None:
+        if (
+            self.floor_ceiling is not None
+            and self.min_max_annual_withdrawals is not None
+        ):
             # Upper limit
             if ceiling_indexed > max_indexed:
                 max_final = max_indexed
@@ -703,24 +777,29 @@ class VanguardDynamicSpending(PercentageStrategy):
         elif self.floor_ceiling is not None and self.min_max_annual_withdrawals is None:
             # print("min_max_annual_withdrawals is None")
             min_final = floor_indexed
-            max_final = ceiling_indexed if ceiling_indexed != 0 else withdrawal_size_by_percentage
+            max_final = (
+                ceiling_indexed
+                if ceiling_indexed != 0
+                else withdrawal_size_by_percentage
+            )
         else:
             # no limits
             min_final = -math.inf
             max_final = math.inf
         # Apply the limitation to the withdrawal
         if min_final <= withdrawal_size_by_percentage <= max_final:
-            withdrawal = - withdrawal_size_by_percentage
+            withdrawal = -withdrawal_size_by_percentage
             # print(f"withdrawal by percentage. Max: {max_final: .0f}, Min: {min_final: .0f}")
         elif withdrawal_size_by_percentage > max_final:
-            withdrawal = - max_final
+            withdrawal = -max_final
             # print(f"withdrawal by max_final. By percentage was {withdrawal_size_by_percentage: .0f}")
         elif withdrawal_size_by_percentage < min_final:
-            withdrawal = - min_final
+            withdrawal = -min_final
             # print(f"withdrawal by min_final. By percentage was {withdrawal_size_by_percentage: .0f}")
         else:
-            raise ValueError('Wrong withdrawal size. Check the calculation.')
+            raise ValueError("Wrong withdrawal size. Check the calculation.")
         return withdrawal
+
 
 class CutWithdrawalsIfDrawdown(IndexationStrategy):
     """
@@ -749,18 +828,47 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
         List of tuples (threshold, reduction_coefficient).
         Example: [(0.20, 0.40)] means if drawdown > 20%, reduce withdrawal by 40%.
         Default is [(.20, .40), (.50, 1)].
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import okama as ok
+    >>> pf = ok.Portfolio(
+    ...     ["SPY.US", "BND.US"],
+    ...     weights=[.6, .4],
+    ...     first_date="2010-01",
+    ...     last_date="2024-10",
+    ...     ccy="USD",
+    ...     inflation=True,
+    ... )
+    >>> cwid = ok.CutWithdrawalsIfDrawdown(
+    ...     parent=pf,
+    ...     initial_investment=1_000_000,
+    ...     frequency="year",
+    ...     amount=-60_000,
+    ...     indexation="inflation",
+    ...     crash_threshold_reduction=[(.10, .25), (.20, .50), (.35, 1)],
+    ... )
+    >>> pf.dcf.cashflow_parameters = cwid
+    >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
+    >>> plt.show()
     """
+
     NAME = "CWID"
+
     def __init__(
-            self,
-            parent: core.Portfolio,
-            frequency: Optional[str] = "year",
-            initial_investment: float = 1000.0,
-            time_series_dic: dict = {},
-            time_series_discounted_values: bool = False,
-            amount: float = 0.0,
-            indexation: Optional[Union[str, float]] = None,
-            crash_threshold_reduction: list[tuple[float, float]] = [(.20, .40), (.50, 1)],
+        self,
+        parent: core.Portfolio,
+        frequency: Optional[str] = "year",
+        initial_investment: float = 1000.0,
+        time_series_dic: dict = {},
+        time_series_discounted_values: bool = False,
+        amount: float = 0.0,
+        indexation: Optional[Union[str, float]] = None,
+        crash_threshold_reduction: list[tuple[float, float]] = [
+            (0.20, 0.40),
+            (0.50, 1),
+        ],
     ):
         super().__init__(
             parent=parent,
@@ -769,12 +877,14 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
             time_series_dic=time_series_dic,
             time_series_discounted_values=time_series_discounted_values,
             amount=amount,
-            indexation=indexation
+            indexation=indexation,
         )
         self._crash_threshold_reduction_series = None
         self.portfolio = self.parent
         self._crash_threshold_reduction = crash_threshold_reduction
-        self._crash_threshold_reduction_series = self.make_series_from_list(self.crash_threshold_reduction)
+        self._crash_threshold_reduction_series = self.make_series_from_list(
+            self.crash_threshold_reduction
+        )
 
     def __repr__(self):
         dic = {
@@ -785,7 +895,7 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
             "Cash flow strategy": self.NAME,
             "Cash flow amount": self.amount,
             "Cash flow indexation": self.indexation,
-            "Crash threshold reduction": self.crash_threshold_reduction
+            "Crash threshold reduction": self.crash_threshold_reduction,
         }
         return repr(pd.Series(dic))
 
@@ -816,13 +926,18 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
             validators.validate_real("threshold", threshold)
             validators.validate_real("reduction", reduction)
             if abs(threshold) >= 1 or threshold == 0:
-                raise ValueError('crash_threshold_reduction first values (threshold) must be in the interval (0, 1).')
+                raise ValueError(
+                    "crash_threshold_reduction first values (threshold) must be in the interval (0, 1)."
+                )
             if abs(reduction) > 1:
-                raise ValueError('crash_threshold_reduction second values (reductiuon) must be in the interval [0, 1].')
+                raise ValueError(
+                    "crash_threshold_reduction second values (reductiuon) must be in the interval [0, 1]."
+                )
         self._crash_threshold_reduction = value
 
-
-    def _calculate_withdrawal_size(self, drawdown: float, withdrawal_without_drawdowns: float) -> float:
+    def _calculate_withdrawal_size(
+        self, drawdown: float, withdrawal_without_drawdowns: float
+    ) -> float:
         """
         Calculate regular withdrawal size (Extra Withdrawals are not taken into account). Used in helpers.
 
@@ -843,7 +958,7 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
             if abs(drawdown) >= threshold:
                 withdrawal *= 1 - reduction
                 break
-        return - withdrawal
+        return -withdrawal
 
     def make_series_from_list(self, l: list[tuple[float, float]]) -> pd.Series:
         """

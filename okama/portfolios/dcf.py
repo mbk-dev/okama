@@ -36,20 +36,24 @@ class WithdrawalGoal:
 
 class PortfolioDCF:
     """
-    Class to access discounted cash flow (DCF) methods of Portfolio.
-    All methods can be used in Portfolio instances through construction:
-    ```
-    pf = Portfolio()
-    pf.dcf.weatlh_index
-    pf.dсf.cashflow_pv
-    ```
+    Discounted cash flow (DCF) methods for a `Portfolio`.
+
+    This class is available via `Portfolio.dcf`.
 
     Parameters
     ----------
-    discount_rate: float or None, default None
-        Cash flow discount rate required to calculate Present value (PV) or Future (FV) of cashflow.
-        If not provided geometric mean of inflation is taken.
-        For portfolios without inflation the default value from settings is used.
+    parent : Portfolio
+        Parent `Portfolio` instance.
+    discount_rate : float or None, default None
+        Annual effective discount rate used to calculate present values (PV).
+        If None and the portfolio has inflation data, the geometric mean of inflation is used.
+        Otherwise, `settings.DEFAULT_DISCOUNT_RATE` is used.
+
+    Examples
+    --------
+    >>> import okama as ok
+    >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")
+    >>> pf.dcf.wealth_index(discounting="fv").head()
     """
 
     def __init__(
@@ -137,26 +141,25 @@ class PortfolioDCF:
 
         Parameters
         ----------
-        distribution: str
-            The type of a distribution to generate random rate of return.
-            Allowed values for distribution:
-            -'norm' for normal distribution
-            -'lognorm' for lognormal distribution
-            -'t' for Student's (t-distribution)
+        distribution : {'norm', 'lognorm', 't'}, default 'norm'
+            Distribution used to generate random rates of return:
 
-        distribution_parameters: tuple, default None
+            - 'norm' for normal distribution
+            - 'lognorm' for lognormal distribution
+            - 't' for Student's t-distribution
+
+        distribution_parameters : tuple or None, default None
             Distribution parameters to generate random rate of return.
             (mean, standard deviation) for normal distribution.
             (shape, loc, scale) for lognormal distribution.
             (df, loc, scale) for Student distribution.
-            Put None in place of any parameter if you want it to be determined automatically by scipy.stat.fit
-            like (3, None, None) for Student's t distribution with degrees of freedom (df) equal to 3
-            and automatic values for loc and scale.
+            Use None for any element to let SciPy estimate it via the distribution `.fit()` method
+            (for example, `(3, None, None)` for Student's t-distribution with df=3 and auto loc/scale).
 
-        period: int
+        period : int, default 1
             Forecast period for portfolio wealth index time series (in years).
 
-        mc_number: int
+        mc_number : int, default 100
             Number of random wealth indexes to generate with Monte Carlo simulation.
 
         Examples
@@ -360,7 +363,7 @@ class PortfolioDCF:
         threshold : float, default 0
             The percentage of the initial investments when the portfolio balance considered voided.
             This parameter is important to use in cash flow strategies with a fixed
-            whtdrawal percentage (PercentageStrategy).
+            withdrawal percentage (PercentageStrategy).
 
         Returns
         -------
@@ -402,7 +405,7 @@ class PortfolioDCF:
         threshold : float, default 0
             The percentage of the initial investments when the portfolio balance considered voided.
             This parameter is important to use in cash flow strategies with a fixed
-            whtdrawal percentage (PercentageStrategy).
+            withdrawal percentage (PercentageStrategy).
 
         Returns
         -------
@@ -438,7 +441,7 @@ class PortfolioDCF:
 
         Returns
         -------
-        float, None
+        float or None
             The discounted value (PV) of the initial investments at the historical first date.
 
         Examples
@@ -463,11 +466,11 @@ class PortfolioDCF:
         """
         The future value (FV) of the initial investments at the historical first date.
 
-        When 'initial_investment' parameter is not defined, `initial_investment_fv` set to None.
+        When the `initial_investment` parameter is not defined, `initial_investment_fv` is set to None.
 
         Returns
         -------
-        float, None
+        float or None
             The future value (FV) of the initial investments.
 
         Examples
@@ -647,13 +650,13 @@ class PortfolioDCF:
         backtest : bool, default True
             Include historical wealth index if True.
 
-        figsize : (float, float), optional
-            Width, height in inches.
-            If None default matplotlib figsize value is used.
+        figsize : tuple of (float, float), default None
+            Figure size (width, height) in inches. If None, matplotlib defaults are used.
 
         Returns
         -------
-        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+        Axes
+            Matplotlib axes object.
 
         Examples
         --------
@@ -717,7 +720,7 @@ class PortfolioDCF:
         threshold : float, default 0
             The percentage of the initial investments when the portfolio balance considered voided.
             This parameter is important to use in cash flow strategies with a fixed
-            whtdrawal percentage (PercentageStrategy).
+            withdrawal percentage (PercentageStrategy).
 
         Returns
         -------
@@ -926,15 +929,15 @@ class PortfolioDCF:
         iter_max: int = 20,
     ) -> Result:
         """
-        Find the largest withdrawals size for Monte Carlo simulation according to Cashflow Strategy.
+        Find the largest withdrawal size for Monte Carlo simulation according to a cash flow strategy.
 
-        It's possible to find the largest withdrawal with 3 kinds of goals:
+        You can find the largest withdrawal size for three goals:
 
-        — 'maintain_balance_pv' to keep the purchasing power of the investments after inflation
-            for the whole period defined in Monte Carlo parameters.
-        — 'maintain_balance_fv' to keep the nominal size of the investments for the whole period
-            defined in Monte Carlo parameters.
-        — 'survival_period' to keep positive balance for a period defined by 'target_survival_period'.
+        - 'maintain_balance_pv' to keep the purchasing power of the investments after inflation
+          for the whole period defined in Monte Carlo parameters.
+        - 'maintain_balance_fv' to keep the nominal size of the investments for the whole period
+          defined in Monte Carlo parameters.
+        - 'survival_period' to keep a positive balance for a period defined by `target_survival_period`.
 
         The method works with IndexationStrategy and PercentageStrategy only.
 
@@ -947,7 +950,7 @@ class PortfolioDCF:
         - 'error_rel' - characterizes how accurately the goal is fulfilled.
         - 'solutions' - the history of attempts to find solutions (withdrawal values and error level).
 
-        The algorithm uses bisection method to find the largest withdrawals size.
+        The algorithm uses the bisection method to find the largest withdrawal size.
 
         Parameters
         ----------
@@ -960,7 +963,7 @@ class PortfolioDCF:
             for a period defined by 'target_survival_period'.
 
         withdrawals_range : tuple of (float, float), default (0, 1)
-            The expected range of annualized withdrawals size measured as a percentage
+            The expected range of annualized withdrawal size measured as a percentage
             of the Initial Investment (CashFlow.initial_investment).
             0.01 stands for 1%. (0.02, 0.05) means that expected withdrawal is in range from 2% to 5% of Initial Investment.
             The first value is expected minimum withdrawal. The second value is expected maximum withdrawal.
@@ -976,10 +979,10 @@ class PortfolioDCF:
             The percentage of initial investments when the portfolio balance is considered voided.
             Important for the "fixed_percentage" Cash flow strategy.
 
-        target_survival_period: int, default 25
+        target_survival_period : int, default 25
             The smallest acceptable survival period. It works with the 'survival_period' goal only.
 
-        iter_max : integer, default 20
+        iter_max : int, default 20
             The maximum number of iterations to find the solution.
 
         tolerance_rel : float, default 0.10
@@ -988,7 +991,7 @@ class PortfolioDCF:
         Returns
         -------
         Result
-            The result of finding solution process.
+            The result of the solution search.
 
         Examples
         --------
@@ -1025,10 +1028,10 @@ class PortfolioDCF:
         attempts                 10
         dtype: object
 
-        in the result the 'withdrawal_abs' is the absolute value of the withdrawal (the first withdrawal value),
-        and the 'withdrawal_rel' the relative withdrawal size (the first withdrawal value divided by the initial investment).
+        In the result, `withdrawal_abs` is the absolute value of the withdrawal (the first withdrawal value),
+        and `withdrawal_rel` is the relative withdrawal size (the first withdrawal value divided by the initial investment).
 
-        If the solution was not found it's still possible to see the intermediate steps.
+        If the solution was not found, it is still possible to see the intermediate steps.
 
         >>> res.solutions
           withdrawal_abs withdrawal_rel error_rel error_rel_change

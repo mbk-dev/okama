@@ -13,32 +13,29 @@ from okama import settings
 
 class AssetList(make_asset_list.ListMaker):
     """
-    The list of financial assets implementation.
+    List of financial assets.
 
-    AssetList can include stocks, ETF, mutual funds, commodities, currencies and stock indexes (benchmarks).
+    AssetList can include stocks, ETFs, mutual funds, commodities, currencies and stock indexes (benchmarks).
 
     Parameters
     ----------
     assets : list, default None
-        List of assets. Could include tickers or asset like objects (Asset, Portfolio).
-        If None a single asset list with a default ticker is used.
-
+        List of assets. Could include tickers or asset-like objects (`Asset`, `Portfolio`).
+        If None, a single-asset list with a default ticker is used.
     first_date : str, default None
         First date of monthly return time series.
-        If None the first date is calculated automatically as the oldest available date for the listed assets.
-
+        If None, the first date is calculated automatically as the oldest available date for the listed assets.
     last_date : str, default None
         Last date of monthly return time series.
-        If None the last date is calculated automatically as the newest available date for the listed assets.
-
+        If None, the last date is calculated automatically as the newest available date for the listed assets.
     ccy : str, default 'USD'
         Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
 
     inflation : bool, default True
         Defines whether to take inflation data into account in the calculations.
-        Including inflation could limit available data (last_date, first_date)
+        Including inflation could limit available data (`first_date`, `last_date`)
         as the inflation data is usually published with a one-month delay.
-        With inflation = False some properties like real return are not available.
+        With `inflation=False`, some properties like real return are not available.
     """
 
     def __repr__(self):
@@ -60,7 +57,7 @@ class AssetList(make_asset_list.ListMaker):
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of each asset over
         historical time period. Accumulated inflation time series is added if `inflation=True` in the AssetList.
 
-        Wealth index is obtained from the accumulated return multiplicated by the initial investments.
+        Wealth index is obtained from the accumulated return multiplied by the initial investments.
         That is: 1000 * (Acc_Return + 1)
         Initial investments are taken as 1000 units of the AssetList base currency.
 
@@ -449,15 +446,15 @@ class AssetList(make_asset_list.ListMaker):
 
         Inflation adjusted annualized returns (real CAGR) are shown with `real=True` option.
 
-        Annual inflation value is calculated for the same period if inflation=True in the AssetList.
+        Annual inflation value is calculated for the same period if `inflation=True` in the `AssetList`.
 
         Parameters
         ----------
-        period: int, optional
-            CAGR trailing period in years. None for the full time CAGR.
-        real: bool, default False
+        period : int, default None
+            CAGR trailing period in years. If None, use the full available period.
+        real : bool, default False
             CAGR is adjusted for inflation (real CAGR) if True.
-            AssetList should be initiated with Inflation=True for real CAGR.
+            AssetList should be initiated with `inflation=True` for real CAGR.
 
         Returns
         -------
@@ -517,9 +514,9 @@ class AssetList(make_asset_list.ListMaker):
         ----------
         window : int, default 12
             Size of the moving window in months. Window size should be at least 12 months for CAGR.
-        real: bool, default False
+        real : bool, default False
             CAGR is adjusted for inflation (real CAGR) if True.
-            AssetList should be initiated with Inflation=True for real CAGR.
+            AssetList should be initiated with `inflation=True` for real CAGR.
 
         Returns
         -------
@@ -565,13 +562,13 @@ class AssetList(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        period: str, int or None, default None
-            Trailing period in years. Period should be more then 0.
+        period : str or int or None, default None
+            Trailing period in years. Period should be greater than 0.
             None - full time cumulative return.
             'YTD' - (Year To Date) period of time beginning the first day of the calendar year up to the last month.
-        real: bool, default False
+        real : bool, default False
             Cumulative return is adjusted for inflation (real cumulative return) if True.
-            AssetList should be initiated with `Inflation=True` for real cumulative return.
+            AssetList should be initiated with `inflation=True` for real cumulative return.
 
         Returns
         -------
@@ -627,9 +624,9 @@ class AssetList(make_asset_list.ListMaker):
         ----------
         window : int, default 12
             Size of the moving window in months.
-        real: bool, default False
+        real : bool, default False
             Cumulative return is adjusted for inflation (real cumulative return) if True.
-            AssetList should be initiated with `Inflation=True` for real cumulative return.
+            AssetList should be initiated with `inflation=True` for real cumulative return.
 
         Returns
         -------
@@ -710,11 +707,11 @@ class AssetList(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        years : tuple of (int,), default (1, 5, 10)
+        years : tuple of int, default (1, 5, 10)
             List of periods for CAGR.
 
         tickers : bool, default True
-            Defines whether show tickers (True) or assets names in the header.
+            Defines whether to show tickers (True) or asset names in the header.
 
         Returns
         -------
@@ -727,7 +724,7 @@ class AssetList(make_asset_list.ListMaker):
         get_cagr : Calculate assets Compound Annual Growth Rate (CAGR).
         dividend_yield : Calculate dividend yield (LTM).
         risk_annual : Return annualized risks (standard deviation).
-        get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
+        get_cvar_historic : Calculate historic Conditional Value at Risk (CVaR).
         drawdowns : Calculate drawdowns.
 
         Examples

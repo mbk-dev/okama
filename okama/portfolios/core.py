@@ -19,62 +19,56 @@ from okama.common.helpers import helpers, ratios, tails
 
 class Portfolio(make_asset_list.ListMaker):
     """
-    Implementation of investment portfolio.
+    Investment portfolio.
 
-    Investments portfolio is a type of financial asset (same as stocks, ETF, mutual funds, currencies etc.).
-    Arguments are similar to AssetList, however Portfolio additionally has:
+    An investment portfolio is a type of financial asset (same as stocks, ETFs, mutual funds, currencies, etc.).
+    The arguments are similar to `AssetList`, but `Portfolio` additionally has:
 
-    - weights
-    - rebalancing_period
-    - symbol
+    - `weights`
+    - `rebalancing_strategy`
+    - `symbol`
 
     Portfolio is defined by the investment strategy, which includes:
-    - asset allocation (financial assets and their proportions in the portfolio)
-    - the rebalancing strategy (`rebalancing_period` parameter)
 
-    The rebalancing is the action of bringing the portfolio that has deviated away
-    from original target asset allocation back into line. After rebalancing the portfolio assets
-    have original weights.
+    - asset allocation (financial assets and their proportions in the portfolio)
+    - the rebalancing strategy (`rebalancing_strategy` parameter)
+
+    Rebalancing is the action of bringing the portfolio that has deviated away from the original target asset
+    allocation back into line. After rebalancing, the portfolio assets have the original weights.
 
     Parameters
     ----------
     assets : list, default None
-        List of assets. Could include tickers or asset like objects (Asset, Portfolio).
-        If None a single asset list with a default ticker is used.
-
+        List of assets. Could include tickers or asset-like objects (`Asset`, `Portfolio`).
+        If None, a single-asset list with a default ticker is used.
     first_date : str, default None
         First date of monthly return time series.
-        If None the first date is calculated automatically as the oldest available date for the listed assets.
-
+        If None, the first date is calculated automatically as the oldest available date for the listed assets.
     last_date : str, default None
         Last date of monthly return time series.
-        If None the last date is calculated automatically as the newest available date for the listed assets.
-
+        If None, the last date is calculated automatically as the newest available date for the listed assets.
     ccy : str, default 'USD'
         Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
-
-    inflation: bool, default True
+    inflation : bool, default True
         Defines whether to take inflation data into account in the calculations.
-        Including inflation could limit available data (last_date, first_date)
+        Including inflation could limit available data (`first_date`, `last_date`)
         as the inflation data is usually published with a one-month delay.
-        With inflation = False some properties like real return are not available.
-
+        With `inflation=False`, some properties like real return are not available.
     weights : list of float, default None
-        List of assets weights.
+        List of asset weights.
         The weight of an asset is the percent of an investment portfolio that corresponds to the asset.
-        If weights = None an equally weighted portfolio is created (all weights are equal).
+        If None, an equally weighted portfolio is created (all weights are equal).
+    rebalancing_strategy : Rebalance, default Rebalance(period="month")
+        Rebalancing strategy for an investment portfolio. The strategy is defined by:
 
-    rebalancing_strategy : Rebalance, default Rebalance(period='year', abs_deviation=None, rel_deviation=None)
-        Rebalancing strategy for an investment portfolio. The rebalancing strategy si defined by:
-        -period (rebalancing frequency): predetermined time intervals when the investor rebalances the portfolio.
-        If 'none' assets weights are not rebalanced.
-        -abs_deviation: the absolute deviation allowed for the assets weights in the portfolio.
-        -rel_deviation: the relative deviation allowed for the assets weights in the portfolio.
-
-    symbol : str, optional
+        - period (rebalancing frequency): predetermined time intervals when the investor rebalances the portfolio.
+          If "none", asset weights are not rebalanced.
+        - abs_deviation: the absolute deviation allowed for the asset weights in the portfolio.
+        - rel_deviation: the relative deviation allowed for the asset weights in the portfolio.
+    symbol : str, default None
         Text symbol of portfolio. It is similar to tickers but have a namespace information.
         Portfolio symbol must end with .PF (all_weather_portfolio.PF).
-        If not defined a random symbol is generated (portfolio_7802.PF).
+        If None, a random symbol is generated (portfolio_7802.PF).
     """
 
     def __init__(
@@ -379,19 +373,20 @@ class Portfolio(make_asset_list.ListMaker):
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
         historical time period. Accumulated inflation time series is added if `inflation=True` in the Portfolio.
 
-        Wealth index is obtained from the accumulated return multiplicated by the initial investments.
+        Wealth index is obtained from the accumulated return multiplied by the initial investments.
         That is: 1000 * (Acc_Return + 1)
         Initial investments are taken as 1000 units of the Portfolio base currency.
 
         Returns
         -------
+        DataFrame
             Time series of wealth index values for portfolio and accumulated inflation.
 
         Examples
         --------
         >>> import matplotlib.pyplot as plt
         >>> x = ok.Portfolio(['SPY.US', 'BND.US'])
-        >>> x.wealth_index(discounting="fv", include_negative_values=False).plot()
+        >>> x.wealth_index.plot()
         >>> plt.show()
         """
         df = self._add_inflation()
@@ -410,12 +405,13 @@ class Portfolio(make_asset_list.ListMaker):
     def wealth_index_with_assets(self) -> pd.DataFrame:
         """
         Calculate wealth index time series for the portfolio, all assets and accumulated inflation.
-        Сash flows are not taken into account.
+
+        Cash flows are not taken into account.
 
         Wealth index (Cumulative Wealth Index) is a time series that presents the value of portfolio over
         historical time period. Accumulated inflation time series is added if `inflation=True` in the Portfolio.
 
-        Wealth index is obtained from the accumulated return multiplicated by the initial investments.
+        Wealth index is obtained from the accumulated return multiplied by the initial investments.
         initial_amount_pv * (Acc_Return + 1)
 
         Returns
@@ -427,7 +423,7 @@ class Portfolio(make_asset_list.ListMaker):
         --------
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
-        >>> pf.wealth_index_fv_with_assets.plot()
+        >>> pf.wealth_index_with_assets.plot()
         >>> plt.show()
         """
         ls = [self.ror, self.assets_ror]
@@ -445,13 +441,13 @@ class Portfolio(make_asset_list.ListMaker):
 
         Returns
         -------
-        Float
+        float
             Mean return value.
 
         Examples
         --------
         >>> pf = ok.Portfolio(['ISF.LSE', 'XGLE.LSE'], weights=[0.6, 0.4], ccy='GBP')
-        >>> pf
+        >>> pf.mean_return_monthly
         0.0001803312727272665
         """
         return self.ror.mean()
@@ -465,8 +461,8 @@ class Portfolio(make_asset_list.ListMaker):
 
         Returns
         -------
-        Float
-           Mean return value.
+        float
+            Mean return value.
 
         Examples
         --------
@@ -484,22 +480,27 @@ class Portfolio(make_asset_list.ListMaker):
 
         Rate of return is calculated for each calendar year.
 
+        Parameters
+        ----------
+        return_type : {'cagr', 'arithmetic_mean'}, default 'cagr'
+            Method used to calculate annual returns.
+
         Returns
         -------
-        DataFrame
+        Series
             Calendar annual rate of return time series.
 
         Examples
         --------
         >>> import matplotlib.pyplot as plt
         >>> pf = ok.Portfolio(['VOO.US', 'AGG.US'], weights=[0.4, 0.6])
-        >>> pf.annual_return_ts.plot(kind='bar')
+        >>> pf.annual_return_ts().plot(kind='bar')
         >>> plt.show()
 
         Plot annual returns for portfolio with EUR as the base currency.
 
         >>> pf = ok.Portfolio(['VOO.US', 'AGG.US'], weights=[0.4, 0.6], ccy='EUR')
-        >>> pf.annual_return_ts.plot(kind='bar')
+        >>> pf.annual_return_ts().plot(kind='bar')
         >>> plt.show()
         """
         return helpers.Frame.get_annual_return_ts_from_monthly(self.ror, return_type)
@@ -513,15 +514,15 @@ class Portfolio(make_asset_list.ListMaker):
 
         Inflation adjusted annualized returns (real CAGR) are shown with `real=True` option.
 
-        Annual inflation value is calculated for the same period if inflation=True in the AssetList.
+        Annual inflation value is calculated for the same period if `inflation=True` in the `Portfolio`.
 
         Parameters
         ----------
-        period: int, optional
-            CAGR trailing period in years. None for the full time CAGR.
-        real: bool, default False
+        period : int, default None
+            CAGR trailing period in years. If None, use the full available period.
+        real : bool, default False
             CAGR is adjusted for inflation (real CAGR) if True.
-            Portfolio should be initiated with Inflation=True for real CAGR.
+            Portfolio should be initiated with `inflation=True` for real CAGR.
 
         Returns
         -------
@@ -570,14 +571,14 @@ class Portfolio(make_asset_list.ListMaker):
         ----------
         window : int, default 12
             Size of the moving window in months. Window size should be at least 12 months for CAGR.
-        real: bool, default False
+        real : bool, default False
             CAGR is adjusted for inflation (real CAGR) if True.
             Portfolio should be initiated with Inflation=True for real CAGR.
 
         Returns
         -------
         DataFrame
-            Time series of rolling CAGR and mean inflation (optionaly).
+            Time series of rolling CAGR and mean inflation (optionally).
 
         Notes
         -----
@@ -613,15 +614,15 @@ class Portfolio(make_asset_list.ListMaker):
         The cumulative return is the total change in the portfolio price during the investment period.
 
         Inflation adjusted cumulative returns (real cumulative returns) are shown with `real=True` option.
-        Annual inflation data is calculated for the same period if `inflation=True` in the AssetList.
+        Annual inflation data is calculated for the same period if `inflation=True` in the `Portfolio`.
 
         Parameters
         ----------
-        period: str, int or None, default None
+        period : str or int or None, default None
             Trailing period in years.
             None - full time cumulative return.
             'YTD' - (Year To Date) period of time beginning the first day of the calendar year up to the last month.
-        real: bool, default False
+        real : bool, default False
             Cumulative return is adjusted for inflation (real cumulative return) if True.
             Portfolio should be initiated with `Inflation=True` for real cumulative return.
 
@@ -672,7 +673,7 @@ class Portfolio(make_asset_list.ListMaker):
         ----------
         window : int, default 12
             Size of the moving window in months.
-        real: bool, default False
+        real : bool, default False
             Cumulative return is adjusted for inflation (real cumulative return) if True.
             Portfolio should be initiated with `Inflation=True` for real cumulative return.
 
@@ -1009,7 +1010,7 @@ class Portfolio(make_asset_list.ListMaker):
         Calculate monthly risk expanding time series for Portfolio.
 
         Monthly risk of portfolio is a standard deviation of the rate of return time series.
-        Standard deviation (sigma σ) is normalized by N-1.
+        Standard deviation (sigma) is normalized by N-1.
 
         Returns
         -------
@@ -1136,7 +1137,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Returns
         -------
-        Float
+        float
             Historic Value at Risk (VaR) value for the portfolio.
 
         Examples
@@ -1159,14 +1160,14 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        time_frame : int, default 12 (12 months)
-            Time period size in months
+        time_frame : int, default 12
+            Time period size in months.
         level : int, default 1
             Confidence level in percents to calculate the VaR. Default value is 1% (1% quantile).
 
         Returns
         -------
-        Float
+        float
             Historic Conditional Value at Risk (CVAR, expected shortfall) value for the portfolio.
 
         Examples
@@ -1252,7 +1253,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        years : tuple of (int,), default (1, 5, 10)
+        years : tuple of int, default (1, 5, 10)
             List of periods for CAGR statistics.
 
         Returns
@@ -1262,12 +1263,12 @@ class Portfolio(make_asset_list.ListMaker):
 
         See Also
         --------
-            get_cumulative_return : Calculate cumulative return.
-            get_cagr : Calculate assets Compound Annual Growth Rate (CAGR).
-            dividend_yield : Calculate dividend yield (LTM).
-            risk_annual : Return annualized risks (standard deviation).
-            get_cvar : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
-            drawdowns : Calculate drawdowns.
+        get_cumulative_return : Calculate cumulative return.
+        get_cagr : Calculate portfolio Compound Annual Growth Rate (CAGR).
+        dividend_yield : Calculate dividend yield (LTM).
+        risk_annual : Return annualized risks (standard deviation).
+        get_cvar_historic : Calculate historic Conditional Value at Risk (CVAR, expected shortfall).
+        drawdowns : Calculate drawdowns.
 
         Examples
         --------
@@ -1395,7 +1396,7 @@ class Portfolio(make_asset_list.ListMaker):
         """
         Compute the percentile rank of a score (CAGR value).
 
-        Percentile rank can be calculated for given distribution type or for hsitorical distribution of CAGR.
+        Percentile rank can be calculated for a historical distribution of CAGR.
 
         If percentile_inverse of, for example, 0% (CAGR value) is equal to 8% for 1 year time frame
         it means that 8% of the CAGR values in the distribution are negative in 1 year periods. Or in other words
@@ -1403,10 +1404,9 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        years: int, default 1
+        years : int, default 1
             Period length (time frame) in years when CAGR is calculated.
-
-        score: float, default 0
+        score : float, default 0
             Score that is compared to the elements in CAGR array.
 
         Returns
@@ -1419,7 +1419,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
         >>> pf.percentile_inverse_cagr(score=0, years=1)
         18.08
-        The probability of getting negative result (score=0) in 1 year period for histirucal distribution.
+        The probability of getting negative result (score=0) in 1 year period for historical distribution.
         """
         cagr_distr = self.get_rolling_cagr(years * settings._MONTHS_PER_YEAR).loc[:, [self.symbol]].squeeze()
         return scipy.stats.percentileofscore(cagr_distr, score, kind="rank")
@@ -1433,11 +1433,10 @@ class Portfolio(make_asset_list.ListMaker):
 
         Parameters
         ----------
-        years: int, default 1
+        years : int
             Max window size for rolling CAGR in the distribution in years.
             It should not exceed 1/2 of the portfolio history period length 'period_length'.
-
-        percentiles: list of int, default [10, 50, 90]
+        percentiles : list of int, default [10, 50, 90]
             List of percentiles to be calculated.
 
         Returns

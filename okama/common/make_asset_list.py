@@ -15,30 +15,26 @@ from okama.common.error import ShortPeriodLengthError
 
 class ListMaker(ABC):
     """
-    Abstract class to generate a list of assets with properties.
+    Abstract base class for building an asset list.
 
     Parameters
     ----------
     assets : list, default None
-        List of assets. Could include tickers or asset like objects (Asset, Portfolio).
-        If None a single asset list with a default ticker is used.
-
+        List of assets. Could include tickers or asset-like objects (`Asset`, `Portfolio`).
+        If None, a single-asset list with a default ticker is used.
     first_date : str, default None
         First date of monthly return time series.
-        If None the first date is calculated automatically as the oldest available date for the listed assets.
-
+        If None, the first date is calculated automatically as the oldest available date for the listed assets.
     last_date : str, default None
         Last date of monthly return time series.
-        If None the last date is calculated automatically as the newest available date for the listed assets.
-
+        If None, the last date is calculated automatically as the newest available date for the listed assets.
     ccy : str, default 'USD'
         Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
-
-    inflation: bool, default True
+    inflation : bool, default True
         Defines whether to take inflation data into account in the calculations.
-        Including inflation could limit available data (last_date, first_date)
+        Including inflation could limit available data (`first_date`, `last_date`)
         as the inflation data is usually published with a one-month delay.
-        With inflation = False some properties like real return are not available.
+        With `inflation=False`, some properties like real return are not available.
     """
 
     def __init__(
@@ -102,9 +98,30 @@ class ListMaker(ABC):
         pass
 
     def __len__(self):
+        """
+        Return the number of assets in the list.
+
+        Returns
+        -------
+        int
+            Number of assets.
+        """
         return len(self.symbols)
 
     def __getitem__(self, item):
+        """
+        Return an asset object by index.
+
+        Parameters
+        ----------
+        item : int
+            Index of the asset.
+
+        Returns
+        -------
+        Asset
+            Asset object.
+        """
         return list(self.asset_obj_dict.values())[item]
 
     @staticmethod
@@ -113,6 +130,28 @@ class ListMaker(ABC):
         first_date: Optional[str] = None,
         last_date: Optional[str] = None,
     ) -> dict:
+        """
+        Create a dictionary of Asset objects from a list of symbols or Asset-like objects.
+
+        Parameters
+        ----------
+        ls : list
+            List of symbols or Asset-like objects.
+        first_date : str, optional
+            First date for the assets.
+        last_date : str, optional
+            Last date for the assets.
+
+        Returns
+        -------
+        dict
+            Dictionary of Asset objects with symbols as keys.
+
+        Raises
+        ------
+        ShortPeriodLengthError
+            If an asset's historical data period is too short (less than 3 months).
+        """
         def get_item(symbol):
             asset_item = (
                 symbol
@@ -153,6 +192,19 @@ class ListMaker(ABC):
     def _make_list(self, first_date: Optional[str], last_date: Optional[str]) -> dict:
         """
         Make an asset list from a list of symbols.
+
+        Parameters
+        ----------
+        first_date : str, optional
+            First date of monthly return time series.
+        last_date : str, optional
+            Last date of monthly return time series.
+
+        Returns
+        -------
+        dict
+            Dictionary containing various properties of the asset list,
+            such as first_date, last_date, asset names, currencies, etc.
         """
         base_currency_ticker: str = self._currency.ticker
         currency_first_date: pd.Timestamp = self._currency.first_date
@@ -236,6 +288,18 @@ class ListMaker(ABC):
     def _make_ror(self, list_asset: asset.Asset, base_currency_name: str) -> pd.Series:
         """
         Make asset rate of return time series.
+
+        Parameters
+        ----------
+        list_asset : asset.Asset
+            Asset object.
+        base_currency_name : str
+            Name of the base currency.
+
+        Returns
+        -------
+        pd.Series
+            Rate of return monthly time series for the asset.
         """
         asset_currency_name = list_asset.currency
         if asset_currency_name == base_currency_name:
@@ -253,6 +317,18 @@ class ListMaker(ABC):
     def _adjust_ror_to_currency(cls, returns: pd.Series, asset_currency: asset.Asset) -> pd.Series:
         """
         Adjust returns time series to a certain currency.
+
+        Parameters
+        ----------
+        returns : pd.Series
+            Rate of return time series.
+        asset_currency : asset.Asset
+            Currency asset object.
+
+        Returns
+        -------
+        pd.Series
+            Adjusted rate of return time series.
         """
         asset_mult = returns + 1.0
         currency_mult = asset_currency.ror + 1.0
@@ -267,6 +343,18 @@ class ListMaker(ABC):
     def _adjust_price_to_currency_monthly(self, price: pd.Series, asset_currency: str) -> pd.Series:
         """
         Adjust monthly time series of dividends or close values to a base currency.
+
+        Parameters
+        ----------
+        price : pd.Series
+            Price time series.
+        asset_currency : str
+            Currency of the asset.
+
+        Returns
+        -------
+        pd.Series
+            Adjusted price time series.
         """
         ccy_symbol = f"{asset_currency}{self.currency}.FX"
         currency_rate = asset.Asset(ccy_symbol, first_date=self.first_date, last_date=self.last_date).close_monthly.to_frame()
@@ -277,12 +365,30 @@ class ListMaker(ABC):
         return merged.iloc[:, 0].multiply(merged[ccy_symbol], axis=0)
 
     @staticmethod
-    def _define_symbol_list(assets):
+    def _define_symbol_list(assets: List[Union[str, Type]]) -> List[str]:
+        """
+        Extract symbols from a list of assets.
+
+        Parameters
+        ----------
+        assets : list
+            List of assets (can be strings or Asset-like objects).
+
+        Returns
+        -------
+        list of str
+            List of symbols.
+        """
         return [asset.symbol if hasattr(asset, "symbol") else asset for asset in assets]
 
     def _add_inflation(self) -> pd.DataFrame:
         """
         Add inflation column to returns DataFrame.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with assets' rate of return and inflation.
         """
         if hasattr(self, "inflation"):
             return pd.concat([self._assets_ror, self.inflation_ts], axis=1, join="inner")
@@ -291,19 +397,19 @@ class ListMaker(ABC):
 
     def _validate_period(self, period: Any) -> None:
         """
-        Check if conditions are met:
-        * period should be an integer
-        * period should be positive
-        * period should not exceed history period length
+        Validate trailing period.
 
         Parameters
         ----------
-        period : Any
+        period : int
+            Trailing period in years.
 
-        Returns
-        -------
-        None
-            No exceptions raised if validation passes.
+        Raises
+        ------
+        ValueError
+            If `period` is not positive or exceeds the available history.
+        TypeError
+            If `period` is not an integer.
         """
         validators.validate_integer("period", period, min_value=0, inclusive=False)
         if period > self.pl.years:
@@ -312,6 +418,18 @@ class ListMaker(ABC):
     def _get_single_asset_dividends(self, tick: str, remove_forecast: bool = True) -> pd.Series:
         """
         Get monthly dividend time series for a single symbol and adjust to the currency.
+
+        Parameters
+        ----------
+        tick : str
+            Asset symbol.
+        remove_forecast : bool, default True
+            If True, remove forecasted (future) data.
+
+        Returns
+        -------
+        pd.Series
+            Monthly dividend time series.
         """
         asset = self.asset_obj_dict[tick]
         s = asset.dividends[self.first_date : self.last_date]
@@ -329,7 +447,15 @@ class ListMaker(ABC):
         """
         Get monthly dividend time series for all assets. Dividend values are adjusted to base currency.
 
-        If `remove_forecast=True` all forecasted (future) data is removed from the time series.
+        Parameters
+        ----------
+        remove_forecast : bool, default True
+            If True, all forecasted (future) data is removed from the time series.
+
+        Returns
+        -------
+        pd.DataFrame
+            Monthly dividend time series for all assets.
         """
         if self._assets_dividends_ts.empty:
             dic = {}
@@ -344,6 +470,21 @@ class ListMaker(ABC):
         Calculate real monthly return time series.
 
         Rate of return monthly data is adjusted for inflation.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            DataFrame of monthly returns.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame of real monthly returns.
+
+        Raises
+        ------
+        ValueError
+            If inflation data is not available.
         """
         if not hasattr(self, "inflation"):
             raise ValueError("Real Return is not defined. Set inflation=True when initiating the class.")
@@ -353,6 +494,21 @@ class ListMaker(ABC):
 
     @property
     def _assets_dividend_yield(self) -> pd.DataFrame:
+        """
+        Calculate last twelve months (LTM) dividend yield time series (monthly) for each asset.
+
+        LTM dividend yield is the sum trailing twelve months of common dividends per share divided by
+        the current price per share.
+
+        All yields are calculated in the asset list base currency after adjusting the dividends and price time series.
+        Forecasted (future) dividends are removed.
+        Zero value time series are created for assets without dividends.
+
+        Returns
+        -------
+        pd.DataFrame
+            Monthly time series of LTM dividend yield for each asset.
+        """
         if self._dividend_yield.empty:
             frame = {}
             df = self._get_assets_dividends(remove_forecast=True)
@@ -464,34 +620,35 @@ class ListMaker(ABC):
         xy_text: tuple = (0, 10),
     ) -> Axes:
         """
-        Plot the assets points on the risk-return chart with annotations.
+        Plot asset points on the risk-return chart with annotations.
 
         Annualized values for risk and return are used.
-        Risk is a standard deviation of monthly rate of return time series.
-        Return can be an annualized mean return (expected return) or CAGR (Compound annual growth rate).
-
-        Returns
-        -------
-        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+        Risk is the standard deviation of monthly rate of return time series.
+        Return can be an annualized mean return (expected return) or CAGR (compound annual growth rate).
 
         Parameters
         ----------
         kind : {'mean', 'cagr'}, default 'mean'
-            Type of Return: annualized mean return (expected return) or CAGR (Compound annual growth rate).
+            Type of return: annualized mean return (expected return) or CAGR (compound annual growth rate).
 
         tickers : {'tickers', 'names'} or list of str, default 'tickers'
             Annotation type for assets.
-            'tickers' - assets symbols are shown in form of 'SPY.US'
-            'names' - assets names are used like - 'SPDR S&P 500 ETF Trust'
-            To show custom annotations for each asset pass the list of names.
+
+            - 'tickers': asset symbols are shown in the form 'SPY.US'.
+            - 'names': asset names are shown (for example, 'SPDR S&P 500 ETF Trust').
+            - list of str: custom annotations for each asset.
 
         pct_values : bool, default False
-            Risk and return values in the axes:
-            Algebraic annotation (False)
-            Percents (True)
+            If True, show risk and return values in percent.
+            If False, show values as decimals.
 
         xy_text : tuple, default (0, 10)
             The shift of the annotation text (x, y) from the point.
+
+        Returns
+        -------
+        Axes
+            Matplotlib axes object.
 
         Examples
         --------
