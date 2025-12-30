@@ -67,7 +67,7 @@ class MonteCarlo:
     >>> pf.dcf.wealth_index(discounting='fv', include_negative_values=False).plot()
     >>> plt.show()
     """
-
+    # TODO: Change example
     def __init__(
             self,
             parent: dcf.PortfolioDCF,
@@ -102,7 +102,7 @@ class MonteCarlo:
             "Distribution parameters": self.distribution_parameters,
             "Distribution parameters after resolving": resolved_params,
             "Monte Carlo period": self.period,
-            "Monte Carlo number": self.number,
+            "Monte Carlo number": self.mc_number,
         }
         return repr(pd.Series(dic))
 
@@ -172,7 +172,7 @@ class MonteCarlo:
         self._period = period
 
     @property
-    def number(self) -> int:
+    def mc_number(self) -> int:
         """
         Number of random scenarios to generate with Monte Carlo simulation.
 
@@ -182,8 +182,8 @@ class MonteCarlo:
         """
         return self._mc_number
 
-    @number.setter
-    def number(self, mc_number):
+    @mc_number.setter
+    def mc_number(self, mc_number):
         validators.validate_integer("mc_number", mc_number)
         self._clear_cf_cache()
         self._mc_number = mc_number
@@ -393,11 +393,11 @@ class MonteCarlo:
         parameters = self.get_parameters_for_distribution()
         match self.distribution:
             case "norm":
-                random_returns = np.random.normal(parameters[0], parameters[1], (period_months, self.number))
+                random_returns = np.random.normal(parameters[0], parameters[1], (period_months, self.mc_number))
             case "lognorm":
-                random_returns = scipy.stats.lognorm(parameters[0], loc=parameters[1], scale=parameters[2]).rvs(size=[period_months, self.number])
+                random_returns = scipy.stats.lognorm(parameters[0], loc=parameters[1], scale=parameters[2]).rvs(size=[period_months, self.mc_number])
             case "t":
-                random_returns = scipy.stats.t(df=parameters[0], loc=parameters[1], scale=parameters[2]).rvs(size=[period_months, self.number])
+                random_returns = scipy.stats.t(df=parameters[0], loc=parameters[1], scale=parameters[2]).rvs(size=[period_months, self.mc_number])
             case _:
                 raise ValueError('Unknown distribution type.')
         return pd.DataFrame(data=random_returns, index=ts_index)
