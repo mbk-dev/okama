@@ -218,8 +218,29 @@ class Portfolio(make_asset_list.ListMaker):
         -------
         DataFrame
             Dates of rebalancing events time series.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(
+        ...     assets=["SPY.US", "AGG.US"],
+        ...     weights=[0.5, 0.5],
+        ...     rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.05)
+        ... )
+        >>> pf.rebalancing_events
+        date
+        2004-05    calendar
+        2005-05    calendar
+        2006-05    calendar
+        2007-05    calendar
+        2008-05    calendar
+                     ...
+        2020-05    calendar
+        2020-11         abs
+        2021-05    calendar
+        2022-05    calendar
+        2023-05    calendar
+        Name: event, Length: 21, dtype: object
         """
-        # TODO: add examples
         return self.rebalancing_strategy.wealth_ts(target_weights=self.weights, ror=self.assets_ror).events
 
     @property
@@ -237,8 +258,17 @@ class Portfolio(make_asset_list.ListMaker):
         -------
         Rebalance
             Portfolio rebalancing strategy.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(
+        ...     assets=["SPY.US", "AGG.US"],
+        ...     weights=[0.5, 0.5],
+        ...     rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.05)
+        ... )
+        >>> pf.rebalancing_strategy
+        Rebalance(period='year', abs_deviation=0.05, rel_deviation=None)
         """
-        # TODO: add examples
         return self._rebalancing_strategy
 
     @rebalancing_strategy.setter
@@ -606,6 +636,26 @@ class Portfolio(make_asset_list.ListMaker):
             df_or_ts = self._make_real_return_time_series(df_or_ts)
         df = self._make_df_if_series(df_or_ts)
         return helpers.Frame.get_rolling_fn(df, window=window, fn=helpers.Frame.get_cagr)
+
+    def get_monthly_geometric_mean_return(self):
+        """
+        Calculate monthly geometric mean return for the portfolio.
+
+        The geometric mean return is the constant periodic return that would produce the same
+        final value as a sequence of varying periodic returns when compounded over time.
+
+        Returns
+        -------
+        float
+            Monthly geometric mean return value.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.6, 0.4])
+        >>> pf.get_monthly_geometric_mean_return()
+        0.005321
+        """
+        return (self.ror + 1.0).prod() ** (1 / self.ror.shape[0]) - 1.0
 
     def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
         """
