@@ -551,6 +551,28 @@ class AssetList(make_asset_list.ListMaker):
             df = self._make_real_return_time_series(df)
         return helpers.Frame.get_rolling_fn(df, window=window, fn=helpers.Frame.get_cagr)
 
+    def get_monthly_geometric_mean_return(self):
+        """
+        Calculate monthly geometric mean return for each asset.
+
+        The geometric mean return is the constant periodic return that would produce the same
+        final value as a sequence of varying periodic returns when compounded over time.
+
+        Returns
+        -------
+        Series
+            Monthly geometric mean return value for each asset.
+
+        Examples
+        --------
+        >>> al = ok.AssetList(['SPY.US', 'AGG.US'])
+        >>> al.get_monthly_geometric_mean_return()
+        SPY.US    0.008456
+        AGG.US    0.003124
+        dtype: float64
+        """
+        return (self.assets_ror + 1.0).prod() ** (1 / self.assets_ror.shape[0]) - 1.0
+
     def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
         """
         Calculate cumulative return over a given trailing period for each asset.
