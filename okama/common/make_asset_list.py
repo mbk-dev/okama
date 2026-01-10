@@ -613,11 +613,12 @@ class ListMaker(ABC):
         return self._currency.currency
 
     def plot_assets(
-        self,
-        kind: str = "mean",
-        tickers: Union[str, list] = "tickers",
-        pct_values: bool = False,
-        xy_text: tuple = (0, 10),
+            self,
+            kind: str = "mean",
+            tickers: Union[str, list] = "tickers",
+            pct_values: bool = False,
+            xy_text: tuple = (0, 10),
+            **kwargs
     ) -> Axes:
         """
         Plot asset points on the risk-return chart with annotations.
@@ -644,6 +645,9 @@ class ListMaker(ABC):
 
         xy_text : tuple, default (0, 10)
             The shift of the annotation text (x, y) from the point.
+
+        **kwargs
+            Arbitrary keyword arguments passed to matplotlib.pyplot.scatter.
 
         Returns
         -------
@@ -685,7 +689,7 @@ class ListMaker(ABC):
         plt.autoscale(enable=True, axis="year", tight=False)
         ax.margins(0.05, 0.1)  # increase margins on Y-axis from 5% to 10% as `annotate` moves text upwards
         m = 100 if pct_values else 1
-        ax.scatter(risks * m, returns * m, zorder=10)
+        ax.scatter(risks * m, returns * m, zorder=10, **(kwargs or {}))
         # Set the labels
         if tickers == "tickers":
             asset_labels = self.symbols
