@@ -25,16 +25,16 @@ class EfficientFrontier(asset_list.AssetList):
     """
     Efficient Frontier with multi-period optimization.
 
-    In multi-period optimization portfolios are rebalanced with a given frequency.
+    In multi-period optimization, portfolios are rebalanced according to a rebalancing strategy.
 
-    Rebalancing is the process by which an investor restores their portfolio to its target allocation
-    by selling and buying assets. After rebalancing all the assets have original weights.
+    Rebalancing is the process by which an investor restores a portfolio to its target allocation
+    by selling and buying assets. After rebalancing, the portfolio assets have their target weights.
 
     Parameters
     ----------
-    assets : list, default None
-        List of assets. Could include tickers or asset like objects (Asset, Portfolio).
-        If None a single asset list with a default ticker is used.
+    assets : list[str]
+        List of assets. Could include tickers or asset-like objects (`Asset`, `Portfolio`).
+        Must contain at least two assets.
 
     first_date : str, default None
         First date of monthly return time series.
@@ -47,23 +47,19 @@ class EfficientFrontier(asset_list.AssetList):
     ccy : str, default 'USD'
         Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
 
-    bounds: tuple of ((float, float),...)
-        Bounds for the assets weights. Each asset can have weights limitation from 0 to 1.0.
-        If an asset has limitation for 10 to 20%, bounds are defined as (0.1, 0.2).
-        bounds = ((0, .5), (0, 1)) shows that in Portfolio with two assets first one has weight limitations
-        from 0 to 50%. The second asset has no limitations.
+    bounds : tuple[tuple[float, float], ...] or None, default None
+        Bounds for asset weights. Each asset weight is constrained within the corresponding (min, max) pair.
+        For example, `((0.0, 0.5), (0.0, 1.0))` restricts the first asset to [0%, 50%] and leaves the second
+        asset unconstrained.
 
-    inflation : bool, default True
+    inflation : bool, default False
         Defines whether to take inflation data into account in the calculations.
-        Including inflation could limit available data (last_date, first_date)
-        as the inflation data is usually published with a one-month delay.
+        Including inflation could limit available data (`first_date`, `last_date`) as the inflation data is
+        usually published with a one-month delay.
 
-    rebalancing_strategy : Rebalance, default Rebalance(period='year', abs_deviation=None, rel_deviation=None)
-        Rebalancing strategy for an investment portfolio. The rebalancing strategy si defined by:
-        -period (rebalancing frequency): predetermined time intervals when the investor rebalances the portfolio.
-        If 'none' assets weights are not rebalanced.
-        -abs_deviation: the absolute deviation allowed for the assets weights in the portfolio.
-        -rel_deviation: the relative deviation allowed for the assets weights in the portfolio.
+    rebalancing_strategy : Rebalance, default Rebalance(period='year')
+        Rebalancing strategy used to generate portfolio return series during optimization.
+        Only `rebalancing_strategy.period` is used; `abs_deviation` and `rel_deviation` are ignored.
 
     n_points : int, default 20
         Number of points in the Efficient Frontier.
@@ -80,7 +76,7 @@ class EfficientFrontier(asset_list.AssetList):
 
     Notes
     -----
-    For monthly rebalanced portfolios okama.EfficientFrontier class could be used.
+    For classic single-period (monthly rebalanced, constant-weight) optimization, use `EfficientFrontierSingle`.
     """
 
     _FTOL = (1e-06, 1e-05, 1e-3, 1e-02)  # possible tolerance values for the optimizer
@@ -246,24 +242,23 @@ class EfficientFrontier(asset_list.AssetList):
     @property
     def rebalancing_strategy(self) -> Rebalance:
         """
-        Return or set rebalancing period for multi-period Efficient Frontier.
+        Rebalancing strategy used to compute portfolio return series during optimization.
 
-        Rebalancing periods could be:
-        'year' - one Year (default)
-        'none' - not rebalanced portfolios
+        Only `rebalancing_strategy.period` is used in the optimization; `abs_deviation` and `rel_deviation`
+        are ignored.
 
         Returns
         -------
-        str
-            Rebalancing period value.
+        Rebalance
+            Rebalancing strategy.
 
         Examples
         --------
         >>> frontier = ok.EfficientFrontier(['SPY.US', 'BND.US'])
-        >>> frontier.rebalancing_strategy  # default rebalancing period is one year
+        >>> frontier.rebalancing_strategy.period
         'year'
 
-        >>> frontier.rebalancing_strategy = 'none'  # change for not rebalanced portfolios
+        >>> frontier.rebalancing_strategy = ok.Rebalance(period='none')
         """
         return self._rebalancing_strategy
 
@@ -322,25 +317,22 @@ class EfficientFrontier(asset_list.AssetList):
         target_return: Optional[float] = None,
     ) -> Dict[str, float]:
         """
-        Calculate assets weights, annualized values for risk and return, Diversification ratio
-        for the most diversified portfolio given the target CAGR within given bounds.
+        Calculate assets weights and portfolio metrics for the most diversified portfolio within bounds.
 
-        The most diversified portfolio has the largest Diversification Ratio.
-
-        The Diversification Ratio is the ratio of the weighted average of assets risks divided by the portfolio risk.
-        In this case risk is the annualized standard deviation for the rate of return.
-
-        Returns
-        -------
-        dict
-             Weights of assets and annualized values for risk, CAGR and Diversification ratio of the most diversified portfolio.
+        The most diversified portfolio is defined as the portfolio with the maximum Diversification Ratio.
 
         Parameters
         ----------
-        target_return : float, optional
-            Target Compound Annual Growth Rate (CAGR) for the portfolio. The optimization process looks for a portfolio 
-            with the target_return and largest Diversification ratio. If not specified global most diversified portfolio 
-            is obtained.
+        target_return : float, default None
+            Target Compound Annual Growth Rate (CAGR) for the portfolio. If provided, the optimizer searches for a
+            portfolio with the target CAGR and the maximum Diversification Ratio. If None, the global most diversified
+            portfolio is returned.
+
+        Returns
+        -------
+        dict[str, float]
+            Mapping with asset weights (keys are tickers or asset names depending on `ticker_names`) and portfolio
+            metrics: 'CAGR', 'Risk', and 'Diversification ratio'.
 
         Examples
         --------
@@ -430,11 +422,14 @@ class EfficientFrontier(asset_list.AssetList):
 
         Parameters
         ----------
-        rate_of_return : {cagr, mean_return}, default cagr
-            Use CAGR (Compound annual growth rate) or arithmetic mean of return to calculate Sharpe Ratio.
-
         rf_return : float, default 0
             Risk-free rate of return.
+
+        rate_of_return : {'cagr', 'mean_return'}, default 'cagr'
+            Return definition used to calculate Sharpe ratio.
+
+            - 'cagr': Compound Annual Growth Rate.
+            - 'mean_return': Arithmetic mean return (annualized).
 
         Returns
         -------
@@ -909,9 +904,8 @@ class EfficientFrontier(asset_list.AssetList):
     @property
     def _max_ratio_asset_right_to_max_cagr(self) -> Optional[dict]:
         """
-        The asset with the maximum ratio between the CAGR
-        (Compound Annual Growth Rate) and the risk for assets that are “to the right”
-        of the portfolio with the maximum CAGR on the efficiency frontier.
+        The asset with the maximum ratio between CAGR and risk among assets that are to the right
+        of the portfolio with the maximum CAGR on the Efficient Frontier.
         """
         cagr = helpers.Frame.get_cagr(self.assets_ror)
         risk_monthly = self.assets_ror.std()
@@ -1052,11 +1046,11 @@ class EfficientFrontier(asset_list.AssetList):
         ...                             first_date='2004-12',
         ...                             last_date='2020-10',
         ...                             ccy=curr,
-        ...                             rebalancing_strategy=ok.Rebalnce(period='year'),
-        ...                             ticker_names=True,  # use tickers in DataFrame column names (can be set to False to show full assets names instead tickers)
+        ...                             rebalancing_strategy=ok.Rebalance(period='year'),
+        ...                             ticker_names=True,  # use tickers in DataFrame column names (set to False to show full asset names instead of tickers)
         ...                             n_points=20,  # number of points in the Efficient Frontier
         ...                             full_frontier=False,  # draw the frontier to the global CAGR max only
-        ...                             verbose=False)  # verbose mode is False to skip the progress while the EF points are calcualted
+        ...                             verbose=False)  # verbose mode is False to skip progress while EF points are calculated
         >>> df_reb_year = y.ef_points
         >>> df_reb_year.head(5)
                Risk      CAGR    GLD.US    SPY.US
@@ -1067,7 +1061,7 @@ class EfficientFrontier(asset_list.AssetList):
         4  0.150615  0.089397  0.059713  0.940287
 
         To compare the Efficient Frontiers of annually rebalanced portfolios with not rebalanced portfolios it's possible to draw 2 charts:
-        rebalancing_strategy=ok.Rebalance(period='year') and period='none'.
+        rebalancing_strategy=ok.Rebalance(period='year') and ok.Rebalance(period='none').
 
         >>> import matplotlib.pyplot as plt
         >>> y.rebalancing_strategy = ok.Rebalance(period='none')
@@ -1201,20 +1195,19 @@ class EfficientFrontier(asset_list.AssetList):
 
     def get_monte_carlo(self, n: int = 100) -> pd.DataFrame:
         """
-        Generate N random rebalanced portfolios with Monte Carlo simulation.
+        Generate random rebalanced portfolios with Monte Carlo simulation.
 
-        Risk (annualized standard deviation) and Return (CAGR) are calculated for a set of random weights.
-
-        Returns
-        -------
-        DataFrame
-            Table with Return (CAGR) and Risk values for random portfolios
-            (portfolios with random asset weights).
+        Risk (annualized standard deviation) and return (CAGR) are calculated for random weights within `bounds`.
 
         Parameters
         ----------
         n : int, default 100
             Number of random portfolios to generate with Monte Carlo simulation.
+
+        Returns
+        -------
+        DataFrame
+            Table with Return (CAGR) and Risk values for random portfolios (portfolios with random asset weights).
 
         Examples
         --------
@@ -1236,7 +1229,7 @@ class EfficientFrontier(asset_list.AssetList):
         3  0.185500  0.168739
         4  0.176748  0.192657
 
-        Monte Carlo simulation results can be plotted togeather with the optimized portfolios on the Efficient Frontier.
+        Monte Carlo simulation results can be plotted together with the optimized portfolios on the Efficient Frontier.
 
         >>> import matplotlib.pyplot as plt
         >>> df_reb_year = x.ef_points  # optimize portfolios for EF. Calculations will take some time ...
@@ -1271,32 +1264,32 @@ class EfficientFrontier(asset_list.AssetList):
 
     def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> Axes:
         """
-        Plot Efficient Frontier of every pair of assets.
+        Plot Efficient Frontier for every pair of assets.
 
         Efficient Frontier is a set of portfolios which satisfy the condition that no other portfolio exists
         with a higher expected return but with the same risk (standard deviation of return).
 
         Arithmetic mean (expected return) is used for optimized portfolios.
 
-        Returns
-        -------
-        Axes : 'matplotlib.axes._subplots.AxesSubplot'
-
         Parameters
         ----------
-        tickers : {'tickers', 'names'} or list of str, default 'tickers'
+        tickers : {'tickers', 'names'} or list[str], default 'tickers'
             Annotation type for assets.
             'tickers' - assets symbols are shown in form of 'SPY.US'
             'names' - assets names are used like - 'SPDR S&P 500 ETF Trust'
             To show custom annotations for each asset pass the list of names.
 
-        figsize: (float, float), optional
-            Figure size: width, height in inches.
-            If None default matplotlib size is taken: [6.4, 4.8]
+        figsize : tuple[float, float], default None
+            Figure size (width, height) in inches. If `None`, matplotlib default is used.
+
+        Returns
+        -------
+        Axes
+            Matplotlib axes with the plot.
 
         Notes
         -----
-        It should be at least 3 assets.
+        At least 3 assets are required.
 
         Examples
         --------
@@ -1308,13 +1301,13 @@ class EfficientFrontier(asset_list.AssetList):
         >>> ef.plot_pair_ef()
         >>> plt.show()
 
-        It can be useful to plot the full Efficent Frontier (EF) with optimized 4 assets portfolios
+        It can be useful to plot the full Efficient Frontier (EF) with optimized 4 asset portfolios
         together with the EFs for each pair of assets.
 
         >>> ef4 = ok.EfficientFrontier(assets=ls4, ccy=curr, n_points=100)
         >>> df4 = ef4.ef_points
         >>> fig = plt.figure()
-        >>> # Plot Efficient Frontier of every pair of assets. Optimized portfolios will have 2 assets.
+        >>> # Plot Efficient Frontier for every pair of assets. Optimized portfolios will have 2 assets.
         >>> ef4.plot_pair_ef()  # mean return is used for optimized portfolios.
         >>> ax = plt.gca()
         >>> # Plot the full Efficient Frontier for 4 asset portfolios.
@@ -1359,13 +1352,13 @@ class EfficientFrontier(asset_list.AssetList):
         rf_return : float, default 0
             Risk-free rate of return.
 
-        figsize : (float, float), optional
-            Figure size: width, height in inches.
-            If None default matplotlib size is taken: [6.4, 4.8]
+        figsize : tuple[float, float], default None
+            Figure size (width, height) in inches. If `None`, matplotlib default is used.
 
         Returns
         -------
-        Axes : 'matplotlib.axes._subplots.AxesSubplot'
+        Axes
+            Matplotlib axes with the plot.
 
         Examples
         --------
@@ -1373,7 +1366,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
         >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', full_frontier=True)
         >>> ef.plot_cml(rf_return=0.05)  # Risk-Free return is 5%
-        >>> plt.show
+        >>> plt.show()
         """
         ef = self.ef_points
         tg = self.get_tangency_portfolio(rf_return=rf_return, rate_of_return="cagr")
@@ -1409,19 +1402,10 @@ class EfficientFrontier(asset_list.AssetList):
         """
         Plot Transition Map for optimized portfolios on the Efficient Frontier.
 
-        Transition Map shows the relation between asset weights and optimized portfolios properties:
+        Transition Map shows the relation between asset weights and optimized portfolio properties:
 
         - CAGR (Compound annual growth rate)
         - Risk (annualized standard deviation of return)
-
-        Wights are displayed on the y-axis.
-        CAGR or Risk - on the x-axis.
-
-        Constrained optimization with weights bounds is available.
-
-        Returns
-        -------
-        Axes : 'matplotlib.axes._subplots.AxesSubplot'
 
         Parameters
         ----------
@@ -1429,9 +1413,13 @@ class EfficientFrontier(asset_list.AssetList):
             Show the relation between weights and CAGR (if 'cagr') or between weights and Risk (if 'risk').
             CAGR or Risk are displayed on the x-axis.
 
-        figsize : (float, float), optional
-            Figure size: width, height in inches.
-            If None default matplotlib size is taken: [6.4, 4.8]
+        figsize : tuple[float, float], default None
+            Figure size (width, height) in inches. If `None`, matplotlib default is used.
+
+        Returns
+        -------
+        Axes
+            Matplotlib axes with the plot.
 
         Examples
         --------
@@ -1440,9 +1428,8 @@ class EfficientFrontier(asset_list.AssetList):
         >>> x.plot_transition_map()
         >>> plt.show()
 
-        Transition Map with default setting show the relation between Risk (stanrd deviation) and assets weights for
-        optimized portfolios.
-        The same relation for CAGR can be shown setting x_axe='cagr'.
+        Transition Map with default settings shows the relation between risk (standard deviation) and asset weights
+        for optimized portfolios. The same relation for CAGR can be shown by setting `x_axe='cagr'`.
 
         >>> x.plot_transition_map(x_axe='cagr')
         >>> plt.show()
