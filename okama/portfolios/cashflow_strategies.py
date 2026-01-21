@@ -585,6 +585,34 @@ class VanguardDynamicSpending(PercentageStrategy):
         return repr(pd.Series(dic))
 
     @property
+    def percentage(self) -> float:
+        """
+        The percentage of withdrawals or contributions.
+
+        The size of withdrawals or contribution is defined as a percentage of portfolio balance per year.
+
+        Returns
+        -------
+        float
+            The percentage of withdrawals or contributions.
+        """
+        return self._percentage
+
+    @percentage.setter
+    def percentage(self, percentage):
+        self._clear_cf_cache()
+        validators.validate_real("percentage", percentage)
+        if percentage < -1:
+            raise ValueError(
+                "Withdrawal Percentage must less or equal to the Initial investment (100%)."
+            )
+        if percentage > 0:
+            raise ValueError(
+                "Only withdrawals are allowed in VDS strategy. Percentage must be negative or zero."
+            )
+        self._percentage = percentage
+
+    @property
     def frequency(self):
         """
         Frequency of cash flows. Always 'year' for VDS.
