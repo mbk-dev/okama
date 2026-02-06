@@ -24,7 +24,7 @@ def _configure_dcf_for_plot(pf):
     ind.indexation = DEFAULT_DISCOUNT_RATE
     pf.dcf.cashflow_parameters = ind
     pf.dcf.mc.period = 1
-    pf.dcf.mc.number = 3
+    pf.dcf.mc.mc_number = 3
     return pf.dcf
 
 
@@ -42,5 +42,5 @@ def test_plot_forecast_monte_carlo_returns_axes_no_backtest(pf_single_monthly):
     ax = dcf.plot_forecast_monte_carlo(backtest=False, figsize=(4, 3))
     assert ax is not None
     assert ax.figure is not None
-    assert len(ax.lines) == dcf.mc.number
+    assert len(ax.lines) == dcf.mc.mc_number
     plt.close("all")

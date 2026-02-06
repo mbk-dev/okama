@@ -87,7 +87,7 @@ def test_monte_carlo_none_frequency(pf_monthly):
     cf = ok.CashFlow(pf_monthly, frequency="none", initial_investment=1000.0)
     pf_monthly.dcf.cashflow_parameters = cf
     pf_monthly.dcf.mc.period = 1
-    pf_monthly.dcf.mc.number = 10
+    pf_monthly.dcf.mc.mc_number = 10
     
     # Just check it doesn't crash and returns correct shape
     mc_wealth = pf_monthly.dcf.monte_carlo_wealth(discounting="fv")

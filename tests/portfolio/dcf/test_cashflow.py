@@ -155,7 +155,7 @@ def test_monte_carlo_wealth_shapes(dcf_indexation_yearly):
     # Small MC for speed (set via properties to avoid distribution_parameters validation)
     dcf.mc.distribution = "norm"
     dcf.mc.period = 1
-    dcf.mc.number = 10
+    dcf.mc.mc_number = 10
     dcf.discount_rate = 0.05
     # Wealth FV
     df_fv = dcf.monte_carlo_wealth(discounting="fv")
@@ -172,11 +172,11 @@ def test_monte_carlo_cash_flow_basic(dcf_timeseries_monthly):
     dcf = dcf_timeseries_monthly
     dcf.mc.distribution = "norm"
     dcf.mc.period = 1
-    dcf.mc.number = 12
+    dcf.mc.mc_number = 10
     cf_fv = dcf.monte_carlo_cash_flow(discounting="fv", remove_if_wealth_index_negative=True)
     assert isinstance(cf_fv, pd.DataFrame)
     # For cash flow MC, there is no extra anchor row: exactly months in horizon
-    assert cf_fv.shape == (_MONTHS_PER_YEAR, 12)
+    assert cf_fv.shape == (_MONTHS_PER_YEAR, 10)
     # PV should match shape; numerical difference is not guaranteed if cash flow becomes zeroed
     dcf.discount_rate = 0.07
     cf_pv = dcf.monte_carlo_cash_flow(discounting="pv", remove_if_wealth_index_negative=False)
@@ -201,7 +201,7 @@ def test_find_the_largest_withdrawals_size_converges(dcf_indexation_yearly):
     # Use small MC to keep it fast
     dcf.mc.distribution = "norm"
     dcf.mc.period = 1
-    dcf.mc.number = 16
+    dcf.mc.mc_number = 16
     res = dcf.find_the_largest_withdrawals_size(
         goal="survival_period",
         withdrawals_range=(0.0, 1.0),  # relative to initial investment per period
@@ -268,6 +268,6 @@ def test_plot_forecast_monte_carlo_smoke(dcf_indexation_yearly):
     dcf = dcf_indexation_yearly
     dcf.mc.distribution = "norm"
     dcf.mc.period = 1
-    dcf.mc.number = 5
+    dcf.mc.mc_number = 5
     # Function returns None; this is a smoke test to ensure no exceptions are raised
     dcf.plot_forecast_monte_carlo(backtest=False)

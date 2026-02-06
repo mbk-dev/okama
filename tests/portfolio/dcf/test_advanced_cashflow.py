@@ -8,6 +8,13 @@ def pf_single_monthly(synthetic_env):
     return ok.Portfolio(["A.US"], ccy="USD", inflation=False, rebalancing_strategy=ok.Rebalance(period="month"))
 
 
+def _configure_small_mc(dcf: ok.PortfolioDCF, period: int = 1, mc_number: int = 16) -> None:
+    """Configure a small Monte Carlo setup for fast deterministic solver checks."""
+    dcf.mc.distribution = "norm"
+    dcf.mc.period = period
+    dcf.mc.mc_number = mc_number
+
+
 def test_vds_frequency_is_year_and_setter_raises(pf_single_monthly):
     vds = ok.VanguardDynamicSpending(pf_single_monthly)
     assert vds.frequency == "year"
@@ -19,7 +26,7 @@ def test_vds_calculate_withdrawal_size_limits(pf_single_monthly):
     vds = ok.VanguardDynamicSpending(
         pf_single_monthly,
         percentage=-0.10,
-        min_max_annual_withdrawal=(500.0, 900.0),
+        min_max_annual_withdrawals=(500.0, 900.0),
         adjust_min_max=False,
         floor_ceiling=(-0.10, 0.10),
         adjust_floor_ceiling=False,
@@ -37,7 +44,7 @@ def test_vds_cash_flow_ts_yearly_entries(pf_single_monthly):
     vds = ok.VanguardDynamicSpending(
         pf_single_monthly,
         percentage=-0.06,
-        min_max_annual_withdrawal=(200.0, 2_000.0),
+        min_max_annual_withdrawals=(200.0, 2_000.0),
         floor_ceiling=(-0.10, 0.10),
         adjust_min_max=False,
         adjust_floor_ceiling=False,
@@ -83,3 +90,64 @@ def test_cwid_cash_flow_ts_yearly_entries(pf_single_monthly):
     assert len(non_zero) == 2
     assert (non_zero <= 0).all()
     assert non_zero.abs().max() <= 1000.0
+    
+
+def test_vds_percentage_validation_positive_assignment_raises(pf_single_monthly):
+    """VDS should raise an error if a positive percentage is assigned."""
+    vds = ok.VanguardDynamicSpending(pf_single_monthly)
+    with pytest.raises(ValueError, match=r"Percentage must be negative or zero"):
+        vds.percentage = 0.1
+
+
+def test_find_the_largest_withdrawals_size_supports_cwid(pf_single_monthly) -> None:
+    cwid = ok.CutWithdrawalsIfDrawdown(
+        pf_single_monthly,
+        initial_investment=10_000.0,
+        amount=-1_000.0,
+        indexation=0.0,
+        crash_threshold_reduction=[(0.1, 0.3), (0.3, 1.0)],
+    )
+    pf_single_monthly.dcf.cashflow_parameters = cwid
+    _configure_small_mc(pf_single_monthly.dcf, period=5)
+
+    res = pf_single_monthly.dcf.find_the_largest_withdrawals_size(
+        goal="survival_period",
+        withdrawals_range=(0.0, 1.0),
+        target_survival_period=3,
+        percentile=50,
+        threshold=0,
+        tolerance_rel=0.25,
+        iter_max=10,
+    )
+
+    assert isinstance(res.withdrawal_abs, float)
+    assert isinstance(res.withdrawal_rel, float)
+    assert isinstance(res.error_rel, float)
+    assert res.withdrawal_abs <= 0
+    assert res.solutions.shape[0] >= 1
+
+
+def test_find_the_largest_withdrawals_size_supports_vds(pf_single_monthly) -> None:
+    vds = ok.VanguardDynamicSpending(
+        pf_single_monthly,
+        initial_investment=10_000.0,
+        percentage=-0.08,
+        indexation=0.0,
+    )
+    pf_single_monthly.dcf.cashflow_parameters = vds
+    _configure_small_mc(pf_single_monthly.dcf, period=10)
+
+    res = pf_single_monthly.dcf.find_the_largest_withdrawals_size(
+        goal="survival_period",
+        withdrawals_range=(0.0, 0.2),
+        target_survival_period=10,
+        percentile=50,
+        threshold=0,
+        tolerance_rel=0.25,
+        iter_max=10,
+    )
+
+    assert isinstance(res.withdrawal_abs, float)
+    assert isinstance(res.withdrawal_rel, float)
+    assert isinstance(res.error_rel, float)
+    assert res.solutions["withdrawal_abs"].nunique() > 1

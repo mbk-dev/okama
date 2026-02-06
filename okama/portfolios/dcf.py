@@ -790,41 +790,45 @@ class PortfolioDCF:
         Tuple[float, float]
             (expected_min_withdrawal, expected_max_withdrawal)
         """
-        if self.cashflow_parameters.NAME == CashflowStrategyType.FIXED_AMOUNT:
+        if isinstance(self.cashflow_parameters, cf.IndexationStrategy):
             return (
                 -withdrawals_range[0] * start_investment / self.cashflow_parameters.periods_per_year,
                 -withdrawals_range[1] * start_investment / self.cashflow_parameters.periods_per_year
             )
-        elif self.cashflow_parameters.NAME == CashflowStrategyType.FIXED_PERCENTAGE:
-            return withdrawals_range[0], withdrawals_range[1]
+        elif isinstance(self.cashflow_parameters, cf.PercentageStrategy):
+            return -withdrawals_range[0], -withdrawals_range[1]
         else:
-            raise ValueError("This method works with IndexationStrategy or PercentageStrategy only.")
+            raise ValueError("This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only.")
 
     def _get_main_parameter(self) -> float:
         """Get the main withdrawal parameter based on strategy type."""
-        if self.cashflow_parameters.NAME == CashflowStrategyType.FIXED_AMOUNT:
+        if isinstance(self.cashflow_parameters, cf.IndexationStrategy):
             return self.cashflow_parameters.amount
-        elif self.cashflow_parameters.NAME == CashflowStrategyType.FIXED_PERCENTAGE:
+        elif  isinstance(self.cashflow_parameters, cf.PercentageStrategy):
             return self.cashflow_parameters.percentage
         else:
-            raise ValueError("This method works with IndexationStrategy or PercentageStrategy only.")
+            raise ValueError("This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only.")
 
     def _set_main_parameter(self, value: float) -> None:
         """Set the main withdrawal parameter based on strategy type."""
-        if self.cashflow_parameters.NAME == CashflowStrategyType.FIXED_AMOUNT:
+        if isinstance(self.cashflow_parameters, cf.IndexationStrategy):
             self.cashflow_parameters.amount = value
-        elif self.cashflow_parameters.NAME == CashflowStrategyType.FIXED_PERCENTAGE:
-            self.cashflow_parameters.percentage = -value
+        elif isinstance(self.cashflow_parameters, cf.PercentageStrategy):
+            self.cashflow_parameters.percentage = value
         else:
-            raise ValueError("This method works with IndexationStrategy or PercentageStrategy only.")
+            raise ValueError("This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only.")
 
     def _update_parameter(self, delta: float, increase: bool) -> None:
         """Update withdrawal parameter using bisection step."""
         sign = -1 if increase else 1
-        if self.cashflow_parameters.NAME == CashflowStrategyType.FIXED_AMOUNT:
+        if isinstance(self.cashflow_parameters, cf.IndexationStrategy):
             self.cashflow_parameters.amount += sign * delta / 2
-        elif self.cashflow_parameters.NAME == CashflowStrategyType.FIXED_PERCENTAGE:
+        elif isinstance(self.cashflow_parameters, cf.PercentageStrategy):
             self.cashflow_parameters.percentage += sign * delta / 2
+        else:
+            raise ValueError(
+                "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only."
+            )
 
     def _calculate_goal_metrics(
         self,
@@ -871,12 +875,16 @@ class PortfolioDCF:
         Tuple[float, float]
             (withdrawal_abs, withdrawal_rel)
         """
-        if self.cashflow_parameters.NAME == CashflowStrategyType.FIXED_AMOUNT:
+        if isinstance(self.cashflow_parameters, cf.IndexationStrategy):
             withdrawal_abs = main_parameter
             withdrawal_rel = abs(main_parameter / start_investment * self.cashflow_parameters.periods_per_year)
-        else:  # FIXED_PERCENTAGE
+        elif isinstance(self.cashflow_parameters, cf.PercentageStrategy):
             withdrawal_abs = main_parameter * start_investment / self.cashflow_parameters.periods_per_year
             withdrawal_rel = abs(main_parameter)
+        else:
+            raise ValueError(
+                "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only."
+            )
         
         return withdrawal_abs, withdrawal_rel
 

@@ -225,8 +225,8 @@ def test_property_setters_clear_cache(mc_normal_small):
     # Number setter
     parent._monte_carlo_wealth_fv = pd.DataFrame([[1.0]])
     parent._monte_carlo_cash_flow_fv = pd.DataFrame([[1.0]])
-    mc_normal_small.number = 7
-    assert mc_normal_small.number == 7
+    mc_normal_small.mc_number = 7
+    assert mc_normal_small.mc_number == 7
     assert parent._monte_carlo_wealth_fv.empty
     assert parent._monte_carlo_cash_flow_fv.empty
 
@@ -243,10 +243,10 @@ def test_forecast_preparation_shapes(mc_normal_small):
 
 def test_get_cagr_distribution_series(mc_normal_small):
     mc_normal_small.period = 1
-    mc_normal_small.number = 10
+    mc_normal_small.mc_number = 10
     s = mc_normal_small._get_cagr_distribution()
     assert isinstance(s, pd.Series)
-    assert len(s) == mc_normal_small.number
+    assert len(s) == mc_normal_small.mc_number
     assert np.isfinite(s).all()
 
 
