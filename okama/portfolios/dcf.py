@@ -1055,6 +1055,7 @@ class PortfolioDCF:
         
         # Initialization
         backup_obj = self.cashflow_parameters
+        backup_main_parameter = self._get_main_parameter()
         start_investment = self.cashflow_parameters.initial_investment
         expected_min_withdrawal, expected_max_withdrawal = self._get_withdrawal_bounds(
             withdrawals_range, start_investment
@@ -1063,56 +1064,79 @@ class PortfolioDCF:
         
         # Bisection search
         solutions = pd.DataFrame(columns=["withdrawal_abs", "withdrawal_rel", "error_rel", "error_rel_change"])
-        
-        for iteration in range(iter_max):
-            withdrawal_abs, withdrawal_rel, error_rel, condition, expected_min_withdrawal, expected_max_withdrawal = \
-                self._bisection_iteration(
-                    goal, percentile, threshold, start_investment, 
-                    target_survival_period, expected_min_withdrawal, expected_max_withdrawal
+        try:
+            for iteration in range(iter_max):
+                (
+                    withdrawal_abs,
+                    withdrawal_rel,
+                    error_rel,
+                    condition,
+                    expected_min_withdrawal,
+                    expected_max_withdrawal,
+                ) = self._bisection_iteration(
+                    goal,
+                    percentile,
+                    threshold,
+                    start_investment,
+                    target_survival_period,
+                    expected_min_withdrawal,
+                    expected_max_withdrawal,
                 )
-            
-            # Record solution
-            solutions.at[iteration, "withdrawal_abs"] = withdrawal_abs
-            solutions.at[iteration, "withdrawal_rel"] = withdrawal_rel
-            solutions.at[iteration, "error_rel"] = error_rel
-            gradient = solutions.at[iteration, "error_rel"] - solutions.at[iteration - 1, "error_rel"] if iteration > 0 else 0
-            solutions.at[iteration, "error_rel_change"] = gradient
-            
-            logger.info(f"Iteration {iteration}: error_rel={error_rel:.3f}, gradient={gradient:.3f}")
-            
-            # Check convergence
-            if error_rel < tolerance_rel:
-                logger.info(f"Solution found: {withdrawal_abs:.2f} or {withdrawal_rel * 100:.2f}% after {iteration + 1} steps.")
-                result = Result(
-                    success=True,
-                    withdrawal_abs=withdrawal_abs,
-                    withdrawal_rel=withdrawal_rel,
-                    error_rel=error_rel,
-                    solutions=solutions,
+
+                # Record solution
+                solutions.at[iteration, "withdrawal_abs"] = withdrawal_abs
+                solutions.at[iteration, "withdrawal_rel"] = withdrawal_rel
+                solutions.at[iteration, "error_rel"] = error_rel
+                gradient = (
+                    solutions.at[iteration, "error_rel"] - solutions.at[iteration - 1, "error_rel"]
+                    if iteration > 0
+                    else 0
                 )
-                self._restore_cashflow_parameters_from_backup(backup_obj)
-                return result
-        
-        # No solution found - return best attempt
-        best_idx = solutions["error_rel"].idxmin()
-        best_result = solutions.loc[best_idx]
-        logger.warning(
-            f"Solution not found after {iter_max} steps. "
-            f"Best withdrawal: {best_result['withdrawal_abs']:.2f} ({best_result['withdrawal_rel'] * 100:.2f}%) "
-            f"with error: {best_result['error_rel'] * 100:.2f}%"
-        )
-        
-        result = Result(
-            success=False,
-            withdrawal_abs=best_result["withdrawal_abs"],
-            withdrawal_rel=best_result["withdrawal_rel"],
-            error_rel=best_result["error_rel"],
-            solutions=solutions,
-        )
+                solutions.at[iteration, "error_rel_change"] = gradient
 
-        self._restore_cashflow_parameters_from_backup(backup_obj)
-        return result
+                logger.info(f"Iteration {iteration}: error_rel={error_rel:.3f}, gradient={gradient:.3f}")
 
-    def _restore_cashflow_parameters_from_backup(self, backup_obj: cf.CashFlow | None):
+                # Check convergence
+                if error_rel < tolerance_rel:
+                    logger.info(
+                        f"Solution found: {withdrawal_abs:.2f} or {withdrawal_rel * 100:.2f}% "
+                        f"after {iteration + 1} steps."
+                    )
+                    return Result(
+                        success=True,
+                        withdrawal_abs=withdrawal_abs,
+                        withdrawal_rel=withdrawal_rel,
+                        error_rel=error_rel,
+                        solutions=solutions,
+                    )
+
+            # No solution found - return best attempt
+            best_idx = solutions["error_rel"].idxmin()
+            best_result = solutions.loc[best_idx]
+            logger.warning(
+                f"Solution not found after {iter_max} steps. "
+                f"Best withdrawal: {best_result['withdrawal_abs']:.2f} ({best_result['withdrawal_rel'] * 100:.2f}%) "
+                f"with error: {best_result['error_rel'] * 100:.2f}%"
+            )
+
+            return Result(
+                success=False,
+                withdrawal_abs=best_result["withdrawal_abs"],
+                withdrawal_rel=best_result["withdrawal_rel"],
+                error_rel=best_result["error_rel"],
+                solutions=solutions,
+            )
+        finally:
+            self._restore_cashflow_parameters_from_backup(backup_obj, backup_main_parameter)
+
+    def _restore_cashflow_parameters_from_backup(
+        self, backup_obj: cf.CashFlow | None, backup_main_parameter: float | None = None
+    ) -> None:
         self.cashflow_parameters = backup_obj
-        self.cashflow_parameters._clear_cf_cache()
+        if self.cashflow_parameters is None:
+            return
+
+        if backup_main_parameter is not None:
+            self._set_main_parameter(backup_main_parameter)
+        else:
+            self.cashflow_parameters._clear_cf_cache()
