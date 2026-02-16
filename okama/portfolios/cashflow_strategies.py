@@ -258,8 +258,9 @@ class IndexationStrategy(CashFlow):
     @property
     def amount(self):
         """
-        Portfolio regular contributions or withdrawals size. Negative value corresponds to withdrawals.
-        Positive value corresponds to contributions. Cash flow value is indexed each period by 'indexation'.
+        Portfolio regular withdrawal or contribution size.
+        Negative value corresponds to withdrawals. Positive value corresponds to contributions.
+        Cash flow value is indexed each period by 'indexation'.
 
         The frequency of withdrawals or contributions is determined by the `frequency` parameter.
 
@@ -274,8 +275,8 @@ class IndexationStrategy(CashFlow):
     def amount(self, amount):
         self._clear_cf_cache()
         validators.validate_real("amount", amount)
-        if amount > self.initial_investment:
-            raise ValueError("Amount must be less or equal to the initial investment.")
+        if amount < 0 and abs(amount) > self.initial_investment:
+            raise ValueError("It's not possible to withdraw more than the initial investment.")
         self._amount = amount
 
     @property
@@ -483,7 +484,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         If True, values in time_series_dic are considered as discounted (PV). Default is False.
     percentage : float, optional
         Percentage of portfolio balance to be withdrawn. Negative value. Default is 0.0.
-    min_max_annual_withdrawal : tuple[float, float], optional
+    min_max_annual_withdrawals : tuple[float, float], optional
         Optional absolute min/max annual withdrawal amounts (positive values). Default is None.
     adjust_min_max : bool, optional
         If True, min/max bounds are indexed using `indexation`. Default is True.
@@ -514,7 +515,7 @@ class VanguardDynamicSpending(PercentageStrategy):
     ...     initial_investment=1_000_000,
     ...     percentage=-0.08,
     ...     floor_ceiling=(-.025, .05),
-    ...     min_max_annual_withdrawal=(40_000, 100_000),
+    ...     min_max_annual_withdrawals=(40_000, 100_000),
     ...     adjust_min_max=True,
     ...     indexation="inflation",
     ... )
@@ -532,7 +533,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         time_series_dic: dict = {},
         time_series_discounted_values: bool = False,
         percentage: float = 0.0,
-        min_max_annual_withdrawal: Optional[tuple[float, float]] = None,
+        min_max_annual_withdrawals: Optional[tuple[float, float]] = None,
         adjust_min_max: bool = True,
         floor_ceiling: Optional[tuple[float, float]] = None,
         adjust_floor_ceiling: bool = False,
@@ -552,7 +553,7 @@ class VanguardDynamicSpending(PercentageStrategy):
             percentage=percentage,
         )
         self.portfolio = self.parent
-        self._min_max_annual_withdrawals = min_max_annual_withdrawal
+        self._min_max_annual_withdrawals = min_max_annual_withdrawals
         self._adjust_min_max = adjust_min_max
         self._floor_ceiling = floor_ceiling
         self.adjust_floor_ceiling = adjust_floor_ceiling
@@ -587,9 +588,9 @@ class VanguardDynamicSpending(PercentageStrategy):
     @property
     def percentage(self) -> float:
         """
-        The percentage of withdrawals or contributions.
+        The percentage of withdrawals (no contributions are allowed in VDS strategy). The value must be negative.
 
-        The size of withdrawals or contribution is defined as a percentage of portfolio balance per year.
+        The size of withdrawals is defined as a percentage of portfolio balance per year.
 
         Returns
         -------
@@ -882,7 +883,7 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
     >>> plt.show()
     """
 
-    NAME = "CWID"
+    NAME = "CWD"
 
     def __init__(
         self,
