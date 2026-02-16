@@ -34,7 +34,7 @@ def get_wealth_indexes_fv_with_cashflow(
         # for Series
         portfolio_position = 0
         ror = ror.to_frame()
-    if cashflow_parameters.NAME == "CWID":
+    if cashflow_parameters.NAME == "CWD":
         drawdowns = helpers.Frame.get_drawdowns(ror.iloc[:, portfolio_position])
     cash_flow_ts = dcf_object.cashflow_parameters.time_series
     # check if iteration needed
@@ -74,7 +74,7 @@ def get_wealth_indexes_fv_with_cashflow(
                 cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "time_series":
                 cashflow = 0
-            elif cashflow_parameters.NAME == "CWID":
+            elif cashflow_parameters.NAME == "CWD":
                 withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[date] < 0:
                     cashflow = cashflow_parameters._calculate_withdrawal_size(
@@ -121,7 +121,7 @@ def get_wealth_indexes_fv_with_cashflow(
                     balance=period_initial_amount,
                     number_of_periods=n,
                 )
-            elif cashflow_parameters.NAME == "CWID":
+            elif cashflow_parameters.NAME == "CWD":
                 withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[last_date] < 0:
                     cashflow_value = cashflow_parameters._calculate_withdrawal_size(
@@ -167,7 +167,7 @@ def get_cash_flow_fv(
     last_regular_cash_flow = 0
     cs_fv = pd.Series(dtype=float, name="cash_flow_fv")
     amount = getattr(cashflow_parameters, "amount", None)
-    if cashflow_parameters.NAME == "CWID":
+    if cashflow_parameters.NAME == "CWD":
         drawdowns = helpers.Frame.get_drawdowns(ror)
     if isinstance(ror, pd.DataFrame):
         portfolio_position = ror.columns.get_loc(portfolio_symbol)
@@ -215,7 +215,7 @@ def get_cash_flow_fv(
                 cashflow = cashflow_parameters.percentage / periods_per_year * period_initial_amount
             elif cashflow_parameters.NAME == "time_series":
                 cashflow = 0
-            elif cashflow_parameters.NAME == "CWID":
+            elif cashflow_parameters.NAME == "CWD":
                 withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[date] < 0:
                     cashflow = cashflow_parameters._calculate_withdrawal_size(
@@ -263,7 +263,7 @@ def get_cash_flow_fv(
                     balance=period_initial_amount,
                     number_of_periods=n,
                 )
-            elif cashflow_parameters.NAME == "CWID":
+            elif cashflow_parameters.NAME == "CWD":
                 withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[last_date] < 0:
                     cashflow_value = cashflow_parameters._calculate_withdrawal_size(
