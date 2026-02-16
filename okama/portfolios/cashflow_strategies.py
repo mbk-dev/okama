@@ -928,6 +928,31 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
         return repr(pd.Series(dic))
 
     @property
+    def amount(self):
+        """
+        Portfolio regular withdrawals size. Must be negative.
+        Cash flow value is indexed each period by 'indexation'.
+
+        The frequency of withdrawals or contributions is determined by the `frequency` parameter.
+
+        Returns
+        -------
+        float
+            Portfolio regular cash flow size.
+        """
+        return self._amount
+
+    @amount.setter
+    def amount(self, amount):
+        self._clear_cf_cache()
+        validators.validate_real("amount", amount)
+        if abs(amount) > self.initial_investment:
+            raise ValueError("It's not possible to withdraw more than the initial investment.")
+        if amount > 0:
+            raise ValueError("Amount must be negative or zero for withdrawals in CWD strategy.")
+        self._amount = amount
+
+    @property
     def crash_threshold_reduction(self):
         """
         List of tuples (threshold, reduction_coefficient) that define how much withdrawals are reduced
