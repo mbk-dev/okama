@@ -202,6 +202,7 @@ def test_find_the_largest_withdrawals_size_converges(dcf_indexation_yearly):
     dcf.mc.distribution = "norm"
     dcf.mc.period = 1
     dcf.mc.mc_number = 16
+    initial_amount = dcf.cashflow_parameters.amount
     res = dcf.find_the_largest_withdrawals_size(
         goal="survival_period",
         withdrawals_range=(0.0, 1.0),  # relative to initial investment per period
@@ -218,6 +219,7 @@ def test_find_the_largest_withdrawals_size_converges(dcf_indexation_yearly):
     assert isinstance(res.error_rel, float)
     assert isinstance(res.solutions, pd.DataFrame)
     assert {"withdrawal_abs", "withdrawal_rel", "error_rel", "error_rel_change"}.issubset(res.solutions.columns)
+    assert dcf.cashflow_parameters.amount == pytest.approx(initial_amount)
 
 
 # ------------------ Additional coverage: repr, validations, and plotting smoke ------------------

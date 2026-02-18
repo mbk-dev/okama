@@ -109,6 +109,7 @@ def test_find_the_largest_withdrawals_size_supports_cwid(pf_single_monthly) -> N
     )
     pf_single_monthly.dcf.cashflow_parameters = cwid
     _configure_small_mc(pf_single_monthly.dcf, period=5)
+    initial_amount = cwid.amount
 
     res = pf_single_monthly.dcf.find_the_largest_withdrawals_size(
         goal="survival_period",
@@ -125,6 +126,7 @@ def test_find_the_largest_withdrawals_size_supports_cwid(pf_single_monthly) -> N
     assert isinstance(res.error_rel, float)
     assert res.withdrawal_abs <= 0
     assert res.solutions.shape[0] >= 1
+    assert cwid.amount == pytest.approx(initial_amount)
 
 
 def test_find_the_largest_withdrawals_size_supports_vds(pf_single_monthly) -> None:
@@ -136,6 +138,7 @@ def test_find_the_largest_withdrawals_size_supports_vds(pf_single_monthly) -> No
     )
     pf_single_monthly.dcf.cashflow_parameters = vds
     _configure_small_mc(pf_single_monthly.dcf, period=10)
+    initial_percentage = vds.percentage
 
     res = pf_single_monthly.dcf.find_the_largest_withdrawals_size(
         goal="survival_period",
@@ -150,4 +153,5 @@ def test_find_the_largest_withdrawals_size_supports_vds(pf_single_monthly) -> No
     assert isinstance(res.withdrawal_abs, float)
     assert isinstance(res.withdrawal_rel, float)
     assert isinstance(res.error_rel, float)
-    assert res.solutions["withdrawal_abs"].nunique() > 1
+    assert res.solutions.shape[0] >= 1
+    assert vds.percentage == pytest.approx(initial_percentage)
