@@ -915,7 +915,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         global_max_cagr = self.global_max_return_portfolio["CAGR"]
         global_max_risk = self.global_max_return_portfolio["Risk"]
-
+        # TODO: global_max_cagr_is_not_asset must be TRUE if CAGR difference is small but RISK difference is big
         global_max_cagr_is_not_asset = (cagr < global_max_cagr * (1 - tolerance)).all()
         if global_max_cagr_is_not_asset:
             cagr_diff = cagr - global_max_cagr
@@ -955,19 +955,19 @@ class EfficientFrontier(asset_list.AssetList):
         """
         Full range of CAGR values (from min to max).
         """
-        min_ratio_data = self._min_ratio_asset
-        max_ratio_data = self._max_ratio_asset_right_to_max_cagr
-
-        if min_ratio_data is not None and max_ratio_data is not None:
-            min_cagr = min_ratio_data.get("min_asset_cagr")
-            max_cagr = self.global_max_return_portfolio["CAGR"]
-            return np.linspace(min_cagr, max_cagr, self.n_points)
-
         if self.full_frontier:
-            min_cagr = helpers.Frame.get_cagr(self.assets_ror).min()
+            cagr_series = helpers.Frame.get_cagr(self.assets_ror)
+            right_asset = self._max_ratio_asset_right_to_max_cagr
+            if right_asset is not None:
+                exclude_ticker = right_asset.get("ticker_with_largest_cagr")
+                if exclude_ticker in cagr_series.index and len(cagr_series) > 1:
+                    min_cagr = cagr_series.drop(labels=exclude_ticker).min()
+                else:
+                    min_cagr = cagr_series.min()
+            else:
+                min_cagr = cagr_series.min()
         else:
             min_cagr = self.gmv_annual_values[1]
-
         max_cagr = self.global_max_return_portfolio["CAGR"]
         return np.linspace(min_cagr, max_cagr, self.n_points)
 
