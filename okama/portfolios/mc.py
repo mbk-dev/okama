@@ -301,7 +301,7 @@ class MonteCarlo:
             shape, _, scale = scipy.stats.lognorm.fit(self.ror, floc=-1.0)
         else:
             if None in parameters:
-                shape, _, scale = scipy.stats.lognorm.fit(self.ror, floc=-1.0) if parameters is None else parameters
+                shape, _, scale = scipy.stats.lognorm.fit(self.ror, floc=-1.0)
                 shape = parameters[0] if parameters[0] is not None else shape
                 scale = parameters[2] if parameters[2] is not None else scale
             else:
@@ -755,6 +755,10 @@ class MonteCarlo:
         A q-q plot is a plot of the quantiles of the portfolio rate of return historical data
         against the quantiles of a given theoretical distribution.
 
+        Bootstrap bands in a Q–Q plot are bootstrap-based confidence envelopes around quantiles that show
+        the amount of random sample-to-sample variation one would expect. They bands built by repeatedly resampling
+        dataset of a given size and recomputing the Q–Q points.
+
         Parameters
         ----------
         var_level : int, default 5
@@ -762,7 +766,8 @@ class MonteCarlo:
 
         bootstrap_size_var : int, default 2000
             Number of bootstrap resamples used to compute confidence intervals for empirical
-            VaR and CVaR. If 0, the bootstrap stripe is not drawn.
+            VaR and CVaR. If 0, the bootstrap stripe is not drawn. A larger number provides a
+            smoother estimate of the confidence bands at the cost of computation time.
 
         zoom_to_left_tail : int or None, default 20
             Zoom the plot to the left tail by limiting the view to the
