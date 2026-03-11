@@ -143,7 +143,7 @@ def test_find_the_largest_withdrawals_size_supports_vds(pf_single_monthly) -> No
     res = pf_single_monthly.dcf.find_the_largest_withdrawals_size(
         goal="survival_period",
         withdrawals_range=(0.0, 0.2),
-        target_survival_period=10,
+        target_survival_period=7,
         percentile=50,
         threshold=0,
         tolerance_rel=0.25,

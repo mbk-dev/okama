@@ -200,7 +200,7 @@ def test_find_the_largest_withdrawals_size_converges(dcf_indexation_yearly):
     dcf = dcf_indexation_yearly
     # Use small MC to keep it fast
     dcf.mc.distribution = "norm"
-    dcf.mc.period = 1
+    dcf.mc.period = 2
     dcf.mc.mc_number = 16
     initial_amount = dcf.cashflow_parameters.amount
     res = dcf.find_the_largest_withdrawals_size(
@@ -220,6 +220,25 @@ def test_find_the_largest_withdrawals_size_converges(dcf_indexation_yearly):
     assert isinstance(res.solutions, pd.DataFrame)
     assert {"withdrawal_abs", "withdrawal_rel", "error_rel", "error_rel_change"}.issubset(res.solutions.columns)
     assert dcf.cashflow_parameters.amount == pytest.approx(initial_amount)
+
+
+def test_find_the_largest_withdrawals_size_rejects_target_above_period_with_tolerance(
+    dcf_indexation_yearly,
+) -> None:
+    dcf = dcf_indexation_yearly
+    dcf.mc.period = 10
+
+    with pytest.raises(
+        ValueError,
+        match=r"target_survival_period must be less than Monte Carlo simulation period",
+    ):
+        dcf.find_the_largest_withdrawals_size(
+            goal="survival_period",
+            target_survival_period=8,
+            percentile=50,
+            tolerance_rel=0.25,
+            iter_max=1,
+        )
 
 
 # ------------------ Additional coverage: repr, validations, and plotting smoke ------------------
