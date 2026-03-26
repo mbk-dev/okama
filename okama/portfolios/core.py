@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from random import randint
 from typing import Optional, List, Dict, Union, Tuple, Literal
+from urllib.parse import urlencode
 
 import numpy as np
 import pandas as pd
@@ -1617,24 +1618,30 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[.60, .40], rebalancing_strategy='year')
+        >>> pf = ok.Portfolio(
+        ...     ['SPY.US', 'AGG.US'],
+        ...     weights=[.60, .40],
+        ...     rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.05),
+        ... )
         >>> pf.okamaio_link
-        'https://okama.io/portfolio?tickers=SPY.US,AGG.US&weights=60.0,40.0&ccy=USD&first_date=2003-10-01&last_date=2024-08-01&rebal=year&symbol=portfolio_6323.PF'
+        'https://okama.io/portfolio?tickers=SPY.US,AGG.US&weights=60.0,40.0&ccy=USD&first_date=2003-10-01&last_date=2024-08-01&rebal=year&rebalancing_period=year&rebalancing_abs_deviation=0.05&symbol=portfolio_6323.PF'
         """
-        okamaio_url = "https://okama.io/"
-        new_url = okamaio_url + "portfolio?tickers="
-        tickers_str = ",".join(str(symbol) for symbol in self.symbols)
-        new_url += tickers_str
         weights_percent = [w * 100 for w in self.weights]
-        weights_str = "&weights=" + ",".join(str(w) for w in weights_percent)
-        new_url += weights_str
-        new_url += f"&ccy={self.currency}"
-        new_url += f"&first_date={self.first_date.strftime('%Y-%m-%d')}"
-        new_url += f"&last_date={self.last_date.strftime('%Y-%m-%d')}"
-        # TODO: change rebalancing strategy in the link
-        new_url += f"&rebal={self.rebalancing_strategy.period}"
-        new_url += f"&symbol={self.symbol}"
-        return new_url
+        query_params = {
+            "tickers": ",".join(str(symbol) for symbol in self.symbols),
+            "weights": ",".join(str(weight) for weight in weights_percent),
+            "ccy": self.currency,
+            "first_date": self.first_date.strftime("%Y-%m-%d"),
+            "last_date": self.last_date.strftime("%Y-%m-%d"),
+            "rebal": self.rebalancing_strategy.period,
+            "rebalancing_period": self.rebalancing_strategy.period,
+            "symbol": self.symbol,
+        }
+        if self.rebalancing_strategy.abs_deviation is not None:
+            query_params["rebalancing_abs_deviation"] = self.rebalancing_strategy.abs_deviation
+        if self.rebalancing_strategy.rel_deviation is not None:
+            query_params["rebalancing_rel_deviation"] = self.rebalancing_strategy.rel_deviation
+        return f"https://okama.io/portfolio?{urlencode(query_params, safe=',')}"
 
     def _clear_cf_cache(self):
         self._monte_carlo_wealth = pd.DataFrame()
