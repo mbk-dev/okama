@@ -26,16 +26,16 @@
 
 .. meta::
    :title: Okama Documentation: Python library for investments
-   :description lang=en: okama is a Python library with investment portfolio analyzing & optimization tools
+   :description lang=en: okama is a Python library for investment portfolio analysis and optimization
    :keywords lang=en: okama, python, investments, portfolio optimization, quantitative finance, asset allocation, rebalancing, efficient frontier, financial assets
 
 ===================
 Okama Documentation
 ===================
 
-*okama* is a library with investment portfolio analyzing & optimization tools. CFA recommendations are used in quantitative finance.
+*okama* is a Python library for investment portfolio analysis and optimization. It applies concepts commonly used in quantitative finance.
 
-*okama* goes with **free** «end of day» historical stock markets data and macroeconomic indicators through API.
+*okama* provides access to **free** end-of-day historical market data and macroeconomic indicators through an API.
 
     ...entities should not be multiplied without necessity
 
@@ -44,27 +44,27 @@ Okama Documentation
 Okama main features
 *******************
 
-* Investment portfolio constrained Markowitz Mean-Variance Analysis (MVA) and optimization
-* Rebalanced portfolio optimization with constraints (multi-period Efficient Frontier)
-* Investment portfolios with contributions / withdrawals cash flows (DCF)
-* Monte Carlo Simulations for financial assets and investment portfolios
-* Popular risk metrics: VAR, CVaR, semi-deviation, variance and drawdowns
-* Forecasting models according to normal and lognormal distribution
-* Testing distribution on historical data
+* Constrained Markowitz Mean-Variance Analysis (MVA) and portfolio optimization
+* Multi-period Efficient Frontier optimization with rebalancing constraints
+* Investment portfolios with contribution and withdrawal cash flows (DCF)
+* Monte Carlo simulations for financial assets and investment portfolios
+* Popular risk metrics: VaR, CVaR, semideviation, variance, and drawdowns
+* Forecasting models based on normal, lognormal, and Student's t distributions
+* Distribution fitting and goodness-of-fit testing on historical data
 * Dividend yield and other dividend indicators for stocks
-* Backtesting and comparing historical performance of broad range of assets and indexes in multiple currencies
-* Methods to track the performance of index funds (ETF) and compare them with benchmarks
-* Main macroeconomic indicators: inflation, central banks rates, financial ratios
-* Matplotlib visualization scripts for the Efficient Frontier, Transition map and assets risk / return performance
+* Backtesting and comparing the historical performance of a broad range of assets and indexes in multiple currencies
+* Methods for tracking the performance of index funds (ETFs) and comparing them with benchmarks
+* Main macroeconomic indicators: inflation, central bank rates, and financial ratios
+* Matplotlib visualizations for the Efficient Frontier, Transition Map, and asset risk/return performance
 
 Financial data and macroeconomic indicators
 *******************************************
-*okama* can be used with free financial data available through API.
+*okama* can work with free financial data available through its API.
 
 End of day historical data
 ==========================
 
-* Stocks and ETF for main world markets
+* Stocks and ETFs for major world markets
 * Mutual funds
 * Commodities
 * Currencies
@@ -73,11 +73,11 @@ End of day historical data
 Macroeconomic indicators
 ========================
 
-For several countries (USA, United Kingdom, European Union, Russia, Israel etc.):
+For several countries, including the USA, the United Kingdom, the European Union, Russia, and Israel:
 
 * Inflation
 * Central bank rates
-* CAPE10 (Shiller P/E) Cyclically adjusted price-to-earnings ratios
+* CAPE10 (Shiller P/E), or cyclically adjusted price-to-earnings ratios
 
 Other historical data
 =====================
@@ -104,7 +104,7 @@ The latest development version can be installed directly from GitHub:
 
 .. warning::
 
-    The development version of *okama* can have technical and financial issues. Please use carefully at your own risk.
+    The development version of *okama* may have technical and financial issues. Use it carefully and at your own risk.
 
 .. toctree::
     :maxdepth: 1
@@ -124,8 +124,8 @@ The latest development version can be installed directly from GitHub:
 
     /jupyter/portfolio
 
-Main classes
-************
+Main
+****
 
 Assets & Portfolio
 ==================
@@ -133,17 +133,27 @@ Assets & Portfolio
 .. autosummary::
     :toctree: stubs
     :template: custom-class-template.rst
-    :caption: Main Classes
+    :caption: Main API
 
     okama.Asset
     okama.AssetList
     okama.Portfolio
+    okama.Rebalance
+
+Cash Flows & DCF
+================
+
+.. autosummary::
+    :toctree: stubs
+    :template: custom-class-template.rst
+
     okama.PortfolioDCF
     okama.MonteCarlo
     okama.IndexationStrategy
     okama.PercentageStrategy
     okama.TimeSeriesStrategy
-    okama.Rebalance
+    okama.VanguardDynamicSpending
+    okama.CutWithdrawalsIfDrawdown
 
 Efficient Frontier
 ==================
@@ -153,7 +163,6 @@ Efficient Frontier
     :template: custom-class-template-no-inherited.rst
 
     okama.EfficientFrontier
-    okama.EfficientFrontierReb
 
 Macroeconomics
 ==============
@@ -166,6 +175,20 @@ Macroeconomics
     okama.Inflation
     okama.Rate
     okama.Indicator
+
+Data Access & Search
+====================
+
+Use these helpers to discover available namespaces and find supported symbols before creating assets or portfolios.
+
+.. autosummary::
+    :toctree: stubs
+
+    okama.search
+    okama.symbols_in_namespace
+
+``okama.namespaces``
+    Returns a dictionary of available data namespaces and their descriptions.
 
 Indices and tables
 ******************
