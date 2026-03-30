@@ -569,3 +569,4 @@ class Indicator(MacroABC):
         allowed_namespaces = [x for x in all_macro_namespaces if x not in restricted_namespaces]
         if namespace not in allowed_namespaces:
             raise ValueError(f"{namespace} is not in allowed namespaces: {allowed_namespaces}")
+

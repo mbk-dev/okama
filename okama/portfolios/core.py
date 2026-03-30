@@ -185,14 +185,14 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> reb_period='none'  # The Portfolio is not rebalanced.
+        >>> reb_period = ok.Rebalance(period="none")  # The Portfolio is not rebalanced.
         >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.5, 0.5], rebalancing_strategy=reb_period)
         >>> pf.weights_ts.plot()
         >>> plt.show()
 
         The weights of assets time series will differ significantly if the portfolio rebalancing_period is 1 year.
 
-        >>> pf.rebalancing_strategy = 'year'  # set a new rebalancing period
+        >>> pf.rebalancing_strategy = ok.Rebalance(period="year")  # set a new rebalancing period
         >>> pf.weights_ts.plot()
         >>> plt.show()
         """
@@ -311,7 +311,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> p = ok.Portflio()
+        >>> p = ok.Portfolio()
         >>> p.symbol  # a randomly generated symbol will be shown
         'portfolio_5312.PF'
 
@@ -617,20 +617,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.Portfolio(['DXET.XFRA', 'DBXN.XFRA'], ccy='EUR', inflation=True)
+        >>> x = ok.Portfolio(['SPY.US', 'BND.US'], ccy='EUR', inflation=True)
         >>> x.get_rolling_cagr(window=5*12, real=True)
-                 portfolio_7645.PF
-        2013-09           0.029914
-        2013-10           0.052435
-        2013-11           0.055651
-        2013-12           0.045180
-        2014-01           0.063153
-                            ...
-        2021-01           0.032734
-        2021-02           0.037779
-        2021-03           0.043811
-        2021-04           0.043729
-        2021-05           0.042704
+                 portfolio_...
+        date
+        ...             ...
         """
         df_or_ts = self._add_inflation()
         if real:
@@ -735,7 +726,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.6, .35, .05], rebalancing_strategy='year')
+        >>> pf = ok.Portfolio(
+        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
+        ...     weights=[.6, .35, .05],
+        ...     rebalancing_strategy=ok.Rebalance(period="year"),
+        ... )
         >>> pf.get_rolling_cumulative_return(window=24, real=True)
                  portfolio_9012.PF
         2006-11           0.125728
@@ -1467,7 +1462,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
+        >>> pf = ok.Portfolio(
+        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
+        ...     weights=[.60, .35, .05],
+        ...     rebalancing_strategy=ok.Rebalance(period="year"),
+        ... )
         >>> pf.percentile_inverse_cagr(score=0, years=1)
         18.08
         The probability of getting negative result (score=0) in 1 year period for historical distribution.
@@ -1497,7 +1496,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='none')
+        >>> pf = ok.Portfolio(
+        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
+        ...     weights=[.60, .35, .05],
+        ...     rebalancing_strategy=ok.Rebalance(period="none"),
+        ... )
         >>> pf.percentile_cagr(years=5, percentiles=[1, 50, 99])
                      1         50        99
         years
@@ -1647,3 +1650,4 @@ class Portfolio(make_asset_list.ListMaker):
         self._monte_carlo_wealth = pd.DataFrame()
         self._wealth_index = pd.DataFrame()
         self._cash_flow_fv = pd.DataFrame()
+

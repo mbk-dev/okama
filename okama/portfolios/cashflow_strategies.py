@@ -501,7 +501,6 @@ class VanguardDynamicSpending(PercentageStrategy):
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> import okama as ok
     >>> pf = ok.Portfolio(
     ...     ["SPY.US", "BND.US"],
     ...     weights=[.6, .4],
@@ -861,7 +860,6 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> import okama as ok
     >>> pf = ok.Portfolio(
     ...     ["SPY.US", "BND.US"],
     ...     weights=[.6, .4],
@@ -961,12 +959,12 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
 
         Example
         -------
-        crash_threshold_reduction = [
-            (.05, .20),
-            (.10, .40),
-            (.20, .50),
-            (.30, 1)
-        ]
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], weights=[0.6, 0.4], ccy="USD")
+        >>> strategy = ok.CutWithdrawalsIfDrawdown(parent=pf)
+        >>> strategy.crash_threshold_reduction = [(0.05, 0.20), (0.10, 0.40), (0.20, 0.50), (0.30, 1.0)]
+        >>> strategy.crash_threshold_reduction
+        [(0.05, 0.2), (0.1, 0.4), (0.2, 0.5), (0.3, 1.0)]
+
         If drawdown is 5%, reduce withdrawal by 20%; if 10%, reduce by 40%; if 20%, reduce by 50%.
         If drawdown is 30% or more, withdrawals stop entirely (100% reduction).
         """
@@ -1032,3 +1030,4 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
         values = [abs(value) for _, value in l]
         crash_series = pd.Series(values, index=indices)
         return crash_series.sort_index(ascending=False)
+

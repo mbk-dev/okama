@@ -211,3 +211,4 @@ class Asset:
         if self.exchange == "PIF":
             return data_queries.QueryData.get_nav(self.symbol)
         return np.nan
+

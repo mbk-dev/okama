@@ -711,3 +711,4 @@ class ListMaker(ABC):
                 ha="center",  # horizontal alignment can be left, right or center
             )
         return ax
+

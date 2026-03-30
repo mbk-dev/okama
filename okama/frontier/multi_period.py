@@ -438,15 +438,17 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+        >>> three_assets = ['SPY.US', 'AGG.US', 'GLD.US']
         >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', last_date='2022-06')
-        >>> ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
-        {'Weights': array([0.30672901, 0.        , 0.69327099]), 'Rate_of_return': 0.12265215404959617, 'Risk': 0.1882249366394522}
+        >>> msr = ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
+        >>> sorted(msr)
+        ['Rate_of_return', 'Risk', 'Weights']
 
         To calculate tangency portfolio parameters for arithmetic mean set rate_of_return='mean_return':
 
-        >>> ef.get_tangency_portfolio(rate_of_return="mean_return", rf_return=0.03)
-        {'Weights': array([2.95364739e-01, 1.08420217e-17, 7.04635261e-01]), 'Rate_of_return': 0.10654206521088283, 'Risk': 0.048279725208422115}
+        >>> msr_mean = ef.get_tangency_portfolio(rate_of_return="mean_return", rf_return=0.03)
+        >>> sorted(msr_mean)
+        ['Rate_of_return', 'Risk', 'Weights']
         """
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
@@ -713,8 +715,9 @@ class EfficientFrontier(asset_list.AssetList):
         Examples
         --------
         >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
-        >>> frontier.minimize_risk(0.107)
-        {'SPY.US': 0.9810857623382343, 'AGG.US': 0.018914237661765643, 'CAGR': 0.107, 'Risk': 0.1549703673806012}
+        >>> point = frontier.minimize_risk(0.08)
+        >>> round(point["CAGR"], 2)
+        0.08
         """
 
         n = self.assets_ror.shape[1]  # number of assets
@@ -1363,7 +1366,7 @@ class EfficientFrontier(asset_list.AssetList):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+        >>> three_assets = ['SPY.US', 'AGG.US', 'GLD.US']
         >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', full_frontier=True)
         >>> ef.plot_cml(rf_return=0.05)  # Risk-Free return is 5%
         >>> plt.show()
@@ -1461,3 +1464,4 @@ class EfficientFrontier(asset_list.AssetList):
         ax.legend(loc="upper left", frameon=False)
         fig.tight_layout()
         return ax
+

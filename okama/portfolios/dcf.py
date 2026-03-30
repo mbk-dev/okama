@@ -51,7 +51,6 @@ class PortfolioDCF:
 
     Examples
     --------
-    >>> import okama as ok
     >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")
     >>> pf.dcf.wealth_index(discounting="fv").head()
     """
@@ -372,12 +371,7 @@ class PortfolioDCF:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(
-                ['SPY.US', 'AGG.US'],
-                ccy='USD',
-                first_date='2010-01',
-                last_date='2024-10'
-            )
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], ccy="USD", first_date="2010-01", last_date="2024-10")
         >>> # set cash flow strategy
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
@@ -414,12 +408,7 @@ class PortfolioDCF:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(
-                ['SPY.US', 'AGG.US'],
-                ccy='USD',
-                first_date='2010-01',
-                last_date='2024-10'
-            )
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], ccy="USD", first_date="2010-01", last_date="2024-10")
         >>> # set cash flow strategy
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
@@ -523,7 +512,11 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
+        >>> pf = ok.Portfolio(
+        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
+        ...     weights=[.60, .35, .05],
+        ...     rebalancing_strategy=ok.Rebalance(period="month"),
+        ... )
         >>> pf.dcf.set_mc_parameters(distribution="t", period=10, mc_number=100)  # Set Monte Carlo parameters
         >>> # set cash flow parameters
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
@@ -595,7 +588,11 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
+        >>> pf = ok.Portfolio(
+        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
+        ...     weights=[.60, .35, .05],
+        ...     rebalancing_strategy=ok.Rebalance(period="month"),
+        ... )
         >>> pf.dcf.set_mc_parameters(distribution="t", period=10, mc_number=100)  # Set Monte Carlo parameters
         >>> # set cash flow parameters
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
@@ -661,7 +658,11 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(assets=['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
+        >>> pf = ok.Portfolio(
+        ...     assets=["SPY.US", "AGG.US", "GLD.US"],
+        ...     weights=[0.60, 0.35, 0.05],
+        ...     rebalancing_strategy=ok.Rebalance(period="year"),
+        ... )
         >>> # Set Monte Carlo parameters
         >>> pf.dcf.set_mc_parameters(distribution="norm", period=50, mc_number=200)
         >>> # set cash flow parameters
@@ -836,12 +837,12 @@ class PortfolioDCF:
         Examples
         --------
         >>> pf = ok.Portfolio(
-         ...       assets=["MCFTR.INDX", "RUCBTRNS.INDX"],
-         ...       weights=[.3, .7],
-         ...       inflation=True,
-         ...       ccy="RUB",
-         ...       rebalancing_strategy=ok.Rebalance(period="year"),
-         ...   )
+        ...     assets=["MCFTR.INDX", "RUCBTRNS.INDX"],
+        ...     weights=[0.3, 0.7],
+        ...     inflation=True,
+        ...     ccy="RUB",
+        ...     rebalancing_strategy=ok.Rebalance(period="year"),
+        ... )
         >>> # Fixed Percentage strategy
         >>> pc = ok.PercentageStrategy(pf)
         >>> pc.initial_investment = 10_000
@@ -849,17 +850,13 @@ class PortfolioDCF:
         >>> # Assign a strategy
         >>> pf.dcf.cashflow_parameters = pc
         >>> # Set Monte Carlo parameters
-        >>> pf.dcf.set_mc_parameters(
-        ...    distribution="norm",
-        ...    period=50,
-        ...    mc_number=200
-        ...)
+        >>> pf.dcf.set_mc_parameters(distribution="norm", period=50, mc_number=200)
         >>> res = pf.dcf.find_the_largest_withdrawals_size(
-        ...    percentile=50,
-        ...    goal="survival_period",
-        ...    threshold=0.05,
-        ...    target_survival_period=25
-        ...)
+        ...     percentile=50,
+        ...     goal="survival_period",
+        ...     threshold=0.05,
+        ...     target_survival_period=25,
+        ... )
         >>> res
         success                True
         withdrawal_abs   -917.96875
@@ -1152,5 +1149,6 @@ class PortfolioDCF:
         else:
             raise ValueError(
                 "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only.")
+
 
 

@@ -327,15 +327,17 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+        >>> three_assets = ['SPY.US', 'AGG.US', 'GLD.US']
         >>> ef = ok.EfficientFrontierSingle(assets=three_assets, ccy='USD', last_date='2022-06')
-        >>> ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
-        {'Weights': array([0.30672901, 0.        , 0.69327099]), 'Mean_return': 0.12265215404959617, 'Risk': 0.1882249366394522}
+        >>> msr = ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
+        >>> sorted(msr)
+        ['Rate_of_return', 'Risk', 'Weights']
 
-        To calculate tangency portfolio parameters for CAGR (geometric mean) set cagr=True:
+        To calculate tangency portfolio parameters for arithmetic mean set `rate_of_return="mean_return"`:
 
-        >>> ef.get_tangency_portfolio(rate_of_return="mean_return", rf_return=0.03)
-        {'Weights': array([2.95364739e-01, 1.08420217e-17, 7.04635261e-01]), 'Mean_return': 0.10654206521088283, 'Risk': 0.048279725208422115}
+        >>> msr_mean = ef.get_tangency_portfolio(rate_of_return="mean_return", rf_return=0.03)
+        >>> sorted(msr_mean)
+        ['Rate_of_return', 'Risk', 'Weights']
         """
         assets_ror = self.assets_ror
         n = self.assets_ror.shape[1]
@@ -1115,10 +1117,10 @@ class EfficientFrontierSingle(asset_list.AssetList):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> three_assets = ['MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
+        >>> three_assets = ['SPY.US', 'AGG.US', 'GLD.US']
         >>> ef = ok.EfficientFrontierSingle(assets=three_assets, ccy='USD', full_frontier=True)
         >>> ef.plot_cml(rf_return=0.05, y_axe="cagr")  # Risk-Free return is 5%
-        >>> plt.show
+        >>> plt.show()
         """
         if y_axe.lower() not in {"cagr", "mean_return"}:
             raise ValueError("rate_of_return must be 'cagr' or 'mean_return'")
@@ -1151,3 +1153,4 @@ class EfficientFrontierSingle(asset_list.AssetList):
         # plot the assets
         self.plot_assets(kind="mean" if y_axe == "mean_return" else "cagr")
         return ax
+

@@ -54,7 +54,6 @@ class MonteCarlo:
 
     Examples
     --------
-    >>> import okama as ok
     >>> import matplotlib.pyplot as plt
     >>> pf = ok.Portfolio(first_date='2015-01', last_date='2024-10')
     >>> pf.dcf.set_mc_parameters(distribution='t', period=10, mc_number=100)
@@ -372,7 +371,11 @@ class MonteCarlo:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='month')
+        >>> pf = ok.Portfolio(
+        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
+        ...     weights=[.60, .35, .05],
+        ...     rebalancing_strategy=ok.Rebalance(period="month"),
+        ... )
         >>> pf.dcf.set_mc_parameters(period=8, mc_number=5000)
         >>> pf.dcf.mc.monte_carlo_returns_ts
                          0         1         2     ...      4997      4998      4999
@@ -440,8 +443,11 @@ class MonteCarlo:
 
         Examples
         --------
-        >>> import okama as ok
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
+        >>> pf = ok.Portfolio(
+        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
+        ...     weights=[.60, .35, .05],
+        ...     rebalancing_strategy=ok.Rebalance(period="year"),
+        ... )
         >>> pf.dcf.set_mc_parameters(distribution='norm', period=1)
         >>> pf.dcf.mc.percentile_distribution_cagr()
         {10: ..., 50: ..., 90: ...}
@@ -481,8 +487,11 @@ class MonteCarlo:
 
         Examples
         --------
-        >>> import okama as ok
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
+        >>> pf = ok.Portfolio(
+        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
+        ...     weights=[.60, .35, .05],
+        ...     rebalancing_strategy=ok.Rebalance(period="year"),
+        ... )
         >>> pf.dcf.set_mc_parameters(distribution='lognorm', period=1, mc_number=5000)
         >>> pf.dcf.mc.percentile_inverse_cagr(score=0)
         ...
@@ -779,9 +788,12 @@ class MonteCarlo:
 
         Examples
         --------
-        >>> import okama as ok
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05], rebalancing_strategy='year')
+        >>> pf = ok.Portfolio(
+        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
+        ...     weights=[.60, .35, .05],
+        ...     rebalancing_strategy=ok.Rebalance(period="year"),
+        ... )
         >>> pf.dcf.set_mc_parameters(distribution="t")
         >>> pf.dcf.mc.plot_qq(bootstrap_size_var=2000, zoom_to_left_tail=50, figsize=(10, 10))
         >>> plt.show()
@@ -948,3 +960,4 @@ class MonteCarlo:
         plt.plot(x, p, "k", linewidth=2)
         plt.title(title)
         plt.show()
+
