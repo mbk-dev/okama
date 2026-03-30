@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from urllib.parse import parse_qs, urlparse
 
 import okama as ok
 
@@ -194,6 +195,25 @@ def test_describe_and_table_return_types(pf_ab_monthly):
 def test_okamaio_link_returns_string(pf_ab_monthly):
     link = pf_ab_monthly.okamaio_link
     assert isinstance(link, str) and len(link) > 0
+
+
+def test_okamaio_link_serializes_rebalancing_strategy(pf_ab_monthly):
+    pf_ab_monthly.rebalancing_strategy = ok.Rebalance(period="quarter", abs_deviation=0.05, rel_deviation=0.1)
+    query = parse_qs(urlparse(pf_ab_monthly.okamaio_link).query)
+
+    assert query["rebal"] == ["quarter"]
+    assert query["rebalancing_period"] == ["quarter"]
+    assert query["rebalancing_abs_deviation"] == ["0.05"]
+    assert query["rebalancing_rel_deviation"] == ["0.1"]
+
+
+def test_okamaio_link_omits_empty_rebalancing_thresholds(pf_ab_monthly):
+    query = parse_qs(urlparse(pf_ab_monthly.okamaio_link).query)
+
+    assert query["rebal"] == ["month"]
+    assert query["rebalancing_period"] == ["month"]
+    assert "rebalancing_abs_deviation" not in query
+    assert "rebalancing_rel_deviation" not in query
 
 
 # ---------------- New tests for additional Portfolio API -----------------
