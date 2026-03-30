@@ -9,12 +9,64 @@ from okama import settings
 
 @lru_cache()
 def get_namespaces():
+    """
+    Return the namespace mapping exposed as ``ok.namespaces``.
+
+    The returned dictionary maps namespace codes to human-readable
+    descriptions.
+
+    Returns
+    -------
+    dict
+        Dictionary where keys are namespace codes and values are namespace
+        descriptions.
+
+    Examples
+    --------
+    >>> "US" in ok.namespaces
+    True
+    >>> isinstance(ok.namespaces["US"], str)
+    True
+    """
     string_response = api_methods.API.get_namespaces()
     return json.loads(string_response)
 
 
 @lru_cache()
 def symbols_in_namespace(namespace: str = settings.default_namespace, response_format: str = "frame") -> pd.DataFrame:
+    """
+    Return all symbols available in a namespace.
+
+    Parameters
+    ----------
+    namespace : str, default settings.default_namespace
+        Namespace code such as ``"US"``, ``"XETR"``, or ``"INFL"``.
+
+    response_format : {'frame', 'json'}, default 'frame'
+        Format of the returned namespace contents.
+
+    Returns
+    -------
+    pandas.DataFrame or list
+        Namespace contents.
+
+        - Returns a ``DataFrame`` when ``response_format='frame'``.
+        - Returns the parsed API JSON payload as a list when
+          ``response_format='json'``.
+
+    Raises
+    ------
+    ValueError
+        If ``response_format`` is not ``'frame'`` or ``'json'``.
+
+    Examples
+    --------
+    >>> symbols = ok.symbols_in_namespace("US")
+    >>> symbols.empty
+    False
+    >>> {"symbol", "name", "currency"}.issubset(symbols.columns)
+    True
+    """
     string_response = api_methods.API.get_symbols_in_namespace(namespace.upper())
     list_of_symbols = json.loads(string_response)
     if response_format.lower() == "frame":

@@ -44,6 +44,33 @@ import okama.settings
 
 
 def __getattr__(name):
+    """
+    Lazily expose selected API metadata at the package level.
+
+    Parameters
+    ----------
+    name : str
+        Public attribute name requested from the ``okama`` package.
+
+    Returns
+    -------
+    Any
+        Cached namespace metadata for supported attribute names.
+
+    Raises
+    ------
+    AttributeError
+        If ``name`` is not a supported dynamic package attribute.
+
+    Notes
+    -----
+    Supported dynamic attributes include ``okama.namespaces``,
+    ``okama.assets_namespaces``, ``okama.macro_namespaces``, and
+    ``okama.no_dividends_namespaces``.
+
+    ``okama.namespaces`` returns a dictionary of available namespace codes and
+    their descriptions.
+    """
     if name == "namespaces":
         return okama.api.namespaces.get_namespaces()
     elif name == "assets_namespaces":

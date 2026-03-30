@@ -9,6 +9,49 @@ from okama.api import api_methods, namespaces
 
 @lru_cache()
 def search(search_string: str, namespace: Optional[str] = None, response_format: str = "frame") -> json:
+    """
+    Search symbols by ticker, name, or ISIN.
+
+    When ``namespace`` is provided, the search is performed within the cached
+    table returned by ``ok.symbols_in_namespace(namespace)``. Otherwise the
+    query is delegated to the API search endpoint across all namespaces.
+
+    Parameters
+    ----------
+    search_string : str
+        Case-insensitive text used to match symbol names, tickers, and ISINs.
+
+    namespace : str, optional
+        Namespace code such as ``"US"`` or ``"XETR"``. If omitted, all
+        available namespaces are searched.
+
+    response_format : {'frame', 'json'}, default 'frame'
+        Format of the returned search results.
+
+    Returns
+    -------
+    pandas.DataFrame or str or list
+        Search results.
+
+        - Returns a ``DataFrame`` when ``response_format='frame'``.
+        - Returns a JSON string in pandas ``records`` orientation when
+          ``namespace`` is provided and ``response_format='json'``.
+        - Returns the parsed API JSON payload as a list when ``namespace`` is
+          omitted and ``response_format='json'``.
+
+    Raises
+    ------
+    ValueError
+        If ``response_format`` is not ``'frame'`` or ``'json'``.
+
+    Examples
+    --------
+    >>> result = ok.search("SPY", namespace="US")
+    >>> result.empty
+    False
+    >>> {"symbol", "ticker", "name"}.issubset(result.columns)
+    True
+    """
     # search for string in a single namespace
     if namespace:
         df = namespaces.symbols_in_namespace(namespace.upper())
