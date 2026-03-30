@@ -14,3 +14,5 @@ Additional rules:
 - Use type hints for all function parameters and return types.
 - Use f-string formatting for all logging and print messages.
 - When editing Jupyter Notebook examples in the `/examples` directory, ensure that the code examples are up-to-date with the current codebase in the Git branch.
+- Use interpreter in poetry env (poetry run python ...).
+- Always use "poetry add" instead of "pip install".
