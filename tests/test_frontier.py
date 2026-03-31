@@ -166,8 +166,12 @@ def test_mdp_points_basic_properties(ef_three):
 
 def test_get_assets_tickers_modes(synthetic_env):
     """get_assets_tickers should return symbols when ticker_names=True and names when False."""
-    ef_symbols = ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=10, ticker_names=True)
-    ef_names = ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=10, ticker_names=False)
+    ef_symbols = ok.EfficientFrontierSingle(
+        ["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=10, ticker_names=True
+    )
+    ef_names = ok.EfficientFrontierSingle(
+        ["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=10, ticker_names=False
+    )
 
     # Tickers mode
     assert ef_symbols.get_assets_tickers() == ["IDX.US", "A.US", "B.US"]

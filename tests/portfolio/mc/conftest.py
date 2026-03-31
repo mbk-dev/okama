@@ -50,7 +50,9 @@ def _mc_offline_asset_patches():
 
     def _get_or_make(symbol: str):
         if symbol not in _cache:
-            _cache[symbol] = FakeAsset(symbol, _series_for(symbol), currency="RUB" if symbol.endswith(".INDX") else "USD")
+            _cache[symbol] = FakeAsset(
+                symbol, _series_for(symbol), currency="RUB" if symbol.endswith(".INDX") else "USD"
+            )
         return _cache[symbol]
 
     def _filtered_get_dict(symbols, first_date=None, last_date=None):
@@ -98,14 +100,9 @@ def mc_normal_small():
         symbol="pf1.PF",
     )
     pf_dcf = okama.portfolios.dcf.PortfolioDCF(pf, discount_rate=None)
-    mc = ok.MonteCarlo(
-        parent=pf_dcf,
-        distribution="norm",
-        distribution_parameters=(None, None),
-        period=1,
-        mc_number=10
-    )
+    mc = ok.MonteCarlo(parent=pf_dcf, distribution="norm", distribution_parameters=(None, None), period=1, mc_number=10)
     return mc
+
 
 @pytest.fixture(scope="package")
 def mc_lognormal_small():
@@ -121,13 +118,10 @@ def mc_lognormal_small():
     )
     pf_dcf = okama.portfolios.dcf.PortfolioDCF(pf, discount_rate=None)
     mc = ok.MonteCarlo(
-        parent=pf_dcf,
-        distribution="lognorm",
-        distribution_parameters=(None, None, None),
-        period=1,
-        mc_number=10
+        parent=pf_dcf, distribution="lognorm", distribution_parameters=(None, None, None), period=1, mc_number=10
     )
     return mc
+
 
 @pytest.fixture(scope="package")
 def mc_students():
@@ -143,12 +137,6 @@ def mc_students():
     )
     pf_dcf = okama.portfolios.dcf.PortfolioDCF(pf, discount_rate=None)
     mc = ok.MonteCarlo(
-        parent=pf_dcf,
-        distribution="t",
-        distribution_parameters=(None, None, None),
-        period=10,
-        mc_number=100
+        parent=pf_dcf, distribution="t", distribution_parameters=(None, None, None), period=10, mc_number=100
     )
     return mc
-
-

@@ -327,7 +327,7 @@ class Rebalance:
     def wealth_ts_ef(self, weights: list, ror: pd.DataFrame) -> pd.Series:
         """
         Calculate wealth index time series of rebalanced portfolio given returns time series of the assets.
-        
+
         Simple version without conditional rebalancing (abs_deviation and rel_deviation are not used).
         This method is used for efficient frontier optimization.
         Default rebalancing period is a Year (end of year).
@@ -348,7 +348,7 @@ class Rebalance:
         """
         initial_inv = 1000
         weights_array = np.asarray(weights)
-        
+
         if self.period == "none":  # Not rebalanced portfolio
             inv_period_spread = weights_array * initial_inv
             assets_wealth_indexes = inv_period_spread * (1 + ror).cumprod()
@@ -357,31 +357,31 @@ class Rebalance:
             # Fully vectorized approach without loops
             period_grouper = pd.Grouper(freq=self._pandas_frequency_grouper, convention="start")
             period_ids = ror.groupby(period_grouper).ngroup()
-            
+
             growth_factors = 1 + ror
             cumulative_growth_within_period = growth_factors.groupby(period_ids).cumprod()
-            
+
             wealth_per_asset_normalized = weights_array * cumulative_growth_within_period
             portfolio_wealth_normalized = wealth_per_asset_normalized.sum(axis=1)
-            
+
             # Calculate ending wealth for each period (growth factor for that period)
             period_ends = portfolio_wealth_normalized.groupby(period_ids).last()
-            
+
             # Calculate cumulative multiplier for the START of each period
             period_multipliers = period_ends.shift(1).fillna(1.0).cumprod()
-            
+
             # Map multipliers back to the original time series
             aligned_multipliers = period_ids.map(period_multipliers)
-            
+
             # Calculate final wealth index
             wealth_index = initial_inv * aligned_multipliers * portfolio_wealth_normalized
-            
+
         return wealth_index
 
     def return_ror_ts_ef(self, weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
         """
         Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
-        
+
         Simple version without conditional rebalancing (abs_deviation and rel_deviation are not used).
         This method is used for efficient frontier optimization.
         Default rebalancing period is a Year (end of year).

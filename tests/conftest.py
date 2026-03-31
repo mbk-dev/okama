@@ -15,6 +15,7 @@ from tests.helpers.factories import (
     make_ror_series,
 )
 
+
 @pytest.fixture(scope="session", autouse=True)
 def set_seed():
     """Set deterministic seeds for numpy and random across the test session."""
@@ -75,7 +76,6 @@ def mock_macro():
     mp.setattr(dq.QueryData, "get_symbol_info", staticmethod(_wrapped_get_symbol_info))
     yield
     mp.undo()
-
 
 
 # Rebalance
@@ -140,8 +140,9 @@ def synthetic_env(mocker):
                     # Pass through the original object for symbols not in fake_assets
                     # This is needed for tests that create their own test objects
                     from okama.common.make_asset_list import ListMaker
+
                     # Call the original unmocked method
-                    original_result = ListMaker.__dict__['_get_asset_obj_dict'].__func__(
+                    original_result = ListMaker.__dict__["_get_asset_obj_dict"].__func__(
                         [s], first_date=first_date, last_date=last_date
                     )
                     result.update(original_result)
@@ -153,9 +154,7 @@ def synthetic_env(mocker):
     m_get_dict = mocker.patch(
         "okama.common.make_asset_list.ListMaker._get_asset_obj_dict", side_effect=_filtered_get_dict
     )
-    m_currency_asset = mocker.patch(
-        "okama.common.make_asset_list.asset.Asset", side_effect=FakeCurrencyAsset
-    )
+    m_currency_asset = mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=FakeCurrencyAsset)
 
     yield {
         "index": idx,

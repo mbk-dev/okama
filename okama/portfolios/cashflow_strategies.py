@@ -81,9 +81,7 @@ class CashFlow:
             self._frequency = frequency
             self._pandas_frequency = settings.frequency_mapping.get(self.frequency)
         else:
-            raise ValueError(
-                f"frequency must be in {settings.frequency_mapping.keys()}"
-            )
+            raise ValueError(f"frequency must be in {settings.frequency_mapping.keys()}")
 
     @property
     def periods_per_year(self) -> int:
@@ -296,9 +294,7 @@ class IndexationStrategy(CashFlow):
         if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
             self._indexation = self.portfolio.get_cagr().loc[self.portfolio.inflation]
         elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
-            raise ValueError(
-                "There is no information about historical inflation. Set inflation=True to calculate."
-            )
+            raise ValueError("There is no information about historical inflation. Set inflation=True to calculate.")
         elif indexation is None and not hasattr(self.portfolio, "inflation"):
             self._indexation = settings.DEFAULT_DISCOUNT_RATE
         else:
@@ -392,9 +388,7 @@ class PercentageStrategy(CashFlow):
         self._clear_cf_cache()
         validators.validate_real("percentage", percentage)
         if percentage < -1:
-            raise ValueError(
-                "Withdrawal Percentage must less or equal to the Initial investment (100%)."
-            )
+            raise ValueError("Withdrawal Percentage must less or equal to the Initial investment (100%).")
         self._percentage = percentage
 
 
@@ -466,7 +460,7 @@ class VanguardDynamicSpending(PercentageStrategy):
     The withdrawal amount is calculated as a percentage of the portfolio balance.
 
     The `floor_ceiling` parameter limits the withdrawals relative to the
-    previous year's cash flow. 
+    previous year's cash flow.
 
     The absolute withdrawal amount can be optionally limited with
     `min_max_annual_withdrawal`. If `adjust_min_max=True`, these bounds are indexed
@@ -566,19 +560,15 @@ class VanguardDynamicSpending(PercentageStrategy):
             "Cash flow frequency": self.frequency,
             "Cash flow strategy": self.NAME,
             "Cash flow percentage": self.percentage,  # negative
-            "Minimum annual withdrawal": self.min_max_annual_withdrawals[0]
-            if self.min_max_annual_withdrawals is not None
-            else None,  # positive
-            "Maximum annual withdrawal": self.min_max_annual_withdrawals[1]
-            if self.min_max_annual_withdrawals is not None
-            else None,  # positive
+            "Minimum annual withdrawal": (
+                self.min_max_annual_withdrawals[0] if self.min_max_annual_withdrawals is not None else None
+            ),  # positive
+            "Maximum annual withdrawal": (
+                self.min_max_annual_withdrawals[1] if self.min_max_annual_withdrawals is not None else None
+            ),  # positive
             "Max and Min withdrawals are indexed": str(self.adjust_min_max),
-            "Floor": self.floor_ceiling[0]
-            if self.floor_ceiling is not None
-            else None,  # negative
-            "Ceiling": self.floor_ceiling[1]
-            if self.floor_ceiling is not None
-            else None,  # positive
+            "Floor": self.floor_ceiling[0] if self.floor_ceiling is not None else None,  # negative
+            "Ceiling": self.floor_ceiling[1] if self.floor_ceiling is not None else None,  # positive
             "Floor and Ceiling are indexed": str(self.adjust_floor_ceiling),
             "Indexation": self.indexation,
         }
@@ -603,13 +593,9 @@ class VanguardDynamicSpending(PercentageStrategy):
         self._clear_cf_cache()
         validators.validate_real("percentage", percentage)
         if percentage < -1:
-            raise ValueError(
-                "Withdrawal Percentage must less or equal to the Initial investment (100%)."
-            )
+            raise ValueError("Withdrawal Percentage must less or equal to the Initial investment (100%).")
         if percentage > 0:
-            raise ValueError(
-                "Only withdrawals are allowed in VDS strategy. Percentage must be negative or zero."
-            )
+            raise ValueError("Only withdrawals are allowed in VDS strategy. Percentage must be negative or zero.")
         self._percentage = percentage
 
     @property
@@ -636,9 +622,7 @@ class VanguardDynamicSpending(PercentageStrategy):
     @min_max_annual_withdrawals.setter
     def min_max_annual_withdrawals(self, value: Optional[tuple[float, float]]):
         if not isinstance(value, tuple):
-            raise TypeError(
-                "min_max_annual_withdrawals must be a tuple (float, float)."
-            )
+            raise TypeError("min_max_annual_withdrawals must be a tuple (float, float).")
         min_w = value[0]
         max_w = value[1]
         validators.validate_real("minimum annual withdrawal", min_w)
@@ -648,9 +632,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         if max_w < 0:
             raise ValueError("Max withdrawal cannot be negative.")
         if min_w > max_w:
-            raise ValueError(
-                "Minimum withdrawal cannot be greater than maximum withdrawal."
-            )
+            raise ValueError("Minimum withdrawal cannot be greater than maximum withdrawal.")
         self._clear_cf_cache()
         self._min_max_annual_withdrawals = value
 
@@ -721,9 +703,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
             self._indexation = self.portfolio.get_cagr().loc[self.portfolio.inflation]
         elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
-            raise ValueError(
-                "There is no information about historical inflation. Set inflation=True to calculate."
-            )
+            raise ValueError("There is no information about historical inflation. Set inflation=True to calculate.")
         elif indexation is None and not hasattr(self.portfolio, "inflation"):
             self._indexation = settings.DEFAULT_DISCOUNT_RATE
         else:
@@ -731,9 +711,7 @@ class VanguardDynamicSpending(PercentageStrategy):
             self._clear_cf_cache()
             self._indexation = indexation
 
-    def _calculate_withdrawal_size(
-        self, last_withdrawal: float, balance: float, number_of_periods: int
-    ) -> float:
+    def _calculate_withdrawal_size(self, last_withdrawal: float, balance: float, number_of_periods: int) -> float:
         """
         Calculate regular withdrawal size (Extra Withdrawals are not taken into account). Used in helpers.
 
@@ -778,10 +756,7 @@ class VanguardDynamicSpending(PercentageStrategy):
                 else abs(max_withdrawal)
             )
         # Chek what limitation is actual
-        if (
-            self.floor_ceiling is not None
-            and self.min_max_annual_withdrawals is not None
-        ):
+        if self.floor_ceiling is not None and self.min_max_annual_withdrawals is not None:
             # Upper limit
             if ceiling_indexed > max_indexed:
                 max_final = max_indexed
@@ -805,11 +780,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         elif self.floor_ceiling is not None and self.min_max_annual_withdrawals is None:
             # print("min_max_annual_withdrawals is None")
             min_final = floor_indexed
-            max_final = (
-                ceiling_indexed
-                if ceiling_indexed != 0
-                else withdrawal_size_by_percentage
-            )
+            max_final = ceiling_indexed if ceiling_indexed != 0 else withdrawal_size_by_percentage
         else:
             # no limits
             min_final = -math.inf
@@ -909,9 +880,7 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
         self._crash_threshold_reduction_series = None
         self.portfolio = self.parent
         self._crash_threshold_reduction = crash_threshold_reduction
-        self._crash_threshold_reduction_series = self.make_series_from_list(
-            self.crash_threshold_reduction
-        )
+        self._crash_threshold_reduction_series = self.make_series_from_list(self.crash_threshold_reduction)
 
     def __repr__(self):
         dic = {
@@ -978,18 +947,12 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
             validators.validate_real("threshold", threshold)
             validators.validate_real("reduction", reduction)
             if abs(threshold) >= 1 or threshold == 0:
-                raise ValueError(
-                    "crash_threshold_reduction first values (threshold) must be in the interval (0, 1)."
-                )
+                raise ValueError("crash_threshold_reduction first values (threshold) must be in the interval (0, 1).")
             if abs(reduction) > 1:
-                raise ValueError(
-                    "crash_threshold_reduction second values (reductiuon) must be in the interval [0, 1]."
-                )
+                raise ValueError("crash_threshold_reduction second values (reductiuon) must be in the interval [0, 1].")
         self._crash_threshold_reduction = value
 
-    def _calculate_withdrawal_size(
-        self, drawdown: float, withdrawal_without_drawdowns: float
-    ) -> float:
+    def _calculate_withdrawal_size(self, drawdown: float, withdrawal_without_drawdowns: float) -> float:
         """
         Calculate regular withdrawal size (Extra Withdrawals are not taken into account). Used in helpers.
 
@@ -1030,4 +993,3 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
         values = [abs(value) for _, value in l]
         crash_series = pd.Series(values, index=indices)
         return crash_series.sort_index(ascending=False)
-

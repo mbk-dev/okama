@@ -119,14 +119,10 @@ def list_basic_patches(mocker):
         "A.US": _FakeAsset("A.US", dm.ror_a, currency="USD"),
         "B.US": _FakeAsset("B.US", dm.ror_b, currency="USD"),
     }
-    m_get_dict = mocker.patch(
-        "okama.common.make_asset_list.ListMaker._get_asset_obj_dict", return_value=fake_assets
-    )
+    m_get_dict = mocker.patch("okama.common.make_asset_list.ListMaker._get_asset_obj_dict", return_value=fake_assets)
 
     # Patch currency Asset used inside ListMaker.__init__ (self._currency)
-    m_currency_asset = mocker.patch(
-        "okama.common.make_asset_list.asset.Asset", side_effect=_FakeCurrencyAsset
-    )
+    m_currency_asset = mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=_FakeCurrencyAsset)
 
     yield {
         "defaults": dm,
@@ -154,12 +150,8 @@ def synthetic_env2(mocker):
         "A.US": _FakeAsset("A.US", a2, currency="USD", name="Asset A"),
         "B.US": _FakeAsset("B.US", a3, currency="USD", name="Asset B"),
     }
-    m_get_dict = mocker.patch(
-        "okama.common.make_asset_list.ListMaker._get_asset_obj_dict", return_value=fake_assets
-    )
-    m_currency_asset = mocker.patch(
-        "okama.common.make_asset_list.asset.Asset", side_effect=_FakeCurrencyAsset
-    )
+    m_get_dict = mocker.patch("okama.common.make_asset_list.ListMaker._get_asset_obj_dict", return_value=fake_assets)
+    m_currency_asset = mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=_FakeCurrencyAsset)
 
     yield {
         "index": idx,
@@ -167,6 +159,3 @@ def synthetic_env2(mocker):
         "m_get_dict": m_get_dict,
         "m_currency_asset": m_currency_asset,
     }
-
-
-

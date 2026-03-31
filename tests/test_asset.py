@@ -5,6 +5,7 @@ import pandas as pd
 
 import okama as ok
 
+
 class _DefaultMocks:
     def __init__(self, *, exchange: str = "NYSE"):
         self.allowed_namespaces = {"US", "FX", "INDX", "PIF"}
@@ -52,8 +53,8 @@ def test_init_uses_mocked_queries(basic_patches):
     assert a.inflation == f"{dm.symbol_info['currency']}.INFL"
 
     # Asserts on dates computed from ror index
-    assert a.first_date == dm.ror_index[0].to_timestamp(how='start')
-    assert a.last_date == dm.ror_index[-1].to_timestamp(how='start')
+    assert a.first_date == dm.ror_index[0].to_timestamp(how="start")
+    assert a.last_date == dm.ror_index[-1].to_timestamp(how="start")
 
 
 def test_price_calls_live_price(basic_patches, mocker):

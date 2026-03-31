@@ -126,9 +126,8 @@ def test_distribution_properties_with_24m_normal_series(synthetic_env):
     assert isinstance(rs, pd.DataFrame)
     assert isinstance(ks_test, pd.DataFrame)
     # p-value (< 0.05) indicates that null hypothesis (H0) is rejected and the time series is not normally distributed
-    assert (jb_test.loc['p-value', :] > 0.05).all()
-    assert (ks_test.loc['p-value', :] > 0.05).all()
-
+    assert (jb_test.loc["p-value", :] > 0.05).all()
+    assert (ks_test.loc["p-value", :] > 0.05).all()
 
 
 def test_sharpe_and_sortino(synthetic_env):
@@ -183,9 +182,19 @@ def test_describe_basic_with_zero_dividends(synthetic_env2, mocker):
 
     desc = al.describe()
     props = set(desc["property"].values)
-    assert {"Compound return", "CAGR", "Annualized mean return", "Dividend yield", "Risk", "CVAR",
-            "Max drawdowns", "Max drawdowns dates", "Inception date", "Last asset date",
-            "Common last data date"}.issubset(props)
+    assert {
+        "Compound return",
+        "CAGR",
+        "Annualized mean return",
+        "Dividend yield",
+        "Risk",
+        "CVAR",
+        "Max drawdowns",
+        "Max drawdowns dates",
+        "Inception date",
+        "Last asset date",
+        "Common last data date",
+    }.issubset(props)
     risk_row = desc.loc[desc["property"] == "Risk"].iloc[0]
     for c in al.symbols:
         assert pytest.approx(float(risk_row[c]), rel=1e-10) == float(al.risk_annual.iloc[-1][c])
@@ -213,8 +222,8 @@ def test_real_mean_return_with_mocked_inflation(mocker):
     class _FakeInflation:
         def __init__(self, symbol: str, first_date=None, last_date=None):
             self.symbol = symbol
-            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp(how='start')
-            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp(how='start')
+            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp(how="start")
+            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp(how="start")
             # Use PeriodIndex to align in _add_inflation (concat inner)
             self.values_monthly = infl_monthly.to_period("M")
 
@@ -244,8 +253,8 @@ def test_dividends_and_yield_pipeline(mocker):
             self.name = name or f"{self.ticker} name"
             self.currency = currency
             self.ror = ror
-            self.first_date = ror.index[0].to_timestamp(how='start')
-            self.last_date = ror.index[-1].to_timestamp(how='start')
+            self.first_date = ror.index[0].to_timestamp(how="start")
+            self.last_date = ror.index[-1].to_timestamp(how="start")
 
         @property
         def dividends(self):

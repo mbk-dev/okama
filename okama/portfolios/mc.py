@@ -66,14 +66,15 @@ class MonteCarlo:
     >>> pf.dcf.wealth_index(discounting='fv', include_negative_values=False).plot()
     >>> plt.show()
     """
+
     # TODO: Change example
     def __init__(
-            self,
-            parent: dcf.PortfolioDCF,
-            distribution: str = 'norm',
-            distribution_parameters: Optional[tuple] = None,
-            period: int = 25,
-            mc_number: int = 100,
+        self,
+        parent: dcf.PortfolioDCF,
+        distribution: str = "norm",
+        distribution_parameters: Optional[tuple] = None,
+        period: int = 25,
+        mc_number: int = 100,
     ):
         self.parent = parent
         self._distribution = distribution
@@ -221,8 +222,8 @@ class MonteCarlo:
         # Var CVaR
         var_theor = tails.var_theoretical(distr=self.distribution, alpha=var_level / 100, args=parameters)
         cvar_theor = tails.cvar_theoretical(distr=self.distribution, alpha=var_level / 100, args=parameters)
-        var_emp = - helpers.Frame.get_var_historic(ror=self.ror, level=var_level)
-        cvar_emp = - helpers.Frame.get_cvar_historic(ror=self.ror, level=var_level)
+        var_emp = -helpers.Frame.get_var_historic(ror=self.ror, level=var_level)
+        cvar_emp = -helpers.Frame.get_cvar_historic(ror=self.ror, level=var_level)
         delta_var = var_emp - var_theor
         delta_cvar = cvar_emp - cvar_theor
         # Arithmetic mean
@@ -240,7 +241,7 @@ class MonteCarlo:
         return {
             "delta_arithmetic_mean": float(delta_arithmetic_mean),
             "delta_var": float(delta_var),
-            "delta_cvar": float(delta_cvar)
+            "delta_cvar": float(delta_cvar),
         }
 
     def optimize_df_for_students(self, var_level: int) -> float:
@@ -270,12 +271,14 @@ class MonteCarlo:
         if not var_level in range(1, 100):
             raise ValueError("var_level must be in [1, 99]")
         _, loc, scale = self._get_params_for_t()
-        var_emp = - helpers.Frame.get_var_historic(ror=self.ror, level=var_level)
-        cvar_emp = - helpers.Frame.get_cvar_historic(ror=self.ror, level=var_level)
+        var_emp = -helpers.Frame.get_var_historic(ror=self.ror, level=var_level)
+        cvar_emp = -helpers.Frame.get_cvar_historic(ror=self.ror, level=var_level)
+
         def loss(df):
             var_theor = tails.var_t(alpha=var_level / 100, v=df, loc=loc, scale=scale)
             cvar_theor = tails.cvar_t(alpha=var_level / 100, v=df, loc=loc, scale=scale)
             return (var_theor - var_emp) ** 2 + (cvar_theor - cvar_emp) ** 2
+
         res = scipy.optimize.minimize_scalar(loss, bounds=(2.1, 50), method="bounded")
         return float(res.x)
 
@@ -398,11 +401,15 @@ class MonteCarlo:
             case "norm":
                 random_returns = np.random.normal(parameters[0], parameters[1], (period_months, self.mc_number))
             case "lognorm":
-                random_returns = scipy.stats.lognorm(parameters[0], loc=parameters[1], scale=parameters[2]).rvs(size=[period_months, self.mc_number])
+                random_returns = scipy.stats.lognorm(parameters[0], loc=parameters[1], scale=parameters[2]).rvs(
+                    size=[period_months, self.mc_number]
+                )
             case "t":
-                random_returns = scipy.stats.t(df=parameters[0], loc=parameters[1], scale=parameters[2]).rvs(size=[period_months, self.mc_number])
+                random_returns = scipy.stats.t(df=parameters[0], loc=parameters[1], scale=parameters[2]).rvs(
+                    size=[period_months, self.mc_number]
+                )
             case _:
-                raise ValueError('Unknown distribution type.')
+                raise ValueError("Unknown distribution type.")
         return pd.DataFrame(data=random_returns, index=ts_index)
 
     def _forecast_preparation(self) -> tuple[int, pd.DatetimeIndex]:
@@ -751,11 +758,11 @@ class MonteCarlo:
 
     # Plots
     def plot_qq(
-            self,
-            var_level: int = 5,
-            bootstrap_size_var: int = 2000,
-            zoom_to_left_tail: int = 20,
-            figsize: Optional[tuple] = None
+        self,
+        var_level: int = 5,
+        bootstrap_size_var: int = 2000,
+        zoom_to_left_tail: int = 20,
+        figsize: Optional[tuple] = None,
     ) -> None:
         """
         Generate a quantile-quantile (Q-Q) plot of portfolio monthly rate of return against quantiles of a given
@@ -808,8 +815,8 @@ class MonteCarlo:
             p_zoom = 1
         else:
             raise ValueError("Zoom level must be between 1 and 99 (or None).")
-        var_emp = - helpers.Frame.get_var_historic(ror=self.ror, level=int(alpha * 100))
-        cvar_emp = - helpers.Frame.get_cvar_historic(ror=self.ror, level=int(alpha * 100))
+        var_emp = -helpers.Frame.get_var_historic(ror=self.ror, level=int(alpha * 100))
+        cvar_emp = -helpers.Frame.get_cvar_historic(ror=self.ror, level=int(alpha * 100))
         if distr == "norm":
             distargs = ()
             distribution = scipy.stats.norm
@@ -836,30 +843,34 @@ class MonteCarlo:
         delta_cvar = cvar_emp - cvar_theor
 
         # VaR points
-        ax.scatter([var_theor], [var_emp], color='tab:red', s=40, zorder=3, label=f'VaR {alpha:.0%}')
-        ax.axvline(var_theor, color='tab:red', ls=':', lw=1.2)
-        ax.axhline(var_emp, color='tab:red', ls='--', lw=1.2)
+        ax.scatter([var_theor], [var_emp], color="tab:red", s=40, zorder=3, label=f"VaR {alpha:.0%}")
+        ax.axvline(var_theor, color="tab:red", ls=":", lw=1.2)
+        ax.axhline(var_emp, color="tab:red", ls="--", lw=1.2)
 
-        ax.annotate(f'delta var={delta_var:.4f}',
-                    xy=(var_theor, var_emp),
-                    xytext=(10, -15),
-                    textcoords='offset points',
-                    color='tab:red',
-                    fontsize=9,
-                    bbox=dict(boxstyle='round,pad=0.15', fc='white', ec='tab:red', alpha=0.7))
+        ax.annotate(
+            f"delta var={delta_var:.4f}",
+            xy=(var_theor, var_emp),
+            xytext=(10, -15),
+            textcoords="offset points",
+            color="tab:red",
+            fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="tab:red", alpha=0.7),
+        )
 
         # CVAR points
-        ax.scatter([cvar_theor], [cvar_emp], color='yellow', s=40, zorder=3, label=f'CVAR {alpha:.0%}')
-        ax.axvline(cvar_theor, color='tab:blue', ls=':', lw=1.2)
-        ax.axhline(cvar_emp, color='tab:blue', ls='--', lw=1.2)
+        ax.scatter([cvar_theor], [cvar_emp], color="yellow", s=40, zorder=3, label=f"CVAR {alpha:.0%}")
+        ax.axvline(cvar_theor, color="tab:blue", ls=":", lw=1.2)
+        ax.axhline(cvar_emp, color="tab:blue", ls="--", lw=1.2)
 
-        ax.annotate(f'delta cvar={delta_cvar:.4f}',
-                    xy=(cvar_theor, cvar_emp),
-                    xytext=(10, -15),
-                    textcoords='offset points',
-                    color='tab:red',
-                    fontsize=9,
-                    bbox=dict(boxstyle='round,pad=0.15', fc='white', ec='tab:red', alpha=0.7))
+        ax.annotate(
+            f"delta cvar={delta_cvar:.4f}",
+            xy=(cvar_theor, cvar_emp),
+            xytext=(10, -15),
+            textcoords="offset points",
+            color="tab:red",
+            fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="tab:red", alpha=0.7),
+        )
 
         sm.qqplot(
             self.ror,
@@ -868,10 +879,10 @@ class MonteCarlo:
             loc=parameters[0] if distr == "norm" else parameters[1],
             scale=parameters[1] if distr == "norm" else parameters[2],
             fit=False,
-            line='45',
+            line="45",
             markersize=3,
             alpha=0.7,
-            ax=ax
+            ax=ax,
         )
         # BOOTSTRAP VaR & CVaR
         if bootstrap_size_var:
@@ -883,8 +894,8 @@ class MonteCarlo:
             var_ci = np.quantile(boot_var, [0.025, 0.975])
             cvar_ci = np.quantile(boot_cvar, [0.025, 0.975])
             # Stripe 95% CI emp VaR & CVar
-            ax.axhspan(var_ci[0], var_ci[1], color='tab:blue', alpha=0.08, label='95% CI Emp-VaR (bootstrap)')
-            ax.axhspan(cvar_ci[0], cvar_ci[1], color='tab:green', alpha=0.08, label='95% CI Emp-CVaR (bootstrap)')
+            ax.axhspan(var_ci[0], var_ci[1], color="tab:blue", alpha=0.08, label="95% CI Emp-VaR (bootstrap)")
+            ax.axhspan(cvar_ci[0], cvar_ci[1], color="tab:green", alpha=0.08, label="95% CI Emp-CVaR (bootstrap)")
 
         # Zoom to the left tail (large drawdowns)
         if zoom_to_left_tail:
@@ -893,9 +904,8 @@ class MonteCarlo:
             ax.set_xlim(x001_theor, x10_theor)
             ax.set_ylim(y001_emp, y10_emp)
 
-
         ax.grid(True, alpha=0.3)
-        ax.legend(loc='lower right', fontsize=8)
+        ax.legend(loc="lower right", fontsize=8)
         plt.tight_layout()
         plt.title(title)
         plt.show()
@@ -908,12 +918,8 @@ class MonteCarlo:
         )
         # Log bootstrap confidence intervals only if they were computed
         if bootstrap_size_var:
-            logger.info(
-                f"95% CI empiric VaR (bootstrap): [{var_ci[0]:.6f}, {var_ci[1]:.6f}]"
-            )
-            logger.info(
-                f"95% CI empiric CVaR (bootstrap): [{cvar_ci[0]:.6f}, {cvar_ci[1]:.6f}]"
-            )
+            logger.info(f"95% CI empiric VaR (bootstrap): [{var_ci[0]:.6f}, {var_ci[1]:.6f}]")
+            logger.info(f"95% CI empiric CVaR (bootstrap): [{cvar_ci[0]:.6f}, {cvar_ci[1]:.6f}]")
 
     def plot_hist_fit(self, bins: int = None) -> None:
         """
@@ -960,4 +966,3 @@ class MonteCarlo:
         plt.plot(x, p, "k", linewidth=2)
         plt.title(title)
         plt.show()
-

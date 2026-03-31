@@ -98,8 +98,8 @@ def test_inflation_init_and_values_monthly(macro_patches):
     assert infl.type == "inflation"
 
     # Dates computed from monthly index
-    assert infl.first_date == md.m_idx[0].to_timestamp(how='start')
-    assert infl.last_date == md.m_idx[-1].to_timestamp(how='start')
+    assert infl.first_date == md.m_idx[0].to_timestamp(how="start")
+    assert infl.last_date == md.m_idx[-1].to_timestamp(how="start")
 
     # values_monthly comes from mock
     assert infl.values_monthly.equals(md.infl_m)
@@ -113,7 +113,7 @@ def test_set_values_monthly_happy_path(macro_patches):
     infl.set_values_monthly(next_month_str, 0.03)
     assert infl.values_monthly[pd.Period(next_month_str, freq="M")] == 0.03
     # last_date should update to the newly added month
-    assert infl.last_date == pd.Period(next_month_str, freq="M").to_timestamp(how='start')
+    assert infl.last_date == pd.Period(next_month_str, freq="M").to_timestamp(how="start")
 
 
 def test_rate_values_daily_calls_period_D(macro_patches):

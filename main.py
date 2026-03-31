@@ -12,36 +12,14 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
-ls = ["SPY.US", "GLD.US"]
-# ls = ['RGBITR.INDX', 'RUCBTRNS.INDX', 'MCFTR.INDX', 'GC.COMM', 'RUS_PR.RE']
+tickers = [
+    "VNQ.US",
+    "DBXD.XFRA",
+    "MCFTR.INDX",
+]  # we can create lists of assets and portfolio containing general type of assets and **indexes**
+w = [0.5, 0.25, 0.25]
+currency = "USD"
 
-rb = ok.Rebalance(period='year')
+y = ok.Portfolio(tickers, ccy=currency, weights=w)
 
-x = ok.EfficientFrontier(
-    assets=ls,
-    ccy="RUB",
-    last_date="2022-01",
-    inflation=False,
-    rebalancing_strategy=rb,
-    n_points=80,
-    verbose=True,
-    full_frontier=True
-)
-
-df = x.ef_points
-print(df)
-
-fig, ax = plt.subplots(figsize=(12, 10))
-
-# Plot the Efficient Frontiers
-ax.plot(df.Risk, df.CAGR, label="Граница эффективности с учетом ребалансировки")
-
-# Plot the assets
-x.plot_assets(kind="cagr")
-
-# Set labels
-ax.set_xlabel("Risk (Standard Deviation)")
-ax.set_ylabel("CAGR")
-ax.legend()
-plt.show()
-
+print(y)

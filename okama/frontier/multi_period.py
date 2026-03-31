@@ -232,11 +232,11 @@ class EfficientFrontier(asset_list.AssetList):
         """
         # Round weights to avoid floating point precision issues in cache keys
         weights_key = tuple(np.round(weights, decimals=10))
-        
+
         if weights_key not in self._ror_cache:
             rebalance = Rebalance(period=self.rebalancing_strategy.period)
             self._ror_cache[weights_key] = rebalance.return_ror_ts_ef(weights, self.assets_ror)
-        
+
         return self._ror_cache[weights_key]
 
     @property
@@ -808,19 +808,19 @@ class EfficientFrontier(asset_list.AssetList):
 
         # Prepare initial guess hints
         init_guesses = dict()
-        
+
         # Hint 1: max ratio asset
         if self._max_ratio_asset_right_to_max_cagr:
             init_guess_1 = np.repeat(0, n)
             init_guess_1[self._max_ratio_asset_right_to_max_cagr["list_position"]] = 1.0
-            init_guesses['max_ratio_asset_right_to_max_cagr'] = init_guess_1
-        
+            init_guesses["max_ratio_asset_right_to_max_cagr"] = init_guess_1
+
         # Hint 2: Global max return portfolio
-        if hasattr(self, '_global_max_return_portfolio_weights'):
-            init_guesses['global_max_return_portfolio'] = self._global_max_return_portfolio_weights.copy()
+        if hasattr(self, "_global_max_return_portfolio_weights"):
+            init_guesses["global_max_return_portfolio"] = self._global_max_return_portfolio_weights.copy()
         else:
             global_max = self.global_max_return_portfolio
-            init_guesses['global_max_return_portfolio'] = global_max["Weights"].copy()
+            init_guesses["global_max_return_portfolio"] = global_max["Weights"].copy()
             self._global_max_return_portfolio_weights = global_max["Weights"].copy()  # caching result
 
         solution = None
@@ -849,7 +849,7 @@ class EfficientFrontier(asset_list.AssetList):
                 solution["iterations"] = weights.nit
                 solution["init_guess"] = init_guess_key
                 break
-        
+
         if solution is None:
             raise RecursionError(f"No solution found for target CAGR value: {target_return}.")
         return solution
@@ -1464,4 +1464,3 @@ class EfficientFrontier(asset_list.AssetList):
         ax.legend(loc="upper left", frameon=False)
         fig.tight_layout()
         return ax
-

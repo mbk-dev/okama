@@ -152,6 +152,7 @@ class ListMaker(ABC):
         ShortPeriodLengthError
             If an asset's historical data period is too short (less than 3 months).
         """
+
         def get_item(symbol):
             asset_item = (
                 symbol
@@ -230,8 +231,8 @@ class ListMaker(ABC):
             ror_series_list.append(ror_series)
 
             # get asset first and last dates after adjusting to the currency
-            asset_first_date = ror_series.index[0].to_timestamp(how='start')
-            asset_last_date = ror_series.index[-1].to_timestamp(how='start')
+            asset_first_date = ror_series.index[0].to_timestamp(how="start")
+            asset_last_date = ror_series.index[-1].to_timestamp(how="start")
 
             # check first and last dates
             fd_max = max(x for x in [asset_first_date, input_first_date] if x is not None)
@@ -308,7 +309,7 @@ class ListMaker(ABC):
             asset_currency = asset.Asset(
                 symbol=f"{asset_currency_name}{base_currency_name}.FX",
                 first_date=list_asset.first_date,
-                last_date=list_asset.last_date
+                last_date=list_asset.last_date,
             )
             ror = self._adjust_ror_to_currency(returns=list_asset.ror, asset_currency=asset_currency)
         return ror
@@ -357,7 +358,9 @@ class ListMaker(ABC):
             Adjusted price time series.
         """
         ccy_symbol = f"{asset_currency}{self.currency}.FX"
-        currency_rate = asset.Asset(ccy_symbol, first_date=self.first_date, last_date=self.last_date).close_monthly.to_frame()
+        currency_rate = asset.Asset(
+            ccy_symbol, first_date=self.first_date, last_date=self.last_date
+        ).close_monthly.to_frame()
         merged = price.to_frame().join(currency_rate, how="left")
         if merged.isnull().values.any():
             # can happen if the first value is missing
@@ -526,7 +529,7 @@ class ListMaker(ABC):
                     continue
                 # Get dividend yield time series
                 div_yield = pd.Series(dtype=float)
-                div_monthly.index = div_monthly.index.to_timestamp(how='start')
+                div_monthly.index = div_monthly.index.to_timestamp(how="start")
                 for date in price_monthly_ts.index.to_timestamp(how="End"):
                     date0 = date - pd.DateOffset(months=12)  # last 12 months
                     ltm_div = div_monthly[date0:date].sum()
@@ -613,12 +616,12 @@ class ListMaker(ABC):
         return self._currency.currency
 
     def plot_assets(
-            self,
-            kind: str = "mean",
-            tickers: Union[str, list] = "tickers",
-            pct_values: bool = False,
-            xy_text: tuple = (0, 10),
-            **kwargs
+        self,
+        kind: str = "mean",
+        tickers: Union[str, list] = "tickers",
+        pct_values: bool = False,
+        xy_text: tuple = (0, 10),
+        **kwargs,
     ) -> Axes:
         """
         Plot asset points on the risk-return chart with annotations.
@@ -711,4 +714,3 @@ class ListMaker(ABC):
                 ha="center",  # horizontal alignment can be left, right or center
             )
         return ax
-

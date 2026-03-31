@@ -112,6 +112,7 @@ def test_validate_distribution_invalid():
 
 # validate_distribution_parameters
 
+
 def test_validate_distribution_parameters_type_error():
     with pytest.raises(ValueError) as ex:
         validators.validate_distribution_parameters("norm", 123)

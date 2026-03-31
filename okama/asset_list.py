@@ -1716,4 +1716,3 @@ class AssetList(make_asset_list.ListMaker):
         mean_return = self.mean_return
         semideviation = helpers.Frame.get_below_target_semideviation(ror=self.assets_ror, t_return=t_return) * 12**0.5
         return ratios.get_sortino_ratio(pf_return=mean_return, t_return=t_return, semi_deviation=semideviation)
-

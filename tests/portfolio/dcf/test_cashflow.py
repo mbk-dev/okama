@@ -31,17 +31,22 @@ def dcf_indexation_yearly(pf_ab_monthly):
     # Explicit indexation for inflation=False portfolio to avoid None
     ind.indexation = DEFAULT_DISCOUNT_RATE
     pf_ab_monthly.dcf.cashflow_parameters = ind
+
     # Ensure Portfolio has MC interfaces expected by dcf methods
     class _MCShim:
         def __init__(self, mc):
             self._mc = mc
+
         def monte_carlo_returns_ts(self):
             # dcf.monte_carlo_wealth wrongly calls parent.mc.monte_carlo_returns_ts()
             return self._mc.monte_carlo_returns_ts
+
     pf_ab_monthly.mc = _MCShim(pf_ab_monthly.dcf.mc)
+
     # dcf.monte_carlo_cash_flow calls parent.monte_carlo_returns_ts(distr=..., years=..., n=...)
     def _pf_mc_returns(*args, **kwargs):
         return pf_ab_monthly.dcf.mc.monte_carlo_returns_ts
+
     pf_ab_monthly.monte_carlo_returns_ts = _pf_mc_returns  # type: ignore[attr-defined]
     return pf_ab_monthly.dcf
 
@@ -54,14 +59,19 @@ def dcf_percentage_halfyear(pf_ab_monthly):
     pc.frequency = "half-year"
     pc.percentage = 0.04  # 4% annualized over two periods
     pf_ab_monthly.dcf.cashflow_parameters = pc
+
     class _MCShim:
         def __init__(self, mc):
             self._mc = mc
+
         def monte_carlo_returns_ts(self):
             return self._mc.monte_carlo_returns_ts
+
     pf_ab_monthly.mc = _MCShim(pf_ab_monthly.dcf.mc)
+
     def _pf_mc_returns(*args, **kwargs):
         return pf_ab_monthly.dcf.mc.monte_carlo_returns_ts
+
     pf_ab_monthly.monte_carlo_returns_ts = _pf_mc_returns  # type: ignore[attr-defined]
     return pf_ab_monthly.dcf
 
@@ -75,14 +85,19 @@ def dcf_timeseries_monthly(pf_ab_monthly):
     ts.time_series_dic = {"2020-06": 300.0, "2021-03": -500.0}
     ts.time_series_discounted_values = False
     pf_ab_monthly.dcf.cashflow_parameters = ts
+
     class _MCShim:
         def __init__(self, mc):
             self._mc = mc
+
         def monte_carlo_returns_ts(self):
             return self._mc.monte_carlo_returns_ts
+
     pf_ab_monthly.mc = _MCShim(pf_ab_monthly.dcf.mc)
+
     def _pf_mc_returns(*args, **kwargs):
         return pf_ab_monthly.dcf.mc.monte_carlo_returns_ts
+
     pf_ab_monthly.monte_carlo_returns_ts = _pf_mc_returns  # type: ignore[attr-defined]
     return pf_ab_monthly.dcf
 
@@ -243,6 +258,7 @@ def test_find_the_largest_withdrawals_size_rejects_target_above_period_with_tole
 
 # ------------------ Additional coverage: repr, validations, and plotting smoke ------------------
 
+
 def test_portfolio_dcf_repr_contains_key_fields(dcf_indexation_yearly):
     """__repr__ should include key fields for quick inspection."""
     dcf = dcf_indexation_yearly
@@ -283,6 +299,7 @@ def test_plot_forecast_monte_carlo_smoke(dcf_indexation_yearly):
     # Use a non-interactive backend to avoid GUI requirements
     try:
         import matplotlib
+
         matplotlib.use("Agg")
     except Exception:
         pass

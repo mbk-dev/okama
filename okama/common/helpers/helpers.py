@@ -218,8 +218,7 @@ class Frame:
 
     @staticmethod
     def get_annual_return_ts_from_monthly(
-        ror_monthly: Union[pd.DataFrame, pd.Series],
-        return_type: Literal["cagr", "arithmetic_mean"] = "cagr"
+        ror_monthly: Union[pd.DataFrame, pd.Series], return_type: Literal["cagr", "arithmetic_mean"] = "cagr"
     ) -> Union[pd.DataFrame, pd.Series]:
         """
         Annual Rate of Returns time series from monthly data.

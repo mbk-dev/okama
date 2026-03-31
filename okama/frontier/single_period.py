@@ -1153,4 +1153,3 @@ class EfficientFrontierSingle(asset_list.AssetList):
         # plot the assets
         self.plot_assets(kind="mean" if y_axe == "mean_return" else "cagr")
         return ax
-

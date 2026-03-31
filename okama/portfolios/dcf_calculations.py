@@ -15,7 +15,7 @@ def get_wealth_indexes_fv_with_cashflow(
     portfolio_symbol: Optional[str],
     inflation_symbol: Optional[str],
     cashflow_parameters: cf.CashFlow,
-    task: Literal['backtest', 'monte_carlo'],
+    task: Literal["backtest", "monte_carlo"],
 ) -> Union[pd.Series, pd.DataFrame]:
     """
     Calculate wealth index Future Values (FV) for a series of returns with cash flows (withdrawals/contributions).
@@ -45,12 +45,16 @@ def get_wealth_indexes_fv_with_cashflow(
         n_rows = ror.shape[0]
         monthly_discount_rate = (1 + dcf_object.discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
         discount_factors = (1.0 + monthly_discount_rate) ** np.arange(n_rows)
-        if task == 'backtest':
+        if task == "backtest":
             if dcf_object.cashflow_parameters.time_series_discounted_values:
-                ror_cashflow_df.loc[:, "cashflow_ts"] = ror_cashflow_df.loc[:, "cashflow_ts"].mul(discount_factors, axis=0)
-        elif task =='monte_carlo':
+                ror_cashflow_df.loc[:, "cashflow_ts"] = ror_cashflow_df.loc[:, "cashflow_ts"].mul(
+                    discount_factors, axis=0
+                )
+        elif task == "monte_carlo":
             if not dcf_object.cashflow_parameters.time_series_discounted_values:
-                ror_cashflow_df.loc[:, "cashflow_ts"] = ror_cashflow_df.loc[:, "cashflow_ts"].mul(discount_factors, axis=0)
+                ror_cashflow_df.loc[:, "cashflow_ts"] = ror_cashflow_df.loc[:, "cashflow_ts"].mul(
+                    discount_factors, axis=0
+                )
         else:
             raise ValueError(f"Unknown task: {task}. It must be 'monte_carlo' or 'backtest'")
     else:
@@ -61,7 +65,7 @@ def get_wealth_indexes_fv_with_cashflow(
     if hasattr(cashflow_parameters, "indexation") and cashflow_parameters.frequency != "none":
         indexation_per_period = (1 + cashflow_parameters.indexation) ** (1 / periods_per_year) - 1
     if cashflow_parameters.frequency == "month" or cashflow_parameters.frequency == "none":
-    # Fast Calculation
+        # Fast Calculation
         s = pd.Series(dtype=float, name=portfolio_symbol)
         for n, row in enumerate(ror.itertuples()):
             date = row[0]
@@ -89,7 +93,7 @@ def get_wealth_indexes_fv_with_cashflow(
             date = row[0]
             s[date] = period_initial_amount
     elif cashflow_parameters.frequency != "month" and cashflow_parameters.frequency != "none":
-    # Slow Calculation
+        # Slow Calculation
         pandas_frequency = cashflow_parameters._pandas_frequency
         months_in_full_period = settings._MONTHS_PER_YEAR / cashflow_parameters.periods_per_year
         wealth_chunks = []  # Collect all chunks to concatenate once at the end
@@ -137,7 +141,11 @@ def get_wealth_indexes_fv_with_cashflow(
             period_wealth_index.iloc[-1] = period_final_balance
             period_initial_amount = period_final_balance
             wealth_chunks.append(period_wealth_index)
-        wealth_df = pd.concat(wealth_chunks, sort=False) if wealth_chunks else pd.DataFrame(dtype=float, columns=[portfolio_symbol])
+        wealth_df = (
+            pd.concat(wealth_chunks, sort=False)
+            if wealth_chunks
+            else pd.DataFrame(dtype=float, columns=[portfolio_symbol])
+        )
         s = wealth_df.squeeze()
     first_date = s.index[0]
     first_wealth_index_date = first_date - 1  # set first date to one month earlie
@@ -152,11 +160,12 @@ def get_wealth_indexes_fv_with_cashflow(
     wealth_index.sort_index(ascending=True, inplace=True)
     return wealth_index
 
+
 def get_cash_flow_fv(
-        ror: Union[pd.Series, pd.DataFrame],
-        portfolio_symbol: Optional[str],
-        cashflow_parameters: cf.CashFlow,
-        task: Literal['backtest', 'monte_carlo'],
+    ror: Union[pd.Series, pd.DataFrame],
+    portfolio_symbol: Optional[str],
+    cashflow_parameters: cf.CashFlow,
+    task: Literal["backtest", "monte_carlo"],
 ) -> Union[pd.Series, pd.DataFrame]:
     """
     Calculate cash flow future values (FV) for a series of returns according to withdrawal/contributions strategies.
@@ -184,14 +193,16 @@ def get_cash_flow_fv(
         n_rows = ror.shape[0]
         monthly_discount_rate = (1 + dcf_object.discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
         discount_factors = (1.0 + monthly_discount_rate) ** np.arange(n_rows)
-        if task == 'backtest':
+        if task == "backtest":
             if dcf_object.cashflow_parameters.time_series_discounted_values:
-                ror_cashflow_df.loc[:, "cashflow_ts"] = ror_cashflow_df.loc[:, "cashflow_ts"].mul(discount_factors,
-                                                                                                  axis=0)
-        elif task == 'monte_carlo':
+                ror_cashflow_df.loc[:, "cashflow_ts"] = ror_cashflow_df.loc[:, "cashflow_ts"].mul(
+                    discount_factors, axis=0
+                )
+        elif task == "monte_carlo":
             if not dcf_object.cashflow_parameters.time_series_discounted_values:
-                ror_cashflow_df.loc[:, "cashflow_ts"] = ror_cashflow_df.loc[:, "cashflow_ts"].mul(discount_factors,
-                                                                                                  axis=0)
+                ror_cashflow_df.loc[:, "cashflow_ts"] = ror_cashflow_df.loc[:, "cashflow_ts"].mul(
+                    discount_factors, axis=0
+                )
         else:
             raise ValueError(f"Unknown task: {task}. It must be 'monte_carlo' or 'backtest'")
     else:
@@ -219,8 +230,8 @@ def get_cash_flow_fv(
                 withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[date] < 0:
                     cashflow = cashflow_parameters._calculate_withdrawal_size(
-                        drawdown = drawdowns[date],
-                        withdrawal_without_drawdowns = withdrawal_without_drawdowns,
+                        drawdown=drawdowns[date],
+                        withdrawal_without_drawdowns=withdrawal_without_drawdowns,
                     )
                 else:
                     cashflow = withdrawal_without_drawdowns
@@ -267,8 +278,8 @@ def get_cash_flow_fv(
                 withdrawal_without_drawdowns = amount * (1 + indexation_per_period) ** n
                 if drawdowns[last_date] < 0:
                     cashflow_value = cashflow_parameters._calculate_withdrawal_size(
-                        drawdown = drawdowns[last_date],
-                        withdrawal_without_drawdowns = withdrawal_without_drawdowns,
+                        drawdown=drawdowns[last_date],
+                        withdrawal_without_drawdowns=withdrawal_without_drawdowns,
                     )
                 else:
                     cashflow_value = withdrawal_without_drawdowns
@@ -300,9 +311,9 @@ def remove_negative_values(input_s: pd.Series) -> pd.Series:
 
 
 def discount_monthly_cash_flow(
-        cash_flow_fv: Union[pd.Series, pd.DataFrame],
-        annual_effective_discount_rate: float,
-        reverse: bool = False,
+    cash_flow_fv: Union[pd.Series, pd.DataFrame],
+    annual_effective_discount_rate: float,
+    reverse: bool = False,
 ) -> Union[pd.Series, pd.DataFrame]:
     number_of_months = cash_flow_fv.shape[0]
     monlthly_discount_rate = (1 + annual_effective_discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1

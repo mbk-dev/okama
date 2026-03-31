@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # Constants for cashflow strategy types
 class CashflowStrategyType:
     """Constants for cashflow strategy types."""
+
     FIXED_AMOUNT = "fixed_amount"
     FIXED_PERCENTAGE = "fixed_percentage"
 
@@ -29,6 +30,7 @@ class CashflowStrategyType:
 # Constants for withdrawal goals
 class WithdrawalGoal:
     """Constants for withdrawal goals."""
+
     MAINTAIN_BALANCE_PV = "maintain_balance_pv"
     MAINTAIN_BALANCE_FV = "maintain_balance_fv"
     SURVIVAL_PERIOD = "survival_period"
@@ -126,14 +128,14 @@ class PortfolioDCF:
         elif cashflow_parameters is None:
             self._cashflow_parameters = cashflow_parameters
         else:
-            raise TypeError('cashflow_parameters must be a CashFlow instance or None')
+            raise TypeError("cashflow_parameters must be a CashFlow instance or None")
 
     def set_mc_parameters(
-            self,
-            distribution: str = "norm",
-            distribution_parameters: Optional[tuple] = None,
-            period: int = 1,
-            mc_number: int = 100
+        self,
+        distribution: str = "norm",
+        distribution_parameters: Optional[tuple] = None,
+        period: int = 1,
+        mc_number: int = 100,
     ):
         """
         Add Monte Carlo simulation parameters to PortfolioDCF.
@@ -344,8 +346,7 @@ class PortfolioDCF:
         )
         if hasattr(self.parent, "inflation"):
             inflation_wi = helpers.Frame.get_wealth_indexes(
-                ror = self.parent.inflation_ts,
-                initial_amount=self.cashflow_parameters.initial_investment
+                ror=self.parent.inflation_ts, initial_amount=self.cashflow_parameters.initial_investment
             )
             wealth_df = pd.concat([wealth_df, inflation_wi], axis=1, join="inner", copy="false")
         return wealth_df
@@ -446,7 +447,9 @@ class PortfolioDCF:
         """
         if hasattr(self.cashflow_parameters, "initial_investment"):
             monlthly_discount_rate = (1 + self.discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
-            return self.cashflow_parameters.initial_investment / (1.0 + monlthly_discount_rate) ** self.parent.ror.shape[0]
+            return (
+                self.cashflow_parameters.initial_investment / (1.0 + monlthly_discount_rate) ** self.parent.ror.shape[0]
+            )
         else:
             return None
 
@@ -479,11 +482,8 @@ class PortfolioDCF:
         else:
             return None
 
-
     def monte_carlo_wealth(
-            self,
-            discounting: Literal["fv", "pv"] = "fv",
-            include_negative_values: bool = True
+        self, discounting: Literal["fv", "pv"] = "fv", include_negative_values: bool = True
     ) -> pd.DataFrame:
         """
         Calculate portfolio random wealth indexes with cash flows (withdrawals/contributions) using Monte Carlo simulation.
@@ -557,11 +557,8 @@ class PortfolioDCF:
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
-
     def monte_carlo_cash_flow(
-            self,
-            discounting: Literal["fv", "pv"],
-            remove_if_wealth_index_negative: bool = True
+        self, discounting: Literal["fv", "pv"], remove_if_wealth_index_negative: bool = True
     ) -> pd.DataFrame:
         """
         Calculate portfolio random cash flow (withdrawals/contributions) time series by Monte Carlo simulation.
@@ -760,7 +757,7 @@ class PortfolioDCF:
 
     def find_the_largest_withdrawals_size(
         self,
-        goal: Literal['maintain_balance_pv', 'maintain_balance_fv', 'survival_period'],
+        goal: Literal["maintain_balance_pv", "maintain_balance_fv", "survival_period"],
         withdrawals_range: Tuple[float, float] = (0, 1),
         target_survival_period: int = 25,
         percentile: int = 20,
@@ -881,7 +878,7 @@ class PortfolioDCF:
         """
         # Validation
         self._validate_parameters(withdrawals_range, target_survival_period, percentile, threshold, tolerance_rel)
-        
+
         # Initialization
         backup_obj = self.cashflow_parameters
         backup_main_parameter = self._get_main_parameter()
@@ -890,7 +887,7 @@ class PortfolioDCF:
             withdrawals_range, start_investment
         )
         self._set_main_parameter(expected_max_withdrawal)
-        
+
         # Bisection search
         solutions = pd.DataFrame(columns=["withdrawal_abs", "withdrawal_rel", "error_rel", "error_rel_change"])
         try:
@@ -997,12 +994,7 @@ class PortfolioDCF:
             )
 
     def _calculate_goal_metrics(
-            self,
-            goal: str,
-            percentile: int,
-            threshold: float,
-            start_investment: float,
-            target_survival_period: int
+        self, goal: str, percentile: int, threshold: float, start_investment: float, target_survival_period: int
     ) -> Tuple[bool, float]:
         """
         Calculate whether goal condition is met and relative error.
@@ -1021,22 +1013,20 @@ class PortfolioDCF:
             condition = (wealth_at_quantile >= start_investment) and (sp_at_quantile == self.mc.period)
             error_rel = abs(wealth_at_quantile - start_investment) / start_investment
             logger.debug(
-                f"Goal: {goal}, wealth_at_quantile={wealth_at_quantile:.2f}, main_parameter={self._get_main_parameter():.3f}")
+                f"Goal: {goal}, wealth_at_quantile={wealth_at_quantile:.2f}, main_parameter={self._get_main_parameter():.3f}"
+            )
             return condition, error_rel
         elif goal == WithdrawalGoal.SURVIVAL_PERIOD:
             condition = sp_at_quantile >= target_survival_period
             error_rel = abs(sp_at_quantile - target_survival_period) / target_survival_period
             logger.debug(
-                f"Goal: {goal}, sp_at_quantile={sp_at_quantile:.2f}, main_parameter={self._get_main_parameter():.3f}")
+                f"Goal: {goal}, sp_at_quantile={sp_at_quantile:.2f}, main_parameter={self._get_main_parameter():.3f}"
+            )
             return condition, error_rel
         else:
             raise ValueError("The goal can be: maintain_balance_fv, maintain_balance_pv or survival_period.")
 
-    def _calculate_withdrawal_metrics(
-            self,
-            main_parameter: float,
-            start_investment: float
-    ) -> Tuple[float, float]:
+    def _calculate_withdrawal_metrics(self, main_parameter: float, start_investment: float) -> Tuple[float, float]:
         """Calculate absolute and relative withdrawal values.
 
         Returns
@@ -1058,14 +1048,14 @@ class PortfolioDCF:
         return withdrawal_abs, withdrawal_rel
 
     def _bisection_iteration(
-            self,
-            goal: str,
-            percentile: int,
-            threshold: float,
-            start_investment: float,
-            target_survival_period: int,
-            expected_min_withdrawal: float,
-            expected_max_withdrawal: float
+        self,
+        goal: str,
+        percentile: int,
+        threshold: float,
+        start_investment: float,
+        target_survival_period: int,
+        expected_min_withdrawal: float,
+        expected_max_withdrawal: float,
     ) -> Tuple[float, float, float, bool, float, float]:
         """Perform one iteration of bisection search.
 
@@ -1092,8 +1082,7 @@ class PortfolioDCF:
             self._update_parameter(delta, increase=False)
             logger.debug("Decreasing withdrawal")
 
-        return (withdrawal_abs, withdrawal_rel, error_rel, condition,
-                expected_min_withdrawal, expected_max_withdrawal)
+        return (withdrawal_abs, withdrawal_rel, error_rel, condition, expected_min_withdrawal, expected_max_withdrawal)
 
     def _restore_cashflow_parameters_from_backup(
         self, backup_obj: cf.CashFlow | None, backup_main_parameter: float | None = None
@@ -1108,9 +1097,7 @@ class PortfolioDCF:
             self.cashflow_parameters._clear_cf_cache()
 
     def _get_withdrawal_bounds(
-            self,
-            withdrawals_range: Tuple[float, float],
-            start_investment: float
+        self, withdrawals_range: Tuple[float, float], start_investment: float
     ) -> Tuple[float, float]:
         """Calculate min and max withdrawal bounds based on strategy type.
 
@@ -1122,13 +1109,14 @@ class PortfolioDCF:
         if isinstance(self.cashflow_parameters, cf.IndexationStrategy):
             return (
                 -withdrawals_range[0] * start_investment / self.cashflow_parameters.periods_per_year,
-                -withdrawals_range[1] * start_investment / self.cashflow_parameters.periods_per_year
+                -withdrawals_range[1] * start_investment / self.cashflow_parameters.periods_per_year,
             )
         elif isinstance(self.cashflow_parameters, cf.PercentageStrategy):
             return -withdrawals_range[0], -withdrawals_range[1]
         else:
             raise ValueError(
-                "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only.")
+                "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only."
+            )
 
     def _get_main_parameter(self) -> float:
         """Get the main withdrawal parameter based on strategy type."""
@@ -1138,7 +1126,8 @@ class PortfolioDCF:
             return self.cashflow_parameters.percentage
         else:
             raise ValueError(
-                "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only.")
+                "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only."
+            )
 
     def _set_main_parameter(self, value: float) -> None:
         """Set the main withdrawal parameter based on strategy type."""
@@ -1148,7 +1137,5 @@ class PortfolioDCF:
             self.cashflow_parameters.percentage = value
         else:
             raise ValueError(
-                "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only.")
-
-
-
+                "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only."
+            )

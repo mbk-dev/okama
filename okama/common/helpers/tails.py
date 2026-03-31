@@ -24,6 +24,7 @@ def var_normal(alpha: float, loc: float = 0.0, scale: float = 1.0) -> float:
     z = norm.ppf(alpha)
     return loc + scale * z
 
+
 def cvar_normal(alpha: float, loc: float, scale: float) -> float:
     """
     Compute left-tail CVaR (Conditional VaR, Expected Shortfall) at level alpha
@@ -48,9 +49,11 @@ def cvar_normal(alpha: float, loc: float, scale: float) -> float:
     phi = norm.pdf(z)
     return loc - scale * (phi / alpha)
 
+
 def var_t(alpha: float, v: float, loc: float = 0.0, scale: float = 1.0) -> float:
     q = t.ppf(alpha, v)
     return loc + scale * q
+
 
 def cvar_t(alpha: float, v: float, loc: float = 0.0, scale: float = 1.0) -> float:
     """
@@ -80,8 +83,9 @@ def cvar_t(alpha: float, v: float, loc: float = 0.0, scale: float = 1.0) -> floa
         return np.nan
     q = t.ppf(alpha, v)
     f = t.pdf(q, v)
-    es_std = - ((v + q ** 2) / ((v - 1) * alpha)) * f
+    es_std = -((v + q**2) / ((v - 1) * alpha)) * f
     return loc + scale * es_std
+
 
 def var_lognorm(alpha: float, shape: float, loc: float = 0.0, scale: float = 1.0) -> float:
     if not (0 < alpha < 1):
@@ -150,6 +154,7 @@ def var_theoretical(distr: str, alpha: float, args: tuple) -> float:
         case _:
             raise ValueError("Unknown distribution: " + distr)
 
+
 def cvar_theoretical(distr: str, alpha: float, args: tuple) -> float:
     match distr:
         case "norm":
@@ -160,8 +165,6 @@ def cvar_theoretical(distr: str, alpha: float, args: tuple) -> float:
             return cvar_t(alpha, *args)
         case _:
             raise ValueError("Unknown distribution: " + distr)
-
-
 
 
 # Empiric
@@ -187,5 +190,3 @@ def cvar_of_sample(arr: np.ndarray, alpha: float):
     """
     q = np.quantile(arr, alpha)
     return arr[arr <= q].mean()
-
-

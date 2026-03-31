@@ -24,7 +24,11 @@ def ef_reb_three(synthetic_env):
     EfficientFrontierReb with three mocked assets IDX.US, A.US and B.US.
     """
     return ok.EfficientFrontier(
-        ["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=12, rebalancing_strategy=ok.Rebalance(period="year")
+        ["IDX.US", "A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=12,
+        rebalancing_strategy=ok.Rebalance(period="year"),
     )
 
 
@@ -231,14 +235,22 @@ def test_verbose_property_setter(ef_reb_ab):
 def test_full_frontier_parameter(synthetic_env):
     """Test that full_frontier parameter is properly set."""
     ef_full = ok.EfficientFrontier(
-        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, 
-        rebalancing_strategy=ok.Rebalance(period="year"), full_frontier=True
+        ["A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+        full_frontier=True,
     )
     assert ef_full.full_frontier is True
-    
+
     ef_partial = ok.EfficientFrontier(
-        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, 
-        rebalancing_strategy=ok.Rebalance(period="year"), full_frontier=False
+        ["A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+        full_frontier=False,
     )
     assert ef_partial.full_frontier is False
 
@@ -283,8 +295,7 @@ def test_target_cagr_range_left_properties(ef_reb_ab):
 def test_bounds_validation(synthetic_env):
     """Test bounds validation raises error for incorrect number of bounds."""
     ef = ok.EfficientFrontier(
-        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
-        rebalancing_strategy=ok.Rebalance(period="year")
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, rebalancing_strategy=ok.Rebalance(period="year")
     )
     # Try to set bounds with wrong length
     with pytest.raises(ValueError, match=r"The number of symbols .* and the length of bounds .* should be equal"):
@@ -294,8 +305,7 @@ def test_bounds_validation(synthetic_env):
 def test_rebalancing_strategy_validation(synthetic_env):
     """Test that rebalancing_strategy setter validates input type."""
     ef = ok.EfficientFrontier(
-        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
-        rebalancing_strategy=ok.Rebalance(period="year")
+        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10, rebalancing_strategy=ok.Rebalance(period="year")
     )
     with pytest.raises(ValueError, match=r"rebalancing_strategy must be of type Rebalance"):
         ef.rebalancing_strategy = "year"  # type: ignore
@@ -311,9 +321,12 @@ def test_ticker_names_validation(ef_reb_ab):
 def test_get_monte_carlo_with_bounds(synthetic_env):
     """Test get_monte_carlo respects bounds constraints."""
     ef = ok.EfficientFrontier(
-        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
+        ["A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=10,
         rebalancing_strategy=ok.Rebalance(period="year"),
-        bounds=((0.3, 0.7), (0.3, 0.7))
+        bounds=((0.3, 0.7), (0.3, 0.7)),
     )
     np.random.seed(42)
     mc = ef.get_monte_carlo(n=5)
@@ -379,9 +392,12 @@ def test_get_most_diversified_portfolio_weights_sum_to_one(ef_reb_ab):
 def test_get_most_diversified_portfolio_with_bounds(synthetic_env):
     """Test get_most_diversified_portfolio respects bounds."""
     ef = ok.EfficientFrontier(
-        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
+        ["A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=10,
         rebalancing_strategy=ok.Rebalance(period="year"),
-        bounds=((0.3, 0.7), (0.3, 0.7))
+        bounds=((0.3, 0.7), (0.3, 0.7)),
     )
     dic = ef.get_most_diversified_portfolio()
     # Check bounds are respected
@@ -484,9 +500,12 @@ def test_get_tangency_portfolio_with_rate_of_return_mean(ef_reb_ab):
 def test_get_tangency_portfolio_respects_bounds(synthetic_env):
     """Test get_tangency_portfolio respects bounds."""
     ef = ok.EfficientFrontier(
-        ["A.US", "B.US"], ccy="USD", inflation=False, n_points=10,
+        ["A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=10,
         rebalancing_strategy=ok.Rebalance(period="year"),
-        bounds=((0.2, 0.8), (0.2, 0.8))
+        bounds=((0.2, 0.8), (0.2, 0.8)),
     )
     result = ef.get_tangency_portfolio(rf_return=0.0)
     # Check bounds are respected
@@ -543,4 +562,3 @@ def test_plot_cml_has_expected_elements(ef_reb_ab):
     assert len(ax.collections) >= 1
     # Should have annotations (MSR label)
     assert len(ax.texts) >= 1
-

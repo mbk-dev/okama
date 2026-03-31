@@ -17,11 +17,7 @@ _MONTHS_PER_YEAR = 12
 PeriodLength = namedtuple("PeriodLength", "years months")
 
 # Distributions
-distributions = (
-    "norm",
-    "lognorm",
-    "t"
-)
+distributions = ("norm", "lognorm", "t")
 
 # From Pandas resamples alias: https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
 frequency_mapping = {"none": "none", "year": "Y", "half-year": "2Q", "quarter": "Q", "month": "M"}

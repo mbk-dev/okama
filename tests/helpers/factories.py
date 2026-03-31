@@ -26,8 +26,8 @@ class ListDefaults:
         self.ror_index = pd.period_range("2020-01", "2020-03", freq="M")
         self.ror_a = pd.Series([0.01, 0.02, 0.03], index=self.ror_index, name="A.US")
         self.ror_b = pd.Series([0.00, -0.01, 0.02], index=self.ror_index, name="B.US")
-        self.first_ts = self.ror_index[0].to_timestamp(how='start')
-        self.last_ts = self.ror_index[-1].to_timestamp(how='start')
+        self.first_ts = self.ror_index[0].to_timestamp(how="start")
+        self.last_ts = self.ror_index[-1].to_timestamp(how="start")
 
 
 class FakeAsset:
@@ -50,8 +50,8 @@ class FakeAsset:
             self.dividends.name = symbol
         except Exception:
             self.dividends = pd.Series(dtype=float, name=symbol)
-        self.first_date = ror.index[0].to_timestamp(how='start')
-        self.last_date = ror.index[-1].to_timestamp(how='start')
+        self.first_date = ror.index[0].to_timestamp(how="start")
+        self.last_date = ror.index[-1].to_timestamp(how="start")
 
 
 class FakeCurrencyAsset:

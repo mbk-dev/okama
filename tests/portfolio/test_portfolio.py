@@ -25,7 +25,9 @@ def pf_ab_none(synthetic_env):
 @pytest.fixture()
 def pf_three_monthly(synthetic_env):
     """Three-asset Portfolio with monthly rebalancing and no inflation (mocked data)."""
-    return ok.Portfolio(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, rebalancing_strategy=ok.Rebalance(period="month"))
+    return ok.Portfolio(
+        ["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, rebalancing_strategy=ok.Rebalance(period="month")
+    )
 
 
 def test_initialization_failing_weights_number(synthetic_env):

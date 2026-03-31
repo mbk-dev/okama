@@ -31,8 +31,8 @@ def _inflation_env(mocker):
         def __init__(self, symbol: str, first_date=None, last_date=None):
             self.symbol = symbol
             # first/last dates are taken from the monthly series index
-            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp(how='start')
-            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp(how='start')
+            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp(how="start")
+            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp(how="start")
             # ListMaker expects PeriodIndex in _add_inflation path
             self.values_monthly = infl_monthly.to_period("M")
 
@@ -72,7 +72,7 @@ def test_inflation_basic_pipeline_and_properties(_inflation_env):
     "compute_metric",
     [
         "real_mean_return",  # property: annualized arithmetic mean adjusted by arithmetic mean inflation
-        "real_cagr",         # method: get_cagr(real=True) full period
+        "real_cagr",  # method: get_cagr(real=True) full period
     ],
 )
 def test_real_metrics_with_inflation_parametrized(_inflation_env, compute_metric):

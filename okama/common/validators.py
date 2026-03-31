@@ -104,7 +104,8 @@ def validate_distribution(distribution: Any) -> None:
     Validate that `distribution` has one of allowed values.
     """
     if distribution not in settings.distributions:
-        raise ValueError(f'distribution must be in {settings.distributions}.')
+        raise ValueError(f"distribution must be in {settings.distributions}.")
+
 
 def validate_distribution_parameters(distr: str, param: tuple) -> None:
     if param is None:

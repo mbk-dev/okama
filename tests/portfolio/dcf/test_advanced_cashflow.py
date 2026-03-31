@@ -65,7 +65,9 @@ def test_cwid_calculate_withdrawal_size_reduction(pf_single_monthly):
         indexation=0.0,
         crash_threshold_reduction=[(0.20, 0.40), (0.50, 1.0)],
     )
-    assert cwid._calculate_withdrawal_size(drawdown=-0.25, withdrawal_without_drawdowns=-1000.0) == pytest.approx(-600.0)
+    assert cwid._calculate_withdrawal_size(drawdown=-0.25, withdrawal_without_drawdowns=-1000.0) == pytest.approx(
+        -600.0
+    )
     assert cwid._calculate_withdrawal_size(drawdown=-0.55, withdrawal_without_drawdowns=-1000.0) == pytest.approx(0.0)
 
 
@@ -90,7 +92,7 @@ def test_cwid_cash_flow_ts_yearly_entries(pf_single_monthly):
     assert len(non_zero) == 2
     assert (non_zero <= 0).all()
     assert non_zero.abs().max() <= 1000.0
-    
+
 
 def test_vds_percentage_validation_positive_assignment_raises(pf_single_monthly):
     """VDS should raise an error if a positive percentage is assigned."""

@@ -93,7 +93,9 @@ def test_check_if_rebalancing_required_dataframe_last_row_rel():
     r = ok.Rebalance(period="none", rel_deviation=0.05)
     idx = pd.period_range("2020-01", "2020-02", freq="M")
     # First row without deviation, second row violates the relative threshold
-    awi = pd.DataFrame([[500.0, 500.0], [560.0, 440.0]], index=idx, columns=["A", "B"])  # end-of-period weights: 0.5/0.5, then 0.56/0.44
+    awi = pd.DataFrame(
+        [[500.0, 500.0], [560.0, 440.0]], index=idx, columns=["A", "B"]
+    )  # end-of-period weights: 0.5/0.5, then 0.56/0.44
     pwi = pd.Series([1000.0, 1000.0], index=idx)
     target = [0.5, 0.5]
 

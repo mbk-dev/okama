@@ -1650,4 +1650,3 @@ class Portfolio(make_asset_list.ListMaker):
         self._monte_carlo_wealth = pd.DataFrame()
         self._wealth_index = pd.DataFrame()
         self._cash_flow_fv = pd.DataFrame()
-

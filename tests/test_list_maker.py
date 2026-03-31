@@ -91,17 +91,18 @@ def test_validate_period_ok_and_fail(synthetic_env):
 
 def test_get_asset_obj_dict_raises_for_short_history():
     """Test that _get_asset_obj_dict raises ShortPeriodLengthError for assets with insufficient history.
-    
+
     This test directly calls the validation logic by importing the original module
     to avoid interference from patches in other parallel tests (e.g., synthetic_env).
     """
     # Import the module directly to get the original unpatched version
     import importlib
     import okama.common.make_asset_list
+
     # Force reload to ensure we get a fresh unpatched version
     importlib.reload(okama.common.make_asset_list)
     from okama.common.make_asset_list import ListMaker as UnpatchedListMaker
-    
+
     PL = ok.settings.PeriodLength
 
     class TinyAsset:
@@ -113,7 +114,7 @@ def test_get_asset_obj_dict_raises_for_short_history():
     # Create a list with TinyAsset objects directly (instead of strings)
     # This way we bypass the Asset(symbol) construction and use our test objects
     tiny_assets = [TinyAsset("TINY1.US"), TinyAsset("TINY2.US")]
-    
+
     with pytest.raises(ok.common.error.ShortPeriodLengthError):
         UnpatchedListMaker._get_asset_obj_dict(tiny_assets)  # staticmethod
 
@@ -135,8 +136,8 @@ def _inflation_env_for_listmaker(mocker):
     class _FakeInflation:
         def __init__(self, symbol: str, first_date=None, last_date=None):
             self.symbol = symbol
-            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp(how='start')
-            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp(how='start')
+            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp(how="start")
+            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp(how="start")
             self.values_monthly = infl_monthly.to_period("M")
 
     mocker.patch("okama.common.make_asset_list.macro.Inflation", side_effect=_FakeInflation)
