@@ -133,7 +133,7 @@ Assets & Portfolio
 .. autosummary::
     :toctree: stubs
     :template: custom-class-template.rst
-    :caption: Main API
+    :caption: Main
 
     okama.Asset
     okama.AssetList
@@ -181,14 +181,22 @@ Data Access & Search
 
 Use these helpers to discover available namespaces and find supported symbols before creating assets or portfolios.
 
-.. autosummary::
-    :toctree: stubs
+:py:func:`okama.search`
+    Search symbols by ticker, name, or ISIN.
 
-    okama.search
-    okama.symbols_in_namespace
+:py:func:`okama.symbols_in_namespace`
+    Return all symbols available in a namespace.
 
-``okama.namespaces``
+:py:data:`okama.namespaces`
     Returns a dictionary of available data namespaces and their descriptions.
+
+.. toctree::
+    :hidden:
+    :caption: Data Access & Search
+
+    stubs/okama.search
+    stubs/okama.symbols_in_namespace
+    okama.namespaces
 
 Indices and tables
 ******************
