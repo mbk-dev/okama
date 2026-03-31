@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from random import randint
-from typing import Optional, List, Dict, Union, Tuple, Literal
+from typing import Optional, List, Union, Tuple, Literal
 from urllib.parse import urlencode
 
 import numpy as np
@@ -9,13 +9,11 @@ import pandas as pd
 
 import scipy.stats
 
-from matplotlib import pyplot as plt
-
 import okama.portfolios.dcf as dcf
 from okama import settings
 from okama.common.helpers.rebalancing import Rebalance
 from okama.common import make_asset_list, validators
-from okama.common.helpers import helpers, ratios, tails
+from okama.common.helpers import helpers, ratios
 
 
 class Portfolio(make_asset_list.ListMaker):

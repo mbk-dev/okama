@@ -3,7 +3,6 @@ import random
 
 import pytest
 import okama as ok
-from pathlib import Path
 import numpy as np
 import pandas as pd
 

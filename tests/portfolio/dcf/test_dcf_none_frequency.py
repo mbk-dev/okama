@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import pytest
 import okama as ok
-from okama import settings
 from okama.common.helpers import helpers
 
 

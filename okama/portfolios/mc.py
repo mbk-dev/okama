@@ -268,7 +268,7 @@ class MonteCarlo:
             If `var_level` is outside [1, 99].
 
         """
-        if not var_level in range(1, 100):
+        if var_level not in range(1, 100):
             raise ValueError("var_level must be in [1, 99]")
         _, loc, scale = self._get_params_for_t()
         var_emp = -helpers.Frame.get_var_historic(ror=self.ror, level=var_level)

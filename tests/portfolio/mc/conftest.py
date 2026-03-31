@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import pytest
 import okama as ok
 from pathlib import Path

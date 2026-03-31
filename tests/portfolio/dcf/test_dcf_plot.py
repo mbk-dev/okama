@@ -1,13 +1,12 @@
 import matplotlib
-
-# Ensure non-interactive backend for headless test runs
-matplotlib.use("Agg")
-
 import matplotlib.pyplot as plt
 import pytest
 
 import okama as ok
 from okama.settings import DEFAULT_DISCOUNT_RATE
+
+# Ensure non-interactive backend for headless test runs
+matplotlib.use("Agg")
 
 
 @pytest.fixture()

@@ -1,7 +1,6 @@
 import warnings
 
 import pandas as pd
-from matplotlib import pyplot as plt
 
 import okama as ok
 

@@ -1,10 +1,8 @@
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from pytest import approx, mark
 
 import okama as ok
-from okama.common.helpers import rebalancing as rb
 
 
 def test_validate_period_failing():

@@ -10,7 +10,6 @@ from matplotlib.axes import Axes
 
 from scipy.optimize import minimize
 
-import okama.common.helpers.rebalancing
 from okama import asset_list, settings
 from okama.common.helpers import helpers
 from okama.common.helpers.rebalancing import Rebalance
