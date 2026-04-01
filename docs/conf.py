@@ -51,6 +51,8 @@ language = "en"
 source_encoding = "utf-8"
 
 add_module_names = False
+toc_object_entries = False
+toc_object_entries_show_parents = "hide"
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
