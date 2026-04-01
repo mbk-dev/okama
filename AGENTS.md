@@ -16,3 +16,4 @@ Additional rules:
 - When editing Jupyter Notebook examples in the `/examples` directory, ensure that the code examples are up-to-date with the current codebase in the Git branch.
 - Use interpreter in poetry env (poetry run python ...).
 - Always use "poetry add" instead of "pip install".
+- When you write a release description, always include the names of the specific classes and methods when describing new features and bug fixes.
