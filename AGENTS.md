@@ -1,5 +1,11 @@
 # okama — Development rules for AI agents
 
+## environment
+- project uses poetry for the envirobment & dependecies management
+- new dependecy must be added in pyproject.toml and additionally to requirements.txt
+- Use interpreter in poetry env (poetry run python ...).
+- Always use "poetry add" instead of "pip install"
+
 ## After any code changes:
 1) Determine whether *executable Python code* was changed, not just comments or docstrings.
 2) If executable code was changed — always run tests: `pytest -q`.
@@ -18,6 +24,5 @@
 - Use type hints for all function parameters and return types.
 - Use f-string formatting for all logging and print messages.
 - When editing Jupyter Notebook examples in the `/examples` directory, ensure that the code examples are up-to-date with the current codebase in the Git branch.
-- Use interpreter in poetry env (poetry run python ...).
-- Always use "poetry add" instead of "pip install".
+
 
