@@ -247,7 +247,10 @@ class PortfolioDCF:
         if discounting.lower() == "fv":
             return wealth_index_fv
         elif discounting.lower() == "pv":
-            return dcf_calculations.discount_monthly_cash_flow(wealth_index_fv, self.discount_rate, reverse=True)
+            result = dcf_calculations.discount_monthly_cash_flow(wealth_index_fv, self.discount_rate, reverse=True)
+            if hasattr(self.parent, "inflation") and self.parent.inflation in result.columns:
+                result[self.parent.inflation] = self.cashflow_parameters.initial_investment
+            return result
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
 

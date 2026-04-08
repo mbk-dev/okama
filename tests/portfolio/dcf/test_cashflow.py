@@ -294,6 +294,28 @@ def test_discount_rate_setter_validation(pf_ab_monthly):
         pf_ab_monthly.dcf.discount_rate = "abc"  # type: ignore[assignment]
 
 
+def test_wealth_index_pv_inflation_column_is_constant(synthetic_env):
+    """When discount_rate=None and discounting='pv', the inflation column must be constant
+    and equal to initial_investment (real purchasing power is flat in PV terms)."""
+    pf = ok.Portfolio(["A.US", "B.US"], ccy="USD", inflation=True, rebalancing_strategy=ok.Rebalance(period="month"))
+    ind = ok.IndexationStrategy(pf)
+    ind.initial_investment = 10_000
+    ind.frequency = "year"
+    ind.amount = -1_000
+    ind.indexation = 0.0
+    pf.dcf.cashflow_parameters = ind
+    pf.dcf.discount_rate = None  # uses inflation CAGR as discount rate
+
+    wi_pv = pf.dcf.wealth_index(discounting="pv")
+    infl_col = pf.inflation  # e.g. "USD.INFL"
+    assert infl_col in wi_pv.columns, f"Inflation column '{infl_col}' not found in wealth_index result"
+    infl_values = wi_pv[infl_col]
+    assert (infl_values == ind.initial_investment).all(), (
+        f"Inflation column in PV wealth index must be constant {ind.initial_investment}, "
+        f"got: {infl_values.values}"
+    )
+
+
 def test_plot_forecast_monte_carlo_smoke(dcf_indexation_yearly):
     """Smoke-test plot_forecast_monte_carlo: should not raise and must return a result object."""
     # Use a non-interactive backend to avoid GUI requirements
