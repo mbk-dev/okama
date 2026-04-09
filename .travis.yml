@@ -4,7 +4,7 @@ dist: focal
 
 python:
   - "3.11"
-  - "3.13"
+  - "3.14"
 
 # command to install dependencies
 before_install:

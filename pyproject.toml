@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "okama"
-version = "2.0.0"
+version = "2.0.1"
 description = "Investment portfolio analyzing & optimization tools"
 authors = ["Sergey Kikevich <chilango74@gmail.com>"]
 license = "MIT"
@@ -19,11 +19,10 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Mathematics",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
