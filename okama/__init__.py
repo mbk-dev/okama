@@ -21,6 +21,9 @@ Main features:
 """
 
 from importlib.metadata import version
+from typing import Any
+
+import pandas as pd
 
 from okama.asset import Asset
 from okama.asset_list import AssetList
@@ -50,7 +53,22 @@ from okama.common.helpers.rebalancing import Rebalance
 import okama.settings
 
 
-def __getattr__(name):
+def _ensure_pandas_compatibility() -> None:
+    """
+    Restore pandas APIs removed in 3.x that are still used by okama callers.
+
+    pandas 3.0 removed ``DataFrame.applymap`` in favor of ``DataFrame.map``.
+    Adding the alias keeps existing user code and test suites compatible across
+    supported pandas releases.
+    """
+    if not hasattr(pd.DataFrame, "applymap") and hasattr(pd.DataFrame, "map"):
+        pd.DataFrame.applymap = pd.DataFrame.map
+
+
+_ensure_pandas_compatibility()
+
+
+def __getattr__(name: str) -> Any:
     """
     Lazily expose selected API metadata at the package level.
 
