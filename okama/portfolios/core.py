@@ -114,7 +114,7 @@ class Portfolio(make_asset_list.ListMaker):
 
     def _add_inflation(self):
         if hasattr(self, "inflation"):
-            return pd.concat([self.ror, self.inflation_ts], axis=1, join="inner", copy="false")
+            return pd.concat([self.ror, self.inflation_ts], axis=1, join="inner")
         else:
             return self.ror
 
@@ -458,7 +458,7 @@ class Portfolio(make_asset_list.ListMaker):
         ls = [self.ror, self.assets_ror]
         if hasattr(self, "inflation"):
             ls.append(self.inflation_ts)
-        df = pd.concat(ls, axis=1, join="inner", copy="false")
+        df = pd.concat(ls, axis=1, join="inner")
         return helpers.Frame.get_wealth_indexes(df)
 
     @property
@@ -784,7 +784,7 @@ class Portfolio(make_asset_list.ListMaker):
         if len(series_list) == 1:
             assets_close_monthly = series_list[0].to_frame()
         else:
-            assets_close_monthly = pd.concat(series_list, axis=1, join="inner", copy="false")
+            assets_close_monthly = pd.concat(series_list, axis=1, join="inner")
         assets_close_monthly = assets_close_monthly[self.first_date : self.last_date]
         return assets_close_monthly
 

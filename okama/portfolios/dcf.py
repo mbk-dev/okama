@@ -341,7 +341,7 @@ class PortfolioDCF:
         >>> plt.show()
         """
         ls = [self.parent.ror, self.parent.assets_ror]
-        ror_df = pd.concat(ls, axis=1, join="inner", copy="false")
+        ror_df = pd.concat(ls, axis=1, join="inner")
         wealth_df = ror_df.apply(
             dcf_calculations.get_wealth_indexes_fv_with_cashflow,
             axis=0,
@@ -351,7 +351,7 @@ class PortfolioDCF:
             inflation_wi = helpers.Frame.get_wealth_indexes(
                 ror=self.parent.inflation_ts, initial_amount=self.cashflow_parameters.initial_investment
             )
-            wealth_df = pd.concat([wealth_df, inflation_wi], axis=1, join="inner", copy="false")
+            wealth_df = pd.concat([wealth_df, inflation_wi], axis=1, join="inner")
         return wealth_df
 
     def survival_period_hist(self, threshold: float = 0) -> float:

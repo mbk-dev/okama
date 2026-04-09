@@ -898,7 +898,7 @@ class AssetList(make_asset_list.ListMaker):
         # TODO: make a single method with mean_return
         if not hasattr(self, "inflation"):
             raise ValueError("Real Return is not defined. Set inflation=True to calculate.")
-        df = pd.concat([self.assets_ror, self.inflation_ts], axis=1, join="inner", copy="false")
+        df = pd.concat([self.assets_ror, self.inflation_ts], axis=1, join="inner")
         infl_mean = self.inflation_ts.values.mean() * settings._MONTHS_PER_YEAR
         ror_mean = df.loc[:, self.symbols].mean() * settings._MONTHS_PER_YEAR
         return (1.0 + ror_mean) / (1.0 + infl_mean) - 1.0
@@ -1044,7 +1044,7 @@ class AssetList(make_asset_list.ListMaker):
             s1 = s.where(s > 0).notnull().astype(int)
             s1_1 = s.where(s > 0).isnull().astype(int).cumsum()
             s2 = s1.groupby(s1_1).cumsum()
-            df = pd.concat([df, s2], axis=1, copy="false")
+            df = pd.concat([df, s2], axis=1)
         return df
 
     @property
@@ -1081,7 +1081,7 @@ class AssetList(make_asset_list.ListMaker):
             s1 = s.where(s != 0).notnull().astype(int)
             s1_1 = s.where(s != 0).isnull().astype(int).cumsum()
             s2 = s1.groupby(s1_1).cumsum()
-            df = pd.concat([df, s2], axis=1, copy="false")
+            df = pd.concat([df, s2], axis=1)
         return df
 
     def get_dividend_mean_growth_rate(self, period: int = 5) -> pd.Series:
