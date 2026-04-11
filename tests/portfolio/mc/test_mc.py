@@ -274,8 +274,9 @@ def test_plot_qq_runs_and_creates_figure(mc_students):
     mc_students.distribution = "t"
     before = len(plt.get_fignums())
     # Use a small bootstrap size to avoid UnboundLocalError on CI path and keep it fast
-    mc_students.plot_qq(var_level=5, bootstrap_size_var=100, zoom_to_left_tail=50, figsize=(4, 3))
+    ax = mc_students.plot_qq(var_level=5, bootstrap_size_var=100, zoom_to_left_tail=50, figsize=(4, 3))
     after = len(plt.get_fignums())
+    assert isinstance(ax, matplotlib.axes.Axes)
     assert after == before + 1
     plt.close("all")
 
@@ -283,7 +284,8 @@ def test_plot_qq_runs_and_creates_figure(mc_students):
 def test_plot_hist_fit_runs_and_creates_figure(mc_normal_small):
     mc_normal_small.distribution = "norm"
     before = len(plt.get_fignums())
-    mc_normal_small.plot_hist_fit(bins=10)
+    ax = mc_normal_small.plot_hist_fit(bins=10)
     after = len(plt.get_fignums())
+    assert isinstance(ax, matplotlib.axes.Axes)
     assert after == before + 1
     plt.close("all")
