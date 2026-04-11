@@ -1,3 +1,5 @@
+import warnings
+
 import pandas as pd
 import numpy as np
 import pytest
@@ -110,6 +112,13 @@ def test_discount_rate_default_and_setter(pf_ab_monthly):
     assert pf_ab_monthly.dcf.discount_rate == pytest.approx(0.087, abs=1e-12)
 
 
+def test_time_series_dic_creates_float_series(pf_ab_monthly: ok.Portfolio) -> None:
+    ts = ok.TimeSeriesStrategy(pf_ab_monthly)
+    ts.time_series_dic = {"2020-06": 300, "2021-03": -500}
+
+    assert pd.api.types.is_float_dtype(ts.time_series.dtype)
+
+
 def test_indexation_strategy_default_indexation_when_no_inflation(pf_ab_monthly):
     assert not hasattr(pf_ab_monthly, "inflation")
     ind = ok.IndexationStrategy(pf_ab_monthly, indexation=None)
@@ -133,6 +142,18 @@ def test_cash_flow_ts_fv_sign_and_length(dcf_indexation_yearly):
     assert len(cfts) == len(dcf_indexation_yearly.parent.ror)
     # Since strategy has withdrawals, the sum should be negative (allow zero if masked by negative WI rule)
     assert cfts.sum() <= 0
+
+
+def test_cash_flow_ts_halfyear_without_dtype_warning(dcf_percentage_halfyear) -> None:
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        cfts = dcf_percentage_halfyear.cash_flow_ts(discounting="fv", remove_if_wealth_index_negative=False)
+
+    assert isinstance(cfts, pd.Series)
+    assert not any(
+        issubclass(warning.category, FutureWarning) and "incompatible dtype" in str(warning.message)
+        for warning in caught
+    )
 
 
 def test_wealth_index_fv_with_assets_columns(dcf_percentage_halfyear):

@@ -158,7 +158,7 @@ class CashFlow:
         """
         Create cash flow time series in form of Pandas.Series.
         """
-        self.time_series = pd.Series(self._time_series_dic)
+        self.time_series = pd.Series(self._time_series_dic, dtype=float)
         self.time_series.index = pd.to_datetime(self.time_series.index).to_period("M")
         self.time_series.sort_index(inplace=True)
         self.time_series.name = "cashflow_ts"

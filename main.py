@@ -12,17 +12,26 @@ import os
 
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
-tickers = [
-    "SPY.US",
-    "AGG.US",
-    "GC.COMM",
-]  # we can create lists of assets and portfolio containing general type of assets and **indexes**
-w = [0.7, 0.15, 0.15]
-currency = "USD"
+pf = ok.Portfolio(
+    ["MCFTR.INDX", "RUCBTRNS.INDX", "GC.COMM"],
+    weights=[0.60, 0.35, 0.05],
+    ccy="RUB",
+    inflation=True,
+    last_date="2026-02",
+    rebalancing_strategy=ok.Rebalance(period="year"),
+    symbol="Pension_portfolio.PF",
+)
 
-y = ok.Portfolio(tickers, ccy=currency, weights=w, inflation=True)
+ind = ok.IndexationStrategy(pf)  # создаём стратегию, привязанную к портфелю
 
-y.dcf.discount_rate = None
-y.dcf.wealth_index(discounting="pv", include_negative_values=False).plot()
+ind.initial_investment = 10_000   # размер начальных вложений
+ind.amount = -2_500               # размер годового снятия
+ind.frequency = "year"            # частота — раз в год
+ind.indexation = "inflation"      # индексация на среднюю инфляцию
+
+pf.dcf.cashflow_parameters = ind
+
+cf_percentage = pf.dcf.cash_flow_ts(discounting="fv").resample("Y").sum()
+cf_percentage.plot(kind="bar")
 
 plt.show()

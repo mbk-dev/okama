@@ -59,7 +59,7 @@ def get_wealth_indexes_fv_with_cashflow(
             raise ValueError(f"Unknown task: {task}. It must be 'monte_carlo' or 'backtest'")
     else:
         ror_cashflow_df = ror
-        ror_cashflow_df.loc[:, "cashflow_ts"] = 0
+        ror_cashflow_df.loc[:, "cashflow_ts"] = 0.0
     cash_flow_ts = ror_cashflow_df["cashflow_ts"]  # cash flow monthly time series
     periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
     if hasattr(cashflow_parameters, "indexation") and cashflow_parameters.frequency != "none":
@@ -207,7 +207,7 @@ def get_cash_flow_fv(
             raise ValueError(f"Unknown task: {task}. It must be 'monte_carlo' or 'backtest'")
     else:
         ror_cashflow_df = ror
-        ror_cashflow_df.loc[:, "cashflow_ts"] = 0
+        ror_cashflow_df.loc[:, "cashflow_ts"] = 0.0
     cash_flow_ts = ror_cashflow_df["cashflow_ts"]  # cash flow monthly time series
     periods_per_year = settings.frequency_periods_per_year[cashflow_parameters.frequency]
     if hasattr(cashflow_parameters, "indexation") and cashflow_parameters.frequency != "none":
