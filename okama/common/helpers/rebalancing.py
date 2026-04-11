@@ -203,10 +203,10 @@ class Rebalance:
                 assets_wealth_indexes = pd.concat(awi_chunks, verify_integrity=True, sort=False)
         # set value for the first date
         portfolio_wealth_index.loc[first_wealth_index_date] = initial_inv
-        portfolio_wealth_index.sort_index(ascending=True, inplace=True)
+        portfolio_wealth_index = portfolio_wealth_index.sort_index(ascending=True)
         if calculate_assets_wealth_indexes:
             assets_wealth_indexes.loc[first_wealth_index_date] = target_weights_np * initial_inv
-            assets_wealth_indexes.sort_index(ascending=True, inplace=True)
+            assets_wealth_indexes = assets_wealth_indexes.sort_index(ascending=True)
         return Result(
             portfolio_wealth_index=portfolio_wealth_index, assets_wealth_indexes=assets_wealth_indexes, events=events_ts
         )
@@ -231,7 +231,7 @@ class Rebalance:
                     assets_wealth_indexes_local = target_weights_np * assets_wealth_indexes_local.sum()
                     events_ts[date - 1] = "abs" if condition_abs else "rel"  # set previous month as its EOD data
                 assets_wealth_indexes_local *= 1 + r
-                assets_wealth_indexes_local.rename(date, inplace=True)
+                assets_wealth_indexes_local = assets_wealth_indexes_local.rename(date)
             if calculate_assets_wealth_indexes:
                 # collect rows for a single concat after the loop
                 awi_rows.append(pd.DataFrame(assets_wealth_indexes_local).T)
@@ -321,7 +321,7 @@ class Rebalance:
         first_ror_date = ror.index[0]
         wealth_index_aligned = wealth_index.loc[wealth_index.index >= first_ror_date]
         portfolio_ror = wealth_index_aligned.pct_change()
-        portfolio_ror.dropna(inplace=True)
+        portfolio_ror = portfolio_ror.dropna()
         return portfolio_ror
 
     def wealth_ts_ef(self, weights: list, ror: pd.DataFrame) -> pd.Series:

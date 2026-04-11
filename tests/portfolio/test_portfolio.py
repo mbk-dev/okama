@@ -256,7 +256,7 @@ def test_assets_and_portfolio_close_and_counts(pf_ab_monthly):
     assert list(nos.columns) == ["A.US", "B.US"]
     # The very first row can be NaN (pre-initialization marker); subsequent rows must be finite and non-negative
     if len(nos) > 0:
-        assert nos.iloc[1:].applymap(np.isfinite).values.all()
+        assert nos.iloc[1:].map(np.isfinite).values.all()
         assert (nos.iloc[1:].values >= 0).all()
 
 

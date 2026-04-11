@@ -498,7 +498,7 @@ class AssetList(make_asset_list.ListMaker):
                 raise ValueError("Real CAGR is not defined. Set inflation=True in AssetList to calculate it.")
             mean_inflation = helpers.Frame.get_cagr(self.inflation_ts[dt:])
             cagr = (1.0 + cagr) / (1.0 + mean_inflation) - 1.0
-            cagr.drop(self.inflation, inplace=True)
+            cagr = cagr.drop(self.inflation)
         return cagr
 
     def get_rolling_cagr(self, window: int = 12, real: bool = False) -> pd.DataFrame:
@@ -633,7 +633,7 @@ class AssetList(make_asset_list.ListMaker):
                 )
             cumulative_inflation = helpers.Frame.get_cumulative_return(self.inflation_ts[dt:])
             cr = (1.0 + cr) / (1.0 + cumulative_inflation) - 1.0
-            cr.drop(self.inflation, inplace=True)
+            cr = cr.drop(self.inflation)
         return cr
 
     def get_rolling_cumulative_return(self, window: int = 12, real: bool = False) -> pd.DataFrame:
@@ -839,15 +839,16 @@ class AssetList(make_asset_list.ListMaker):
         rows_list.append(row)
         # Create DataFrame from list of rows
         description = pd.DataFrame(rows_list)
+        description[["property", "period"]] = description[["property", "period"]].astype("string")
         # rename columns
         if hasattr(self, "inflation"):
-            description.rename(columns={self.inflation: "inflation"}, inplace=True)
+            description = description.rename(columns={self.inflation: "inflation"})
             description = helpers.Frame.change_columns_order(description, ["inflation"], position="last")
         description = helpers.Frame.change_columns_order(description, ["property", "period"], position="first")
         if not tickers:
             for ti in self.symbols:
                 # short_ticker = ti.split(".", 1)[0]
-                description.rename(columns={ti: self.names[ti]}, inplace=True)
+                description = description.rename(columns={ti: self.names[ti]})
         return description
 
     @property
@@ -1120,7 +1121,7 @@ class AssetList(make_asset_list.ListMaker):
         """
         self._validate_period(period)
         growth_ts = self.dividends_annual.pct_change().iloc[1:-1]  # Slice the last year for full dividends
-        growth_ts.replace([np.inf, -np.inf, np.nan], 0, inplace=True)  # replace possible nan and inf
+        growth_ts = growth_ts.replace([np.inf, -np.inf, np.nan], 0)  # replace possible nan and inf
         dt0 = self.last_date
         dt = helpers.Date.subtract_years(dt0, period)
         return ((growth_ts[dt:] + 1.0).prod()) ** (1 / period) - 1.0

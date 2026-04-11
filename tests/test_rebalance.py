@@ -123,9 +123,9 @@ def test_assets_weights_ts_no_rebalancing_manual():
 
     # Insert the initial point
     assets_wealth_indexes_manual.loc[first_wealth_index_date] = initial_allocation
-    assets_wealth_indexes_manual.sort_index(inplace=True)
+    assets_wealth_indexes_manual = assets_wealth_indexes_manual.sort_index()
     portfolio_wealth_index_manual.loc[first_wealth_index_date] = initial_inv
-    portfolio_wealth_index_manual.sort_index(inplace=True)
+    portfolio_wealth_index_manual = portfolio_wealth_index_manual.sort_index()
 
     weights_manual = assets_wealth_indexes_manual.divide(portfolio_wealth_index_manual, axis=0)
 

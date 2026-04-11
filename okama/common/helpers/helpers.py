@@ -230,7 +230,7 @@ class Frame:
         else:
             raise ValueError("Return type must be either cagr or arithmetic_mean.")
         if isinstance(ts, pd.Series):
-            ts.rename(ror_monthly.name, inplace=True)
+            ts = ts.rename(ror_monthly.name)
         return ts
 
     @staticmethod
@@ -248,7 +248,7 @@ class Frame:
         wealth_index = initial_investments * (ror + 1).cumprod()
         first_wealth_index_date = first_date - 1  # set 1000 to one month earlie
         wealth_index.loc[first_wealth_index_date] = initial_investments
-        wealth_index.sort_index(ascending=True, inplace=True)
+        wealth_index = wealth_index.sort_index(ascending=True)
         return wealth_index
 
     @singledispatchmethod
@@ -366,7 +366,7 @@ class Frame:
         The shape of time series should be at least 12. In the opposite case empty time series is returned.
         """
         sk = ror.expanding(min_periods=12).skew()
-        sk.dropna(inplace=True)
+        sk = sk.dropna()
         return sk
 
     @staticmethod
@@ -377,7 +377,7 @@ class Frame:
         """
         check_rolling_window(window, ror)
         sk = ror.rolling(window=window).skew()
-        sk.dropna(inplace=True)
+        sk = sk.dropna()
         return sk
 
     @staticmethod
@@ -387,7 +387,7 @@ class Frame:
         Kurtosis should be close to zero for normal distribution.
         """
         kt = ror.expanding(min_periods=12).kurt()
-        kt.dropna(inplace=True)
+        kt = kt.dropna()
         return kt
 
     @staticmethod
@@ -515,7 +515,7 @@ class Index:
             raise ValueError("At least 2 symbols must be provided to calculate Tracking Difference.")
         initial_value = accumulated_return.iloc[0]
         difference = accumulated_return.subtract(accumulated_return.iloc[:, 0], axis=0) / initial_value
-        difference.drop(difference.columns[0], axis=1, inplace=True)  # drop the first column (stock index data)
+        difference = difference.drop(difference.columns[0], axis=1)  # drop the first column (stock index data)
         return difference
 
     @staticmethod
@@ -543,7 +543,7 @@ class Index:
         if ror.shape[0] < 12:
             raise ShortPeriodLengthError("Tracking Error is not defined for time periods < 1 year")
         cumsum = ror.subtract(ror.iloc[:, 0], axis=0).pow(2, axis=0).cumsum()
-        cumsum.drop(cumsum.columns[0], axis=1, inplace=True)  # drop the first column (stock index data)
+        cumsum = cumsum.drop(cumsum.columns[0], axis=1)  # drop the first column (stock index data)
         tracking_error = cumsum.divide((1.0 + np.arange(ror.shape[0])), axis=0).pow(0.5, axis=0)
         return tracking_error * np.sqrt(12)
 
@@ -559,7 +559,7 @@ class Index:
             raise ValueError("fn should be corr or cov")
         cov_matrix_ts = getattr(ror.expanding(), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
-        cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
+        cov_matrix_ts = cov_matrix_ts.drop(columns=ror.columns[0])
         return cov_matrix_ts.iloc[settings._MONTHS_PER_YEAR :]
 
     @staticmethod
@@ -575,8 +575,8 @@ class Index:
         check_rolling_window(window=window, ror=ror, window_below_year=False)
         cov_matrix_ts = getattr(ror.rolling(window=window), fn)()
         cov_matrix_ts = cov_matrix_ts.drop(index=ror.columns[1:], level=1).droplevel(1)
-        cov_matrix_ts.drop(columns=ror.columns[0], inplace=True)
-        cov_matrix_ts.dropna(inplace=True)
+        cov_matrix_ts = cov_matrix_ts.drop(columns=ror.columns[0])
+        cov_matrix_ts = cov_matrix_ts.dropna()
         return cov_matrix_ts
 
     @staticmethod

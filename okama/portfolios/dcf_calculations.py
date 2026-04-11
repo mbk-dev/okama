@@ -41,7 +41,7 @@ def get_wealth_indexes_fv_with_cashflow(
     cashflow_iterate_condition = not (cash_flow_ts.empty or (cash_flow_ts == 0).all())
     if cashflow_iterate_condition:
         ror_cashflow_df = ror.assign(cashflow_ts=cash_flow_ts)
-        ror_cashflow_df.fillna(0, inplace=True)
+        ror_cashflow_df = ror_cashflow_df.fillna(0)
         n_rows = ror.shape[0]
         monthly_discount_rate = (1 + dcf_object.discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
         discount_factors = (1.0 + monthly_discount_rate) ** np.arange(n_rows)
@@ -157,7 +157,7 @@ def get_wealth_indexes_fv_with_cashflow(
         wealth_index = pd.concat([s, cum_inflation], axis="columns")
     else:
         wealth_index = s
-    wealth_index.sort_index(ascending=True, inplace=True)
+    wealth_index = wealth_index.sort_index(ascending=True)
     return wealth_index
 
 
@@ -189,7 +189,7 @@ def get_cash_flow_fv(
     cashflow_iterate_condition = not (cash_flow_ts.empty or (cash_flow_ts == 0).all())
     if cashflow_iterate_condition:
         ror_cashflow_df = ror.assign(cashflow_ts=cash_flow_ts)
-        ror_cashflow_df.fillna(0, inplace=True)
+        ror_cashflow_df = ror_cashflow_df.fillna(0)
         n_rows = ror.shape[0]
         monthly_discount_rate = (1 + dcf_object.discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
         discount_factors = (1.0 + monthly_discount_rate) ** np.arange(n_rows)

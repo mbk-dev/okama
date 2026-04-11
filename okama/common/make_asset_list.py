@@ -338,7 +338,7 @@ class ListMaker(ABC):
         currency_mult = df.iloc[:, -1]
         asset_mult = df.iloc[:, 0]
         x = asset_mult * currency_mult - 1.0
-        x.rename(returns.name, inplace=True)
+        x = x.rename(returns.name)
         return x
 
     def _adjust_price_to_currency_monthly(self, price: pd.Series, asset_currency: str) -> pd.Series:
@@ -364,7 +364,7 @@ class ListMaker(ABC):
         merged = price.to_frame().join(currency_rate, how="left")
         if merged.isnull().values.any():
             # can happen if the first value is missing
-            merged.fillna(method="backfill", inplace=True)
+            merged = merged.bfill()
         return merged.iloc[:, 0].multiply(merged[ccy_symbol], axis=0)
 
     @staticmethod
@@ -492,7 +492,7 @@ class ListMaker(ABC):
         if not hasattr(self, "inflation"):
             raise ValueError("Real Return is not defined. Set inflation=True when initiating the class.")
         df = (1.0 + df).divide(1.0 + self.inflation_ts, axis=0) - 1.0
-        df.drop(columns=[self.inflation], inplace=True)
+        df = df.drop(columns=[self.inflation])
         return df
 
     @property

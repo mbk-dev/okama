@@ -70,7 +70,7 @@ def search(search_string: str, namespace: Optional[str] = None, response_format:
     json_response = json.loads(string_response)
     if response_format.lower() == "frame":
         df = pd.DataFrame(json_response[1:], columns=json_response[0])
-        return df
+        return df.astype("string", copy=False)
     elif response_format.lower() == "json":
         return json_response
     else:

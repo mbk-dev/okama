@@ -390,7 +390,7 @@ class Portfolio(make_asset_list.ListMaker):
                 s = helpers.Frame.get_portfolio_return_ts(self.weights, self.assets_ror)
             else:
                 s = self.rebalancing_strategy.return_ror_ts(self.weights, self.assets_ror)
-            s.rename(self.symbol, inplace=True)
+            s = s.rename(self.symbol)
             self._ror = s
         return self._ror
 
@@ -427,7 +427,7 @@ class Portfolio(make_asset_list.ListMaker):
     def _make_df_if_series(self, ts):
         if isinstance(ts, pd.Series):  # should always return a DataFrame
             ts = ts.to_frame()
-            ts.rename({1: self.symbol}, axis="columns", inplace=True)
+            ts = ts.rename({1: self.symbol}, axis="columns")
         return ts
 
     @property
@@ -589,7 +589,7 @@ class Portfolio(make_asset_list.ListMaker):
                 raise ValueError("Real CAGR is not defined. Set inflation=True in Portfolio to calculate it.")
             mean_inflation = helpers.Frame.get_cagr(self.inflation_ts[dt:])
             cagr = (1.0 + cagr) / (1.0 + mean_inflation) - 1.0
-            cagr.drop(self.inflation, inplace=True)
+            cagr = cagr.drop(self.inflation)
         return cagr
 
     def get_rolling_cagr(self, window: int = 12, real: bool = False) -> pd.DataFrame:
@@ -700,7 +700,7 @@ class Portfolio(make_asset_list.ListMaker):
                 )
             cumulative_inflation = helpers.Frame.get_cumulative_return(self.inflation_ts[dt:])
             cr = (1.0 + cr) / (1.0 + cumulative_inflation) - 1.0
-            cr.drop(self.inflation, inplace=True)
+            cr = cr.drop(self.inflation)
         return cr
 
     def get_rolling_cumulative_return(self, window: int = 12, real: bool = False) -> pd.DataFrame:
@@ -883,7 +883,7 @@ class Portfolio(make_asset_list.ListMaker):
         Freq: M, Name: portfolio_2951.PF, Length: 171, dtype: float64
         """
         s = (self._get_assets_dividends() * self.number_of_securities).sum(axis=1)
-        s.rename(self.symbol, inplace=True)
+        s = s.rename(self.symbol)
         return s
 
     @property
@@ -921,7 +921,7 @@ class Portfolio(make_asset_list.ListMaker):
         """
         df = self._assets_dividend_yield @ self.weights_ts.T
         div_yield_series = pd.Series(np.diag(df), index=df.index)  # faster than df1.mul(df2).sum(axis=1)
-        div_yield_series.rename(self.symbol, inplace=True)
+        div_yield_series = div_yield_series.rename(self.symbol)
         return div_yield_series
 
     @property
@@ -1399,8 +1399,9 @@ class Portfolio(make_asset_list.ListMaker):
         rows_list.append(row)
         # Create DataFrame from list of rows
         description = pd.DataFrame(rows_list)
+        description[["property", "period"]] = description[["property", "period"]].astype("string")
         if hasattr(self, "inflation"):
-            description.rename(columns={self.inflation: "inflation"}, inplace=True)
+            description = description.rename(columns={self.inflation: "inflation"})
         description = helpers.Frame.change_columns_order(description, ["property", "period", self.symbol])
         return description
 
@@ -1517,7 +1518,7 @@ class Portfolio(make_asset_list.ListMaker):
             ]
             returns_dict.update({percentile: percentile_returns_list})
         df = pd.DataFrame(returns_dict, index=list(period_range))
-        df.index.rename("years", inplace=True)
+        df.index = df.index.rename("years")
         return df
 
     def get_sharpe_ratio(self, rf_return: float = 0) -> float:

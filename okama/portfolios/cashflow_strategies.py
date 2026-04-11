@@ -160,7 +160,7 @@ class CashFlow:
         """
         self.time_series = pd.Series(self._time_series_dic, dtype=float)
         self.time_series.index = pd.to_datetime(self.time_series.index).to_period("M")
-        self.time_series.sort_index(inplace=True)
+        self.time_series = self.time_series.sort_index()
         self.time_series.name = "cashflow_ts"
 
     def _clear_cf_cache(self):

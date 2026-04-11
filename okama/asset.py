@@ -200,7 +200,7 @@ class Asset:
             index = pd.date_range(start=self.first_date, end=self.last_date, freq="MS", inclusive="neither")
             period = index.to_period("D")
             div = pd.Series(data=0, index=period)
-            div.rename(self.symbol, inplace=True)
+            div = div.rename(self.symbol)
         return div.resample("M").sum()
 
     @property

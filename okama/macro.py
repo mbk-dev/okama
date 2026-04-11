@@ -235,6 +235,7 @@ class MacroABC(ABC):
         all_rows.extend([row0, row1, row2, row3])
         # Concatenate all rows at once (more efficient than repeated pd.concat in loop)
         description = pd.DataFrame.from_records(all_rows)
+        description[["property", "period"]] = description[["property", "period"]].astype("string")
         return helpers.Frame.change_columns_order(description, ["property", "period"], position="first")
 
 
@@ -369,7 +370,7 @@ class Inflation(MacroABC):
         if self.values_monthly.shape[0] < 12:
             raise LongRollingWindowLengthError("data history depth is less than rolling window size (12 months)")
         x = (self.values_monthly + 1.0).rolling(settings._MONTHS_PER_YEAR).apply(np.prod, raw=True) - 1.0
-        x.dropna(inplace=True)
+        x = x.dropna()
         return x
 
     def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
@@ -489,6 +490,7 @@ class Inflation(MacroABC):
         all_rows.append(row)
         # Concatenate all rows at once (more efficient than repeated pd.concat in loop)
         description = pd.DataFrame.from_records(all_rows)
+        description[["property", "period"]] = description[["property", "period"]].astype("string")
         return helpers.Frame.change_columns_order(description, ["property", "period"], position="first")
 
 

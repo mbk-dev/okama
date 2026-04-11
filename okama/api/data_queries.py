@@ -120,7 +120,7 @@ class QueryData:
         else:
             # make empty time series when no dividends
             ts = pd.Series(dtype=float)
-            ts.rename(symbol, inplace=True)
+            ts = ts.rename(symbol)
         return ts
 
     @staticmethod
