@@ -321,5 +321,4 @@ def discount_monthly_cash_flow(
         discount_factors = (1.0 + monlthly_discount_rate) ** np.arange(number_of_months)
     else:
         discount_factors = (1.0 + monlthly_discount_rate) ** np.arange(number_of_months)[::-1]
-    cash_flow_pv = cash_flow_fv.div(discount_factors, axis=0)
-    return cash_flow_pv
+    return cash_flow_fv.div(discount_factors, axis=0)

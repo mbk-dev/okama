@@ -186,7 +186,7 @@ class PortfolioDCF:
         self.mc.period = period
         self.mc.mc_number = mc_number
 
-    def wealth_index(self, discounting: Literal["fv", "pv"], include_negative_values: bool = False) -> pd.DataFrame:
+    def wealth_index(self, discounting: Literal["fv", "pv"], include_negative_values: bool = False) -> Union[pd.Series, pd.DataFrame]:
         """
         Calculate wealth index time series for the portfolio with cash flow (contributions and withdrawals)
         using historical rate of returns.
@@ -247,10 +247,7 @@ class PortfolioDCF:
         if discounting.lower() == "fv":
             return wealth_index_fv
         elif discounting.lower() == "pv":
-            result = dcf_calculations.discount_monthly_cash_flow(wealth_index_fv, self.discount_rate, reverse=True)
-            if hasattr(self.parent, "inflation") and self.parent.inflation in result.columns:
-                result[self.parent.inflation] = self.cashflow_parameters.initial_investment
-            return result
+            return dcf_calculations.discount_monthly_cash_flow(wealth_index_fv, self.discount_rate, reverse=False)
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
@@ -306,7 +303,7 @@ class PortfolioDCF:
         if discounting.lower() == "fv":
             return cash_flow_fv
         elif discounting.lower() == "pv":
-            return dcf_calculations.discount_monthly_cash_flow(cash_flow_fv, self.discount_rate, reverse=True)
+            return dcf_calculations.discount_monthly_cash_flow(cash_flow_fv, self.discount_rate, reverse=False)
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
 
