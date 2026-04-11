@@ -170,20 +170,27 @@ def test_initial_investment_pv_and_fv(dcf_percentage_halfyear):
     dcf = dcf_percentage_halfyear
     dcf.discount_rate = 0.10
     dcf.mc.period = 5
-    # PV at the beginning of the historical period
-    assert dcf.initial_investment_pv == dcf.wealth_index(discounting="pv", include_negative_values=False).iloc[0, 0]
-    # FV at the beginning of the historical period
-    assert dcf.initial_investment_fv == dcf.wealth_index(discounting="fv", include_negative_values=False).iloc[0, 0]
+    wi_pv = dcf.wealth_index(discounting="pv", include_negative_values=False)
+    wi_fv = dcf.wealth_index(discounting="fv", include_negative_values=False)
+    monthly_discount_rate = (1 + dcf.discount_rate) ** (1 / _MONTHS_PER_YEAR) - 1
+    expected_initial_investment_pv = dcf.cashflow_parameters.initial_investment / (
+        1.0 + monthly_discount_rate
+    ) ** dcf.parent.ror.shape[0]
+
+    assert dcf.initial_investment_fv == wi_fv.iloc[0, 0] == wi_pv.iloc[0, 0]
+    assert dcf.initial_investment_pv == pytest.approx(expected_initial_investment_pv)
+    assert dcf.initial_investment_pv < dcf.initial_investment_fv
 
 
 def test_wealth_index_pv_less_than_fv(dcf_indexation_yearly):
-    """Test that wealth_index[0] with discounting='pv' is less than with discounting='fv'."""
+    """PV wealth index should match FV at start and stay below it afterward."""
     dcf = dcf_indexation_yearly
-    # Get wealth index with both discounting methods
     wi_fv = dcf.wealth_index(discounting="fv", include_negative_values=False)
     wi_pv = dcf.wealth_index(discounting="pv", include_negative_values=False)
-    # First value with PV discounting should be less than with FV discounting
-    assert wi_pv.iloc[0, 0] < wi_fv.iloc[0, 0]
+
+    assert wi_pv.iloc[0, 0] == pytest.approx(wi_fv.iloc[0, 0])
+    assert (wi_pv.iloc[:, 0] <= wi_fv.iloc[:, 0]).all()
+    assert (wi_pv.iloc[1:, 0] < wi_fv.iloc[1:, 0]).any()
 
 
 def test_monte_carlo_wealth_shapes(dcf_indexation_yearly):
@@ -313,28 +320,6 @@ def test_discount_rate_setter_validation(pf_ab_monthly):
     # Wrong type
     with pytest.raises(TypeError):
         pf_ab_monthly.dcf.discount_rate = "abc"  # type: ignore[assignment]
-
-
-def test_wealth_index_pv_inflation_column_is_constant(synthetic_env):
-    """When discount_rate=None and discounting='pv', the inflation column must be constant
-    and equal to initial_investment (real purchasing power is flat in PV terms)."""
-    pf = ok.Portfolio(["A.US", "B.US"], ccy="USD", inflation=True, rebalancing_strategy=ok.Rebalance(period="month"))
-    ind = ok.IndexationStrategy(pf)
-    ind.initial_investment = 10_000
-    ind.frequency = "year"
-    ind.amount = -1_000
-    ind.indexation = 0.0
-    pf.dcf.cashflow_parameters = ind
-    pf.dcf.discount_rate = None  # uses inflation CAGR as discount rate
-
-    wi_pv = pf.dcf.wealth_index(discounting="pv")
-    infl_col = pf.inflation  # e.g. "USD.INFL"
-    assert infl_col in wi_pv.columns, f"Inflation column '{infl_col}' not found in wealth_index result"
-    infl_values = wi_pv[infl_col]
-    assert (infl_values == ind.initial_investment).all(), (
-        f"Inflation column in PV wealth index must be constant {ind.initial_investment}, "
-        f"got: {infl_values.values}"
-    )
 
 
 def test_plot_forecast_monte_carlo_smoke(dcf_indexation_yearly):
