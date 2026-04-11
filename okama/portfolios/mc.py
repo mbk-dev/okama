@@ -8,6 +8,7 @@ import numpy as np
 import scipy
 import statsmodels.api as sm
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 
 from okama import settings
 from okama.common import validators
@@ -763,7 +764,7 @@ class MonteCarlo:
         bootstrap_size_var: int = 2000,
         zoom_to_left_tail: int = 20,
         figsize: Optional[tuple] = None,
-    ) -> None:
+    ) -> Axes:
         """
         Generate a quantile-quantile (Q-Q) plot of portfolio monthly rate of return against quantiles of a given
         theoretical distribution.
@@ -793,6 +794,11 @@ class MonteCarlo:
         figsize : tuple[float, float], default None
             Figure size in inches (width, height). If `None`, matplotlib default is used.
 
+        Returns
+        -------
+        Axes
+            Matplotlib axes object.
+
         Examples
         --------
         >>> import matplotlib.pyplot as plt
@@ -807,7 +813,7 @@ class MonteCarlo:
         """
         distr = self.distribution
         parameters = self.get_parameters_for_distribution()
-        fig, ax = plt.subplots(figsize=figsize)
+        _, ax = plt.subplots(figsize=figsize)
         alpha = var_level / 100
         if zoom_to_left_tail in range(1, 99):
             p_zoom = zoom_to_left_tail / 100
@@ -906,9 +912,8 @@ class MonteCarlo:
 
         ax.grid(True, alpha=0.3)
         ax.legend(loc="lower right", fontsize=8)
-        plt.tight_layout()
-        plt.title(title)
-        plt.show()
+        ax.set_title(title)
+        ax.figure.tight_layout()
         # Log metrics using f-strings
         logger.info(
             f"VaR  {alpha:.0%}: theor={var_theor:.6f}, emp={var_emp:.6f}, delta(emp-theor)={(var_emp - var_theor):.6f}"
@@ -920,8 +925,9 @@ class MonteCarlo:
         if bootstrap_size_var:
             logger.info(f"95% CI empiric VaR (bootstrap): [{var_ci[0]:.6f}, {var_ci[1]:.6f}]")
             logger.info(f"95% CI empiric CVaR (bootstrap): [{cvar_ci[0]:.6f}, {cvar_ci[1]:.6f}]")
+        return ax
 
-    def plot_hist_fit(self, bins: int = None) -> None:
+    def plot_hist_fit(self, bins: int = None) -> Axes:
         """
         Plot a histogram of historical monthly returns and overlay the fitted theoretical PDF.
 
@@ -933,6 +939,11 @@ class MonteCarlo:
         bins : int, default None
             Number of histogram bins. If None, matplotlib will choose automatically.
 
+        Returns
+        -------
+        Axes
+            Matplotlib axes object.
+
         Examples
         --------
         >>> import matplotlib.pyplot as plt
@@ -942,10 +953,11 @@ class MonteCarlo:
         >>> plt.show()
         """
         data = self.ror
+        _, ax = plt.subplots()
         # Plot the histogram
-        plt.hist(data, bins=bins, density=True, alpha=0.6, color="g")
+        ax.hist(data, bins=bins, density=True, alpha=0.6, color="g")
         # Plot the PDF.Probability Density Function
-        xmin, xmax = plt.xlim()
+        xmin, xmax = ax.get_xlim()
         x = np.linspace(xmin, xmax, 100)
         distr = self.distribution
         if distr == "norm":  # Generate PDF
@@ -963,6 +975,6 @@ class MonteCarlo:
             title = f"Fit results: df = {df:.3f}, loc = {loc:.3f}, scale = {scale:.3f}"
         else:
             raise ValueError('distr must be "norm" (default) or "lognorm".')
-        plt.plot(x, p, "k", linewidth=2)
-        plt.title(title)
-        plt.show()
+        ax.plot(x, p, "k", linewidth=2)
+        ax.set_title(title)
+        return ax
