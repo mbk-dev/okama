@@ -1049,23 +1049,23 @@ class EfficientFrontier(asset_list.AssetList):
         --------
         >>> ls = ['SPY.US', 'GLD.US']
         >>> curr = 'USD'
-        >>> y = ok.EfficientFrontier(assets=ls,
-        ...                             first_date='2004-12',
-        ...                             last_date='2020-10',
-        ...                             ccy=curr,
-        ...                             rebalancing_strategy=ok.Rebalance(period='year'),
-        ...                             ticker_names=True,  # use tickers in DataFrame column names (set to False to show full asset names instead of tickers)
-        ...                             n_points=20,  # number of points in the Efficient Frontier
-        ...                             full_frontier=False,  # draw the frontier to the global CAGR max only
-        ...                             verbose=False)  # verbose mode is False to skip progress while EF points are calculated
+        >>> y = ok.EfficientFrontier(
+        ...     assets=ls,
+        ...     first_date='2004-12',
+        ...     last_date='2020-10',
+        ...     ccy=curr,
+        ...     rebalancing_strategy=ok.Rebalance(period='year'),
+        ...     ticker_names=True,  # Use tickers in DataFrame column names.
+        ...     n_points=20,  # Number of points in the Efficient Frontier.
+        ... )
         >>> df_reb_year = y.ef_points
-        >>> df_reb_year.head(5)
-               Risk      CAGR    GLD.US    SPY.US
-        0  0.159400  0.087763  0.000000  1.000000
-        1  0.157205  0.088171  0.014261  0.985739
-        2  0.155007  0.088580  0.028941  0.971059
-        3  0.152810  0.088988  0.044079  0.955921
-        4  0.150615  0.089397  0.059713  0.940287
+        >>> df_reb_year[['Risk', 'CAGR', 'SPY.US', 'GLD.US']].head(5)
+               Risk      CAGR    SPY.US    GLD.US
+        0  0.159403  0.087770  1.000000  0.000000
+        1  0.157208  0.088178  0.985742  0.014258
+        2  0.155011  0.088586  0.971065  0.028935
+        3  0.152814  0.088994  0.955931  0.044069
+        4  0.150619  0.089402  0.940300  0.059700
 
         To compare the Efficient Frontiers of annually rebalanced portfolios with not rebalanced portfolios it's possible to draw 2 charts:
         rebalancing_strategy=ok.Rebalance(period='year') and ok.Rebalance(period='none').
@@ -1074,13 +1074,12 @@ class EfficientFrontier(asset_list.AssetList):
         >>> y.rebalancing_strategy = ok.Rebalance(period='none')
         >>> df_not_reb = y.ef_points
         >>> fig = plt.figure()
-        >>> # Plot the assets points
-        >>> y.plot_assets(kind='cagr')
-        >>> ax = plt.gca()
+        >>> # Plot the assets points using CAGR to match the Efficient Frontier Y-axis.
+        >>> ax = y.plot_assets(kind='cagr')
         >>> # Plot the Efficient Frontier for annually rebalanced portfolios
-        >>> ax.plot(df_reb_year.Risk, df_reb_year.CAGR, label='Annually rebalanced')
+        >>> ax.plot(df_reb_year['Risk'], df_reb_year['CAGR'], label='Annually rebalanced')
         >>> # Plot the Efficient Frontier for not rebalanced portfolios
-        >>> ax.plot(df_not_reb.Risk, df_not_reb.CAGR, label='Not rebalanced')
+        >>> ax.plot(df_not_reb['Risk'], df_not_reb['CAGR'], label='Not rebalanced')
         >>> # Set axis labels and the title
         >>> ax.set_title('Multi-period Efficient Frontier: 2 assets')
         >>> ax.set_xlabel('Risk (Standard Deviation)')
