@@ -582,12 +582,13 @@ class EfficientFrontier(asset_list.AssetList):
 
     def _get_gmv_monthly(self) -> Tuple[float, float]:
         """
-        Calculate the risk and return (mean, monthly) of the Global Minimum Volatility portfolio.
+        Calculate the risk and geometric mean of the Global Minimum Volatility portfolio.
 
         Global Minimum Volatility portfolio is a portfolio with the lowest risk of all possible.
         """
         ts = self._get_portfolio_ror_ts(self.gmv_monthly_weights)
-        return ts.std(), ts.mean()
+        geometric_mean_return = (ts.add(1.0).prod()) ** (1 / ts.shape[0]) - 1.0
+        return ts.std(), geometric_mean_return
 
     @property
     def gmv_annual_values(self) -> Tuple[float, float]:
@@ -1271,8 +1272,6 @@ class EfficientFrontier(asset_list.AssetList):
         Efficient Frontier is a set of portfolios which satisfy the condition that no other portfolio exists
         with a higher expected return but with the same risk (standard deviation of return).
 
-        Arithmetic mean (expected return) is used for optimized portfolios.
-
         Parameters
         ----------
         tickers : {'tickers', 'names'} or list[str], default 'tickers'
@@ -1310,10 +1309,10 @@ class EfficientFrontier(asset_list.AssetList):
         >>> df4 = ef4.ef_points
         >>> fig = plt.figure()
         >>> # Plot Efficient Frontier for every pair of assets. Optimized portfolios will have 2 assets.
-        >>> ef4.plot_pair_ef()  # mean return is used for optimized portfolios.
+        >>> ef4.plot_pair_ef()  # CAGR is used for optimized portfolios.
         >>> ax = plt.gca()
         >>> # Plot the full Efficient Frontier for 4 asset portfolios.
-        >>> ax.plot(df4['Risk'], df4['Mean return'], color = 'black', linestyle='--')
+        >>> ax.plot(df4['Risk'], df4['CAGR'], color = 'black', linestyle='--')
         >>> plt.show()
         """
         if len(self.symbols) < 3:

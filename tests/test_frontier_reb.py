@@ -130,10 +130,13 @@ def test_gmv_monthly_weights_basic(ef_reb_ab):
 
 def test_get_gmv_monthly_returns_types_and_sign(ef_reb_ab):
     risk_m, mean_m = ef_reb_ab._get_gmv_monthly()
+    ts = ef_reb_ab._get_portfolio_ror_ts(ef_reb_ab.gmv_monthly_weights)
+    expected_geometric_mean = float((ts.add(1.0).prod()) ** (1 / ts.shape[0]) - 1.0)
     # both are floats and non-negative risk
     assert isinstance(risk_m, float)
     assert isinstance(mean_m, float)
     assert risk_m >= 0.0
+    assert mean_m == pytest.approx(expected_geometric_mean)
 
 
 def test_rebalancing_strategy_setter_resets_cache(ef_reb_ab):
