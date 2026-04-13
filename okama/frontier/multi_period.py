@@ -440,14 +440,18 @@ class EfficientFrontier(asset_list.AssetList):
         >>> three_assets = ['SPY.US', 'AGG.US', 'GLD.US']
         >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', last_date='2022-06')
         >>> msr = ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
-        >>> sorted(msr)
-        ['Rate_of_return', 'Risk', 'Weights']
+        >>> msr
+        {'Weights': array([0.47687653, 0.25779952, 0.26532395]),
+        'Rate_of_return': 0.07759168028010821,
+        'Risk': 0.0959884843475395}
 
         To calculate tangency portfolio parameters for arithmetic mean set rate_of_return='mean_return':
 
         >>> msr_mean = ef.get_tangency_portfolio(rate_of_return="mean_return", rf_return=0.03)
-        >>> sorted(msr_mean)
-        ['Rate_of_return', 'Risk', 'Weights']
+        >>> msr_mean
+        {'Weights': array([0.61143897, 0.00159518, 0.38696585]),
+        'Rate_of_return': 0.09876868143927053,
+        'Risk': 0.12609086541280776}
         """
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
