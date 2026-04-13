@@ -316,12 +316,10 @@ class Rebalance:
         """
         # Calculate wealth index using wealth_ts (which includes an initial pre-first-period point)
         wealth_index = self.wealth_ts(target_weights, ror).portfolio_wealth_index
-        # Align behavior with manual baseline: start pct_change from the first input ror date,
-        # so the first period in ror.index will be NaN and then dropped.
-        first_ror_date = ror.index[0]
-        wealth_index_aligned = wealth_index.loc[wealth_index.index >= first_ror_date]
-        portfolio_ror = wealth_index_aligned.pct_change()
-        portfolio_ror = portfolio_ror.dropna()
+        # Compute pct_change on the full wealth index (including the pre-first-period point)
+        # so that the first ROR date gets a valid return value, then slice to the original dates.
+        portfolio_ror = wealth_index.pct_change()
+        portfolio_ror = portfolio_ror.loc[portfolio_ror.index >= ror.index[0]]
         return portfolio_ror
 
     def wealth_ts_ef(self, weights: list, ror: pd.DataFrame) -> pd.Series:

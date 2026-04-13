@@ -146,11 +146,15 @@ def test_return_ror_ts_no_rebalancing_manual():
     r = ok.Rebalance(period="none")
     ror_series = r.return_ror_ts(target_weights=target_weights, ror=ror_df)
 
-    # Manual wealth index
+    # Manual wealth index including the pre-first-period point
     initial_inv = 1000.0
     tw = pd.Series(target_weights, index=ror_df.columns)
     assets_wi_manual = (tw * initial_inv) * (1 + ror_df).cumprod()
     portfolio_wi_manual = assets_wi_manual.sum(axis=1)
+    # Prepend the initial investment point so pct_change covers the first ROR date
+    first_wealth_index_date = ror_df.index[0] - 1
+    portfolio_wi_manual.loc[first_wealth_index_date] = initial_inv
+    portfolio_wi_manual = portfolio_wi_manual.sort_index()
 
     manual_ror = portfolio_wi_manual.pct_change().dropna()
 
