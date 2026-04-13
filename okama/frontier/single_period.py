@@ -127,7 +127,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> two_assets = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US'])
+        >>> two_assets = ok.EfficientFrontierSingle(["SPY.US", "AGG.US"])
         >>> two_assets.bounds
         ((0.0, 1.0), (0.0, 1.0))
 
@@ -175,7 +175,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> two_assets = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US'])
+        >>> two_assets = ok.EfficientFrontierSingle(["SPY.US", "AGG.US"])
         >>> two_assets.gmv_monthly_weights
         array([0.05474178, 0.94525822])
         """
@@ -214,7 +214,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US'])
+        >>> ef = ok.EfficientFrontierSingle(["SPY.US", "AGG.US"])
         >>> ef.gmv_annual_weights
         array([0.05474178, 0.94525822])
         """
@@ -262,7 +262,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'])
+        >>> ef = ok.EfficientFrontierSingle(["SPY.US", "AGG.US", "GLD.US"])
         >>> ef.gmv_monthly
         (0.01024946425526032, 0.0036740056018316597)
         """
@@ -291,7 +291,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'])
+        >>> ef = ok.EfficientFrontierSingle(["SPY.US", "AGG.US", "GLD.US"])
         >>> ef.gmv_annualized
         (0.03697734994430258, 0.0449899573148429)
         """
@@ -327,8 +327,8 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> three_assets = ['SPY.US', 'AGG.US', 'GLD.US']
-        >>> ef = ok.EfficientFrontierSingle(assets=three_assets, ccy='USD', last_date='2022-06')
+        >>> three_assets = ["SPY.US", "AGG.US", "GLD.US"]
+        >>> ef = ok.EfficientFrontierSingle(assets=three_assets, ccy="USD", last_date="2022-06")
         >>> msr = ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
         >>> msr
         {'Weights': array([0.49179786, 0.20135428, 0.30684787]),
@@ -420,8 +420,8 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> ls4 = ['SPY.US', 'AGG.US', 'VNQ.US', 'GLD.US']
-        >>> x = ok.EfficientFrontierSingle(assets=ls4, ccy='USD', last_date='2021-12')
+        >>> ls4 = ["SPY.US", "AGG.US", "VNQ.US", "GLD.US"]
+        >>> x = ok.EfficientFrontierSingle(assets=ls4, ccy="USD", last_date="2021-12")
         >>> x.get_most_diversified_portfolio()  # get a global most diversified portfolio
         {'SPY.US': 0.19612726258395477,
         'AGG.US': 0.649730553241489,
@@ -520,14 +520,14 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'])
-        >>> ef.optimize_return(option='max')
+        >>> ef = ok.EfficientFrontierSingle(["SPY.US", "AGG.US", "GLD.US"])
+        >>> ef.optimize_return(option="max")
         {'Weights': array([1.00000000e+00, 1.94289029e-16, 1.11022302e-16]), 'Mean_return_monthly': 0.009144, 'Risk_monthly': 0.041956276163975015}
 
         The global maximum can be found with constrained optimization using bounds.
 
-        >>> ef.bounds = ((0, 1.), (0, 1.), (0.20, 1.))  # The portfolio should have at least 20% of GLD
-        >>> ef.optimize_return(option='max')
+        >>> ef.bounds = ((0, 1.0), (0, 1.0), (0.20, 1.0))  # The portfolio should have at least 20% of GLD
+        >>> ef.optimize_return(option="max")
         {'Weights': array([8.00000000e-01, 5.48172618e-16, 2.00000000e-01]), 'Mean_return_monthly': 0.008894299999999997, 'Risk_monthly': 0.035570987973869726}
         """
         ror = self.assets_ror
@@ -616,7 +616,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'], last_date='2021-07')
+        >>> ef = ok.EfficientFrontierSingle(["SPY.US", "AGG.US", "GLD.US"], last_date="2021-07")
         >>> ef.minimize_risk(target_return=0.044, monthly_return=False)
         {'SPY.US': 0.03817252986735185,
         'AGG.US': 0.9618274701326482,
@@ -687,7 +687,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> ef = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'], last_date='2021-07')
+        >>> ef = ok.EfficientFrontierSingle(["SPY.US", "AGG.US", "GLD.US"], last_date="2021-07")
         >>> ef.mean_return_range
         array([0.0033745 , 0.00367816, 0.00398182, 0.00428547, 0.00458913,
         0.00489279, 0.00519645, 0.00550011, 0.00580376, 0.00610742,
@@ -736,8 +736,8 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> assets = ['SPY.US', 'AGG.US', 'GLD.US']
-        >>> last_date='2021-07'
+        >>> assets = ["SPY.US", "AGG.US", "GLD.US"]
+        >>> last_date = "2021-07"
         >>> y = ok.EfficientFrontierSingle(assets, last_date=last_date)
         >>> y.ef_points
                 Risk  Mean return      CAGR        AGG.US        GLD.US        SPY.US
@@ -766,17 +766,18 @@ class EfficientFrontierSingle(asset_list.AssetList):
         can be used to show the assets in the chart.
 
         >>> import matplotlib.pyplot as plt
+
         >>> fig = plt.figure()
         >>> # Plot the assets points
-        >>> y.plot_assets(kind='cagr')  # kind should be set to "cagr" as we take "CAGR" column from the ef_points.
+        >>> y.plot_assets(kind="cagr")  # kind should be set to "cagr" as we take "CAGR" column from the ef_points.
         >>> ax = plt.gca()
         >>> # Plot the Efficient Frontier
         >>> df = y.ef_points
-        >>> ax.plot(df['Risk'], df['CAGR'])  # we chose to plot CAGR which is geometric mean of return series
+        >>> ax.plot(df["Risk"], df["CAGR"])  # we chose to plot CAGR which is geometric mean of return series
         >>> # Set the axis labels and the title
-        >>> ax.set_title('Single period Efficient Frontier')
-        >>> ax.set_xlabel('Risk (Standard Deviation)')
-        >>> ax.set_ylabel('Return (CAGR)')
+        >>> ax.set_title("Single period Efficient Frontier")
+        >>> ax.set_xlabel("Risk (Standard Deviation)")
+        >>> ax.set_ylabel("Return (CAGR)")
         >>> ax.legend()
         >>> plt.show()
         """
@@ -818,8 +819,8 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> ls4 = ['SP500TR.INDX', 'MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
-        >>> y = ok.EfficientFrontierSingle(assets=ls4, ccy='RUB', last_date='2021-12', n_points=100)
+        >>> ls4 = ["SP500TR.INDX", "MCFTR.INDX", "RGBITR.INDX", "GC.COMM"]
+        >>> y = ok.EfficientFrontierSingle(assets=ls4, ccy="RUB", last_date="2021-12", n_points=100)
         >>> y.mdp_points  # print mdp weights, risk, mean return, CAGR and Diversification ratio
                 Risk  Mean return      CAGR  ...    MCFTR.INDX   RGBITR.INDX  SP500TR.INDX
         0   0.066040     0.094216  0.092220  ...  2.081668e-16  1.000000e+00  0.000000e+00
@@ -839,17 +840,18 @@ class EfficientFrontierSingle(asset_list.AssetList):
         Additionaly 'Plot.plot_assets()' can be used to show the assets in the chart.
 
         >>> import matplotlib.pyplot as plt
+
         >>> fig = plt.figure()
         >>> # Plot the assets points
-        >>> y.plot_assets(kind='cagr')  # kind should be set to "cagr" as we take "CAGR" column from the ef_points.
+        >>> y.plot_assets(kind="cagr")  # kind should be set to "cagr" as we take "CAGR" column from the ef_points.
         >>> ax = plt.gca()
         >>> # Plot the Most diversified portfolios line
         >>> df = y.mdp_points
-        >>> ax.plot(df['Risk'], df['CAGR'])  # we chose to plot CAGR which is geometric mean of return series
+        >>> ax.plot(df["Risk"], df["CAGR"])  # we chose to plot CAGR which is geometric mean of return series
         >>> # Set the axis labels and the title
-        >>> ax.set_title('Most diversified portfolios line')
-        >>> ax.set_xlabel('Risk (Standard Deviation)')
-        >>> ax.set_ylabel('Return (CAGR)')
+        >>> ax.set_title("Most diversified portfolios line")
+        >>> ax.set_xlabel("Risk (Standard Deviation)")
+        >>> ax.set_ylabel("Return (CAGR)")
         >>> plt.show()
         """
         if self._mdp_points.empty:
@@ -883,9 +885,9 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
         Examples
         --------
-        >>> assets = ['SPY.US', 'AGG.US', 'GLD.US']
-        >>> last_date='2021-07'
-        >>> base_currency = 'EUR'
+        >>> assets = ["SPY.US", "AGG.US", "GLD.US"]
+        >>> last_date = "2021-07"
+        >>> base_currency = "EUR"
         >>> y = ok.EfficientFrontierSingle(assets, ccy=base_currency, last_date=last_date)
         >>> y.get_monte_carlo(n=10)  # generate 10 random portfolios
                Risk    Return    SPY.US    AGG.US    GLD.US
@@ -904,21 +906,22 @@ class EfficientFrontierSingle(asset_list.AssetList):
         Additionaly assets points could be plotted with 'Plot.plot_assets()'.
 
         >>> import matplotlib.pyplot as plt
+
         >>> fig = plt.figure()
         >>> # Plot the assets points (optional).
         >>> # The same first and last dates, base currency and return type should be used.
-        >>> y.plot_assets(kind='cagr')
+        >>> y.plot_assets(kind="cagr")
         >>> ax = plt.gca()
         >>> # Plot random portfolios risk-return points.
-        >>> mc = y.get_monte_carlo(n=1000, kind='cagr')
-        >>> ax.scatter(mc.Risk, mc.CAGR, linewidth=0, color='green')
+        >>> mc = y.get_monte_carlo(n=1000, kind="cagr")
+        >>> ax.scatter(mc.Risk, mc.CAGR, linewidth=0, color="green")
         >>> # Plot the Efficient (optional)
         >>> df = y.ef_points
-        >>> ax.plot(df['Risk'], df['CAGR'], color='black', linestyle='dashed', linewidth=3)
+        >>> ax.plot(df["Risk"], df["CAGR"], color="black", linestyle="dashed", linewidth=3)
         >>> # Set the title and axis labels
-        >>> ax.set_title('Single period Efficient Frontier & Monte Carlo simulation')
-        >>> ax.set_xlabel('Risk (Standard Deviation)')
-        >>> ax.set_ylabel('CAGR')
+        >>> ax.set_title("Single period Efficient Frontier & Monte Carlo simulation")
+        >>> ax.set_xlabel("Risk (Standard Deviation)")
+        >>> ax.set_ylabel("CAGR")
         >>> ax.legend()
         >>> plt.show()
         """
@@ -979,7 +982,8 @@ class EfficientFrontierSingle(asset_list.AssetList):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US', 'GLD.US'], ccy='USD', inflation=False)
+
+        >>> x = ok.EfficientFrontierSingle(["SPY.US", "AGG.US", "GLD.US"], ccy="USD", inflation=False)
         >>> x.plot_transition_map()
         >>> plt.show()
 
@@ -987,7 +991,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         optimized portfolios.
         The same relation for CAGR can be shown setting x_axe='cagr'.
 
-        >>> x.plot_transition_map(x_axe='cagr')
+        >>> x.plot_transition_map(x_axe="cagr")
         >>> plt.show()
         """
         ef = self.ef_points
@@ -1047,9 +1051,10 @@ class EfficientFrontierSingle(asset_list.AssetList):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
-        >>> curr = 'USD'
-        >>> last_date = '2021-07'
+
+        >>> ls4 = ["SPY.US", "BND.US", "GLD.US", "VNQ.US"]
+        >>> curr = "USD"
+        >>> last_date = "2021-07"
         >>> ef = ok.EfficientFrontierSingle(ls4, ccy=curr, last_date=last_date)
         >>> ef.plot_pair_ef()
         >>> plt.show()
@@ -1064,7 +1069,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         >>> ef4.plot_pair_ef()  # mean return is used for optimized portfolios.
         >>> ax = plt.gca()
         >>> # Plot the full Efficient Frontier for 4 asset portfolios.
-        >>> ax.plot(df4['Risk'], df4['Mean return'], color = 'black', linestyle='--')
+        >>> ax.plot(df4["Risk"], df4["Mean return"], color="black", linestyle="--")
         >>> plt.show()
         """
         if len(self.symbols) < 3:
@@ -1121,8 +1126,9 @@ class EfficientFrontierSingle(asset_list.AssetList):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> three_assets = ['SPY.US', 'AGG.US', 'GLD.US']
-        >>> ef = ok.EfficientFrontierSingle(assets=three_assets, ccy='USD', full_frontier=True)
+
+        >>> three_assets = ["SPY.US", "AGG.US", "GLD.US"]
+        >>> ef = ok.EfficientFrontierSingle(assets=three_assets, ccy="USD", full_frontier=True)
         >>> ef.plot_cml(rf_return=0.05, y_axe="cagr")  # Risk-Free return is 5%
         >>> plt.show()
         """

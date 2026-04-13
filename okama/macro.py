@@ -123,7 +123,7 @@ class MacroABC(ABC):
 
         Examples
         --------
-        >>> infl = ok.Inflation('USD.INFL', last_date='2022-04')
+        >>> infl = ok.Inflation("USD.INFL", last_date="2022-04")
         >>> infl.values_monthly.tail()  # last 5 months statistics
         date
         2021-12    0.0031
@@ -132,7 +132,7 @@ class MacroABC(ABC):
         2022-03    0.0134
         2022-04    0.0056
         Freq: M, Name: USD.INFL, dtype: float64
-        >>> infl.set_values_monthly(date='2024-05', value=0.09)  # set forecasted inflation value
+        >>> infl.set_values_monthly(date="2024-05", value=0.09)  # set forecasted inflation value
         >>> infl.values_monthly.tail()  # check the statistics again (May data is available now)
         date
         2022-01    0.0084
@@ -287,7 +287,7 @@ class Inflation(MacroABC):
 
         Examples
         --------
-        >>> x = ok.Inflation('RUB.INFL', first_date='2020-01', last_date='2020-12')
+        >>> x = ok.Inflation("RUB.INFL", first_date="2020-01", last_date="2020-12")
         >>> x.cumulative_inflation
         date
         2020-01    0.004000
@@ -323,8 +323,9 @@ class Inflation(MacroABC):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> infl = ok.Inflation('EUR.INFL', first_date='2016-01', last_date='2021-12')
-        >>> infl.annual_inflation_ts.plot(kind='bar')
+
+        >>> infl = ok.Inflation("EUR.INFL", first_date="2016-01", last_date="2021-12")
+        >>> infl.annual_inflation_ts.plot(kind="bar")
         >>> plt.show()
 
         """
@@ -342,7 +343,7 @@ class Inflation(MacroABC):
 
         Examples
         --------
-        >>> x = ok.Inflation('RUB.INFL', first_date='2000-01', last_date='2020-12')
+        >>> x = ok.Inflation("RUB.INFL", first_date="2000-01", last_date="2020-12")
         >>> x.purchasing_power_1000
         145.8118461948026
         """
@@ -361,7 +362,8 @@ class Inflation(MacroABC):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> infl = ok.Inflation('ILS.INFL', first_date='1980-01', last_date='1989-12')
+
+        >>> infl = ok.Inflation("ILS.INFL", first_date="1980-01", last_date="1989-12")
         >>> infl.rolling_inflation.plot()
         >>> plt.show()
         """
@@ -394,7 +396,7 @@ class Inflation(MacroABC):
 
         Examples
         --------
-        >>> infl = ok.Inflation('USD.INFL', last_date='2022-04')
+        >>> infl = ok.Inflation("USD.INFL", last_date="2022-04")
         >>> infl.describe(years=(1, 15, 50))
                  property               period    USD.INFL
         0      compound inflation                  YTD    0.036987

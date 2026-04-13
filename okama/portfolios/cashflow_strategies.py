@@ -130,6 +130,7 @@ class CashFlow:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
+
         >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
         >>> # create simple dictionary with cash flow amounts and dates
         >>> d = {"2018-02": 2_000, "2024-03": -4_000}
@@ -183,9 +184,10 @@ class IndexationStrategy(CashFlow):
     Examples
     --------
     >>> import matplotlib.pyplot as plt
+
     >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
     >>> # Set the cash flow strategy
-    >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
+    >>> ind = ok.IndexationStrategy(pf)  # create IndexationStrategy linked to the portfolio
     >>> ind.initial_investment = 10_000  # add initial investments size
     >>> ind.frequency = "year"  # set cash flow frequency
     >>> ind.amount = -1_500  # set withdrawal size
@@ -325,6 +327,7 @@ class PercentageStrategy(CashFlow):
     Examples
     --------
     >>> import matplotlib.pyplot as plt
+
     >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
     >>> pc = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
     >>> pc.initial_investment = 10_000  # add initial investments size
@@ -412,6 +415,7 @@ class TimeSeriesStrategy(CashFlow):
     Examples
     --------
     >>> import matplotlib.pyplot as plt
+
     >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
     >>> # create simple dictionary with cash flow amounts and dates
     >>> d = {"2018-02": 2_000, "2024-03": -4_000}
@@ -495,19 +499,15 @@ class VanguardDynamicSpending(PercentageStrategy):
     Examples
     --------
     >>> import matplotlib.pyplot as plt
+
     >>> pf = ok.Portfolio(
-    ...     ["SPY.US", "BND.US"],
-    ...     weights=[.6, .4],
-    ...     first_date="2010-01",
-    ...     last_date="2024-10",
-    ...     ccy="USD",
-    ...     inflation=True
+    ...     ["SPY.US", "BND.US"], weights=[0.6, 0.4], first_date="2010-01", last_date="2024-10", ccy="USD", inflation=True
     ... )
     >>> vds = ok.VanguardDynamicSpending(
     ...     parent=pf,
     ...     initial_investment=1_000_000,
     ...     percentage=-0.08,
-    ...     floor_ceiling=(-.025, .05),
+    ...     floor_ceiling=(-0.025, 0.05),
     ...     min_max_annual_withdrawals=(40_000, 100_000),
     ...     adjust_min_max=True,
     ...     indexation="inflation",
@@ -831,9 +831,10 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
     Examples
     --------
     >>> import matplotlib.pyplot as plt
+
     >>> pf = ok.Portfolio(
     ...     ["SPY.US", "BND.US"],
-    ...     weights=[.6, .4],
+    ...     weights=[0.6, 0.4],
     ...     first_date="2010-01",
     ...     last_date="2024-10",
     ...     ccy="USD",
@@ -845,7 +846,7 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
     ...     frequency="year",
     ...     amount=-60_000,
     ...     indexation="inflation",
-    ...     crash_threshold_reduction=[(.10, .25), (.20, .50), (.35, 1)],
+    ...     crash_threshold_reduction=[(0.10, 0.25), (0.20, 0.50), (0.35, 1)],
     ... )
     >>> pf.dcf.cashflow_parameters = cwid
     >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()

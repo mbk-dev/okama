@@ -145,7 +145,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.Portfolio(['SPY.US', 'BND.US'])
+        >>> x = ok.Portfolio(["SPY.US", "BND.US"])
         >>> x.weights
         [0.5, 0.5]
         """
@@ -183,8 +183,9 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
+
         >>> reb_period = ok.Rebalance(period="none")  # The Portfolio is not rebalanced.
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.5, 0.5], rebalancing_strategy=reb_period)
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], weights=[0.5, 0.5], rebalancing_strategy=reb_period)
         >>> pf.weights_ts.plot()
         >>> plt.show()
 
@@ -223,7 +224,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf = ok.Portfolio(
         ...     assets=["SPY.US", "AGG.US"],
         ...     weights=[0.5, 0.5],
-        ...     rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.05)
+        ...     rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.05),
         ... )
         >>> pf.rebalancing_events
         date
@@ -263,7 +264,7 @@ class Portfolio(make_asset_list.ListMaker):
         >>> pf = ok.Portfolio(
         ...     assets=["SPY.US", "AGG.US"],
         ...     weights=[0.5, 0.5],
-        ...     rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.05)
+        ...     rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.05),
         ... )
         >>> pf.rebalancing_strategy
         Rebalance(period='year', abs_deviation=0.05, rel_deviation=None)
@@ -313,11 +314,11 @@ class Portfolio(make_asset_list.ListMaker):
         >>> p.symbol  # a randomly generated symbol will be shown
         'portfolio_5312.PF'
 
-        >>> p.symbol = 'spy_portfolo.PF'  # The symbol can be customized after initialization
+        >>> p.symbol = "spy_portfolo.PF"  # The symbol can be customized after initialization
 
         New Portfolio can have a custom symbol.
 
-        >>> p = ok.Portfolio(symbol='aggressive.PF')
+        >>> p = ok.Portfolio(symbol="aggressive.PF")
         >>> p.symbol
         'aggressive.PF'
         """
@@ -363,7 +364,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(first_date='2020-01', last_date='2020-12')
+        >>> pf = ok.Portfolio(first_date="2020-01", last_date="2020-12")
         >>> pf.ror
         Date
         2020-01   -0.0004
@@ -381,7 +382,8 @@ class Portfolio(make_asset_list.ListMaker):
         Freq: M, Name: portfolio_4669.PF, dtype: float64
 
         >>> import matplotlib.pyplot as plt
-        >>> pf.ror.plot(kind='bar')
+
+        >>> pf.ror.plot(kind="bar")
         >>> plt.show()
         """
         if self._ror.empty:
@@ -414,7 +416,8 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.Portfolio(['SPY.US', 'BND.US'])
+
+        >>> x = ok.Portfolio(["SPY.US", "BND.US"])
         >>> x.wealth_index.plot()
         >>> plt.show()
         """
@@ -451,7 +454,8 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
+
+        >>> pf = ok.Portfolio(["VOO.US", "GLD.US"], weights=[0.8, 0.2])
         >>> pf.wealth_index_with_assets.plot()
         >>> plt.show()
         """
@@ -475,7 +479,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['ISF.LSE', 'XGLE.LSE'], weights=[0.6, 0.4], ccy='GBP')
+        >>> pf = ok.Portfolio(["ISF.LSE", "XGLE.LSE"], weights=[0.6, 0.4], ccy="GBP")
         >>> pf.mean_return_monthly
         0.0001803312727272665
         """
@@ -495,7 +499,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['XCS6.XETR', 'PHAU.LSE'], weights=[0.85, 0.15], ccy='USD')
+        >>> pf = ok.Portfolio(["XCS6.XETR", "PHAU.LSE"], weights=[0.85, 0.15], ccy="USD")
         >>> pf.names
         {'XCS6.XETR': 'Xtrackers MSCI China UCITS ETF 1C', 'PHAU.LSE': 'WisdomTree Physical Gold'}
         >>> pf.mean_return_annual
@@ -522,14 +526,15 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['VOO.US', 'AGG.US'], weights=[0.4, 0.6])
-        >>> pf.annual_return_ts().plot(kind='bar')
+
+        >>> pf = ok.Portfolio(["VOO.US", "AGG.US"], weights=[0.4, 0.6])
+        >>> pf.annual_return_ts().plot(kind="bar")
         >>> plt.show()
 
         Plot annual returns for portfolio with EUR as the base currency.
 
-        >>> pf = ok.Portfolio(['VOO.US', 'AGG.US'], weights=[0.4, 0.6], ccy='EUR')
-        >>> pf.annual_return_ts().plot(kind='bar')
+        >>> pf = ok.Portfolio(["VOO.US", "AGG.US"], weights=[0.4, 0.6], ccy="EUR")
+        >>> pf.annual_return_ts().plot(kind="bar")
         >>> plt.show()
         """
         return helpers.Frame.get_annual_return_ts_from_monthly(self.ror, return_type)
@@ -564,7 +569,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['XCS6.XETR', 'PHAU.LSE'], weights=[0.85, 0.15], ccy='USD')
+        >>> pf = ok.Portfolio(["XCS6.XETR", "PHAU.LSE"], weights=[0.85, 0.15], ccy="USD")
         >>> pf.names
         {'XCS6.XETR': 'Xtrackers MSCI China UCITS ETF 1C', 'PHAU.LSE': 'WisdomTree Physical Gold'}
 
@@ -615,8 +620,8 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.Portfolio(['SPY.US', 'BND.US'], ccy='EUR', inflation=True)
-        >>> x.get_rolling_cagr(window=5*12, real=True)
+        >>> x = ok.Portfolio(["SPY.US", "BND.US"], ccy="EUR", inflation=True)
+        >>> x.get_rolling_cagr(window=5 * 12, real=True)
                  portfolio_...
         date
         ...             ...
@@ -641,7 +646,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.6, 0.4])
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], weights=[0.6, 0.4])
         >>> pf.get_monthly_geometric_mean_return()
         0.005321
         """
@@ -673,7 +678,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['BTC-USD.CC', 'LTC-USD.CC'], weights=[.8, .2], last_date='2021-03')
+        >>> pf = ok.Portfolio(["BTC-USD.CC", "LTC-USD.CC"], weights=[0.8, 0.2], last_date="2021-03")
         >>> pf.get_cumulative_return(period=2, real=True)
         portfolio_6232.PF    9.39381
         dtype: float64
@@ -725,8 +730,8 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(
-        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
-        ...     weights=[.6, .35, .05],
+        ...     ["SPY.US", "AGG.US", "GLD.US"],
+        ...     weights=[0.6, 0.35, 0.05],
         ...     rebalancing_strategy=ok.Rebalance(period="year"),
         ... )
         >>> pf.get_rolling_cumulative_return(window=24, real=True)
@@ -768,7 +773,8 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD')
+
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD")
         >>> pf.assets_close_monthly.plot()
         >>> plt.show()
         """
@@ -809,7 +815,8 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD')
+
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD")
         >>> pf.close_monthly.plot()
         >>> plt.show()
         """
@@ -832,7 +839,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD", last_date="07-2021")
         >>> pf.number_of_securities
                    SPY.US     BND.US
         Date
@@ -867,7 +874,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD", last_date="07-2021")
         >>> pf.dividends
         2007-05    0.849271
         2007-06    3.928855
@@ -904,7 +911,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['T.US', 'XOM.US'], weights=[0.8, 0.2], first_date='2010-01', last_date='2021-01', ccy='USD')
+        >>> pf = ok.Portfolio(["T.US", "XOM.US"], weights=[0.8, 0.2], first_date="2010-01", last_date="2021-01", ccy="USD")
         >>> pf.dividend_yield
         2010-01    0.013249
         2010-02    0.014835
@@ -916,6 +923,7 @@ class Portfolio(make_asset_list.ListMaker):
         Freq: M, Name: portfolio_8836.PF, Length: 133, dtype: float64
 
         >>> import matplotlib.pyplot as plt
+
         >>> pf.dividend_yield.plot()
         >>> plt.show()
         """
@@ -937,8 +945,9 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
-        >>> pf.dividends_annual.plot(kind='bar')
+
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD", last_date="07-2021")
+        >>> pf.dividends_annual.plot(kind="bar")
         >>> plt.show()
         """
         return self._get_assets_dividends().resample("Y").sum()
@@ -973,8 +982,9 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
-        >>> pf.dividend_yield_annual.plot(kind='bar')
+
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD", last_date="07-2021")
+        >>> pf.dividend_yield_annual.plot(kind="bar")
         >>> plt.show()
         """
         return self._assets_dividend_yield.resample(rule="Y").last()
@@ -1007,7 +1017,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
+        >>> x = ok.AssetList(["T.US", "XOM.US"], first_date="1984-01", last_date="1994-12")
         >>> x.dividend_yield
                    T.US    XOM.US
         1984-01  0.000000  0.000000
@@ -1038,7 +1048,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf = ok.Portfolio(["MSFT.US", "AAPL.US"])
         >>> pf.real_mean_return
         0.3088967455111862
         """
@@ -1072,7 +1082,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf = ok.Portfolio(["MSFT.US", "AAPL.US"])
         >>> pf.risk_monthly
         date
         1986-05    0.020117
@@ -1106,7 +1116,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf = ok.Portfolio(["MSFT.US", "AAPL.US"])
         >>> pf.risk_annual
         date
         1986-05    0.285175
@@ -1138,7 +1148,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf = ok.Portfolio(["MSFT.US", "AAPL.US"])
         >>> pf.semideviation_monthly
         0.05601433676604449
         """
@@ -1158,7 +1168,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['MSFT.US', 'AAPL.US'])
+        >>> pf = ok.Portfolio(["MSFT.US", "AAPL.US"])
         >>> pf.semideviation_annual
         0.1940393544621248
         """
@@ -1186,7 +1196,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.Portfolio(['SP500TR.INDX', 'SP500BDT.INDX'], last_date='2021-01')
+        >>> x = ok.Portfolio(["SP500TR.INDX", "SP500BDT.INDX"], last_date="2021-01")
         >>> x.get_var_historic(time_frame=12, level=1)
         0.24030006476701732
         """
@@ -1216,7 +1226,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.Portfolio(['USDEUR.FX', 'BTC-USD.CC'], last_date='2021-01')
+        >>> x = ok.Portfolio(["USDEUR.FX", "BTC-USD.CC"], last_date="2021-01")
         >>> x.get_cvar_historic(time_frame=2, level=1)
         0.3566909250442616
         """
@@ -1256,7 +1266,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US'], weights=[0.5, 0.5])
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], weights=[0.5, 0.5])
         >>> pf.recovery_period.nlargest()
         date
         2010-10    35
@@ -1316,7 +1326,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'BND.US'], ccy='USD', last_date='07-2021')
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD", last_date="07-2021")
         >>> pf.describe(years=[2, 5, 7])  # 'years' customizes the timeframe for the CAGR
                     property              period portfolio_2951.PF  inflation
         0    compound return                 YTD          0.084098   0.048154
@@ -1462,8 +1472,8 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(
-        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
-        ...     weights=[.60, .35, .05],
+        ...     ["SPY.US", "AGG.US", "GLD.US"],
+        ...     weights=[0.60, 0.35, 0.05],
         ...     rebalancing_strategy=ok.Rebalance(period="year"),
         ... )
         >>> pf.percentile_inverse_cagr(score=0, years=1)
@@ -1496,8 +1506,8 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(
-        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
-        ...     weights=[.60, .35, .05],
+        ...     ["SPY.US", "AGG.US", "GLD.US"],
+        ...     weights=[0.60, 0.35, 0.05],
         ...     rebalancing_strategy=ok.Rebalance(period="none"),
         ... )
         >>> pf.percentile_cagr(years=5, percentiles=[1, 50, 99])
@@ -1541,7 +1551,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['VOO.US', 'BND.US'], weights=[0.40, 0.60])
+        >>> pf = ok.Portfolio(["VOO.US", "BND.US"], weights=[0.40, 0.60])
         >>> pf.get_sharpe_ratio(rf_return=0.04)
         0.7412193684695373
         """
@@ -1570,7 +1580,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['VOO.US', 'BND.US'], last_date='2021-12')
+        >>> pf = ok.Portfolio(["VOO.US", "BND.US"], last_date="2021-12")
         >>> pf.get_sortino_ratio(t_return=0.02)
         1.4377728903230174
         """
@@ -1595,7 +1605,7 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['VOO.US', 'BND.US'], weights=[0.7, 0.3], last_date='2021-12')
+        >>> pf = ok.Portfolio(["VOO.US", "BND.US"], weights=[0.7, 0.3], last_date="2021-12")
         >>> pf.diversification_ratio
         1.1264305597257505
         """
@@ -1621,8 +1631,8 @@ class Portfolio(make_asset_list.ListMaker):
         Examples
         --------
         >>> pf = ok.Portfolio(
-        ...     ['SPY.US', 'AGG.US'],
-        ...     weights=[.60, .40],
+        ...     ["SPY.US", "AGG.US"],
+        ...     weights=[0.60, 0.40],
         ...     rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.05),
         ... )
         >>> pf.okamaio_link

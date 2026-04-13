@@ -56,15 +56,16 @@ class MonteCarlo:
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> pf = ok.Portfolio(first_date='2015-01', last_date='2024-10')
-    >>> pf.dcf.set_mc_parameters(distribution='t', period=10, mc_number=100)
+
+    >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")
+    >>> pf.dcf.set_mc_parameters(distribution="t", period=10, mc_number=100)
     >>> ind = ok.IndexationStrategy(pf)
     >>> ind.initial_investment = 10_000
-    >>> ind.frequency = 'year'
+    >>> ind.frequency = "year"
     >>> ind.amount = -1_500
-    >>> ind.indexation = 'inflation'
+    >>> ind.indexation = "inflation"
     >>> pf.dcf.cashflow_parameters = ind
-    >>> pf.dcf.wealth_index(discounting='fv', include_negative_values=False).plot()
+    >>> pf.dcf.wealth_index(discounting="fv", include_negative_values=False).plot()
     >>> plt.show()
     """
 
@@ -376,8 +377,8 @@ class MonteCarlo:
         Examples
         --------
         >>> pf = ok.Portfolio(
-        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
-        ...     weights=[.60, .35, .05],
+        ...     ["SPY.US", "AGG.US", "GLD.US"],
+        ...     weights=[0.60, 0.35, 0.05],
         ...     rebalancing_strategy=ok.Rebalance(period="month"),
         ... )
         >>> pf.dcf.set_mc_parameters(period=8, mc_number=5000)
@@ -452,11 +453,11 @@ class MonteCarlo:
         Examples
         --------
         >>> pf = ok.Portfolio(
-        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
-        ...     weights=[.60, .35, .05],
+        ...     ["SPY.US", "AGG.US", "GLD.US"],
+        ...     weights=[0.60, 0.35, 0.05],
         ...     rebalancing_strategy=ok.Rebalance(period="year"),
         ... )
-        >>> pf.dcf.set_mc_parameters(distribution='norm', period=1)
+        >>> pf.dcf.set_mc_parameters(distribution="norm", period=1)
         >>> pf.dcf.mc.percentile_distribution_cagr()
         {10: ..., 50: ..., 90: ...}
         >>> pf.dcf.set_mc_parameters(period=5)
@@ -496,11 +497,11 @@ class MonteCarlo:
         Examples
         --------
         >>> pf = ok.Portfolio(
-        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
-        ...     weights=[.60, .35, .05],
+        ...     ["SPY.US", "AGG.US", "GLD.US"],
+        ...     weights=[0.60, 0.35, 0.05],
         ...     rebalancing_strategy=ok.Rebalance(period="year"),
         ... )
-        >>> pf.dcf.set_mc_parameters(distribution='lognorm', period=1, mc_number=5000)
+        >>> pf.dcf.set_mc_parameters(distribution="lognorm", period=1, mc_number=5000)
         >>> pf.dcf.mc.percentile_inverse_cagr(score=0)
         ...
         The probability of getting negative result (score=0) in 1 year period for lognormal distribution.
@@ -524,7 +525,7 @@ class MonteCarlo:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['BND.US'])
+        >>> pf = ok.Portfolio(["BND.US"])
         >>> pf.dcf.mc.skewness
         Date
         2008-05   -0.134193
@@ -539,6 +540,7 @@ class MonteCarlo:
         Freq: M, Name: portfolio_8378.PF, Length: 159, dtype: float64
 
         >>> import matplotlib.pyplot as plt
+
         >>> pf.dcf.mc.skewness.plot()
         >>> plt.show()
         """
@@ -564,8 +566,8 @@ class MonteCarlo:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['BND.US'])
-        >>> pf.dcf.mc.skewness_rolling(window=12*10)
+        >>> pf = ok.Portfolio(["BND.US"])
+        >>> pf.dcf.mc.skewness_rolling(window=12 * 10)
         Date
         2017-04    0.464916
         2017-05    0.446095
@@ -582,7 +584,8 @@ class MonteCarlo:
         Freq: M, Name: portfolio_8378.PF, dtype: float64
 
         >>> import matplotlib.pyplot as plt
-        >>> pf.dcf.mc.skewness_rolling(window=12*10).plot()
+
+        >>> pf.dcf.mc.skewness_rolling(window=12 * 10).plot()
         >>> plt.show()
         """
         return helpers.Frame.skewness_rolling(self.ror, window=window)
@@ -604,7 +607,7 @@ class MonteCarlo:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['BND.US'])
+        >>> pf = ok.Portfolio(["BND.US"])
         >>> pf.dcf.mc.kurtosis
         Date
         2008-05   -0.815206
@@ -619,6 +622,7 @@ class MonteCarlo:
         Freq: M, Name: portfolio_4411.PF, Length: 159, dtype: float64
 
         >>> import matplotlib.pyplot as plt
+
         >>> pf.dcf.mc.kurtosis.plot()
         >>> plt.show()
         """
@@ -646,8 +650,8 @@ class MonteCarlo:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['BND.US'])
-        >>> pf.dcf.mc.kurtosis_rolling(window=12*10)
+        >>> pf = ok.Portfolio(["BND.US"])
+        >>> pf.dcf.mc.kurtosis_rolling(window=12 * 10)
         Date
         2017-04    4.041599
         2017-05    4.133518
@@ -663,7 +667,8 @@ class MonteCarlo:
         Freq: M, Name: portfolio_4411.PF, dtype: float64
 
         >>> import matplotlib.pyplot as plt
-        >>> pf.dcf.mc.kurtosis_rolling(window=12*10).plot()
+
+        >>> pf.dcf.mc.kurtosis_rolling(window=12 * 10).plot()
         >>> plt.show()
         """
         return helpers.Frame.kurtosis_rolling(self.ror, window=window)
@@ -690,7 +695,7 @@ class MonteCarlo:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['BND.US'])
+        >>> pf = ok.Portfolio(["BND.US"])
         >>> pf.dcf.mc.jarque_bera
         {'statistic': 58.27670538027455, 'p-value': 2.2148949341271873e-13}
         """
@@ -717,12 +722,12 @@ class MonteCarlo:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['GLD.US'])
-        >>> pf.dcf.set_mc_parameters(distribution='lognorm')
+        >>> pf = ok.Portfolio(["GLD.US"])
+        >>> pf.dcf.set_mc_parameters(distribution="lognorm")
         >>> pf.dcf.mc.kstest
         {'statistic': 0.05001344986084533, 'p-value': 0.6799422889377373}
 
-        >>> pf.dcf.set_mc_parameters(distribution='norm')
+        >>> pf.dcf.set_mc_parameters(distribution="norm")
         >>> pf.dcf.mc.kstest
         {'statistic': 0.09528000069992831, 'p-value': 0.047761781235967415}
 
@@ -802,9 +807,10 @@ class MonteCarlo:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
+
         >>> pf = ok.Portfolio(
-        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
-        ...     weights=[.60, .35, .05],
+        ...     ["SPY.US", "AGG.US", "GLD.US"],
+        ...     weights=[0.60, 0.35, 0.05],
         ...     rebalancing_strategy=ok.Rebalance(period="year"),
         ... )
         >>> pf.dcf.set_mc_parameters(distribution="t")
@@ -947,8 +953,9 @@ class MonteCarlo:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['SP500TR.INDX'])
-        >>> pf.dcf.set_mc_parameters(distribution='norm')
+
+        >>> pf = ok.Portfolio(["SP500TR.INDX"])
+        >>> pf.dcf.set_mc_parameters(distribution="norm")
         >>> pf.dcf.mc.plot_hist_fit()
         >>> plt.show()
         """

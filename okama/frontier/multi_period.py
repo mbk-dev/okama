@@ -150,7 +150,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> two_assets = ok.EfficientFrontierSingle(['SPY.US', 'AGG.US'])
+        >>> two_assets = ok.EfficientFrontierSingle(["SPY.US", "AGG.US"])
         >>> two_assets.bounds
         ((0.0, 1.0), (0.0, 1.0))
 
@@ -191,7 +191,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontier(['SPY.US', 'BND.US'])
+        >>> frontier = ok.EfficientFrontier(["SPY.US", "BND.US"])
         >>> frontier.n_points  # default number of points
         20
         """
@@ -253,11 +253,11 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontier(['SPY.US', 'BND.US'])
+        >>> frontier = ok.EfficientFrontier(["SPY.US", "BND.US"])
         >>> frontier.rebalancing_strategy.period
         'year'
 
-        >>> frontier.rebalancing_strategy = ok.Rebalance(period='none')
+        >>> frontier.rebalancing_strategy = ok.Rebalance(period="none")
         """
         return self._rebalancing_strategy
 
@@ -335,8 +335,8 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> ls4 = ['SPY.US', 'AGG.US', 'VNQ.US', 'GLD.US']
-        >>> x = ok.EfficientFrontier(assets=ls4, ccy='USD', last_date='2021-12')
+        >>> ls4 = ["SPY.US", "AGG.US", "VNQ.US", "GLD.US"]
+        >>> x = ok.EfficientFrontier(assets=ls4, ccy="USD", last_date="2021-12")
         >>> x.get_most_diversified_portfolio()  # get a global most diversified portfolio
         {'SPY.US': 0.19612726258395477,
         'AGG.US': 0.649730553241489,
@@ -437,8 +437,8 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> three_assets = ['SPY.US', 'AGG.US', 'GLD.US']
-        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', last_date='2022-06')
+        >>> three_assets = ["SPY.US", "AGG.US", "GLD.US"]
+        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy="USD", last_date="2022-06")
         >>> msr = ef.get_tangency_portfolio(rf_return=0.03)  # risk free rate of return is 3%
         >>> msr
         {'Weights': array([0.47687653, 0.25779952, 0.26532395]),
@@ -517,7 +517,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(["SPY.US", "AGG.US"])
         >>> frontier.gmv_monthly_weights
         array([0.0578446, 0.9421554])
         """
@@ -558,7 +558,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(["SPY.US", "AGG.US"])
         >>> frontier.gmv_monthly_weights
         array([0.05373824, 0.94626176])
         """
@@ -612,7 +612,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(["SPY.US", "AGG.US"])
         >>> frontier.gmv_annual_values
         (0.03695845106087943, 0.04418318557516887)
         """
@@ -640,7 +640,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(["SPY.US", "AGG.US"])
         >>> frontier.global_max_return_portfolio
         {'Weights': array([1., 0.]), 'CAGR': 0.10797159166196812, 'Risk': 0.1583011735798155, 'Risk_monthly': 0.0410282468594492}
         """
@@ -718,7 +718,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(["SPY.US", "AGG.US"])
         >>> point = frontier.minimize_risk(0.08)
         >>> round(point["CAGR"], 2)
         0.08
@@ -1010,7 +1010,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> frontier = ok.EfficientFrontier(['SPY.US', 'AGG.US'])
+        >>> frontier = ok.EfficientFrontier(["SPY.US", "AGG.US"])
         >>> frontier.target_risk_range
         array([0.03695845, 0.04334491, 0.04973137, 0.05611783, 0.06250429,
                0.06889075, 0.07527721, 0.08166367, 0.08805012, 0.09443658,
@@ -1047,19 +1047,19 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> ls = ['SPY.US', 'GLD.US']
-        >>> curr = 'USD'
+        >>> ls = ["SPY.US", "GLD.US"]
+        >>> curr = "USD"
         >>> y = ok.EfficientFrontier(
         ...     assets=ls,
-        ...     first_date='2004-12',
-        ...     last_date='2020-10',
+        ...     first_date="2004-12",
+        ...     last_date="2020-10",
         ...     ccy=curr,
-        ...     rebalancing_strategy=ok.Rebalance(period='year'),
+        ...     rebalancing_strategy=ok.Rebalance(period="year"),
         ...     ticker_names=True,  # Use tickers in DataFrame column names.
         ...     n_points=20,  # Number of points in the Efficient Frontier.
         ... )
         >>> df_reb_year = y.ef_points
-        >>> df_reb_year[['Risk', 'CAGR', 'SPY.US', 'GLD.US']].head(5)
+        >>> df_reb_year[["Risk", "CAGR", "SPY.US", "GLD.US"]].head(5)
                Risk      CAGR    SPY.US    GLD.US
         0  0.159403  0.087770  1.000000  0.000000
         1  0.157208  0.088178  0.985742  0.014258
@@ -1071,19 +1071,20 @@ class EfficientFrontier(asset_list.AssetList):
         rebalancing_strategy=ok.Rebalance(period='year') and ok.Rebalance(period='none').
 
         >>> import matplotlib.pyplot as plt
-        >>> y.rebalancing_strategy = ok.Rebalance(period='none')
+
+        >>> y.rebalancing_strategy = ok.Rebalance(period="none")
         >>> df_not_reb = y.ef_points
         >>> fig = plt.figure()
         >>> # Plot the assets points using CAGR to match the Efficient Frontier Y-axis.
-        >>> ax = y.plot_assets(kind='cagr')
+        >>> ax = y.plot_assets(kind="cagr")
         >>> # Plot the Efficient Frontier for annually rebalanced portfolios
-        >>> ax.plot(df_reb_year['Risk'], df_reb_year['CAGR'], label='Annually rebalanced')
+        >>> ax.plot(df_reb_year["Risk"], df_reb_year["CAGR"], label="Annually rebalanced")
         >>> # Plot the Efficient Frontier for not rebalanced portfolios
-        >>> ax.plot(df_not_reb['Risk'], df_not_reb['CAGR'], label='Not rebalanced')
+        >>> ax.plot(df_not_reb["Risk"], df_not_reb["CAGR"], label="Not rebalanced")
         >>> # Set axis labels and the title
-        >>> ax.set_title('Multi-period Efficient Frontier: 2 assets')
-        >>> ax.set_xlabel('Risk (Standard Deviation)')
-        >>> ax.set_ylabel('Return (CAGR)')
+        >>> ax.set_title("Multi-period Efficient Frontier: 2 assets")
+        >>> ax.set_xlabel("Risk (Standard Deviation)")
+        >>> ax.set_ylabel("Return (CAGR)")
         >>> ax.legend()
         >>> plt.show()
         """
@@ -1163,8 +1164,8 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> ls4 = ['SP500TR.INDX', 'MCFTR.INDX', 'RGBITR.INDX', 'GC.COMM']
-        >>> y = ok.EfficientFrontier(assets=ls4, ccy='RUB', last_date='2021-12', n_points=20)
+        >>> ls4 = ["SP500TR.INDX", "MCFTR.INDX", "RGBITR.INDX", "GC.COMM"]
+        >>> y = ok.EfficientFrontier(assets=ls4, ccy="RUB", last_date="2021-12", n_points=20)
         >>> y.mdp_points  # print mdp weights, risk, CAGR and Diversification ratio
                 Risk      CAGR  Diversification ratio  ...    MCFTR.INDX   RGBITR.INDX  SP500TR.INDX
         0   0.066040  0.092220               1.234567  ...  2.081668e-16  1.000000e+00  0.000000e+00
@@ -1175,17 +1176,18 @@ class EfficientFrontier(asset_list.AssetList):
         Additionally 'Plot.plot_assets()' can be used to show the assets in the chart.
 
         >>> import matplotlib.pyplot as plt
+
         >>> fig = plt.figure()
         >>> # Plot the assets points
-        >>> y.plot_assets(kind='cagr')  # kind should be set to "cagr" as we take "CAGR" column from the mdp_points.
+        >>> y.plot_assets(kind="cagr")  # kind should be set to "cagr" as we take "CAGR" column from the mdp_points.
         >>> ax = plt.gca()
         >>> # Plot the Most diversified portfolios line
         >>> df = y.mdp_points
-        >>> ax.plot(df['Risk'], df['CAGR'])  # we chose to plot CAGR which is geometric mean of return series
+        >>> ax.plot(df["Risk"], df["CAGR"])  # we chose to plot CAGR which is geometric mean of return series
         >>> # Set the axis labels and the title
-        >>> ax.set_title('Most diversified portfolios line')
-        >>> ax.set_xlabel('Risk (Standard Deviation)')
-        >>> ax.set_ylabel('Return (CAGR)')
+        >>> ax.set_title("Most diversified portfolios line")
+        >>> ax.set_xlabel("Risk (Standard Deviation)")
+        >>> ax.set_ylabel("Return (CAGR)")
         >>> plt.show()
         """
         if self._mdp_points.empty:
@@ -1217,15 +1219,17 @@ class EfficientFrontier(asset_list.AssetList):
 
         Examples
         --------
-        >>> ls_m = ['SPY.US', 'GLD.US', 'PGJ.US', 'RGBITR.INDX', 'MCFTR.INDX']
-        >>> curr_rub = 'RUB'
-        >>> x = ok.EfficientFrontier(assets=ls_m,
-        ...                             first_date='2005-01',
-        ...                             last_date='2020-11',
-        ...                             ccy=curr_rub,
-        ...                             rebalancing_strategy=ok.Rebalance(period='year'),  # set rebalancing period to one year
-        ...                             n_points=20,
-        ...                             verbose=False)
+        >>> ls_m = ["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"]
+        >>> curr_rub = "RUB"
+        >>> x = ok.EfficientFrontier(
+        ...     assets=ls_m,
+        ...     first_date="2005-01",
+        ...     last_date="2020-11",
+        ...     ccy=curr_rub,
+        ...     rebalancing_strategy=ok.Rebalance(period="year"),  # set rebalancing period to one year
+        ...     n_points=20,
+        ...     verbose=False,
+        ... )
         >>> monte_carlo = x.get_monte_carlo(n=1000)  # it can take some time ...
         >>> monte_carlo.head(5)
                CAGR      Risk
@@ -1238,19 +1242,20 @@ class EfficientFrontier(asset_list.AssetList):
         Monte Carlo simulation results can be plotted together with the optimized portfolios on the Efficient Frontier.
 
         >>> import matplotlib.pyplot as plt
+
         >>> df_reb_year = x.ef_points  # optimize portfolios for EF. Calculations will take some time ...
         >>> fig = plt.figure()
         >>> # Plot the assets points (optional).
-        >>> x.plot_assets(kind='cagr')
+        >>> x.plot_assets(kind="cagr")
         >>> ax = plt.gca()
         >>> # Plot random portfolios (Monte Carlo simulation)
         >>> ax.scatter(monte_carlo.Risk, monte_carlo.CAGR)
         >>> # Plot the Efficient Frontier
-        >>> ax.plot(df_reb_year.Risk, df_reb_year.CAGR, label='Annually rebalanced')
+        >>> ax.plot(df_reb_year.Risk, df_reb_year.CAGR, label="Annually rebalanced")
         >>> # Set the axis labels and Title
-        >>> ax.set_title('Multi-period Efficient Frontier & Monte Carlo simulation')
-        >>> ax.set_xlabel('Risk (Standard Deviation)')
-        >>> ax.set_ylabel('CAGR')
+        >>> ax.set_title("Multi-period Efficient Frontier & Monte Carlo simulation")
+        >>> ax.set_xlabel("Risk (Standard Deviation)")
+        >>> ax.set_ylabel("CAGR")
         >>> ax.legend()
         >>> plt.show()
         """
@@ -1298,9 +1303,10 @@ class EfficientFrontier(asset_list.AssetList):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> ls4 = ['SPY.US', 'BND.US', 'GLD.US', 'VNQ.US']
-        >>> curr = 'USD'
-        >>> last_date = '2021-07'
+
+        >>> ls4 = ["SPY.US", "BND.US", "GLD.US", "VNQ.US"]
+        >>> curr = "USD"
+        >>> last_date = "2021-07"
         >>> ef = ok.EfficientFrontier(ls4, ccy=curr, last_date=last_date)
         >>> ef.plot_pair_ef()
         >>> plt.show()
@@ -1315,7 +1321,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> ef4.plot_pair_ef()  # CAGR is used for optimized portfolios.
         >>> ax = plt.gca()
         >>> # Plot the full Efficient Frontier for 4 asset portfolios.
-        >>> ax.plot(df4['Risk'], df4['CAGR'], color = 'black', linestyle='--')
+        >>> ax.plot(df4["Risk"], df4["CAGR"], color="black", linestyle="--")
         >>> plt.show()
         """
         if len(self.symbols) < 3:
@@ -1367,8 +1373,9 @@ class EfficientFrontier(asset_list.AssetList):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> three_assets = ['SPY.US', 'AGG.US', 'GLD.US']
-        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy='USD', full_frontier=True)
+
+        >>> three_assets = ["SPY.US", "AGG.US", "GLD.US"]
+        >>> ef = ok.EfficientFrontier(assets=three_assets, ccy="USD", full_frontier=True)
         >>> ef.plot_cml(rf_return=0.05)  # Risk-Free return is 5%
         >>> plt.show()
         """
@@ -1428,14 +1435,15 @@ class EfficientFrontier(asset_list.AssetList):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.EfficientFrontier(['SPY.US', 'AGG.US', 'GLD.US'], ccy='USD', inflation=False)
+
+        >>> x = ok.EfficientFrontier(["SPY.US", "AGG.US", "GLD.US"], ccy="USD", inflation=False)
         >>> x.plot_transition_map()
         >>> plt.show()
 
         Transition Map with default settings shows the relation between risk (standard deviation) and asset weights
         for optimized portfolios. The same relation for CAGR can be shown by setting `x_axe='cagr'`.
 
-        >>> x.plot_transition_map(x_axe='cagr')
+        >>> x.plot_transition_map(x_axe="cagr")
         >>> plt.show()
         """
         ef = self.ef_points

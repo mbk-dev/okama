@@ -660,7 +660,8 @@ class ListMaker(ABC):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> al = ok.AssetList(['SPY.US', 'AGG.US'], ccy='USD', inflation=False)
+
+        >>> al = ok.AssetList(["SPY.US", "AGG.US"], ccy="USD", inflation=False)
         >>> al.plot_assets()
         >>> plt.show()
 
@@ -668,10 +669,11 @@ class ListMaker(ABC):
         for risk and return.
         To use CAGR instead of expected return use kind='cagr'.
 
-        >>> al.plot_assets(kind='cagr',
-        ...               tickers=['US Stocks', 'US Bonds'],  # use custom annotations for the assets
-        ...               pct_values=True  # risk and return values are in percents
-        ...               )
+        >>> al.plot_assets(
+        ...     kind="cagr",
+        ...     tickers=["US Stocks", "US Bonds"],  # use custom annotations for the assets
+        ...     pct_values=True,  # risk and return values are in percents
+        ... )
         >>> plt.show()
         """
         risk_monthly = self._assets_ror.std()

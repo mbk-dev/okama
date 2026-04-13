@@ -166,11 +166,12 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
+
         >>> pf = ok.Portfolio(first_date="2015-01", last_date="2024-10")  # create Portfolio with default parameters
         >>> # Set Monte Carlo parameters
         >>> pf.dcf.set_mc_parameters(distribution="lognorm", period=10, mc_number=100)
         >>> # Set the cash flow strategy. It's required to generate random wealth indexes.
-        >>> ind = ok.IndexationStrategy(pf) # create IndexationStrategy linked to the portfolio
+        >>> ind = ok.IndexationStrategy(pf)  # create IndexationStrategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investments size
         >>> ind.frequency = "year"  # set cash flow frequency
         >>> ind.amount = -1_500  # set withdrawal size
@@ -217,7 +218,8 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
+
+        >>> pf = ok.Portfolio(["VOO.US", "GLD.US"], weights=[0.8, 0.2])
         >>> ind = ok.IndexationStrategy(pf)  # Set Cash Flow Strategy parameters
         >>> ind.initial_investment = 100  # initial investments value
         >>> ind.frequency = "year"  # withdrawals frequency
@@ -275,7 +277,8 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
+
+        >>> pf = ok.Portfolio(["VOO.US", "GLD.US"], weights=[0.8, 0.2])
         >>> ind = ok.IndexationStrategy(pf)  # Set Cash Flow Strategy parameters
         >>> ind.initial_investment = 100  # initial investments value
         >>> ind.frequency = "year"  # withdrawals frequency
@@ -327,7 +330,8 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> pf = ok.Portfolio(['VOO.US', 'GLD.US'], weights=[0.8, 0.2])
+
+        >>> pf = ok.Portfolio(["VOO.US", "GLD.US"], weights=[0.8, 0.2])
         >>> ind = ok.IndexationStrategy(pf)  # Set Cash Flow Strategy parameters
         >>> ind.initial_investment = 100  # initial investments value
         >>> ind.frequency = "year"  # withdrawals frequency
@@ -437,7 +441,7 @@ class PortfolioDCF:
         Examples
         --------
         >>> # Get discounted PV value of `initial_investment` for a portfolio with 4 years of history (at 2020-04).
-        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB', last_date="2024-10")
+        >>> pf = ok.Portfolio(["EQMX.MOEX", "SBGB.MOEX"], ccy="RUB", last_date="2024-10")
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
         >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
@@ -468,7 +472,7 @@ class PortfolioDCF:
         Examples
         --------
         >>> # Get discounted FV of initial_investment value for a period of 10 years.
-        >>> pf = ok.Portfolio(['EQMX.MOEX', 'SBGB.MOEX'], ccy='RUB')
+        >>> pf = ok.Portfolio(["EQMX.MOEX", "SBGB.MOEX"], ccy="RUB")
         >>> ind = ok.IndexationStrategy(pf)  # create cash flow strategy linked to the portfolio
         >>> ind.initial_investment = 10_000  # add initial investment to cash flow strategy
         >>> pf.dcf.cashflow_parameters = ind  # assign cash flow strategy to portfolio
@@ -512,9 +516,10 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
+
         >>> pf = ok.Portfolio(
-        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
-        ...     weights=[.60, .35, .05],
+        ...     ["SPY.US", "AGG.US", "GLD.US"],
+        ...     weights=[0.60, 0.35, 0.05],
         ...     rebalancing_strategy=ok.Rebalance(period="month"),
         ... )
         >>> pf.dcf.set_mc_parameters(distribution="t", period=10, mc_number=100)  # Set Monte Carlo parameters
@@ -585,9 +590,10 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
+
         >>> pf = ok.Portfolio(
-        ...     ['SPY.US', 'AGG.US', 'GLD.US'],
-        ...     weights=[.60, .35, .05],
+        ...     ["SPY.US", "AGG.US", "GLD.US"],
+        ...     weights=[0.60, 0.35, 0.05],
         ...     rebalancing_strategy=ok.Rebalance(period="month"),
         ... )
         >>> pf.dcf.set_mc_parameters(distribution="t", period=10, mc_number=100)  # Set Monte Carlo parameters
@@ -655,6 +661,7 @@ class PortfolioDCF:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
+
         >>> pf = ok.Portfolio(
         ...     assets=["SPY.US", "AGG.US", "GLD.US"],
         ...     weights=[0.60, 0.35, 0.05],
@@ -727,13 +734,13 @@ class PortfolioDCF:
 
         Examples
         --------
-        >>> pf = ok.Portfolio(['SPY.US', 'AGG.US', 'GLD.US'], weights=[.60, .35, .05])
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US", "GLD.US"], weights=[0.60, 0.35, 0.05])
         >>> # set Monte Carlos parameters
         >>> pf.dcf.set_mc_parameters(
-        ...        distribution="t",  # use Student's distribution (t-distribution)
-        ...        period=50,  # make forecast for 50 years
-        ...        mc_number=200  # create 200 randow wealth indexes
-        ...    )
+        ...     distribution="t",  # use Student's distribution (t-distribution)
+        ...     period=50,  # make forecast for 50 years
+        ...     mc_number=200,  # create 200 randow wealth indexes
+        ... )
         >>> # Set Cash Flow parameters
         >>> pc = ok.PercentageStrategy(pf)  # create PercentageStrategy linked to the portfolio
         >>> pc.initial_investment = 10_000  # add initial investments size

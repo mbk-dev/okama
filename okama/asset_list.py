@@ -69,7 +69,8 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['SPY.US', 'BND.US'])
+
+        >>> x = ok.AssetList(["SPY.US", "BND.US"])
         >>> x.wealth_indexes.plot()
         >>> plt.show()
         """
@@ -103,7 +104,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
+        >>> al = ok.AssetList(["GC.COMM", "SHV.US"], ccy="USD", last_date="2021-01")
         >>> al.risk_monthly
         Symbols   GC.COMM    SHV.US
         date
@@ -150,7 +151,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
+        >>> al = ok.AssetList(["GC.COMM", "SHV.US"], ccy="USD", last_date="2021-01")
         >>> al.risk_annual
         Symbols   GC.COMM    SHV.US
         date
@@ -202,8 +203,9 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['SPY.US', 'AGG.US'], ccy='USD', inflation=True)
-        >>> x.get_rolling_risk_annual(window=5*12).plot()
+
+        >>> x = ok.AssetList(["SPY.US", "AGG.US"], ccy="USD", inflation=True)
+        >>> x.get_rolling_risk_annual(window=5 * 12).plot()
         >>> plt.show()
         """
         check_rolling_window(window=window, ror=self.assets_ror, window_below_year=True)
@@ -237,7 +239,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
+        >>> al = ok.AssetList(["GC.COMM", "SHV.US"], ccy="USD", last_date="2021-01")
         >>> al.semideviation_monthly
         GC.COMM    0.039358
         SHV.US     0.000384
@@ -271,7 +273,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(['GC.COMM', 'SHV.US'], ccy='USD', last_date='2021-01')
+        >>> al = ok.AssetList(["GC.COMM", "SHV.US"], ccy="USD", last_date="2021-01")
         >>> al.semideviation_annual
         GC.COMM    0.115302
         SHV.US     0.000560
@@ -311,7 +313,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.AssetList(['SPY.US', 'AGG.US'])
+        >>> x = ok.AssetList(["SPY.US", "AGG.US"])
         >>> x.get_var_historic(time_frame=60, level=1)
         SPY.US    0.2101
         AGG.US    -0.0867
@@ -351,7 +353,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.AssetList(['SPY.US', 'AGG.US'])
+        >>> x = ok.AssetList(["SPY.US", "AGG.US"])
         >>> x.get_cvar_historic(time_frame=60, level=1)
         SPY.US    0.2574
         AGG.US   -0.0766
@@ -385,7 +387,8 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> al = ok.AssetList(['SPY.US', 'BND.US'], last_date='2021-08')
+
+        >>> al = ok.AssetList(["SPY.US", "BND.US"], last_date="2021-08")
         >>> al.drawdowns.plot()
         >>> plt.show()
         """
@@ -414,7 +417,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.AssetList(['SPY.US', 'AGG.US'])
+        >>> x = ok.AssetList(["SPY.US", "AGG.US"])
         >>> x.recovery_periods
         SPY.US    52
         AGG.US    15
@@ -479,7 +482,7 @@ class AssetList(make_asset_list.ListMaker):
 
         To get inflation adjusted return (real annualized return) add `real=True` option:
 
-        >>> x = ok.AssetList(['EURUSD.FX', 'CNYUSD.FX'], inflation=True)
+        >>> x = ok.AssetList(["EURUSD.FX", "CNYUSD.FX"], inflation=True)
         >>> x.get_cagr(period=5, real=True)
         EURUSD.FX    0.000439
         CNYUSD.FX   -0.017922
@@ -537,13 +540,14 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['SPY.US', 'AGG.US'], ccy='USD', inflation=True)
-        >>> x.get_rolling_cagr(window=5*12).plot()
+
+        >>> x = ok.AssetList(["SPY.US", "AGG.US"], ccy="USD", inflation=True)
+        >>> x.get_rolling_cagr(window=5 * 12).plot()
         >>> plt.show()
 
         For inflation adjusted rolling CAGR add 'real=True' option:
 
-        >>> x.get_rolling_cagr(window=5*12, real=True).plot()
+        >>> x.get_rolling_cagr(window=5 * 12, real=True).plot()
         >>> plt.show()
         """
         df = self._add_inflation()
@@ -565,7 +569,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(['SPY.US', 'AGG.US'])
+        >>> al = ok.AssetList(["SPY.US", "AGG.US"])
         >>> al.get_monthly_geometric_mean_return()
         SPY.US    0.008456
         AGG.US    0.003124
@@ -606,8 +610,8 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.AssetList(['MCFTR.INDX'], ccy='RUB')
-        >>> x.get_cumulative_return(period='YTD')
+        >>> x = ok.AssetList(["MCFTR.INDX"], ccy="RUB")
+        >>> x.get_cumulative_return(period="YTD")
         MCFTR.INDX   0.1483
         RUB.INFL     0.0485
         dtype: float64
@@ -665,13 +669,14 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['SPY.US', 'AGG.US'], ccy='USD', inflation=True)
-        >>> x.get_rolling_cumulative_return(window=5*12).plot()
+
+        >>> x = ok.AssetList(["SPY.US", "AGG.US"], ccy="USD", inflation=True)
+        >>> x.get_rolling_cumulative_return(window=5 * 12).plot()
         >>> plt.show()
 
         For inflation adjusted rolling cumulative return add 'real=True' option:
 
-        >>> x.get_rolling_cumulative_return(window=5*12, real=True).plot()
+        >>> x.get_rolling_cumulative_return(window=5 * 12, real=True).plot()
         >>> plt.show()
         """
         df = self._add_inflation()
@@ -699,8 +704,9 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> al = ok.AssetList(['SPY.US', 'BND.US'], last_date='2021-08')
-        >>> al.annual_return_ts.plot(kind='bar')
+
+        >>> al = ok.AssetList(["SPY.US", "BND.US"], last_date="2021-08")
+        >>> al.annual_return_ts.plot(kind="bar")
         >>> plt.show()
         """
         return helpers.Frame.get_annual_return_ts_from_monthly(self.assets_ror)
@@ -751,7 +757,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(['SPY.US', 'AGG.US'], last_date='2021-08')
+        >>> al = ok.AssetList(["SPY.US", "AGG.US"], last_date="2021-08")
         >>> al.describe(years=[1, 10, 15])
                          property               period    AGG.US    SPY.US inflation
         0         Compound return                  YTD -0.005620  0.180519  0.048154
@@ -866,7 +872,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.AssetList(['MCFTR.INDX', 'RGBITR.INDX'], ccy='RUB', inflation=True)
+        >>> x = ok.AssetList(["MCFTR.INDX", "RGBITR.INDX"], ccy="RUB", inflation=True)
         >>> x.mean_return
         MCFTR.INDX     0.209090
         RGBITR.INDX    0.100133
@@ -890,7 +896,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.AssetList(['MCFTR.INDX', 'RGBITR.INDX'], ccy='RUB', inflation=True)
+        >>> x = ok.AssetList(["MCFTR.INDX", "RGBITR.INDX"], ccy="RUB", inflation=True)
         >>> x.real_mean_return
         MCFTR.INDX     0.118116
         RGBITR.INDX    0.017357
@@ -932,7 +938,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
+        >>> x = ok.AssetList(["T.US", "XOM.US"], first_date="1984-01", last_date="1994-12")
         >>> x.dividend_yield
                    T.US    XOM.US
         1984-01  0.000000  0.000000
@@ -970,8 +976,9 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='2010-01', last_date='2020-12')
-        >>> x.dividends_annual.plot(kind='bar')
+
+        >>> x = ok.AssetList(["T.US", "XOM.US"], first_date="2010-01", last_date="2020-12")
+        >>> x.dividends_annual.plot(kind="bar")
         >>> plt.show()
         """
         return self._get_assets_dividends().resample("Y").sum()
@@ -1006,8 +1013,9 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='2010-01', last_date='2020-12')
-        >>> x.dividend_yield_annual.plot(kind='bar')
+
+        >>> x = ok.AssetList(["T.US", "XOM.US"], first_date="2010-01", last_date="2020-12")
+        >>> x.dividend_yield_annual.plot(kind="bar")
         >>> plt.show()
         """
         return self._assets_dividend_yield.resample(rule="Y").last()
@@ -1034,8 +1042,9 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
-        >>> x.dividend_growing_years.plot(kind='bar')
+
+        >>> x = ok.AssetList(["T.US", "XOM.US"], first_date="1984-01", last_date="1994-12")
+        >>> x.dividend_growing_years.plot(kind="bar")
         >>> plt.show()
         """
         div_growth = self.dividends_annual.pct_change()[1:]
@@ -1070,8 +1079,9 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
-        >>> x.dividend_paying_years.plot(kind='bar')
+
+        >>> x = ok.AssetList(["T.US", "XOM.US"], first_date="1984-01", last_date="1994-12")
+        >>> x.dividend_paying_years.plot(kind="bar")
         >>> plt.show()
         """
         div_annual = self.dividends_annual
@@ -1113,7 +1123,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> x = ok.AssetList(['T.US', 'XOM.US'], first_date='1984-01', last_date='1994-12')
+        >>> x = ok.AssetList(["T.US", "XOM.US"], first_date="1984-01", last_date="1994-12")
         >>> x.get_dividend_mean_growth_rate(period=3)
         T.US      0.020067
         XOM.US    0.024281
@@ -1154,7 +1164,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(["SBERP.MOEX", "LKOH.MOEX"], ccy='RUB', first_date='2005-01', last_date='2023-12')
+        >>> al = ok.AssetList(["SBERP.MOEX", "LKOH.MOEX"], ccy="RUB", first_date="2005-01", last_date="2023-12")
         >>> al.get_dividend_mean_yield(period=3)
         SBERP.MOEX    0.052987
         LKOH.MOEX     0.156526
@@ -1191,13 +1201,14 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
+
+        >>> x = ok.AssetList(["SP500TR.INDX", "SPY.US", "VOO.US"], last_date="2021-01")
         >>> x.tracking_difference().plot()
         >>> plt.show()
 
         To calculate rolling Tracking difference set `rolling_window` to a number of months (moving window size):
 
-        >>> x.tracking_difference(rolling_window = 24).plot()
+        >>> x.tracking_difference(rolling_window=24).plot()
         >>> plt.show()
         """
         if rolling_window:
@@ -1240,12 +1251,13 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
+
+        >>> x = ok.AssetList(["SP500TR.INDX", "SPY.US", "VOO.US"], last_date="2021-01")
         >>> x.tracking_difference_annualized().plot()
 
         To calculate rolling annualized tracking difference set `rolling_window` to a number of months (moving window size):
 
-        >>> x.tracking_difference_annualized(rolling_window = 12*5).plot()
+        >>> x.tracking_difference_annualized(rolling_window=12 * 5).plot()
         >>> plt.show()
         """
         if rolling_window:
@@ -1278,8 +1290,9 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> al = ok.AssetList(['SP500TR.INDX', 'VOO.US', 'SPXS.LSE'], inflation=False)
-        >>> al.tracking_difference_annual.plot(kind='bar')
+
+        >>> al = ok.AssetList(["SP500TR.INDX", "VOO.US", "SPXS.LSE"], inflation=False)
+        >>> al.tracking_difference_annual.plot(kind="bar")
         """
         rows_list = []  # Collect all rows to concatenate once at the end
         for x in self.assets_ror.resample("Y"):
@@ -1314,13 +1327,14 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.AssetList(['SP500TR.INDX', 'SPY.US', 'VOO.US'], last_date='2021-01')
+
+        >>> x = ok.AssetList(["SP500TR.INDX", "SPY.US", "VOO.US"], last_date="2021-01")
         >>> x.tracking_error().plot()
         >>> plt.show()
 
         To calculate rolling tracking error set `rolling_window` to a number of months (moving window size):
 
-        >>> x.tracking_error(rolling_window = 12*5).plot()
+        >>> x.tracking_error(rolling_window=12 * 5).plot()
         >>> plt.show()
         """
         if rolling_window:
@@ -1355,7 +1369,8 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> sp = ok.AssetList(['SP500TR.INDX', 'VBMFX.US', 'GC.COMM'])
+
+        >>> sp = ok.AssetList(["SP500TR.INDX", "VBMFX.US", "GC.COMM"])
         >>> sp.names
         {'SP500TR.INDX': 'S&P 500 (TR)',
         'VBMFX.US': 'VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES',
@@ -1404,7 +1419,8 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> sp = ok.AssetList(['SP500TR.INDX', 'VBMFX.US', 'GC.COMM', 'VNQ.US'])
+
+        >>> sp = ok.AssetList(["SP500TR.INDX", "VBMFX.US", "GC.COMM", "VNQ.US"])
         >>> sp.names
         {'SP500TR.INDX': 'S&P 500 (TR)',
         'VBMFX.US': 'VANGUARD TOTAL BOND MARKET INDEX FUND INVESTOR SHARES',
@@ -1415,7 +1431,7 @@ class AssetList(make_asset_list.ListMaker):
 
         To calculate rolling beta set `rolling_window` to a number of months (moving window size):
 
-        >>> sp.index_beta(rolling_window = 12 * 5).plot()  # 5 years moving window
+        >>> sp.index_beta(rolling_window=12 * 5).plot()  # 5 years moving window
         >>> plt.show()
         """
         if rolling_window:
@@ -1459,7 +1475,8 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> al = ok.AssetList(['VFINX.US', 'GC.COMM'], last_date='2021-01')
+
+        >>> al = ok.AssetList(["VFINX.US", "GC.COMM"], last_date="2021-01")
         >>> al.names
         {'VFINX.US': 'VANGUARD 500 INDEX FUND INVESTOR SHARES',
         'GC.COMM': 'Gold'}
@@ -1501,11 +1518,12 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> al = ok.AssetList(['VFINX.US', 'GC.COMM'], last_date='2021-01')
+
+        >>> al = ok.AssetList(["VFINX.US", "GC.COMM"], last_date="2021-01")
         >>> al.names
         {'VFINX.US': 'VANGUARD 500 INDEX FUND INVESTOR SHARES',
         'GC.COMM': 'Gold'}
-        >>> al.skewness_rolling(window=12*5).plot()
+        >>> al.skewness_rolling(window=12 * 5).plot()
         >>> plt.show()
         """
         return helpers.Frame.skewness_rolling(self.assets_ror, window=window)
@@ -1536,7 +1554,8 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> al = ok.AssetList(['GC.COMM', 'FNER.INDX'], first_date='2000-01', last_date='2021-01')
+
+        >>> al = ok.AssetList(["GC.COMM", "FNER.INDX"], first_date="2000-01", last_date="2021-01")
         >>> al.names
         {'GC.COMM': 'Gold',
         'FNER.INDX': 'FTSE NAREIT All Equity REITs'}
@@ -1576,11 +1595,12 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> al = ok.AssetList(['GC.COMM', 'FNER.INDX'], first_date='2000-01', last_date='2021-01')
+
+        >>> al = ok.AssetList(["GC.COMM", "FNER.INDX"], first_date="2000-01", last_date="2021-01")
         >>> al.names
         {'GC.COMM': 'Gold',
         'FNER.INDX': 'FTSE NAREIT All Equity REITs'}
-        >>> al.kurtosis_rolling(window=12*5).plot()
+        >>> al.kurtosis_rolling(window=12 * 5).plot()
         >>> plt.show()
         """
         return helpers.Frame.kurtosis_rolling(self.assets_ror, window=window)
@@ -1611,7 +1631,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(['GC.COMM', 'FNER.INDX'], first_date='2000-01', last_date='2021-01')
+        >>> al = ok.AssetList(["GC.COMM", "FNER.INDX"], first_date="2000-01", last_date="2021-01")
         >>> al.names
         {'GC.COMM': 'Gold',
         'FNER.INDX': 'FTSE NAREIT All Equity REITs'}
@@ -1649,8 +1669,8 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(['EDV.US'], last_date='2021-01')
-        >>> al.kstest(distr='lognorm')
+        >>> al = ok.AssetList(["EDV.US"], last_date="2021-01")
+        >>> al.kstest(distr="lognorm")
                      EDV.US
         p-value    0.402179
         statistic  0.070246
@@ -1679,7 +1699,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(['VOO.US', 'BND.US'])
+        >>> al = ok.AssetList(["VOO.US", "BND.US"])
         >>> al.get_sharpe_ratio(rf_return=0.02)
         VOO.US    0.962619
         BND.US    0.390814
@@ -1708,7 +1728,7 @@ class AssetList(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> al = ok.AssetList(['VOO.US', 'BND.US'], last_date='2021-12')
+        >>> al = ok.AssetList(["VOO.US", "BND.US"], last_date="2021-12")
         >>> al.get_sortino_ratio(t_return=0.03)
         VOO.US    1.321951
         BND.US    0.028969

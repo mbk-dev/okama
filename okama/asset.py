@@ -146,7 +146,8 @@ class Asset:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> x = ok.Asset('VOO.US')
+
+        >>> x = ok.Asset("VOO.US")
         >>> x.close_monthly.plot()
         >>> plt.show()
         """
@@ -180,7 +181,7 @@ class Asset:
 
         Examples
         --------
-        >>> x = ok.Asset('VNQ.US')
+        >>> x = ok.Asset("VNQ.US")
         >>> x.dividends
                 Date
         2004-12-22    1.2700
