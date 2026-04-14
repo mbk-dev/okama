@@ -51,8 +51,6 @@ from okama.common.helpers.rebalancing import Rebalance
 import okama.settings
 
 
-
-
 def __getattr__(name: str) -> Any:
     """
     Lazily expose selected API metadata at the package level.

@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-
 # Ensure non-interactive backend for headless test runs
 matplotlib.use("Agg")
 

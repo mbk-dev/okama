@@ -7,7 +7,6 @@ import pytest
 import okama as ok
 from okama.settings import DEFAULT_DISCOUNT_RATE, _MONTHS_PER_YEAR
 
-
 # Notes
 # -----
 # - These tests use the global synthetic_env fixture (defined in tests/asset_list/conftest.py
@@ -173,9 +172,9 @@ def test_initial_investment_pv_and_fv(dcf_percentage_halfyear):
     wi_pv = dcf.wealth_index(discounting="pv", include_negative_values=False)
     wi_fv = dcf.wealth_index(discounting="fv", include_negative_values=False)
     monthly_discount_rate = (1 + dcf.discount_rate) ** (1 / _MONTHS_PER_YEAR) - 1
-    expected_initial_investment_pv = dcf.cashflow_parameters.initial_investment / (
-        1.0 + monthly_discount_rate
-    ) ** dcf.parent.ror.shape[0]
+    expected_initial_investment_pv = (
+        dcf.cashflow_parameters.initial_investment / (1.0 + monthly_discount_rate) ** dcf.parent.ror.shape[0]
+    )
 
     assert dcf.initial_investment_fv == wi_fv.iloc[0, 0] == wi_pv.iloc[0, 0]
     assert dcf.initial_investment_pv == pytest.approx(expected_initial_investment_pv)

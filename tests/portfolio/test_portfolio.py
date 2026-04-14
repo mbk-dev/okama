@@ -5,7 +5,6 @@ from urllib.parse import parse_qs, urlparse
 
 import okama as ok
 
-
 # Note: These tests use the global synthetic_env fixture defined in tests/conftest.py
 # which patches asset loading and the currency Asset to avoid any external API calls.
 

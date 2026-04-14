@@ -187,7 +187,9 @@ class PortfolioDCF:
         self.mc.period = period
         self.mc.mc_number = mc_number
 
-    def wealth_index(self, discounting: Literal["fv", "pv"], include_negative_values: bool = False) -> Union[pd.Series, pd.DataFrame]:
+    def wealth_index(
+        self, discounting: Literal["fv", "pv"], include_negative_values: bool = False
+    ) -> Union[pd.Series, pd.DataFrame]:
         """
         Calculate wealth index time series for the portfolio with cash flow (contributions and withdrawals)
         using historical rate of returns.

@@ -24,10 +24,10 @@ pf = ok.Portfolio(
 
 ind = ok.IndexationStrategy(pf)  # создаём стратегию, привязанную к портфелю
 
-ind.initial_investment = 10_000   # размер начальных вложений
-ind.amount = -2_500               # размер годового снятия
-ind.frequency = "year"            # частота — раз в год
-ind.indexation = "inflation"      # индексация на среднюю инфляцию
+ind.initial_investment = 10_000  # размер начальных вложений
+ind.amount = -2_500  # размер годового снятия
+ind.frequency = "year"  # частота — раз в год
+ind.indexation = "inflation"  # индексация на среднюю инфляцию
 
 pf.dcf.cashflow_parameters = ind
 
