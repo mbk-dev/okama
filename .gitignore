@@ -8,3 +8,5 @@ __pycache__
 poetry.lock
 /.idea_backup
 /.ipynb_checkpoints
+main.py
+main_notebook.ipynb
