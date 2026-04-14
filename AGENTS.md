@@ -13,6 +13,33 @@
 4) If test execution reveals any failures or errors, attempt to fix them and re-run the tests.
    Do not repeat this cycle more than 2 times.
    If tests are still failing after that, stop and report the remaining issues instead of continuing.
+5) Before finishing any code change (including notebooks), run `poetry run ruff check .`
+   and fix every reported issue. If a warning is truly unavoidable, silence it with a
+   targeted `# noqa: <CODE>` comment on the offending line and include a brief rationale.
+   Never disable rules globally or use a bare `# noqa`.
+
+## Python style & modernization
+
+- Target **Python 3.13+**. Write new code with modern syntax and avoid legacy forms:
+  - Use built-in generics: `list[int]`, `dict[str, Any]`, `tuple[int, ...]`
+    instead of `typing.List` / `Dict` / `Tuple`.
+  - Use union syntax `X | Y` and `X | None` instead of `typing.Union` / `typing.Optional`.
+  - Prefer literals over constructor calls: `{}`, `[]`, `set()` — avoid `dict()`, `list()`
+    when a literal works. In particular, never write `dict()` for an empty dict,
+    and never wrap `kwargs`-style pairs as `dict(a=1, b=2)` when a literal is clearer.
+  - Use `dict(zip(a, b))` instead of `{k: v for k, v in zip(a, b)}` (ruff C416).
+  - Use set literals `{"a", "b"}` instead of `set(["a", "b"])` (ruff C405).
+  - Never use mutable default arguments (`def f(x=[])` / `x={}`). Use `None` and
+    initialize inside the function body (ruff B006). For simple fixed pairs like
+    `figsize=(12, 6)`, prefer a tuple.
+  - Keep `matplotlib` `bbox=` / style kwargs as dict literals, not `dict(...)` calls.
+- **Ruff configuration** is in `pyproject.toml` (`[tool.ruff.lint]`, selecting `C,E,F,W,B`).
+  Treat it as the authoritative style guide — if ruff is silent, the style is acceptable.
+- **Jupyter notebooks** follow the same rules. Keep all `import` statements at the top
+  of each code cell (ruff E402); put configuration calls (`plt.rcParams[...]`,
+  `pd.set_option(...)`, `warnings.filterwarnings(...)`) *after* the imports.
+- When refactoring a function to reduce complexity (ruff C901) would be risky, it is
+  acceptable to add `# noqa: C901` on the `def` line rather than restructure working code.
 
 ## Preparing release notes
 - When you write a release description, always include the names of the specific classes and methods when describing new features and bug fixes.
