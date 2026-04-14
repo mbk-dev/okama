@@ -1,0 +1,19 @@
+name: Ruff Lint
+
+on: [push, pull_request]
+
+jobs:
+  ruff-lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v4
+      - name: Set up Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Ruff Lint
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check ."
