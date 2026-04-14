@@ -1,5 +1,5 @@
-import itertools
-from typing import Optional, Tuple, Dict, List, Union, Type
+import itertools  # noqa: I001
+from typing import Optional, Tuple, Dict, List, Union, Type  # noqa: UP035
 
 import pandas as pd
 import numpy as np
@@ -67,12 +67,12 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
     def __init__(
         self,
-        assets: Optional[List[Union[str, Type]]] = None,
+        assets: Optional[List[Union[str, Type]]] = None,  # noqa: UP006, UP007, UP045
         *,
-        first_date: Optional[str] = None,
-        last_date: Optional[str] = None,
+        first_date: Optional[str] = None,  # noqa: UP045
+        last_date: Optional[str] = None,  # noqa: UP045
         ccy: str = "USD",
-        bounds: Optional[Tuple[Tuple[float, ...], ...]] = None,
+        bounds: Optional[Tuple[Tuple[float, ...], ...]] = None,  # noqa: UP006, UP045
         inflation: bool = False,
         full_frontier: bool = True,
         n_points: int = 20,
@@ -110,7 +110,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         return repr(pd.Series(dic))
 
     @property
-    def bounds(self) -> Tuple[Tuple[float, ...], ...]:
+    def bounds(self) -> Tuple[Tuple[float, ...], ...]:  # noqa: UP006
         """
         Return bounds for the assets weights.
 
@@ -142,7 +142,6 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
     @bounds.setter
     def bounds(self, bounds):
-
         self._ef_points = pd.DataFrame(dtype=float)
 
         if bounds:
@@ -243,7 +242,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
             raise RecursionError("No solutions where found")
 
     @property
-    def gmv_monthly(self) -> Tuple[float, float]:
+    def gmv_monthly(self) -> Tuple[float, float]:  # noqa: UP006
         """
         Calculate the monthly risk and return of the Global Minimum Volatility (GMV) portfolio within given bounds.
 
@@ -272,7 +271,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         )
 
     @property
-    def gmv_annualized(self) -> Tuple[float, float]:
+    def gmv_annualized(self) -> Tuple[float, float]:  # noqa: UP006
         """
         Calculate the annualized risk and return of the Global Minimum Volatility (GMV) portfolio within given bounds.
 
@@ -392,7 +391,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
     def get_most_diversified_portfolio(
         self,
-        target_return: Optional[float] = None,
+        target_return: Optional[float] = None,  # noqa: UP045
         monthly_return: bool = False,
     ) -> dict:
         """
@@ -491,7 +490,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
             portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(weights.x, ror)
             cagr = helpers.Frame.get_cagr(portfolio_return_ts)
             asset_labels = self.get_assets_tickers()
-            point = {x: y for x, y in zip(asset_labels, weights.x)}
+            point = dict(zip(asset_labels, weights.x))  # noqa: B905
             point["Mean return"] = objective_function.annual_mean_return
             point["CAGR"] = cagr
             point["Risk"] = objective_function.annual_risk
@@ -581,7 +580,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         target_return: float,
         monthly_return: bool = False,
         tolerance: float = 1e-08,
-    ) -> Dict[str, float]:
+    ) -> Dict[str, float]:  # noqa: UP006
         """
         Find minimal risk given the target return within given bounds.
 
@@ -658,7 +657,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
             portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(weights.x, ror)
             cagr = helpers.Frame.get_cagr(portfolio_return_ts)
             asset_labels = self.get_assets_tickers()
-            point = {x: y for x, y in zip(asset_labels, weights.x)}
+            point = dict(zip(asset_labels, weights.x))  # noqa: B905
             point["Mean return"] = a_r
             point["CAGR"] = cagr
             point["Risk"] = a_risk
@@ -937,7 +936,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
             mean_return = helpers.Float.annualize_return(mean_return_monthly)
 
-            point = dict(zip(asset_labels, weights))
+            point = dict(zip(asset_labels, weights))  # noqa: B905
             point["Risk"] = risk
             if kind.lower() == "cagr":
                 cagr = helpers.Float.approx_return_risk_adjusted(mean_return, risk)
@@ -951,7 +950,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         random_portfolios = helpers.Frame.change_columns_order(random_portfolios, ["Risk", second_column])
         return random_portfolios
 
-    def plot_transition_map(self, x_axe: str = "risk", figsize: Optional[tuple] = None) -> Axes:
+    def plot_transition_map(self, x_axe: str = "risk", figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
         """
         Plot Transition Map for optimized portfolios on the single period Efficient Frontier.
 
@@ -1019,7 +1018,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         fig.tight_layout()
         return ax
 
-    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> Axes:
+    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
         """
         Plot Efficient Frontier of every pair of assets.
 
@@ -1096,7 +1095,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         self.plot_assets(kind="mean", tickers=tickers)
         return ax
 
-    def plot_cml(self, rf_return: float = 0, y_axe: str = "cagr", figsize: Optional[tuple] = None) -> Axes:
+    def plot_cml(self, rf_return: float = 0, y_axe: str = "cagr", figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
         """
         Plot Capital Market Line (CML).
 

@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd  # noqa: I001
 import numpy as np
 import pytest
 import okama as ok

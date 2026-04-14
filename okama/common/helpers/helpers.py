@@ -1,5 +1,5 @@
-import math
-from typing import Union, Callable, Optional, Tuple, Literal
+import math  # noqa: I001
+from typing import Union, Callable, Optional, Tuple, Literal  # noqa: UP035
 from functools import singledispatchmethod
 
 import pandas as pd
@@ -15,7 +15,7 @@ from okama.common.error import (
 from okama import settings
 
 
-def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame], window_below_year: bool = False):
+def check_rolling_window(window: int, ror: Union[pd.Series, pd.DataFrame], window_below_year: bool = False):  # noqa: UP007
     validate_integer(arg_name="window", arg_value=window, min_value=0, inclusive=False)
     if not window_below_year and window < settings._MONTHS_PER_YEAR:
         raise RollingWindowLengthBelowOneYearError("window size must be at least 1 year")
@@ -30,7 +30,7 @@ class Float:
     """
 
     @staticmethod
-    def get_monthly_return_from_annual(annual_return: Union[float, pd.Series]) -> Union[float, pd.Series]:
+    def get_monthly_return_from_annual(annual_return: Union[float, pd.Series]) -> Union[float, pd.Series]:  # noqa: UP007
         """
         Gets value of monthly return for a given annual return.
         """
@@ -38,9 +38,9 @@ class Float:
 
     @staticmethod
     def annualize_return(
-        rate_of_return: Union[float, pd.Series],
+        rate_of_return: Union[float, pd.Series],  # noqa: UP007
         periods_per_year: int = settings._MONTHS_PER_YEAR,
-    ) -> Union[float, pd.Series]:
+    ) -> Union[float, pd.Series]:  # noqa: UP007
         """
         Annualizes a return.
         Default annualization is from month to year.
@@ -49,8 +49,9 @@ class Float:
 
     @staticmethod
     def annualize_risk(
-        risk: Union[float, pd.Series, pd.DataFrame], mean_return: Union[float, pd.Series, pd.DataFrame]
-    ) -> Union[float, pd.Series, pd.DataFrame]:
+        risk: Union[float, pd.Series, pd.DataFrame],
+        mean_return: Union[float, pd.Series, pd.DataFrame],  # noqa: UP007
+    ) -> Union[float, pd.Series, pd.DataFrame]:  # noqa: UP007
         """
         Annualizes Risk.
         Annualization from month to year (from standard deviation) is by default. Monthly mean return is also required.
@@ -69,7 +70,7 @@ class Float:
         return np.exp(np.log(1.0 + mean_return) - 0.5 * std**2 / (1.0 + mean_return) ** 2) - 1.0
 
     @staticmethod
-    def get_random_weights(n: int, w_shape: int, bounds: Optional[Tuple[Tuple[float, float], ...]] = None) -> pd.Series:
+    def get_random_weights(n: int, w_shape: int, bounds: Optional[Tuple[Tuple[float, float], ...]] = None) -> pd.Series:  # noqa: UP006, UP045
         """
         Produce N random normalized weights of a given shape using sequential generation.
         bounds : tuple of tuples, optional.
@@ -92,7 +93,6 @@ class Float:
             batch_size = min(1000, n)
 
             while len(weights) < n:
-
                 remaining = np.ones(batch_size)
                 indices = np.arange(w_shape)
                 batch_w = np.zeros((batch_size, w_shape))
@@ -103,7 +103,6 @@ class Float:
                     np.random.shuffle(shuffled_indices[i])
 
                 for i in range(w_shape - 1):
-
                     idx = shuffled_indices[:, i]
                     low = mins[idx]
                     high = maxs[idx]
@@ -172,7 +171,7 @@ class Frame:
         return ror @ weights
 
     @classmethod
-    def get_portfolio_mean_return(cls, weights: Union[list, np.array], ror: pd.DataFrame) -> float:
+    def get_portfolio_mean_return(cls, weights: Union[list, np.array], ror: pd.DataFrame) -> float:  # noqa: UP007
         """
         Computes arithmetic mean return of a portfolio return (monthly as ROR time series are monthly in okama).
 
@@ -184,17 +183,17 @@ class Frame:
         return weights.T @ ror.mean()
 
     @staticmethod
-    def get_cagr(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
+    def get_cagr(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:  # noqa: UP007
         """
         Return Compound Annual Rate of Return (CAGR) for each asset given returns time series DataFrame.
         """
         if ror.shape[0] < 12:
             # CAGR is not defined for periods < 1 year. Return None or Series with NaNs.
-            return pd.Series({x: None for x in ror.columns}) if isinstance(ror, pd.DataFrame) else None
+            return pd.Series(dict.fromkeys(ror.columns)) if isinstance(ror, pd.DataFrame) else None
         return ((ror + 1.0).prod()) ** (settings._MONTHS_PER_YEAR / ror.shape[0]) - 1.0
 
     @staticmethod
-    def get_cumulative_return(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
+    def get_cumulative_return(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:  # noqa: UP007
         """
         Return Compound Return for time series of return (one or several).
         """
@@ -202,11 +201,11 @@ class Frame:
 
     @staticmethod
     def get_rolling_fn(
-        ror: Union[pd.DataFrame, pd.Series],
+        ror: Union[pd.DataFrame, pd.Series],  # noqa: UP007
         window: int,
         fn: Callable,
         window_below_year: bool = False,
-    ) -> Union[pd.DataFrame, pd.Series]:
+    ) -> Union[pd.DataFrame, pd.Series]:  # noqa: UP007
         """
         Calculate rolling function with a given window.
 
@@ -218,8 +217,9 @@ class Frame:
 
     @staticmethod
     def get_annual_return_ts_from_monthly(
-        ror_monthly: Union[pd.DataFrame, pd.Series], return_type: Literal["cagr", "arithmetic_mean"] = "cagr"
-    ) -> Union[pd.DataFrame, pd.Series]:
+        ror_monthly: Union[pd.DataFrame, pd.Series],
+        return_type: Literal["cagr", "arithmetic_mean"] = "cagr",  # noqa: UP007
+    ) -> Union[pd.DataFrame, pd.Series]:  # noqa: UP007
         """
         Annual Rate of Returns time series from monthly data.
         """
@@ -235,8 +235,9 @@ class Frame:
 
     @staticmethod
     def get_wealth_indexes(
-        ror: Union[pd.Series, pd.DataFrame], initial_amount: float = 1000.0
-    ) -> Union[pd.Series, pd.DataFrame]:
+        ror: Union[pd.Series, pd.DataFrame],
+        initial_amount: float = 1000.0,  # noqa: UP007
+    ) -> Union[pd.Series, pd.DataFrame]:  # noqa: UP007
         """
         Returns wealth indexes for a list of assets (or for portfolio).
         Works also with pd.Series inputs.
@@ -282,7 +283,7 @@ class Frame:
     # Risk metrics
 
     @classmethod
-    def get_portfolio_risk(cls, weights: Union[list, np.array], assets_ror: pd.DataFrame) -> float:
+    def get_portfolio_risk(cls, weights: Union[list, np.array], assets_ror: pd.DataFrame) -> float:  # noqa: UP007
         """
         Compute the standard deviation of return for monthly rebalanced portfolio.
         """
@@ -294,7 +295,7 @@ class Frame:
         return math.sqrt(weights.T @ covmat @ weights)
 
     @staticmethod
-    def get_semideviation(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:
+    def get_semideviation(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:  # noqa: UP007
         """
         Returns semideviation.
         """
@@ -303,8 +304,9 @@ class Frame:
 
     @staticmethod
     def get_below_target_semideviation(
-        ror: Union[pd.DataFrame, pd.Series], t_return: float = 0
-    ) -> Union[pd.Series, float]:
+        ror: Union[pd.DataFrame, pd.Series],
+        t_return: float = 0,  # noqa: UP007
+    ) -> Union[pd.Series, float]:  # noqa: UP007
         """
         Returns below target semideviation.
         """
@@ -312,7 +314,7 @@ class Frame:
         return ror[below_target].std(ddof=0)
 
     @staticmethod
-    def get_var_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:
+    def get_var_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:  # noqa: UP007
         """
         Compute monthly historic Value at Risk (VaR) at a specified level.
         """
@@ -322,7 +324,7 @@ class Frame:
         return s
 
     @staticmethod
-    def get_cvar_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:
+    def get_cvar_historic(ror: Union[pd.DataFrame, pd.Series], level: int = 5) -> Union[pd.Series, float]:  # noqa: UP007
         """
         Compute the Conditional VaR (CVaR) at a specified level.
         """
@@ -333,7 +335,7 @@ class Frame:
         return s
 
     @staticmethod
-    def get_drawdowns(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
+    def get_drawdowns(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:  # noqa: UP007
         """
         Get drawdowns from return time series.
         """
@@ -360,7 +362,7 @@ class Frame:
         return df
 
     @staticmethod
-    def skewness(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
+    def skewness(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:  # noqa: UP007
         """
         Calculate expanding skewness.
         The shape of time series should be at least 12. In the opposite case empty time series is returned.
@@ -370,7 +372,7 @@ class Frame:
         return sk
 
     @staticmethod
-    def skewness_rolling(ror: Union[pd.DataFrame, pd.Series], window: int = 60) -> Union[pd.Series, float]:
+    def skewness_rolling(ror: Union[pd.DataFrame, pd.Series], window: int = 60) -> Union[pd.Series, float]:  # noqa: UP007
         """
         Calculate rolling skewness.
         Window size should be at least 12 months.
@@ -381,7 +383,7 @@ class Frame:
         return sk
 
     @staticmethod
-    def kurtosis(ror: Union[pd.Series, pd.DataFrame]):
+    def kurtosis(ror: Union[pd.Series, pd.DataFrame]):  # noqa: UP007
         """
         Calculate expanding Fisher (normalized) kurtosis time series.
         Kurtosis should be close to zero for normal distribution.
@@ -391,7 +393,7 @@ class Frame:
         return kt
 
     @staticmethod
-    def kurtosis_rolling(ror: Union[pd.Series, pd.DataFrame], window: int = 60):
+    def kurtosis_rolling(ror: Union[pd.Series, pd.DataFrame], window: int = 60):  # noqa: UP007
         """
         Calculate rolling Fisher (normalized) kurtosis time series.
         Kurtosis should be close to zero for normal distribution.

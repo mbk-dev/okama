@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa: I001
 import okama as ok
 
 

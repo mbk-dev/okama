@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 from typing import Optional
 import logging
@@ -74,7 +74,7 @@ class MonteCarlo:
         self,
         parent: dcf.PortfolioDCF,
         distribution: str = "norm",
-        distribution_parameters: Optional[tuple] = None,
+        distribution_parameters: Optional[tuple] = None,  # noqa: UP045
         period: int = 25,
         mc_number: int = 100,
     ):
@@ -433,7 +433,7 @@ class MonteCarlo:
 
     def percentile_distribution_cagr(
         self,
-        percentiles: list[int] = [10, 50, 90],
+        percentiles: list[int] = [10, 50, 90],  # noqa: B006
     ) -> dict[int, float]:
         """
         Calculate percentiles for the simulated CAGR distribution.
@@ -768,7 +768,7 @@ class MonteCarlo:
         var_level: int = 5,
         bootstrap_size_var: int = 2000,
         zoom_to_left_tail: int = 20,
-        figsize: Optional[tuple] = None,
+        figsize: Optional[tuple] = None,  # noqa: UP045
     ) -> Axes:
         """
         Generate a quantile-quantile (Q-Q) plot of portfolio monthly rate of return against quantiles of a given
@@ -866,7 +866,7 @@ class MonteCarlo:
             textcoords="offset points",
             color="tab:red",
             fontsize=9,
-            bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="tab:red", alpha=0.7),
+            bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "tab:red", "alpha": 0.7},
         )
 
         # CVAR points
@@ -881,7 +881,7 @@ class MonteCarlo:
             textcoords="offset points",
             color="tab:red",
             fontsize=9,
-            bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="tab:red", alpha=0.7),
+            bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "tab:red", "alpha": 0.7},
         )
 
         sm.qqplot(

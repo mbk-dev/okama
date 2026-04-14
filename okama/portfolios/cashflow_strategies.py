@@ -25,9 +25,9 @@ class CashFlow:
     def __init__(
         self,
         parent: core.Portfolio,
-        frequency: Optional[str] = "none",
+        frequency: Optional[str] = "none",  # noqa: UP045
         initial_investment: float = 1000.0,
-        time_series_dic: dict = {},
+        time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
     ):
         """
@@ -204,12 +204,12 @@ class IndexationStrategy(CashFlow):
     def __init__(
         self,
         parent: core.Portfolio,
-        frequency: Optional[str] = "none",
+        frequency: Optional[str] = "none",  # noqa: UP045
         initial_investment: float = 1000.0,
-        time_series_dic: dict = {},
+        time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
         amount: float = 0,
-        indexation: Optional[Union[str, float]] = None,
+        indexation: Optional[Union[str, float]] = None,  # noqa: UP007, UP045
     ):
         """
         Initialize the IndexationStrategy.
@@ -292,7 +292,7 @@ class IndexationStrategy(CashFlow):
         return self._indexation
 
     @indexation.setter
-    def indexation(self, indexation: Optional[float]):
+    def indexation(self, indexation: Optional[float]):  # noqa: UP045
         if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
             self._indexation = self.portfolio.get_cagr().loc[self.portfolio.inflation]
         elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
@@ -345,9 +345,9 @@ class PercentageStrategy(CashFlow):
     def __init__(
         self,
         parent: core.Portfolio,
-        frequency: Optional[str] = "none",
+        frequency: Optional[str] = "none",  # noqa: UP045
         initial_investment: float = 1000.0,
-        time_series_dic: dict = {},
+        time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
         percentage: float = 0.0,
     ):
@@ -435,7 +435,7 @@ class TimeSeriesStrategy(CashFlow):
         self,
         parent: core.Portfolio,
         initial_investment: float = 0,
-        time_series_dic: dict = {},
+        time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
     ):
         super().__init__(
@@ -523,14 +523,14 @@ class VanguardDynamicSpending(PercentageStrategy):
         self,
         parent: core.Portfolio,
         initial_investment: float = 1000.0,
-        time_series_dic: dict = {},
+        time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
         percentage: float = 0.0,
-        min_max_annual_withdrawals: Optional[tuple[float, float]] = None,
+        min_max_annual_withdrawals: Optional[tuple[float, float]] = None,  # noqa: UP045
         adjust_min_max: bool = True,
-        floor_ceiling: Optional[tuple[float, float]] = None,
+        floor_ceiling: Optional[tuple[float, float]] = None,  # noqa: UP045
         adjust_floor_ceiling: bool = False,
-        indexation: Optional[Union[str, float]] = None,
+        indexation: Optional[Union[str, float]] = None,  # noqa: UP007, UP045
     ):
         """
         Initialize the VanguardDynamicSpending strategy.
@@ -620,7 +620,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         return self._min_max_annual_withdrawals
 
     @min_max_annual_withdrawals.setter
-    def min_max_annual_withdrawals(self, value: Optional[tuple[float, float]]):
+    def min_max_annual_withdrawals(self, value: Optional[tuple[float, float]]):  # noqa: UP045
         if not isinstance(value, tuple):
             raise TypeError("min_max_annual_withdrawals must be a tuple (float, float).")
         min_w = value[0]
@@ -658,7 +658,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         return self._floor_ceiling
 
     @floor_ceiling.setter
-    def floor_ceiling(self, value: Optional[tuple[float, float]]):
+    def floor_ceiling(self, value: Optional[tuple[float, float]]):  # noqa: UP045
         if not isinstance(value, tuple):
             raise TypeError("floor_ceiling must be a tuple (float, float).")
         floor = value[0]
@@ -699,7 +699,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         return self._indexation
 
     @indexation.setter
-    def indexation(self, indexation: Optional[float]):
+    def indexation(self, indexation: Optional[float]):  # noqa: UP045
         if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
             self._indexation = self.portfolio.get_cagr().loc[self.portfolio.inflation]
         elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
@@ -711,7 +711,9 @@ class VanguardDynamicSpending(PercentageStrategy):
             self._clear_cf_cache()
             self._indexation = indexation
 
-    def _calculate_withdrawal_size(self, last_withdrawal: float, balance: float, number_of_periods: int) -> float:
+    def _calculate_withdrawal_size(  # noqa: C901
+        self, last_withdrawal: float, balance: float, number_of_periods: int
+    ) -> float:
         """
         Calculate regular withdrawal size (Extra Withdrawals are not taken into account). Used in helpers.
 
@@ -858,13 +860,13 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
     def __init__(
         self,
         parent: core.Portfolio,
-        frequency: Optional[str] = "year",
+        frequency: Optional[str] = "year",  # noqa: UP045
         initial_investment: float = 1000.0,
-        time_series_dic: dict = {},
+        time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
         amount: float = 0.0,
-        indexation: Optional[Union[str, float]] = None,
-        crash_threshold_reduction: list[tuple[float, float]] = [
+        indexation: Optional[Union[str, float]] = None,  # noqa: UP007, UP045
+        crash_threshold_reduction: list[tuple[float, float]] = [  # noqa: B006
             (0.20, 0.40),
             (0.50, 1),
         ],
@@ -976,7 +978,7 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
                 break
         return -withdrawal
 
-    def make_series_from_list(self, l: list[tuple[float, float]]) -> pd.Series:
+    def make_series_from_list(self, l: list[tuple[float, float]]) -> pd.Series:  # noqa: E741
         """
         Convert list of tuples to pandas Series.
 

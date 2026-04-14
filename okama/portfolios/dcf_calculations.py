@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 from typing import Union, Optional, Literal
 
@@ -10,13 +10,13 @@ import okama.portfolios.cashflow_strategies as cf
 from okama import settings
 
 
-def get_wealth_indexes_fv_with_cashflow(
-    ror: Union[pd.Series, pd.DataFrame],
-    portfolio_symbol: Optional[str],
-    inflation_symbol: Optional[str],
+def get_wealth_indexes_fv_with_cashflow(  # noqa: C901
+    ror: Union[pd.Series, pd.DataFrame],  # noqa: UP007
+    portfolio_symbol: Optional[str],  # noqa: UP045
+    inflation_symbol: Optional[str],  # noqa: UP045
     cashflow_parameters: cf.CashFlow,
     task: Literal["backtest", "monte_carlo"],
-) -> Union[pd.Series, pd.DataFrame]:
+) -> Union[pd.Series, pd.DataFrame]:  # noqa: UP007
     """
     Calculate wealth index Future Values (FV) for a series of returns with cash flows (withdrawals/contributions).
 
@@ -161,12 +161,12 @@ def get_wealth_indexes_fv_with_cashflow(
     return wealth_index
 
 
-def get_cash_flow_fv(
-    ror: Union[pd.Series, pd.DataFrame],
-    portfolio_symbol: Optional[str],
+def get_cash_flow_fv(  # noqa: C901
+    ror: Union[pd.Series, pd.DataFrame],  # noqa: UP007
+    portfolio_symbol: Optional[str],  # noqa: UP045
     cashflow_parameters: cf.CashFlow,
     task: Literal["backtest", "monte_carlo"],
-) -> Union[pd.Series, pd.DataFrame]:
+) -> Union[pd.Series, pd.DataFrame]:  # noqa: UP007
     """
     Calculate cash flow future values (FV) for a series of returns according to withdrawal/contributions strategies.
     """
@@ -311,10 +311,10 @@ def remove_negative_values(input_s: pd.Series) -> pd.Series:
 
 
 def discount_monthly_cash_flow(
-    cash_flow_fv: Union[pd.Series, pd.DataFrame],
+    cash_flow_fv: Union[pd.Series, pd.DataFrame],  # noqa: UP007
     annual_effective_discount_rate: float,
     reverse: bool = False,
-) -> Union[pd.Series, pd.DataFrame]:
+) -> Union[pd.Series, pd.DataFrame]:  # noqa: UP007
     number_of_months = cash_flow_fv.shape[0]
     monlthly_discount_rate = (1 + annual_effective_discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
     if not reverse:

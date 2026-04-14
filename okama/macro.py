@@ -1,5 +1,5 @@
-from abc import ABC
-from typing import Union, Tuple
+from abc import ABC  # noqa: I001
+from typing import Union, Tuple  # noqa: UP035
 
 import numpy as np
 import pandas as pd
@@ -11,7 +11,7 @@ from okama.common.helpers import helpers
 from okama.common.error import LongRollingWindowLengthError
 
 
-class MacroABC(ABC):
+class MacroABC(ABC):  # noqa: B024
     """
     Abstract class for all Macroeconomic parameters.
 
@@ -30,8 +30,8 @@ class MacroABC(ABC):
     def __init__(
         self,
         symbol: str,
-        first_date: Union[str, pd.Timestamp, None] = None,
-        last_date: Union[str, pd.Timestamp, None] = None,
+        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
     ):
         self.symbol: str = symbol
         self._check_namespace()
@@ -56,7 +56,7 @@ class MacroABC(ABC):
         }
         return repr(pd.Series(dic))
 
-    def _check_namespace(self):
+    def _check_namespace(self):  # noqa: B027
         pass
 
     def _set_first_last_dates(self) -> None:
@@ -146,7 +146,7 @@ class MacroABC(ABC):
         self._values_monthly[pd.Period(date, freq="M")] = value
         self._set_first_last_dates()
 
-    def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
+    def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:  # noqa: UP006
         """
         Generate descriptive statistics for YTD and given periods.
         Statistics includes:
@@ -260,8 +260,8 @@ class Inflation(MacroABC):
     def __init__(
         self,
         symbol: str = settings.default_macro_inflation,
-        first_date: Union[str, pd.Timestamp, None] = None,
-        last_date: Union[str, pd.Timestamp, None] = None,
+        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
     ):
         super().__init__(
             symbol,
@@ -375,7 +375,7 @@ class Inflation(MacroABC):
         x = x.dropna()
         return x
 
-    def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
+    def describe(self, years: Tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:  # noqa: UP006
         """
         Generate descriptive inflation statistics for YTD and a given list of periods.
         Statistics includes:
@@ -517,8 +517,8 @@ class Rate(MacroABC):
     def __init__(
         self,
         symbol: str = settings.default_macro_rate,
-        first_date: Union[str, pd.Timestamp, None] = None,
-        last_date: Union[str, pd.Timestamp, None] = None,
+        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
     ):
         super().__init__(
             symbol,
@@ -564,8 +564,8 @@ class Indicator(MacroABC):
     def __init__(
         self,
         symbol: str = settings.default_macro_indicator,
-        first_date: Union[str, pd.Timestamp, None] = None,
-        last_date: Union[str, pd.Timestamp, None] = None,
+        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
     ):
         super().__init__(
             symbol,

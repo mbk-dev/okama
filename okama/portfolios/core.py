@@ -1,7 +1,7 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 from random import randint
-from typing import Optional, List, Union, Tuple, Literal
+from typing import Optional, List, Union, Tuple, Literal  # noqa: UP035
 from urllib.parse import urlencode
 
 import numpy as np
@@ -72,14 +72,14 @@ class Portfolio(make_asset_list.ListMaker):
 
     def __init__(
         self,
-        assets: Optional[List[str]] = None,
+        assets: Optional[List[str]] = None,  # noqa: UP006, UP045
         *,
-        first_date: Optional[str] = None,
-        last_date: Optional[str] = None,
+        first_date: Optional[str] = None,  # noqa: UP045
+        last_date: Optional[str] = None,  # noqa: UP045
         ccy: str = "USD",
         inflation: bool = True,
-        weights: Optional[List[float]] = None,
-        rebalancing_strategy: Rebalance = Rebalance(period="month"),
+        weights: Optional[List[float]] = None,  # noqa: UP006, UP045
+        rebalancing_strategy: Rebalance = Rebalance(period="month"),  # noqa: B008
         symbol: str = None,
     ):
         super().__init__(
@@ -90,7 +90,7 @@ class Portfolio(make_asset_list.ListMaker):
             inflation=inflation,
         )
         self.weights = weights
-        self.assets_weights = dict(zip(self.symbols, self.weights))
+        self.assets_weights = dict(zip(self.symbols, self.weights))  # noqa: B905
         self.rebalancing_strategy = rebalancing_strategy
         self.symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
         self._ror = pd.DataFrame(dtype=float)
@@ -130,7 +130,7 @@ class Portfolio(make_asset_list.ListMaker):
     # todo: add setters for dates and ccy
 
     @property
-    def weights(self) -> Union[list, tuple]:
+    def weights(self) -> Union[list, tuple]:  # noqa: UP007
         """
         Assets weights in portfolio.
 
@@ -152,7 +152,7 @@ class Portfolio(make_asset_list.ListMaker):
         return self._weights
 
     @weights.setter
-    def weights(self, weights: Optional[List[float]]):
+    def weights(self, weights: Optional[List[float]]):  # noqa: UP006, UP045
         if weights is None:
             # Equally weighted portfolio
             n = len(self.symbols)  # number of assets
@@ -539,7 +539,7 @@ class Portfolio(make_asset_list.ListMaker):
         """
         return helpers.Frame.get_annual_return_ts_from_monthly(self.ror, return_type)
 
-    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
+    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:  # noqa: UP045
         """
         Calculate portfolio Compound Annual Growth Rate (CAGR) for a given trailing period.
 
@@ -652,7 +652,7 @@ class Portfolio(make_asset_list.ListMaker):
         """
         return (self.ror + 1.0).prod() ** (1 / self.ror.shape[0]) - 1.0
 
-    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
+    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:  # noqa: UP007
         """
         Calculate cumulative return over a given trailing period for the portfolio.
 
@@ -1288,7 +1288,7 @@ class Portfolio(make_asset_list.ListMaker):
         s2 = s1.groupby(s1_1).cumsum()
         return s2[s2.shift(-1) < s2]
 
-    def describe(self, years: Tuple[int] = (1, 5, 10)) -> pd.DataFrame:
+    def describe(self, years: Tuple[int] = (1, 5, 10)) -> pd.DataFrame:  # noqa: UP006
         """
         Generate descriptive statistics for the portfolio.
 
@@ -1355,7 +1355,7 @@ class Portfolio(make_asset_list.ListMaker):
                 if dt >= self.first_date:
                     row = self.get_cagr(period=i).to_dict()
                 else:
-                    row = {x: None for x in df.columns} if hasattr(self, "inflation") else {self.symbol: None}
+                    row = dict.fromkeys(df.columns) if hasattr(self, "inflation") else {self.symbol: None}
                 row.update(period=f"{i} years", property="CAGR")
                 rows_list.append(row)
             # CAGR for full period
@@ -1483,7 +1483,7 @@ class Portfolio(make_asset_list.ListMaker):
         cagr_distr = self.get_rolling_cagr(years * settings._MONTHS_PER_YEAR).loc[:, [self.symbol]].squeeze()
         return scipy.stats.percentileofscore(cagr_distr, score, kind="rank")
 
-    def percentile_cagr(self, years: int, percentiles: List[int] = [10, 50, 90]) -> pd.DataFrame:
+    def percentile_cagr(self, years: int, percentiles: List[int] = [10, 50, 90]) -> pd.DataFrame:  # noqa: B006, UP006
         """
         Calculate given percentiles for portfolio rolling CAGR distribution from the historical data.
 

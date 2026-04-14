@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd  # noqa: I001
 import pytest
 
 import okama as ok
@@ -96,7 +96,7 @@ def test_get_asset_obj_dict_raises_for_short_history():
     to avoid interference from patches in other parallel tests (e.g., synthetic_env).
     """
     # Import the module directly to get the original unpatched version
-    import importlib
+    import importlib  # noqa: I001
     import okama.common.make_asset_list
 
     # Force reload to ensure we get a fresh unpatched version

@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union  # noqa: I001, UP035
 from dataclasses import dataclass
 
 import numpy as np
@@ -59,7 +59,10 @@ class Rebalance:
     """
 
     def __init__(
-        self, period: str = "year", abs_deviation: Optional[float] = None, rel_deviation: Optional[float] = None
+        self,
+        period: str = "year",
+        abs_deviation: Optional[float] = None,
+        rel_deviation: Optional[float] = None,  # noqa: UP045
     ):
         self.abs_deviation = abs_deviation
         self.rel_deviation = rel_deviation
@@ -111,7 +114,7 @@ class Rebalance:
         self._pandas_frequency = settings.frequency_mapping[self.period]
         self._pandas_frequency_grouper = settings.grouper_frequency_mapping[self.period]
 
-    def wealth_ts(
+    def wealth_ts(  # noqa: C901
         self, target_weights: list, ror: pd.DataFrame, calculate_assets_wealth_indexes: bool = False
     ) -> Result:
         """
@@ -172,15 +175,15 @@ class Rebalance:
                         not rebalancing_by_condition_needed
                     ):
                         # rebalancing
-                        initial_allocation = target_weights_np * end_period_balance
+                        initial_allocation = target_weights_np * end_period_balance  # noqa: F821
                         date = x[0]
                         if rebalancing_by_condition_needed:
-                            events_ts[date.asfreq("M", how="start") - 1] = "abs" if condition_abs else "rel"
+                            events_ts[date.asfreq("M", how="start") - 1] = "abs" if condition_abs else "rel"  # noqa: F821
                         else:
                             events_ts[date.asfreq("M", how="start") - 1] = "calendar"
                     elif rebalancing_by_condition_needed and not rebalancing_condition:
                         # skip rebalancing
-                        initial_allocation = end_period_weights * end_period_balance
+                        initial_allocation = end_period_weights * end_period_balance  # noqa: F821
                 assets_wealth_indexes_local = initial_allocation * (1 + df).cumprod()
                 if calculate_assets_wealth_indexes:
                     # collect asset wealth index chunks for later concatenation
@@ -189,9 +192,9 @@ class Rebalance:
                 # collect portfolio wealth index chunks for later concatenation
                 pw_chunks.append(wealth_index_local.copy())
                 # use local last value instead of relying on concatenated series
-                end_period_balance = wealth_index_local.iloc[-1]
+                end_period_balance = wealth_index_local.iloc[-1]  # noqa: F841
                 if rebalancing_by_condition_needed:
-                    end_period_weights = assets_wealth_indexes_local.iloc[-1].divide(
+                    end_period_weights = assets_wealth_indexes_local.iloc[-1].divide(  # noqa: F841
                         wealth_index_local.iloc[-1], axis=0
                     )
                     rebalancing_condition, condition_abs = self._check_if_rebalancing_required(
@@ -213,7 +216,7 @@ class Rebalance:
 
     def _rebalance_by_condition(
         self, ror, target_weights, initial_inv, calculate_assets_wealth_indexes: bool = False
-    ) -> Tuple[pd.Series, pd.DataFrame, pd.Series]:
+    ) -> Tuple[pd.Series, pd.DataFrame, pd.Series]:  # noqa: UP006
         target_weights_np = np.asarray(target_weights)
         portfolio_wealth_index = pd.Series(dtype="float64")
         assets_wealth_indexes_local = pd.DataFrame(columns=ror.columns, dtype="float64")
@@ -227,9 +230,9 @@ class Rebalance:
                 initial_allocation = target_weights_np * initial_inv  # initial rebalancing
                 assets_wealth_indexes_local = initial_allocation * (1 + r)
             else:
-                if rebalancing_condition:
+                if rebalancing_condition:  # noqa: F821
                     assets_wealth_indexes_local = target_weights_np * assets_wealth_indexes_local.sum()
-                    events_ts[date - 1] = "abs" if condition_abs else "rel"  # set previous month as its EOD data
+                    events_ts[date - 1] = "abs" if condition_abs else "rel"  # noqa: F821
                 assets_wealth_indexes_local *= 1 + r
                 assets_wealth_indexes_local = assets_wealth_indexes_local.rename(date)
             if calculate_assets_wealth_indexes:
@@ -251,7 +254,7 @@ class Rebalance:
         assets_wealth_indexes_local,
         portfolio_wealth_index_local,
         target_weights,
-    ) -> Tuple[bool, bool]:
+    ) -> Tuple[bool, bool]:  # noqa: UP006
         try:
             # DataFrame
             weights = assets_wealth_indexes_local.iloc[-1].divide(portfolio_wealth_index_local.iloc[-1], axis=0)
@@ -297,7 +300,7 @@ class Rebalance:
         reb = self.wealth_ts(target_weights=target_weights, ror=ror, calculate_assets_wealth_indexes=True)
         return reb.assets_wealth_indexes.divide(reb.portfolio_wealth_index, axis=0)
 
-    def return_ror_ts(self, target_weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
+    def return_ror_ts(self, target_weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:  # noqa: UP007
         """
         Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
 
@@ -376,7 +379,7 @@ class Rebalance:
 
         return wealth_index
 
-    def return_ror_ts_ef(self, weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:
+    def return_ror_ts_ef(self, weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:  # noqa: UP007
         """
         Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
 

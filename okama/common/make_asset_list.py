@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List, Any, Type, Union
+from typing import Dict, Optional, List, Any, Type, Union  # noqa: I001, UP035
 from abc import ABC, abstractmethod
 from joblib import Parallel, delayed
 
@@ -39,10 +39,10 @@ class ListMaker(ABC):
 
     def __init__(
         self,
-        assets: Optional[List[Union[str, Type]]] = None,
+        assets: Optional[List[Union[str, Type]]] = None,  # noqa: UP006, UP007, UP045
         *,
-        first_date: Optional[str] = None,
-        last_date: Optional[str] = None,
+        first_date: Optional[str] = None,  # noqa: UP045
+        last_date: Optional[str] = None,  # noqa: UP045
         ccy: str = "USD",
         inflation: bool = True,
     ):
@@ -127,8 +127,8 @@ class ListMaker(ABC):
     @staticmethod
     def _get_asset_obj_dict(
         ls: list,
-        first_date: Optional[str] = None,
-        last_date: Optional[str] = None,
+        first_date: Optional[str] = None,  # noqa: UP045
+        last_date: Optional[str] = None,  # noqa: UP045
     ) -> dict:
         """
         Create a dictionary of Asset objects from a list of symbols or Asset-like objects.
@@ -190,7 +190,7 @@ class ListMaker(ABC):
         asset_obj_list = Parallel(n_jobs=-1, backend="threading")(delayed(get_item)(s) for s in ls)
         return {obj.symbol: obj for obj in asset_obj_list}
 
-    def _make_list(self, first_date: Optional[str], last_date: Optional[str]) -> dict:
+    def _make_list(self, first_date: Optional[str], last_date: Optional[str]) -> dict:  # noqa: UP045
         """
         Make an asset list from a list of symbols.
 
@@ -211,17 +211,17 @@ class ListMaker(ABC):
         currency_first_date: pd.Timestamp = self._currency.first_date
         currency_last_date: pd.Timestamp = self._currency.last_date
 
-        own_first_dates: Dict[str, pd.Timestamp] = {}
-        own_last_dates: Dict[str, pd.Timestamp] = {}
-        first_dates: Dict[str, pd.Timestamp] = {}
-        last_dates: Dict[str, pd.Timestamp] = {}
-        names: Dict[str, str] = {}
-        currencies: Dict[str, str] = {}
+        own_first_dates: Dict[str, pd.Timestamp] = {}  # noqa: UP006
+        own_last_dates: Dict[str, pd.Timestamp] = {}  # noqa: UP006
+        first_dates: Dict[str, pd.Timestamp] = {}  # noqa: UP006
+        last_dates: Dict[str, pd.Timestamp] = {}  # noqa: UP006
+        names: Dict[str, str] = {}  # noqa: UP006
+        currencies: Dict[str, str] = {}  # noqa: UP006
         input_first_date = pd.to_datetime(first_date) if first_date else None
         input_last_date = pd.to_datetime(last_date) if last_date else None
 
         # Collect all rate of return series first, then concatenate once (more efficient)
-        ror_series_list: List[pd.Series] = []
+        ror_series_list: List[pd.Series] = []  # noqa: UP006
         for asset_item in self.asset_obj_dict.values():
             # get asset own first and last dates
             asset_own_first_date = asset_item.first_date
@@ -274,17 +274,17 @@ class ListMaker(ABC):
             df = df.to_frame()
         df.columns.name = "Symbols"  # required for Plotly charts
 
-        return dict(
-            first_date=list_first_date,
-            last_date=list_last_date,
-            newest_asset=own_first_dates_sorted[-1][0],
-            eldest_asset=own_first_dates_sorted[0][0],
-            names_dict=names,
-            currencies_dict=currencies,
-            own_first_dates_sorted=dict(own_first_dates_sorted),
-            own_last_dates_sorted=dict(own_last_dates_sorted),
-            ror=df,
-        )
+        return {
+            "first_date": list_first_date,
+            "last_date": list_last_date,
+            "newest_asset": own_first_dates_sorted[-1][0],
+            "eldest_asset": own_first_dates_sorted[0][0],
+            "names_dict": names,
+            "currencies_dict": currencies,
+            "own_first_dates_sorted": dict(own_first_dates_sorted),
+            "own_last_dates_sorted": dict(own_last_dates_sorted),
+            "ror": df,
+        }
 
     def _make_ror(self, list_asset: asset.Asset, base_currency_name: str) -> pd.Series:
         """
@@ -368,7 +368,7 @@ class ListMaker(ABC):
         return merged.iloc[:, 0].multiply(merged[ccy_symbol], axis=0)
 
     @staticmethod
-    def _define_symbol_list(assets: List[Union[str, Type]]) -> List[str]:
+    def _define_symbol_list(assets: List[Union[str, Type]]) -> List[str]:  # noqa: UP006, UP007
         """
         Extract symbols from a list of assets.
 
@@ -542,7 +542,7 @@ class ListMaker(ABC):
         return self._dividend_yield
 
     @property
-    def _list_of_asset_like_objects(self) -> List[Union[str, Type]]:
+    def _list_of_asset_like_objects(self) -> List[Union[str, Type]]:  # noqa: UP006, UP007
         """
         Return list which may include tickers or asset like objects (Portfolio, Asset).
 
@@ -568,7 +568,7 @@ class ListMaker(ABC):
         return self._assets_ror
 
     @property
-    def symbols(self) -> List[str]:
+    def symbols(self) -> List[str]:  # noqa: UP006
         """
         Return a list of used financial symbols.
 
@@ -585,7 +585,7 @@ class ListMaker(ABC):
         return self._define_symbol_list(self._list_of_asset_like_objects)
 
     @property
-    def tickers(self) -> List[str]:
+    def tickers(self) -> List[str]:  # noqa: UP006
         """
         Return a list of used tickers (symbols without a namespace).
 
@@ -618,7 +618,7 @@ class ListMaker(ABC):
     def plot_assets(
         self,
         kind: str = "mean",
-        tickers: Union[str, list] = "tickers",
+        tickers: Union[str, list] = "tickers",  # noqa: UP007
         pct_values: bool = False,
         xy_text: tuple = (0, 10),
         **kwargs,
@@ -707,7 +707,7 @@ class ListMaker(ABC):
                 raise ValueError("labels and tickers must be of the same length")
             asset_labels = tickers
         # draw the points and print the labels
-        for label, x, y in zip(asset_labels, risks, returns):
+        for label, x, y in zip(asset_labels, risks, returns):  # noqa: B905
             ax.annotate(
                 label,  # this is the text
                 (x * m, y * m),  # this is the point to label

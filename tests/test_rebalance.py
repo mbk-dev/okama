@@ -27,11 +27,11 @@ def test_validate_rel_deviation_failing():
 
 def test_repr(init_rebalance_no_rebalancing):
     value = pd.Series(
-        dict(
-            period="none",
-            abs_deviation=None,
-            rel_deviation=None,
-        )
+        {
+            "period": "none",
+            "abs_deviation": None,
+            "rel_deviation": None,
+        }
     )
     assert repr(init_rebalance_no_rebalancing) == repr(value)
 

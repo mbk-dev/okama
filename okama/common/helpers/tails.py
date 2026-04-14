@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np  # noqa: I001
 from scipy.stats import norm, lognorm, t
 
 

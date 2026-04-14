@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np  # noqa: I001
 import pandas as pd
 import pytest
 from urllib.parse import parse_qs, urlparse

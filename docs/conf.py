@@ -1,7 +1,7 @@
 # Configuration file for the Sphinx documentation builder.
 #
 
-import warnings
+import warnings  # noqa: I001
 import os
 from os import path
 import sys
@@ -20,7 +20,7 @@ sys.path.insert(1, root)
 sys.path.append(os.path.abspath("matplotlib_ext"))
 # sys.path.insert(0, os.path.abspath("."))
 
-import okama  # isort:skip
+import okama  # isort:skip  # noqa: E402
 
 # -- Project information -----------------------------------------------------
 

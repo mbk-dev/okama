@@ -1,4 +1,4 @@
-from unittest.mock import call
+from unittest.mock import call  # noqa: I001
 import pytest
 
 import pandas as pd

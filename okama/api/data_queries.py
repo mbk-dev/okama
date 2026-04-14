@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import Dict, Union  # noqa: I001, UP035
 
 from io import StringIO
 import json
@@ -15,7 +15,7 @@ class QueryData:
     """
 
     @staticmethod
-    def get_symbol_info(symbol: str) -> Dict[str, str]:
+    def get_symbol_info(symbol: str) -> Dict[str, str]:  # noqa: UP006
         json_input = api_methods.API.get_symbol_info(symbol)
         return json.loads(json_input)
 
@@ -39,8 +39,8 @@ class QueryData:
     @staticmethod
     def get_macro_ts(
         symbol: str,
-        first_date: Union[str, None] = None,
-        last_date: Union[str, None] = None,
+        first_date: Union[str, None] = None,  # noqa: UP007
+        last_date: Union[str, None] = None,  # noqa: UP007
         period: str = "M",
     ) -> pd.Series:
         """

@@ -1,4 +1,4 @@
-import socket
+import socket  # noqa: I001
 import random
 
 import pytest
@@ -157,7 +157,7 @@ def synthetic_env(mocker):
 
     yield {
         "index": idx,
-        "series": {k: v for k, v in [("IDX.US", a1), ("A.US", a2), ("B.US", a3)]},
+        "series": {"IDX.US": a1, "A.US": a2, "B.US": a3},
         "m_get_dict": m_get_dict,
         "m_currency_asset": m_currency_asset,
     }

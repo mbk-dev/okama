@@ -1,4 +1,4 @@
-import re
+import re  # noqa: I001
 
 import pytest
 from pytest import approx

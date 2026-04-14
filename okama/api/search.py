@@ -1,4 +1,4 @@
-import json
+import json  # noqa: I001
 from typing import Optional
 from functools import lru_cache
 
@@ -7,8 +7,8 @@ import pandas as pd
 from okama.api import api_methods, namespaces
 
 
-@lru_cache()
-def search(search_string: str, namespace: Optional[str] = None, response_format: str = "frame") -> json:
+@lru_cache()  # noqa: UP011
+def search(search_string: str, namespace: Optional[str] = None, response_format: str = "frame") -> json:  # noqa: UP045
     """
     Search symbols by ticker, name, or ISIN.
 
@@ -70,7 +70,7 @@ def search(search_string: str, namespace: Optional[str] = None, response_format:
     json_response = json.loads(string_response)
     if response_format.lower() == "frame":
         df = pd.DataFrame(json_response[1:], columns=json_response[0])
-        return df.astype("string", copy=False)
+        return df.astype("string")
     elif response_format.lower() == "json":
         return json_response
     else:

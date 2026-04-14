@@ -1,4 +1,4 @@
-from typing import Optional, Union, Tuple
+from typing import Optional, Union, Tuple  # noqa: I001, UP035
 
 import numpy as np
 import pandas as pd
@@ -440,7 +440,7 @@ class AssetList(make_asset_list.ListMaker):
         # Use Int64 (nullable integer) to support NaN values
         return pd.Series(recovery_data, dtype="Int64")
 
-    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:
+    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:  # noqa: UP045
         """
         Calculate assets Compound Annual Growth Rate (CAGR) for a given trailing period.
 
@@ -577,7 +577,7 @@ class AssetList(make_asset_list.ListMaker):
         """
         return (self.assets_ror + 1.0).prod() ** (1 / self.assets_ror.shape[0]) - 1.0
 
-    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:
+    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:  # noqa: UP007
         """
         Calculate cumulative return over a given trailing period for each asset.
 
@@ -711,7 +711,7 @@ class AssetList(make_asset_list.ListMaker):
         """
         return helpers.Frame.get_annual_return_ts_from_monthly(self.assets_ror)
 
-    def describe(self, years: Tuple[int, ...] = (1, 5, 10), tickers: bool = True) -> pd.DataFrame:
+    def describe(self, years: Tuple[int, ...] = (1, 5, 10), tickers: bool = True) -> pd.DataFrame:  # noqa: UP006, C901
         """
         Generate descriptive statistics for a list of assets.
 
@@ -784,7 +784,7 @@ class AssetList(make_asset_list.ListMaker):
                 if dt >= self.first_date:
                     row = self.get_cagr(period=i).to_dict()
                 else:
-                    row = {x: None for x in df.columns}
+                    row = dict.fromkeys(df.columns)
                 row.update(period=f"{i} years", property="CAGR")
                 rows_list.append(row)
             # CAGR for full period
@@ -1223,7 +1223,7 @@ class AssetList(make_asset_list.ListMaker):
             accumulated_return = helpers.Frame.get_wealth_indexes(self.assets_ror)  # we don't need inflation here
             return helpers.Index.tracking_difference(accumulated_return)
 
-    def tracking_difference_annualized(self, rolling_window: Optional[int] = None) -> pd.DataFrame:
+    def tracking_difference_annualized(self, rolling_window: Optional[int] = None) -> pd.DataFrame:  # noqa: UP045
         """
         Calculate annualized tracking difference time series for the rate of return of assets.
 
@@ -1304,7 +1304,7 @@ class AssetList(make_asset_list.ListMaker):
         result.index = result.index.asfreq("Y")
         return result
 
-    def tracking_error(self, rolling_window: Optional[int] = None) -> pd.DataFrame:
+    def tracking_error(self, rolling_window: Optional[int] = None) -> pd.DataFrame:  # noqa: UP045
         """
         Calculate tracking error time series for the rate of return of assets.
 
@@ -1347,7 +1347,7 @@ class AssetList(make_asset_list.ListMaker):
         else:
             return helpers.Index.tracking_error(self.assets_ror)
 
-    def index_corr(self, rolling_window: Optional[int] = None) -> pd.DataFrame:
+    def index_corr(self, rolling_window: Optional[int] = None) -> pd.DataFrame:  # noqa: UP045
         """
         Compute correlation with the index (or benchmark) time series for the assets. Expanding or rolling correlation
         is available.
@@ -1387,7 +1387,7 @@ class AssetList(make_asset_list.ListMaker):
             return helpers.Index.rolling_cov_cor(self.assets_ror, window=rolling_window, fn="corr")
         return helpers.Index.expanding_cov_cor(self.assets_ror, fn="corr")
 
-    def index_beta(self, rolling_window: Optional[int] = None) -> pd.DataFrame:
+    def index_beta(self, rolling_window: Optional[int] = None) -> pd.DataFrame:  # noqa: UP045
         """
         Compute beta coefficient time series for the assets.
 

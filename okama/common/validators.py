@@ -1,6 +1,6 @@
 """Various validators"""
 
-import numbers
+import numbers  # noqa: I001
 import operator
 from typing import Optional, Any
 
@@ -11,11 +11,11 @@ def validate_integer(
     arg_name: str,
     arg_value: Any,
     *,
-    min_value: Optional[int] = None,
-    max_value: Optional[int] = None,
+    min_value: Optional[int] = None,  # noqa: UP045
+    max_value: Optional[int] = None,  # noqa: UP045
     inclusive: bool = False,
-    custom_min_message: Optional[str] = None,
-    custom_max_message: Optional[str] = None,
+    custom_min_message: Optional[str] = None,  # noqa: UP045
+    custom_max_message: Optional[str] = None,  # noqa: UP045
 ):
     """
     Validate that `arg_value` is an integer, and optionally fall within specific bounds.

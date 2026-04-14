@@ -20,34 +20,34 @@ Main features:
 
 """
 
-from importlib.metadata import version
+from importlib.metadata import version  # noqa: I001
 from typing import Any
 
-from okama.asset import Asset
-from okama.asset_list import AssetList
+from okama.asset import Asset  # noqa: F401
+from okama.asset_list import AssetList  # noqa: F401
 from okama.portfolios.core import (
-    Portfolio,
+    Portfolio,  # noqa: F401
 )
-from okama.portfolios.mc import MonteCarlo
-from okama.portfolios.dcf import PortfolioDCF
+from okama.portfolios.mc import MonteCarlo  # noqa: F401
+from okama.portfolios.dcf import PortfolioDCF  # noqa: F401
 from okama.portfolios.cashflow_strategies import (
-    CashFlow,
-    IndexationStrategy,
-    PercentageStrategy,
-    TimeSeriesStrategy,
-    VanguardDynamicSpending,
-    CutWithdrawalsIfDrawdown,
+    CashFlow,  # noqa: F401
+    IndexationStrategy,  # noqa: F401
+    PercentageStrategy,  # noqa: F401
+    TimeSeriesStrategy,  # noqa: F401
+    VanguardDynamicSpending,  # noqa: F401
+    CutWithdrawalsIfDrawdown,  # noqa: F401
 )
-from okama.macro import Inflation, Rate, Indicator
-from okama.frontier.multi_period import EfficientFrontier
-from okama.frontier.single_period import EfficientFrontierSingle
-from okama.api.data_queries import QueryData
-from okama.api.search import search
-from okama.api.api_methods import API
+from okama.macro import Inflation, Rate, Indicator  # noqa: F401
+from okama.frontier.multi_period import EfficientFrontier  # noqa: F401
+from okama.frontier.single_period import EfficientFrontierSingle  # noqa: F401
+from okama.api.data_queries import QueryData  # noqa: F401
+from okama.api.search import search  # noqa: F401
+from okama.api.api_methods import API  # noqa: F401
 import okama.api.namespaces
-from okama.api.namespaces import symbols_in_namespace
-from okama.common.helpers.helpers import Float, Frame, Date
-from okama.common.helpers.rebalancing import Rebalance
+from okama.api.namespaces import symbols_in_namespace  # noqa: F401
+from okama.common.helpers.helpers import Float, Frame, Date  # noqa: F401
+from okama.common.helpers.rebalancing import Rebalance  # noqa: F401
 import okama.settings
 
 

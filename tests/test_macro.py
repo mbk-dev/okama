@@ -1,4 +1,4 @@
-from unittest.mock import call
+from unittest.mock import call  # noqa: I001
 
 import pandas as pd
 import pytest
@@ -146,5 +146,5 @@ def test_macro_init_failing_namespaces(macro_patches):
 def test_inflation_describe_smoke(macro_patches):
     infl = ok.Inflation("USD.INFL")
     df = infl.describe(years=(1,))
-    assert set(["property", "period"]).issubset(df.columns)
+    assert {"property", "period"}.issubset(df.columns)
     assert infl.symbol in df.columns

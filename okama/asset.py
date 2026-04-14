@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union  # noqa: I001
 
 import pandas as pd
 import numpy as np
@@ -28,8 +28,8 @@ class Asset:
     def __init__(
         self,
         symbol: str = settings.default_ticker,
-        first_date: Union[str, pd.Timestamp, None] = None,
-        last_date: Union[str, pd.Timestamp, None] = None,
+        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
     ):
         if symbol is None or len(str(symbol).strip()) == 0:
             raise ValueError("Symbol can not be empty")
@@ -72,7 +72,7 @@ class Asset:
             "isin": self.isin,
             "first date": self.first_date.strftime("%Y-%m"),
             "last date": self.last_date.strftime("%Y-%m"),
-            "period length": "{:.2f}".format(self.period_length),
+            "period length": "{:.2f}".format(self.period_length),  # noqa: UP032
         }
         return repr(pd.Series(dic))
 
@@ -105,7 +105,7 @@ class Asset:
         return self._symbol
 
     @property
-    def price(self) -> Optional[float]:
+    def price(self) -> Optional[float]:  # noqa: UP045
         """
         Return live price of an asset.
 
@@ -205,7 +205,7 @@ class Asset:
         return div.resample("M").sum()
 
     @property
-    def nav_ts(self) -> Optional[pd.Series]:
+    def nav_ts(self) -> Optional[pd.Series]:  # noqa: UP045
         """
         Return NAV time series (monthly) for mutual funds.
         """

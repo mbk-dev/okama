@@ -1,4 +1,4 @@
-import re
+import re  # noqa: I001
 import inspect
 import textwrap
 import pydoc
@@ -18,7 +18,7 @@ IMPORT_MATPLOTLIB_RE = r"\b(import +matplotlib|from +matplotlib +import)\b"
 
 
 class SphinxDocString(NumpyDocString):
-    def __init__(self, docstring, config={}):
+    def __init__(self, docstring, config={}):  # noqa: B006
         NumpyDocString.__init__(self, docstring, config=config)
         self.load_config(config)
 
@@ -131,7 +131,7 @@ class SphinxDocString(NumpyDocString):
         # XXX: If changing the following, please check the rendering when param
         # ends with '_', e.g. 'word_'
         # See https://github.com/numpy/numpydoc/pull/144
-        display_param = "**%s**" % param
+        display_param = "**%s**" % param  # noqa: UP031
 
         if not fake_autosummary:
             return display_param, desc
@@ -151,15 +151,15 @@ class SphinxDocString(NumpyDocString):
 
         prefix = getattr(self, "_name", "")
         if prefix:
-            link_prefix = "%s." % prefix
+            link_prefix = "%s." % prefix  # noqa: UP031
         else:
             link_prefix = ""
 
         # Referenced object has a docstring
-        display_param = ":obj:`%s <%s%s>`" % (param, link_prefix, param)
+        display_param = ":obj:`%s <%s%s>`" % (param, link_prefix, param)  # noqa: UP031
         if obj_doc:
             # Overwrite desc. Take summary logic of autosummary
-            desc = re.split(r"\n\s*\n", obj_doc.strip(), 1)[0]
+            desc = re.split(r"\n\s*\n", obj_doc.strip(), 1)[0]  # noqa: B034
             # XXX: Should this have DOTALL?
             #      It does not in autosummary
             m = re.search(r"^([A-Z].*?\.)(?:\s|$)", " ".join(desc.split()))
@@ -225,11 +225,11 @@ class SphinxDocString(NumpyDocString):
         """
         out = []
         if self[name]:
-            out += [".. rubric:: %s" % name, ""]
+            out += [".. rubric:: %s" % name, ""]  # noqa: UP031
             prefix = getattr(self, "_name", "")
 
             if prefix:
-                prefix = "~%s." % prefix
+                prefix = "~%s." % prefix  # noqa: UP031
 
             autosum = []
             others = []
@@ -243,7 +243,7 @@ class SphinxDocString(NumpyDocString):
 
                 if param_obj and pydoc.getdoc(param_obj):
                     # Referenced object has a docstring
-                    autosum += ["   %s%s" % (prefix, param.name)]
+                    autosum += ["   %s%s" % (prefix, param.name)]  # noqa: UP031
                 else:
                     others.append(param)
 
@@ -256,13 +256,13 @@ class SphinxDocString(NumpyDocString):
             if others:
                 maxlen_0 = max(3, max([len(p.name) + 4 for p in others]))
                 hdr = "=" * maxlen_0 + "  " + "=" * 10
-                fmt = "%%%ds  %%s  " % (maxlen_0,)
+                fmt = "%%%ds  %%s  " % (maxlen_0,)  # noqa: UP031
                 out += ["", "", hdr]
                 for param in others:
                     name = "**" + param.name.strip() + "**"
                     desc = " ".join(x.strip() for x in param.desc).strip()
                     if param.type:
-                        desc = "(%s) %s" % (param.type, desc)
+                        desc = "(%s) %s" % (param.type, desc)  # noqa: UP031
                     out += [fmt % (name, desc)]
                 out += [hdr]
             out += [""]
@@ -299,14 +299,14 @@ class SphinxDocString(NumpyDocString):
         if len(idx) == 0:
             return out
 
-        out += [".. index:: %s" % idx.get("default", "")]
+        out += [".. index:: %s" % idx.get("default", "")]  # noqa: UP031
         for section, references in idx.items():
             if section == "default":
                 continue
             elif section == "refguide":
-                out += ["   single: %s" % (", ".join(references))]
+                out += ["   single: %s" % (", ".join(references))]  # noqa: UP031
             else:
-                out += ["   %s: %s" % (section, ",".join(references))]
+                out += ["   %s: %s" % (section, ",".join(references))]  # noqa: UP031
         out += [""]
         return out
 
@@ -329,7 +329,7 @@ class SphinxDocString(NumpyDocString):
                 m = re.match(r".. \[([a-z0-9._-]+)\]", line, re.I)
                 if m:
                     items.append(m.group(1))
-            out += ["   " + ", ".join(["[%s]_" % item for item in items]), ""]
+            out += ["   " + ", ".join(["[%s]_" % item for item in items]), ""]  # noqa: UP031
         return out
 
     def _str_examples(self):
@@ -377,25 +377,25 @@ class SphinxDocString(NumpyDocString):
 
 
 class SphinxFunctionDoc(SphinxDocString, FunctionDoc):
-    def __init__(self, obj, doc=None, config={}):
+    def __init__(self, obj, doc=None, config={}):  # noqa: B006
         self.load_config(config)
         FunctionDoc.__init__(self, obj, doc=doc, config=config)
 
 
 class SphinxClassDoc(SphinxDocString, ClassDoc):
-    def __init__(self, obj, doc=None, func_doc=None, config={}):
+    def __init__(self, obj, doc=None, func_doc=None, config={}):  # noqa: B006
         self.load_config(config)
         ClassDoc.__init__(self, obj, doc=doc, func_doc=None, config=config)
 
 
 class SphinxObjDoc(SphinxDocString, ObjDoc):
-    def __init__(self, obj, doc=None, config={}):
+    def __init__(self, obj, doc=None, config={}):  # noqa: B006
         self.load_config(config)
         ObjDoc.__init__(self, obj, doc=doc, config=config)
 
 
 # TODO: refactor to use docscrape.get_doc_object
-def get_doc_object(obj, what=None, doc=None, config={}, builder=None):
+def get_doc_object(obj, what=None, doc=None, config={}, builder=None):  # noqa: B006
     if what is None:
         if inspect.isclass(obj):
             what = "class"

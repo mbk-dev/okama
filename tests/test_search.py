@@ -1,4 +1,4 @@
-import json
+import json  # noqa: I001
 import pandas as pd
 import pytest
 

@@ -1,8 +1,8 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 import copy
 import logging
-from typing import Optional, Literal, Tuple
+from typing import Optional, Literal, Tuple  # noqa: UP035
 
 import pandas as pd
 from matplotlib.axes import Axes
@@ -60,7 +60,7 @@ class PortfolioDCF:
     def __init__(
         self,
         parent: core.Portfolio,
-        discount_rate: Optional[float] = None,
+        discount_rate: Optional[float] = None,  # noqa: UP045
     ):
         self.parent = parent
         self.discount_rate = discount_rate
@@ -69,7 +69,7 @@ class PortfolioDCF:
         self._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
         self._cash_flow_fv = pd.Series(dtype=float, name="cash_flow_fv")
         self.mc = mc.MonteCarlo(self)
-        self._cashflow_parameters: Optional[cf.CashFlow] = cf.IndexationStrategy(parent=parent)
+        self._cashflow_parameters: Optional[cf.CashFlow] = cf.IndexationStrategy(parent=parent)  # noqa: UP045
 
     def __repr__(self):
         dic = {
@@ -94,7 +94,7 @@ class PortfolioDCF:
         return self._discount_rate
 
     @discount_rate.setter
-    def discount_rate(self, discount_rate: Optional[float]):
+    def discount_rate(self, discount_rate: Optional[float]):  # noqa: UP045
         self._wealth_index_fv = pd.DataFrame()
         self._monte_carlo_wealth_fv = pd.DataFrame()
         if discount_rate is None and hasattr(self.parent, "inflation"):
@@ -109,7 +109,7 @@ class PortfolioDCF:
             self._discount_rate = discount_rate
 
     @property
-    def cashflow_parameters(self) -> Optional[cf.CashFlow]:
+    def cashflow_parameters(self) -> Optional[cf.CashFlow]:  # noqa: UP045
         """
         Return the cash flow strategy parameters.
 
@@ -121,7 +121,7 @@ class PortfolioDCF:
         return self._cashflow_parameters
 
     @cashflow_parameters.setter
-    def cashflow_parameters(self, cashflow_parameters: Optional[cf.CashFlow]):
+    def cashflow_parameters(self, cashflow_parameters: Optional[cf.CashFlow]):  # noqa: UP045
         if isinstance(cashflow_parameters, cf.CashFlow):
             self._cashflow_parameters = cashflow_parameters
             self.cashflow_parameters._clear_cf_cache()
@@ -133,7 +133,7 @@ class PortfolioDCF:
     def set_mc_parameters(
         self,
         distribution: str = "norm",
-        distribution_parameters: Optional[tuple] = None,
+        distribution_parameters: Optional[tuple] = None,  # noqa: UP045
         period: int = 1,
         mc_number: int = 100,
     ):
@@ -189,7 +189,7 @@ class PortfolioDCF:
 
     def wealth_index(
         self, discounting: Literal["fv", "pv"], include_negative_values: bool = False
-    ) -> Union[pd.Series, pd.DataFrame]:
+    ) -> Union[pd.Series, pd.DataFrame]:  # noqa: F821
         """
         Calculate wealth index time series for the portfolio with cash flow (contributions and withdrawals)
         using historical rate of returns.
@@ -431,7 +431,7 @@ class PortfolioDCF:
         return helpers.Frame.get_survival_date(ws, self.discount_rate, threshold)
 
     @property
-    def initial_investment_pv(self) -> Optional[float]:
+    def initial_investment_pv(self) -> Optional[float]:  # noqa: UP045
         """
         The discounted value (PV) of the initial investments at the historical first date.
 
@@ -460,7 +460,7 @@ class PortfolioDCF:
             return None
 
     @property
-    def initial_investment_fv(self) -> Optional[float]:
+    def initial_investment_fv(self) -> Optional[float]:  # noqa: UP045
         """
         The future value (FV) of the initial investments at the historical first date.
 
@@ -637,7 +637,7 @@ class PortfolioDCF:
     def plot_forecast_monte_carlo(
         self,
         backtest: bool = True,
-        figsize: Optional[tuple] = None,
+        figsize: Optional[tuple] = None,  # noqa: UP045
     ) -> Axes:
         """
         Plot Monte Carlo simulation for portfolio future wealth indexes optionally together with historical wealth index.
@@ -689,7 +689,7 @@ class PortfolioDCF:
         self.cashflow_parameters._clear_cf_cache()
         return ax
 
-    def _plot_mc_with_backtest(self, figsize: Optional[tuple] = None) -> Axes:
+    def _plot_mc_with_backtest(self, figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
         if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
         original_cashflow = self.cashflow_parameters
@@ -767,7 +767,7 @@ class PortfolioDCF:
     def find_the_largest_withdrawals_size(
         self,
         goal: Literal["maintain_balance_pv", "maintain_balance_fv", "survival_period"],
-        withdrawals_range: Tuple[float, float] = (0, 1),
+        withdrawals_range: Tuple[float, float] = (0, 1),  # noqa: UP006
         target_survival_period: int = 25,
         percentile: int = 20,
         threshold: float = 0,
@@ -966,7 +966,7 @@ class PortfolioDCF:
 
     def _validate_parameters(
         self,
-        withdrawals_range: Tuple[float, float],
+        withdrawals_range: Tuple[float, float],  # noqa: UP006
         target_survival_period: int,
         percentile: int,
         threshold: float,
@@ -1004,7 +1004,7 @@ class PortfolioDCF:
 
     def _calculate_goal_metrics(
         self, goal: str, percentile: int, threshold: float, start_investment: float, target_survival_period: int
-    ) -> Tuple[bool, float]:
+    ) -> Tuple[bool, float]:  # noqa: UP006
         """
         Calculate whether goal condition is met and relative error.
 
@@ -1035,7 +1035,7 @@ class PortfolioDCF:
         else:
             raise ValueError("The goal can be: maintain_balance_fv, maintain_balance_pv or survival_period.")
 
-    def _calculate_withdrawal_metrics(self, main_parameter: float, start_investment: float) -> Tuple[float, float]:
+    def _calculate_withdrawal_metrics(self, main_parameter: float, start_investment: float) -> Tuple[float, float]:  # noqa: UP006
         """Calculate absolute and relative withdrawal values.
 
         Returns
@@ -1065,7 +1065,7 @@ class PortfolioDCF:
         target_survival_period: int,
         expected_min_withdrawal: float,
         expected_max_withdrawal: float,
-    ) -> Tuple[float, float, float, bool, float, float]:
+    ) -> Tuple[float, float, float, bool, float, float]:  # noqa: UP006
         """Perform one iteration of bisection search.
 
         Returns
@@ -1106,8 +1106,10 @@ class PortfolioDCF:
             self.cashflow_parameters._clear_cf_cache()
 
     def _get_withdrawal_bounds(
-        self, withdrawals_range: Tuple[float, float], start_investment: float
-    ) -> Tuple[float, float]:
+        self,
+        withdrawals_range: Tuple[float, float],
+        start_investment: float,  # noqa: UP006
+    ) -> Tuple[float, float]:  # noqa: UP006
         """Calculate min and max withdrawal bounds based on strategy type.
 
         Returns

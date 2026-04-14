@@ -96,7 +96,7 @@
 #
 
 
-import pytest
+import pytest  # noqa: I001
 
 import numpy as np
 import pandas as pd
@@ -155,7 +155,7 @@ def synthetic_env2(mocker):
 
     yield {
         "index": idx,
-        "series": {k: v for k, v in [("IDX.US", a1), ("A.US", a2), ("B.US", a3)]},
+        "series": {"IDX.US": a1, "A.US": a2, "B.US": a3},
         "m_get_dict": m_get_dict,
         "m_currency_asset": m_currency_asset,
     }

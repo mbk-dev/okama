@@ -2,7 +2,7 @@
 
 """
 
-import inspect
+import inspect  # noqa: I001
 import textwrap
 import re
 import pydoc
@@ -102,7 +102,7 @@ class ParseError(Exception):
     def __str__(self):
         message = self.args[0]
         if hasattr(self, "docstring"):
-            message = "%s in %r" % (message, self.docstring)
+            message = "%s in %r" % (message, self.docstring)  # noqa: UP031
         return message
 
 
@@ -137,7 +137,7 @@ class NumpyDocString(Mapping):
         "index": {},
     }
 
-    def __init__(self, docstring, config={}):
+    def __init__(self, docstring, config={}):  # noqa: B006
         orig_docstring = docstring
         docstring = textwrap.dedent(docstring).split("\n")
 
@@ -155,7 +155,7 @@ class NumpyDocString(Mapping):
 
     def __setitem__(self, key, val):
         if key not in self._parsed_data:
-            self._error_location("Unknown section %s" % key, error=False)
+            self._error_location("Unknown section %s" % key, error=False)  # noqa: UP031
         else:
             self._parsed_data[key] = val
 
@@ -180,7 +180,7 @@ class NumpyDocString(Mapping):
         if len(l2) >= 3 and (set(l2) in ({"-"}, {"="})) and len(l2) != len(l1):
             snip = "\n".join(self._doc._str[:2]) + "..."
             self._error_location(
-                "potentially wrong underline length... \n%s \n%s in \n%s" % (l1, l2, snip),
+                "potentially wrong underline length... \n%s \n%s in \n%s" % (l1, l2, snip),  # noqa: UP031
                 error=False,
             )
         return l2.startswith("-" * len(l1)) or l2.startswith("=" * len(l1))
@@ -188,11 +188,11 @@ class NumpyDocString(Mapping):
     def _strip(self, doc):
         i = 0
         j = 0
-        for i, line in enumerate(doc):
+        for i, line in enumerate(doc):  # noqa: B007
             if line.strip():
                 break
 
-        for j, line in enumerate(doc[::-1]):
+        for j, line in enumerate(doc[::-1]):  # noqa: B007
             if line.strip():
                 break
 
@@ -316,7 +316,7 @@ class NumpyDocString(Mapping):
                 description = line_match.group("desc")
                 if line_match.group("trailing") and description:
                     self._error_location(
-                        "Unexpected comma or period after function list at index %d of "
+                        "Unexpected comma or period after function list at index %d of "  # noqa: UP031
                         'line "%s"' % (line_match.end("trailing"), line),
                         error=False,
                     )
@@ -403,7 +403,7 @@ class NumpyDocString(Mapping):
                 section = (s.capitalize() for s in section.split(" "))
                 section = " ".join(section)
                 if self.get(section):
-                    self._error_location("The section %s appears twice in  %s" % (section, "\n".join(self._doc._str)))
+                    self._error_location("The section %s appears twice in  %s" % (section, "\n".join(self._doc._str)))  # noqa: UP031
 
             if section in ("Parameters", "Other Parameters", "Attributes", "Methods"):
                 self[section] = self._parse_param_list(content)
@@ -436,7 +436,7 @@ class NumpyDocString(Mapping):
         if error:
             raise ValueError(msg)
         else:
-            warn(msg)
+            warn(msg)  # noqa: B028
 
     # string conversion routines
 
@@ -497,11 +497,11 @@ class NumpyDocString(Mapping):
             links = []
             for func, role in funcs:
                 if role:
-                    link = ":%s:`%s`" % (role, func)
+                    link = ":%s:`%s`" % (role, func)  # noqa: UP031
                 elif func_role:
-                    link = ":%s:`%s`" % (func_role, func)
+                    link = ":%s:`%s`" % (func_role, func)  # noqa: UP031
                 else:
-                    link = "`%s`_" % func
+                    link = "`%s`_" % func  # noqa: UP031
                 links.append(link)
             link = ", ".join(links)
             out += [link]
@@ -524,12 +524,12 @@ class NumpyDocString(Mapping):
         default_index = idx.get("default", "")
         if default_index:
             output_index = True
-        out += [".. index:: %s" % default_index]
+        out += [".. index:: %s" % default_index]  # noqa: UP031
         for section, references in idx.items():
             if section == "default":
                 continue
             output_index = True
-            out += ["   :%s: %s" % (section, ", ".join(references))]
+            out += ["   :%s: %s" % (section, ", ".join(references))]  # noqa: UP031
         if output_index:
             return out
         return ""
@@ -565,7 +565,7 @@ def dedent_lines(lines):
 
 
 class FunctionDoc(NumpyDocString):
-    def __init__(self, func, role="func", doc=None, config={}):
+    def __init__(self, func, role="func", doc=None, config={}):  # noqa: B006
         self._f = func
         self._role = role  # e.g. "func" or "meth"
 
@@ -578,7 +578,7 @@ class FunctionDoc(NumpyDocString):
     def get_func(self):
         func_name = getattr(self._f, "__name__", self.__class__.__name__)
         if inspect.isclass(self._f):
-            func = getattr(self._f, "__call__", self._f.__init__)
+            func = getattr(self._f, "__call__", self._f.__init__)  # noqa: B004
         else:
             func = self._f
         return func, func_name
@@ -592,15 +592,15 @@ class FunctionDoc(NumpyDocString):
 
         if self._role:
             if self._role not in roles:
-                print("Warning: invalid role %s" % self._role)
-            out += ".. %s:: %s\n    \n\n" % (roles.get(self._role, ""), func_name)
+                print("Warning: invalid role %s" % self._role)  # noqa: UP031
+            out += ".. %s:: %s\n    \n\n" % (roles.get(self._role, ""), func_name)  # noqa: UP031
 
         out += super().__str__(func_role=self._role)
         return out
 
 
 class ObjDoc(NumpyDocString):
-    def __init__(self, obj, doc=None, config={}):
+    def __init__(self, obj, doc=None, config={}):  # noqa: B006
         self._f = obj
         NumpyDocString.__init__(self, doc, config=config)
 
@@ -608,9 +608,9 @@ class ObjDoc(NumpyDocString):
 class ClassDoc(NumpyDocString):
     extra_public_methods = ["__call__"]
 
-    def __init__(self, cls, doc=None, modulename="", func_doc=FunctionDoc, config={}):
+    def __init__(self, cls, doc=None, modulename="", func_doc=FunctionDoc, config={}):  # noqa: B006
         if not inspect.isclass(cls) and cls is not None:
-            raise ValueError("Expected a class or None, but got %r" % cls)
+            raise ValueError("Expected a class or None, but got %r" % cls)  # noqa: UP031
         self._cls = cls
 
         if "sphinx" in sys.modules:
@@ -696,7 +696,7 @@ class ClassDoc(NumpyDocString):
         return True
 
 
-def get_doc_object(obj, what=None, doc=None, config={}):
+def get_doc_object(obj, what=None, doc=None, config={}):  # noqa: B006
     if what is None:
         if inspect.isclass(obj):
             what = "class"
