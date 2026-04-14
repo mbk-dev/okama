@@ -48,6 +48,17 @@ easier to integrate.
   [11 rebalancing portfolio.ipynb](examples/11%20rebalancing%20portfolio.ipynb).
 - Read the Docs navigation and API pages refreshed for `okama.search()` and
   `okama.symbols_in_namespace()`.
+- README: added GitHub and pepy.tech download badges and refreshed the project
+  roadmap.
+
+### Tooling
+
+- Migrated linting and formatting from `flake8` + `black` to `ruff check`,
+  including GitHub workflows and contributor instructions in `AGENTS.md`.
+- Added `.pre-commit-config.yaml` with ruff hooks.
+- Added top-level `requirements.txt` mirroring runtime dependencies from
+  `pyproject.toml`.
+- Added this `CHANGELOG.md` following Keep a Changelog and Semantic Versioning.
 
 ## [2.0.0] - 2025-11-27
 
