@@ -1,6 +1,6 @@
 
 [![Documentation Status](https://img.shields.io/readthedocs/okama.svg?style=popout)](http://okama.readthedocs.io/)
-[![Python](https://img.shields.io/badge/python-v3-brightgreen.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/pypi/pyversions/okama.svg)](https://www.python.org/)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/okama.svg)](https://pypi.org/project/okama/)
 [![Downloads](https://static.pepy.tech/badge/okama)](https://pepy.tech/project/okama)
 [![Coverage](https://coveralls.io/repos/github/mbk-dev/okama/badge.svg?branch=master)](https://coveralls.io/github/mbk-dev/okama?branch=master)
@@ -79,9 +79,16 @@ For many countries (China, USA, United Kingdom, European Union, Russia, Israel e
 
 ## Installation
 
+### Requirements
+
+- Python **3.11** or newer
+- Core dependencies: [pandas](https://pandas.pydata.org/), [numpy](https://numpy.org/), [scipy](https://scipy.org/) (plus `matplotlib`, `pyarrow`, `statsmodels`, `arch` and others). See [pyproject.toml](pyproject.toml) for the full list of dependencies and version constraints.
+
+### Install from PyPI
+
 `pip install okama`
 
-The latest development version can be installed directly from GitHub:
+### Install the latest development version from GitHub
 
 ```python
 git clone https://github.com/mbk-dev/okama@dev
@@ -183,6 +190,9 @@ build with _okama_ package and [Dash (plotly)](https://github.com/plotly/dash) f
 
 The plan for _okama_ is to add more functions that will be useful to investors and asset managers.
 
+- Add support for a series of investment portfolios (a financial plan comprising multiple investment strategies, each active until a specific date, after which it transitions to another).
+- Add multidimensional Monte Carlo with Ledoit-Wolf shrinkage
+- Add IRR to PortfolioDCF
 - Add Omega ratio to EfficientFrontier and Portfolio classes.
 - Add Black-Litterman asset allocation 
 - Add different utility functions for optimizers: IRR, portfolio survival period, semi-deviation, VaR, CVaR, drawdowns etc.
