@@ -30,7 +30,56 @@ In general [Conventional Commits specification](https://www.conventionalcommits.
 
 ### Code style
 
-To keep everything consistent, please use [Black](https://github.com/psf/black) with default settings.
+To keep everything consistent, the project uses [Ruff](https://github.com/astral-sh/ruff)
+for linting and formatting. The configuration lives in `pyproject.toml` under
+`[tool.ruff]` — treat it as the authoritative style guide.
+
+Before committing, run:
+
+```bash
+poetry run ruff check .
+poetry run ruff format .
+```
+
+Fix every reported issue. If a warning is truly unavoidable, silence it with a
+targeted `# noqa: <CODE>` comment on the offending line together with a short
+rationale. Never disable rules globally or use a bare `# noqa`.
+
+### Pre-commit hooks
+
+We use [pre-commit](https://pre-commit.com/) to run Ruff automatically on every
+`git commit`. The hook configuration is in [.pre-commit-config.yaml](.pre-commit-config.yaml)
+and currently runs `ruff --fix` and `ruff-format` on the staged files.
+
+**First-time setup** (once per clone):
+
+```bash
+poetry add --group dev pre-commit        # install into the project env
+poetry run pre-commit install            # register the git hook
+```
+
+After this, `pre-commit` will run automatically on every `git commit` and
+block the commit if any check fails. Ruff will auto-fix what it can — just
+re-stage the modified files (`git add -u`) and commit again.
+
+**Useful commands:**
+
+```bash
+# run all hooks against every file in the repo (not just staged ones)
+poetry run pre-commit run --all-files
+
+# run a specific hook
+poetry run pre-commit run ruff --all-files
+
+# update hook versions pinned in .pre-commit-config.yaml
+poetry run pre-commit autoupdate
+
+# bypass hooks for a single commit (discouraged — use only when justified)
+git commit --no-verify
+```
+
+If a hook fails on CI but passes locally, make sure your local hooks are
+installed and up to date (`pre-commit install && pre-commit autoupdate`).
 
 ### Testing
 
