@@ -64,6 +64,8 @@ class ListMaker(ABC):
             self.assets_last_dates,
             self._assets_ror,
         ) = self._make_list(first_date=first_date, last_date=last_date).values()
+        # TODO: assets_first_date and assets_last_date must take dates from API, not limiting to last_data & first_date
+        # add used currency pares limitations
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
         self._assets_ror = self._assets_ror[self.first_date :]
