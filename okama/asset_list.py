@@ -488,6 +488,7 @@ class AssetList(make_asset_list.ListMaker):
         CNYUSD.FX   -0.017922
         dtype: float64
         """
+        # TODO: make this expanding
         df = self._add_inflation()
         dt0 = self.last_date
         if period is None:
@@ -616,6 +617,7 @@ class AssetList(make_asset_list.ListMaker):
         RUB.INFL     0.0485
         dtype: float64
         """
+        # TODO: make this expanding
         df = self._add_inflation()
         dt0 = self.last_date
 
