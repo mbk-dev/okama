@@ -47,7 +47,6 @@
 
 ## Additional rules:
 - Always write all code comments, docstrings, and documentation in **English**, even if the task description or existing code is in another language (e.g. Russian).
-- Do not make any changes to `main_notebook.ipynb`.
 - Use type hints for all function parameters and return types.
 - Use f-string formatting for all logging and print messages.
 - When editing Jupyter Notebook examples in the `/examples` directory, ensure that the code examples are up-to-date with the current codebase in the Git branch.
