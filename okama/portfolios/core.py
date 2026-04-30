@@ -652,14 +652,16 @@ class Portfolio(make_asset_list.ListMaker):
         """
         return (self.ror + 1.0).prod() ** (1 / self.ror.shape[0]) - 1.0
 
-    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:  # noqa: UP007
+    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.DataFrame:  # noqa: UP007
         """
-        Calculate cumulative return over a given trailing period for the portfolio.
+        Calculate the expanding cumulative return time series for the portfolio.
 
-        The cumulative return is the total change in the portfolio price during the investment period.
+        The cumulative return is the total compounded change in the portfolio price from the start
+        of the selected period up to and including each subsequent month. The last row contains
+        the cumulative return over the full selected period.
 
         Inflation adjusted cumulative returns (real cumulative returns) are shown with `real=True` option.
-        Annual inflation data is calculated for the same period if `inflation=True` in the `Portfolio`.
+        Inflation data is taken from the same period if `inflation=True` in the `Portfolio`.
 
         Parameters
         ----------
@@ -673,15 +675,22 @@ class Portfolio(make_asset_list.ListMaker):
 
         Returns
         -------
-        Series
-            Cumulative rate of return values for portfolio and cumulative inflation (if inflation=True in Portfolio).
+        DataFrame
+            Time series of cumulative return for the portfolio and cumulative inflation
+            (if `inflation=True` in Portfolio and `real=False`).
 
         Examples
         --------
         >>> pf = ok.Portfolio(["BTC-USD.CC", "LTC-USD.CC"], weights=[0.8, 0.2], last_date="2021-03")
-        >>> pf.get_cumulative_return(period=2, real=True)
-        portfolio_6232.PF    9.39381
-        dtype: float64
+        >>> pf.get_cumulative_return(period=2, real=True).tail()
+                 portfolio_6232.PF
+        2020-11           3.624500
+        2020-12           5.125700
+        2021-01           7.328400
+        2021-02           8.612000
+        2021-03           9.393810
+
+        The last row contains the cumulative return over the full selected period.
         """
         ts = self._add_inflation()
         df = self._make_df_if_series(ts)
@@ -696,16 +705,17 @@ class Portfolio(make_asset_list.ListMaker):
             self._validate_period(period)
             dt = helpers.Date.subtract_years(dt0, period)
 
-        cr = helpers.Frame.get_cumulative_return(df[dt:])
+        df_slice = df[dt:]
+        cr = (1.0 + df_slice).cumprod() - 1.0
         if real:
             if not hasattr(self, "inflation"):
                 raise ValueError(
                     "Real cumulative return is not defined (no inflation information is available)."
                     "Set inflation=True in Portfolio to calculate it."
                 )
-            cumulative_inflation = helpers.Frame.get_cumulative_return(self.inflation_ts[dt:])
-            cr = (1.0 + cr) / (1.0 + cumulative_inflation) - 1.0
-            cr = cr.drop(self.inflation)
+            cumulative_inflation = (1.0 + self.inflation_ts[dt:]).cumprod() - 1.0
+            cr = (1.0 + cr).divide(1.0 + cumulative_inflation, axis=0) - 1.0
+            cr = cr.drop(columns=self.inflation)
         return cr
 
     def get_rolling_cumulative_return(self, window: int = 12, real: bool = False) -> pd.DataFrame:
@@ -1344,7 +1354,7 @@ class Portfolio(make_asset_list.ListMaker):
         dt0 = self.last_date
         df = self._add_inflation()
         # YTD return
-        ytd_return = self.get_cumulative_return(period="YTD")
+        ytd_return = self.get_cumulative_return(period="YTD").iloc[-1]
         row = ytd_return.to_dict()
         row.update(period="YTD", property="compound return")
         rows_list.append(row)

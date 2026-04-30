@@ -150,17 +150,16 @@ def test_drawdowns_and_recovery_period(pf_three_monthly):
 def test_cagr_and_cumulative_returns(pf_ab_monthly):
     cagr = pf_ab_monthly.get_cagr()
     cum = pf_ab_monthly.get_cumulative_return()
-    # API returns Series with a single value named by portfolio; accept both scalar and 1-len Series
+    # CAGR API returns Series with a single value named by portfolio; accept both scalar and 1-len Series
     if isinstance(cagr, pd.Series):
         assert cagr.shape[0] == 1
         _ = float(cagr.iloc[0])
     else:
         assert isinstance(cagr, float)
-    if isinstance(cum, pd.Series):
-        assert cum.shape[0] == 1
-        _ = float(cum.iloc[0])
-    else:
-        assert isinstance(cum, float)
+    # get_cumulative_return is expanding: history of cumulative compounded returns for the portfolio
+    assert isinstance(cum, pd.DataFrame)
+    assert cum.shape[1] == 1
+    assert cum.shape[0] == pf_ab_monthly.ror.shape[0]
 
 
 def test_rolling_cagr_and_cumulative_returns(pf_ab_monthly):

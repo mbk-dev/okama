@@ -99,8 +99,11 @@ def test_cagr_and_cumulative_returns(synthetic_env):
     al = ok.AssetList(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False)
     cagr = al.get_cagr()
     cum = al.get_cumulative_return()
-    assert isinstance(cagr, pd.Series) and isinstance(cum, pd.Series)
+    assert isinstance(cagr, pd.Series) and isinstance(cum, pd.DataFrame)
     assert all(x in cagr.index for x in ["IDX.US", "A.US", "B.US"])  # columns become index
+    # get_cumulative_return is expanding: history of cumulative compounded returns per asset
+    assert all(x in cum.columns for x in ["IDX.US", "A.US", "B.US"])
+    assert cum.shape[0] == al.assets_ror.shape[0]
 
 
 def test_tracking_and_index_metrics(synthetic_env):

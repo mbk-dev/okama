@@ -578,14 +578,16 @@ class AssetList(make_asset_list.ListMaker):
         """
         return (self.assets_ror + 1.0).prod() ** (1 / self.assets_ror.shape[0]) - 1.0
 
-    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.Series:  # noqa: UP007
+    def get_cumulative_return(self, period: Union[str, int, None] = None, real: bool = False) -> pd.DataFrame:  # noqa: UP007
         """
-        Calculate cumulative return over a given trailing period for each asset.
+        Calculate the expanding cumulative return time series for each asset.
 
-        The cumulative return is the total change in the asset price during the investment period.
+        The cumulative return is the total compounded change in the asset price from the start
+        of the selected period up to and including each subsequent month. The last row contains
+        the cumulative return over the full selected period.
 
         Inflation adjusted cumulative returns (real cumulative returns) are shown with `real=True` option.
-        Annual inflation data is calculated for the same period if `inflation=True` in the AssetList.
+        Inflation data is taken from the same period if `inflation=True` in the AssetList.
 
         Parameters
         ----------
@@ -599,8 +601,9 @@ class AssetList(make_asset_list.ListMaker):
 
         Returns
         -------
-        Series
-            Cumulative return values for each asset and cumulative inflation (if inflation=True in AssetList).
+        DataFrame
+            Time series of cumulative return for each asset and cumulative inflation
+            (if `inflation=True` in AssetList and `real=False`).
 
         See Also
         --------
@@ -612,12 +615,16 @@ class AssetList(make_asset_list.ListMaker):
         Examples
         --------
         >>> x = ok.AssetList(["MCFTR.INDX"], ccy="RUB")
-        >>> x.get_cumulative_return(period="YTD")
-        MCFTR.INDX   0.1483
-        RUB.INFL     0.0485
-        dtype: float64
+        >>> x.get_cumulative_return(period="YTD").tail()
+                 MCFTR.INDX  RUB.INFL
+        2024-08    0.083117  0.031241
+        2024-09    0.094772  0.035987
+        2024-10    0.118014  0.042601
+        2024-11    0.131562  0.046832
+        2024-12    0.148300  0.048500
+
+        The last row contains the YTD cumulative return values.
         """
-        # TODO: make this expanding
         df = self._add_inflation()
         dt0 = self.last_date
 
@@ -630,16 +637,17 @@ class AssetList(make_asset_list.ListMaker):
             self._validate_period(period)
             dt = helpers.Date.subtract_years(dt0, period)
 
-        cr = helpers.Frame.get_cumulative_return(df[dt:])
+        df_slice = df[dt:]
+        cr = (1.0 + df_slice).cumprod() - 1.0
         if real:
             if not hasattr(self, "inflation"):
                 raise ValueError(
                     "Real cumulative return is not defined (no inflation information is available)."
                     "Set inflation=True in AssetList to calculate it."
                 )
-            cumulative_inflation = helpers.Frame.get_cumulative_return(self.inflation_ts[dt:])
-            cr = (1.0 + cr) / (1.0 + cumulative_inflation) - 1.0
-            cr = cr.drop(self.inflation)
+            cumulative_inflation = (1.0 + self.inflation_ts[dt:]).cumprod() - 1.0
+            cr = (1.0 + cr).divide(1.0 + cumulative_inflation, axis=0) - 1.0
+            cr = cr.drop(columns=self.inflation)
         return cr
 
     def get_rolling_cumulative_return(self, window: int = 12, real: bool = False) -> pd.DataFrame:
@@ -775,7 +783,7 @@ class AssetList(make_asset_list.ListMaker):
         dt0 = self.last_date
         df = self._add_inflation()
         # YTD return
-        ytd_return = self.get_cumulative_return(period="YTD")
+        ytd_return = self.get_cumulative_return(period="YTD").iloc[-1]
         row = ytd_return.to_dict()
         row.update(period="YTD", property="Compound return")
         rows_list.append(row)
