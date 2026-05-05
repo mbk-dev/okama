@@ -104,7 +104,8 @@ def test_real_metrics_with_inflation_parametrized(_inflation_env, compute_metric
         assert pytest.approx(got, rel=1e-12) == exp
 
     elif compute_metric == "real_cagr":
-        got = float(al.get_cagr(real=True)["A.US"])  # full-period real CAGR
+        # full-period real CAGR is the last row of the expanding series
+        got = float(al.get_cagr(real=True)["A.US"].iloc[-1])
         exp = expected_real_cagr_full()
         assert pytest.approx(got, rel=1e-12) == exp
 

@@ -294,7 +294,7 @@ class IndexationStrategy(CashFlow):
     @indexation.setter
     def indexation(self, indexation: Optional[float]):  # noqa: UP045
         if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
-            self._indexation = self.portfolio.get_cagr().loc[self.portfolio.inflation]
+            self._indexation = self.portfolio.get_cagr().iloc[-1].loc[self.portfolio.inflation]
         elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
             raise ValueError("There is no information about historical inflation. Set inflation=True to calculate.")
         elif indexation is None and not hasattr(self.portfolio, "inflation"):
@@ -701,7 +701,7 @@ class VanguardDynamicSpending(PercentageStrategy):
     @indexation.setter
     def indexation(self, indexation: Optional[float]):  # noqa: UP045
         if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
-            self._indexation = self.portfolio.get_cagr().loc[self.portfolio.inflation]
+            self._indexation = self.portfolio.get_cagr().iloc[-1].loc[self.portfolio.inflation]
         elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
             raise ValueError("There is no information about historical inflation. Set inflation=True to calculate.")
         elif indexation is None and not hasattr(self.portfolio, "inflation"):

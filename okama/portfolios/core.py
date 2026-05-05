@@ -539,16 +539,16 @@ class Portfolio(make_asset_list.ListMaker):
         """
         return helpers.Frame.get_annual_return_ts_from_monthly(self.ror, return_type)
 
-    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.Series:  # noqa: UP045
+    def get_cagr(self, period: Optional[int] = None, real: bool = False) -> pd.DataFrame:  # noqa: UP045
         """
-        Calculate portfolio Compound Annual Growth Rate (CAGR) for a given trailing period.
+        Calculate the expanding portfolio Compound Annual Growth Rate (CAGR) time series.
 
-        Compound annual growth rate (CAGR) is the rate of return that would be required for an investment to grow from
-        its initial to its final value, assuming all incomes were reinvested.
+        The expanding CAGR at each month is the annualized rate of return required for the investment to grow
+        from its initial value to its value at that month, assuming all incomes were reinvested.
+        The last row contains the CAGR over the full selected period.
 
         Inflation adjusted annualized returns (real CAGR) are shown with `real=True` option.
-
-        Annual inflation value is calculated for the same period if `inflation=True` in the `Portfolio`.
+        Annualized inflation is calculated for the same period if `inflation=True` in the `Portfolio`.
 
         Parameters
         ----------
@@ -560,26 +560,25 @@ class Portfolio(make_asset_list.ListMaker):
 
         Returns
         -------
-        Series
-            Portfolio CAGR value and annualized inflation (optional).
+        DataFrame
+            Time series of expanding portfolio CAGR and annualized inflation
+            (if `inflation=True` in Portfolio and `real=False`).
 
         Notes
         -----
-        CAGR is not defined for periods less than 1 year (NaN values are returned).
+        CAGR is not defined for periods less than 1 year. The first 11 rows are filled with NaN values.
 
         Examples
         --------
-        >>> pf = ok.Portfolio(["XCS6.XETR", "PHAU.LSE"], weights=[0.85, 0.15], ccy="USD")
-        >>> pf.names
-        {'XCS6.XETR': 'Xtrackers MSCI China UCITS ETF 1C', 'PHAU.LSE': 'WisdomTree Physical Gold'}
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], weights=[0.6, 0.4], ccy="USD", inflation=True)
+        >>> pf.get_cagr(period=5).tail()
 
-        To get inflation adjusted return (real annualized return) add `real=True` option:
+        The last row contains the CAGR values over the full selected period.
 
-        >>> pf.get_cagr(period=5, real=True)
-        portfolio_5625.PF    0.121265
-        dtype: float64
+        To get inflation adjusted annualized return (real CAGR) add `real=True` option:
+
+        >>> pf.get_cagr(period=5, real=True).tail()
         """
-        # TODO: add option assets=False
         ts = self._add_inflation()
         df = self._make_df_if_series(ts)
         dt0 = self.last_date
@@ -588,13 +587,20 @@ class Portfolio(make_asset_list.ListMaker):
         else:
             self._validate_period(period)
             dt = helpers.Date.subtract_years(dt0, period)
-        cagr = helpers.Frame.get_cagr(df[dt:])
+        df_slice = df[dt:]
+        n = df_slice.shape[0]
+        exponents = settings._MONTHS_PER_YEAR / np.arange(1, n + 1, dtype=float)
+        cagr: pd.DataFrame = (1.0 + df_slice).cumprod().pow(exponents, axis=0) - 1.0
+        nan_rows = min(settings._MONTHS_PER_YEAR - 1, n)
+        cagr.iloc[:nan_rows] = np.nan
         if real:
             if not hasattr(self, "inflation"):
                 raise ValueError("Real CAGR is not defined. Set inflation=True in Portfolio to calculate it.")
-            mean_inflation = helpers.Frame.get_cagr(self.inflation_ts[dt:])
-            cagr = (1.0 + cagr) / (1.0 + mean_inflation) - 1.0
-            cagr = cagr.drop(self.inflation)
+            infl_cumprod = (1.0 + self.inflation_ts[dt:]).cumprod()
+            infl_cagr = infl_cumprod.pow(pd.Series(exponents, index=infl_cumprod.index)) - 1.0
+            infl_cagr.iloc[:nan_rows] = np.nan
+            cagr = (1.0 + cagr).divide(1.0 + infl_cagr, axis=0) - 1.0
+            cagr = cagr.drop(columns=self.inflation)
         return cagr
 
     def get_rolling_cagr(self, window: int = 12, real: bool = False) -> pd.DataFrame:
@@ -1363,13 +1369,13 @@ class Portfolio(make_asset_list.ListMaker):
             for i in years:
                 dt = helpers.Date.subtract_years(dt0, i)
                 if dt >= self.first_date:
-                    row = self.get_cagr(period=i).to_dict()
+                    row = self.get_cagr(period=i).iloc[-1].to_dict()
                 else:
                     row = dict.fromkeys(df.columns) if hasattr(self, "inflation") else {self.symbol: None}
                 row.update(period=f"{i} years", property="CAGR")
                 rows_list.append(row)
             # CAGR for full period
-            row = self.get_cagr(period=None).to_dict()
+            row = self.get_cagr(period=None).iloc[-1].to_dict()
             row.update(
                 period=self._pl_txt,
                 property="CAGR",
