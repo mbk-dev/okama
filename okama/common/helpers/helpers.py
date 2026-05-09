@@ -297,9 +297,17 @@ class Frame:
     @staticmethod
     def get_semideviation(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:  # noqa: UP007
         """
-        Returns semideviation.
+        Return semi-deviation (downside deviation below the sample mean).
+
+        Semi-deviation measures the dispersion of returns that fall below the sample mean
+        of the same series — the threshold is data-driven and recomputed for each input.
+
+        For *target-based* downside deviation — where the threshold is an externally chosen
+        reference such as 0, the risk-free rate, or a minimum acceptable return — use
+        :func:`get_below_target_semideviation` and pass the target via the ``t_return``
+        parameter.
         """
-        below_mean = ror < ror.std(ddof=0)
+        below_mean = ror < ror.mean()
         return ror[below_mean].std(ddof=0)
 
     @staticmethod

@@ -241,8 +241,8 @@ class AssetList(make_asset_list.ListMaker):
         --------
         >>> al = ok.AssetList(["GC.COMM", "SHV.US"], ccy="USD", last_date="2021-01")
         >>> al.semideviation_monthly
-        GC.COMM    0.039358
-        SHV.US     0.000384
+        GC.COMM    0.032450
+        SHV.US     0.000304
         dtype: float64
         """
         return helpers.Frame.get_semideviation(self.assets_ror)
@@ -275,8 +275,8 @@ class AssetList(make_asset_list.ListMaker):
         --------
         >>> al = ok.AssetList(["GC.COMM", "SHV.US"], ccy="USD", last_date="2021-01")
         >>> al.semideviation_annual
-        GC.COMM    0.115302
-        SHV.US     0.000560
+        GC.COMM    0.112411
+        SHV.US     0.001052
         dtype: float64
         """
         return helpers.Frame.get_semideviation(self.assets_ror) * 12**0.5

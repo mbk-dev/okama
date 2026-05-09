@@ -1164,9 +1164,9 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(["MSFT.US", "AAPL.US"])
+        >>> pf = ok.Portfolio(["MSFT.US", "AAPL.US"], last_date="2024-12")
         >>> pf.semideviation_monthly
-        0.05601433676604449
+        0.057319735856567695
         """
         return helpers.Frame.get_semideviation(self.ror)
 
@@ -1184,9 +1184,9 @@ class Portfolio(make_asset_list.ListMaker):
 
         Examples
         --------
-        >>> pf = ok.Portfolio(["MSFT.US", "AAPL.US"])
+        >>> pf = ok.Portfolio(["MSFT.US", "AAPL.US"], last_date="2024-12")
         >>> pf.semideviation_annual
-        0.1940393544621248
+        0.1985613895600056
         """
         return helpers.Frame.get_semideviation(self.ror) * 12**0.5
 
