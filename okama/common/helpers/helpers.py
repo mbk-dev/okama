@@ -49,7 +49,7 @@ class Float:
 
     @staticmethod
     def annualize_risk(
-        risk: Union[float, pd.Series, pd.DataFrame],
+        risk: float | pd.Series | pd.DataFrame,
         mean_return: Union[float, pd.Series, pd.DataFrame],  # noqa: UP007
     ) -> Union[float, pd.Series, pd.DataFrame]:  # noqa: UP007
         """
@@ -217,7 +217,7 @@ class Frame:
 
     @staticmethod
     def get_annual_return_ts_from_monthly(
-        ror_monthly: Union[pd.DataFrame, pd.Series],
+        ror_monthly: pd.DataFrame | pd.Series,
         return_type: Literal["cagr", "arithmetic_mean"] = "cagr",  # noqa: UP007
     ) -> Union[pd.DataFrame, pd.Series]:  # noqa: UP007
         """
@@ -235,7 +235,7 @@ class Frame:
 
     @staticmethod
     def get_wealth_indexes(
-        ror: Union[pd.Series, pd.DataFrame],
+        ror: pd.Series | pd.DataFrame,
         initial_amount: float = 1000.0,  # noqa: UP007
     ) -> Union[pd.Series, pd.DataFrame]:  # noqa: UP007
         """
@@ -312,7 +312,7 @@ class Frame:
 
     @staticmethod
     def get_below_target_semideviation(
-        ror: Union[pd.DataFrame, pd.Series],
+        ror: pd.DataFrame | pd.Series,
         t_return: float = 0,  # noqa: UP007
     ) -> Union[pd.Series, float]:  # noqa: UP007
         """

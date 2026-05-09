@@ -61,7 +61,7 @@ class Rebalance:
     def __init__(
         self,
         period: str = "year",
-        abs_deviation: Optional[float] = None,
+        abs_deviation: float | None = None,
         rel_deviation: Optional[float] = None,  # noqa: UP045
     ):
         self.abs_deviation = abs_deviation

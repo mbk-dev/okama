@@ -1107,7 +1107,7 @@ class PortfolioDCF:
 
     def _get_withdrawal_bounds(
         self,
-        withdrawals_range: Tuple[float, float],
+        withdrawals_range: tuple[float, float],
         start_investment: float,  # noqa: UP006
     ) -> Tuple[float, float]:  # noqa: UP006
         """Calculate min and max withdrawal bounds based on strategy type.
