@@ -10,3 +10,6 @@ poetry.lock
 /.ipynb_checkpoints
 main.py
 main_notebook.ipynb
+.env
+.env.*
+!.env.example
