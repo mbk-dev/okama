@@ -6,6 +6,11 @@
 - Use interpreter in poetry env (poetry run python ...).
 - Always use "poetry add" instead of "pip install"
 
+### Test-Driven Development (TDD)
+Any change to production code (new feature, bugfix, refactor, behavior change) must follow TDD: **write a failing test first, then the minimal code that makes it pass**. This overrides the default "write code, then tests" workflow.
+
+The required workflow is the `superpowers:test-driven-development` skill. Cycle: **RED → verify RED → GREEN → verify GREEN → REFACTOR**.
+
 ## After any code changes:
 1) Determine whether *executable Python code* was changed, not just comments or docstrings.
 2) If executable code was changed — always run tests: `pytest -q`.
@@ -20,7 +25,21 @@
 
 ## Python style & modernization
 
-- Target **Python 3.13+**. Write new code with modern syntax and avoid legacy forms:
+- **Minimum supported Python version is taken from `pyproject.toml`** (the
+  `python = "..."` constraint under `[tool.poetry.dependencies]`). All library
+  code must run unchanged on that minimum version. For example, if
+  `pyproject.toml` declares `python = ">=3.11,<4.0.0"`, then Python 3.11 must be
+  fully supported and no 3.12+ only syntax or stdlib features may be used in
+  library code without a `sys.version_info` gate and a fallback.
+- **Notebook examples in `/examples` additionally target Google Colab**, which
+  currently ships Python 3.12 by default. Notebooks must run on Colab's 3.12
+  unchanged. Do not use 3.13-only syntax or stdlib features in notebooks
+  (e.g. PEP 695 `type` statement improvements, `typing` additions introduced
+  in 3.13). If a 3.13-only construct is genuinely needed, gate it behind a
+  `sys.version_info` check and provide a 3.12 fallback.
+- When the `pyproject.toml` minimum is bumped, update this section accordingly
+  and re-evaluate which modern-syntax features can be used unconditionally.
+- Write new code with modern syntax and avoid legacy forms:
   - Use built-in generics: `list[int]`, `dict[str, Any]`, `tuple[int, ...]`
     instead of `typing.List` / `Dict` / `Tuple`.
   - Use union syntax `X | Y` and `X | None` instead of `typing.Union` / `typing.Optional`.
@@ -47,7 +66,6 @@
 
 ## Additional rules:
 - Always write all code comments, docstrings, and documentation in **English**, even if the task description or existing code is in another language (e.g. Russian).
-- Do not make any changes to `main_notebook.ipynb`.
 - Use type hints for all function parameters and return types.
 - Use f-string formatting for all logging and print messages.
 - When editing Jupyter Notebook examples in the `/examples` directory, ensure that the code examples are up-to-date with the current codebase in the Git branch.

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "okama"
-version = "2.0.1"
+version = "2.1.0"
 description = "Investment portfolio analyzing & optimization tools"
 authors = ["Sergey Kikevich <chilango74@gmail.com>"]
 license = "MIT"
@@ -85,10 +85,10 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 120
 extend-exclude = ["docs", ".ipynb_checkpoints", "env", ".env"]
-target-version = "py313"
+target-version = "py311"
 
 [tool.ruff.lint]
-select = ["C", "E", "F", "W", "B"]
+select = ["C", "E", "F", "W", "B", "UP"]
 ignore = ["E203", "E501"]
 
 [tool.ruff.lint.per-file-ignores]

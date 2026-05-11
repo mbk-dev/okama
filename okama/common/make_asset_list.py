@@ -64,6 +64,8 @@ class ListMaker(ABC):
             self.assets_last_dates,
             self._assets_ror,
         ) = self._make_list(first_date=first_date, last_date=last_date).values()
+        # TODO: assets_first_date and assets_last_date must take dates from API, not limiting to last_data & first_date
+        # add used currency pares limitations
         if first_date:
             self.first_date = max(self.first_date, pd.to_datetime(first_date))
         self._assets_ror = self._assets_ror[self.first_date :]
@@ -691,7 +693,7 @@ class ListMaker(ABC):
             returns = [returns]
         # set the plot
         ax = plt.gca()
-        plt.autoscale(enable=True, axis="year", tight=False)
+        plt.autoscale(enable=True, axis="both", tight=False)
         ax.margins(0.05, 0.1)  # increase margins on Y-axis from 5% to 10% as `annotate` moves text upwards
         m = 100 if pct_values else 1
         ax.scatter(risks * m, returns * m, zorder=10, **(kwargs or {}))

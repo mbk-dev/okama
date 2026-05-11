@@ -49,7 +49,7 @@ class Float:
 
     @staticmethod
     def annualize_risk(
-        risk: Union[float, pd.Series, pd.DataFrame],
+        risk: float | pd.Series | pd.DataFrame,
         mean_return: Union[float, pd.Series, pd.DataFrame],  # noqa: UP007
     ) -> Union[float, pd.Series, pd.DataFrame]:  # noqa: UP007
         """
@@ -189,7 +189,7 @@ class Frame:
         """
         if ror.shape[0] < 12:
             # CAGR is not defined for periods < 1 year. Return None or Series with NaNs.
-            return pd.Series(dict.fromkeys(ror.columns)) if isinstance(ror, pd.DataFrame) else None
+            return pd.Series(dict.fromkeys(ror.columns, np.nan)) if isinstance(ror, pd.DataFrame) else None
         return ((ror + 1.0).prod()) ** (settings._MONTHS_PER_YEAR / ror.shape[0]) - 1.0
 
     @staticmethod
@@ -217,7 +217,7 @@ class Frame:
 
     @staticmethod
     def get_annual_return_ts_from_monthly(
-        ror_monthly: Union[pd.DataFrame, pd.Series],
+        ror_monthly: pd.DataFrame | pd.Series,
         return_type: Literal["cagr", "arithmetic_mean"] = "cagr",  # noqa: UP007
     ) -> Union[pd.DataFrame, pd.Series]:  # noqa: UP007
         """
@@ -235,7 +235,7 @@ class Frame:
 
     @staticmethod
     def get_wealth_indexes(
-        ror: Union[pd.Series, pd.DataFrame],
+        ror: pd.Series | pd.DataFrame,
         initial_amount: float = 1000.0,  # noqa: UP007
     ) -> Union[pd.Series, pd.DataFrame]:  # noqa: UP007
         """
@@ -297,14 +297,22 @@ class Frame:
     @staticmethod
     def get_semideviation(ror: Union[pd.DataFrame, pd.Series]) -> Union[pd.Series, float]:  # noqa: UP007
         """
-        Returns semideviation.
+        Return semi-deviation (downside deviation below the sample mean).
+
+        Semi-deviation measures the dispersion of returns that fall below the sample mean
+        of the same series — the threshold is data-driven and recomputed for each input.
+
+        For *target-based* downside deviation — where the threshold is an externally chosen
+        reference such as 0, the risk-free rate, or a minimum acceptable return — use
+        :func:`get_below_target_semideviation` and pass the target via the ``t_return``
+        parameter.
         """
-        below_mean = ror < ror.std(ddof=0)
+        below_mean = ror < ror.mean()
         return ror[below_mean].std(ddof=0)
 
     @staticmethod
     def get_below_target_semideviation(
-        ror: Union[pd.DataFrame, pd.Series],
+        ror: pd.DataFrame | pd.Series,
         t_return: float = 0,  # noqa: UP007
     ) -> Union[pd.Series, float]:  # noqa: UP007
         """

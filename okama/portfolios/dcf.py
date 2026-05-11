@@ -452,9 +452,9 @@ class PortfolioDCF:
         6574.643143611553
         """
         if hasattr(self.cashflow_parameters, "initial_investment"):
-            monlthly_discount_rate = (1 + self.discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
+            monthly_discount_rate = (1 + self.discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
             return (
-                self.cashflow_parameters.initial_investment / (1.0 + monlthly_discount_rate) ** self.parent.ror.shape[0]
+                self.cashflow_parameters.initial_investment / (1.0 + monthly_discount_rate) ** self.parent.ror.shape[0]
             )
         else:
             return None
@@ -1107,7 +1107,7 @@ class PortfolioDCF:
 
     def _get_withdrawal_bounds(
         self,
-        withdrawals_range: Tuple[float, float],
+        withdrawals_range: tuple[float, float],
         start_investment: float,  # noqa: UP006
     ) -> Tuple[float, float]:  # noqa: UP006
         """Calculate min and max withdrawal bounds based on strategy type.

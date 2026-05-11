@@ -404,7 +404,7 @@ class EfficientFrontier(asset_list.AssetList):
             point["Diversification ratio"] = -weights.fun
             return point
         else:
-            raise RecursionError("No solutions where found")
+            raise RuntimeError("No solutions where found")
 
     def get_tangency_portfolio(self, rf_return: float = 0, rate_of_return: str = "cagr") -> dict:
         """
@@ -497,7 +497,7 @@ class EfficientFrontier(asset_list.AssetList):
                 "Risk": objective_function.risk,
             }
         else:
-            raise RecursionError("No solutions where found")
+            raise RuntimeError("No solutions where found")
 
     @property
     def gmv_monthly_weights(self) -> np.ndarray:
@@ -712,7 +712,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         Raises
         ------
-        RecursionError
+        RuntimeError
             If no solution is found for the given target CAGR value.
 
         Examples
@@ -770,7 +770,7 @@ class EfficientFrontier(asset_list.AssetList):
             point["iterations"] = weights.nit
             # break
         if not weights.success:
-            raise RecursionError(f"No solution found for target CAGR value: {target_value}.")
+            raise RuntimeError(f"No solution found for target CAGR value: {target_value}.")
         return point
 
     def _maximize_risk(self, target_return: float) -> Dict[str, float]:  # noqa: UP006
@@ -854,7 +854,7 @@ class EfficientFrontier(asset_list.AssetList):
                 break
 
         if solution is None:
-            raise RecursionError(f"No solution found for target CAGR value: {target_return}.")
+            raise RuntimeError(f"No solution found for target CAGR value: {target_return}.")
         return solution
 
     @property
@@ -1399,7 +1399,7 @@ class EfficientFrontier(asset_list.AssetList):
         mean_return_monthly = self.assets_ror.mean()
         risks = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
         max_return = self.global_max_return_portfolio["CAGR"]
-        min_cagr = self.get_cagr().min()
+        min_cagr = self.get_cagr().iloc[-1].min()
         y_bottom = min(min_cagr, rf_return)
         plot_margin = 0.10
         ax.set_ylim(y_bottom * (1 - plot_margin), max_return * (1 + plot_margin))
