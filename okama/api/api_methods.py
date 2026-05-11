@@ -13,8 +13,8 @@ class API:
     Set of methods to get data from API.
     """
 
-    api_url = "https://api.okama.io"
-    default_timeout = 10  # seconds
+    api_url = settings.api_url
+    default_timeout = settings.api_default_timeout  # seconds
 
     endpoint_ror = "/api/ts/ror/"
     endpoint_symbol = "/api/symbol/"

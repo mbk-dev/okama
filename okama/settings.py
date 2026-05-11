@@ -1,4 +1,9 @@
+import os
 from collections import namedtuple
+
+# API
+api_url: str = os.getenv("OKAMA_API_URL", "https://api.okama.io")
+api_default_timeout: int = int(os.getenv("OKAMA_API_TIMEOUT", "10"))  # seconds
 
 # tickers
 default_ticker = "SPY.US"
