@@ -97,6 +97,16 @@ def test_minimize_risk_reaches_target_cagr(ef_reb_ab):
     assert_allclose(np.sum(np.asarray(result["Weights"])), 1.0, atol=1e-8)
 
 
+def test_minimize_risk_raises_runtimeerror_on_failure(ef_reb_ab):
+    """Failed SLSQP optimisation must raise plain RuntimeError, not RecursionError
+    (no recursion is involved; RecursionError misrepresents the failure mode)."""
+    with pytest.raises(RuntimeError) as excinfo:
+        ef_reb_ab.minimize_risk(target_value=10.0)  # 1000% CAGR is infeasible
+    assert type(excinfo.value) is RuntimeError, (
+        f"Expected exact RuntimeError, got {type(excinfo.value).__name__}"
+    )
+
+
 def test_ef_points_shape_and_monotonicity(ef_reb_ab):
     pts = ef_reb_ab.ef_points
     # At least n_points rows (can be larger if right part exists)
