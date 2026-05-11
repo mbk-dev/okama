@@ -347,7 +347,7 @@ class Inflation(MacroABC):
         >>> x.purchasing_power_1000
         145.8118461948026
         """
-        return helpers.Float.get_purchasing_power(self.cumulative_inflation[-1])
+        return helpers.Float.get_purchasing_power(self.cumulative_inflation.iloc[-1])
 
     @property
     def rolling_inflation(self) -> pd.Series:
