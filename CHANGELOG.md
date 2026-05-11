@@ -5,6 +5,61 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-05
+
+Feature release that switches `get_cagr` and `get_cumulative_return` to an
+expanding-window definition, makes the okama API endpoint configurable via
+environment variables, and ships a batch of correctness fixes across the
+helpers, frontier, DCF, macro, and plotting layers.
+
+### Changed
+- `AssetList.get_cumulative_return()` and `Portfolio.get_cumulative_return()`
+  now return an **expanding** cumulative return series instead of a single
+  end-of-period scalar. Notebook
+  [03 investment portfolios.ipynb](examples/03%20investment%20portfolios.ipynb)
+  updated accordingly.
+- `AssetList.get_cagr()` and `Portfolio.get_cagr()` now compute CAGR on an
+  expanding window, consistent with `get_cumulative_return()`.
+
+### Added
+- Configurable API base URL and request timeout via environment variables
+  (`OKAMA_API_URL`, `OKAMA_API_TIMEOUT`) in `okama.settings` and
+  `okama.api.api_methods`.
+
+### Fixed
+- `Frame.get_semideviation()` (in `okama.common.helpers`) now uses the sample
+  mean of returns instead of the population mean, restoring the standard
+  semideviation definition; propagated through `AssetList` and `Portfolio`
+  consumers.
+- `AssetList.recovery_periods` is robust to a `last_date` that is not on a
+  month start.
+- `EfficientFrontier` / `EfficientFrontierReb` (single- and multi-period
+  variants) now raise `RuntimeError` on failed SLSQP optimisation instead of
+  silently returning invalid weights.
+- `AssetList.plot_assets()` / `Portfolio.plot_assets()` autoscale no longer
+  passes the invalid `axis="year"` argument.
+- `Inflation.cumulative_inflation` (in `okama.macro`) uses `.iloc[-1]` instead
+  of positional `[-1]`, fixing a pandas FutureWarning / lookup bug.
+- `PortfolioDCF` discount-rate attribute renamed from the misspelled
+  `monlthly_discount_rate` to `monthly_discount_rate`
+  (`okama.portfolios.dcf`, `okama.portfolios.dcf_calculations`).
+- Helpers producing NaN rows now use `np.nan` in `dict.fromkeys(...)` so
+  resulting DataFrames keep float dtype (`okama.common.helpers`,
+  consumed by `AssetList` and `Portfolio`).
+
+### Removed
+- Dead `Portfolio._clear_cf_cache` method.
+
+### Tooling
+- Enabled ruff `UP` (pyupgrade) rules and applied auto-fixes across
+  `okama.common.helpers`, `okama.common.helpers.rebalancing`,
+  `okama.portfolios.dcf`, and notebook
+  [11 rebalancing portfolio.ipynb](examples/11%20rebalancing%20portfolio.ipynb).
+- Aligned declared supported Python versions with the `pyproject.toml`
+  minimum; `AGENTS.md` now mandates a TDD workflow for production code
+  changes.
+- `.gitignore` excludes `.env`.
+
 ## [2.0.1] - 2026-04
 
 Maintenance-focused release that improves compatibility with `pandas` 3.x and Python 3.14,
