@@ -6,6 +6,11 @@
 - Use interpreter in poetry env (poetry run python ...).
 - Always use "poetry add" instead of "pip install"
 
+### Test-Driven Development (TDD)
+Any change to production code (new feature, bugfix, refactor, behavior change) must follow TDD: **write a failing test first, then the minimal code that makes it pass**. This overrides the default "write code, then tests" workflow.
+
+The required workflow is the `superpowers:test-driven-development` skill. Cycle: **RED → verify RED → GREEN → verify GREEN → REFACTOR**.
+
 ## After any code changes:
 1) Determine whether *executable Python code* was changed, not just comments or docstrings.
 2) If executable code was changed — always run tests: `pytest -q`.
