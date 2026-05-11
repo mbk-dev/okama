@@ -85,7 +85,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 120
 extend-exclude = ["docs", ".ipynb_checkpoints", "env", ".env"]
-target-version = "py313"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["C", "E", "F", "W", "B", "UP"]
