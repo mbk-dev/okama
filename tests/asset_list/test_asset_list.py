@@ -95,6 +95,30 @@ def test_var_cvar_drawdowns_recovery_periods(synthetic_env):
     assert all(x in var.index for x in ["IDX.US", "A.US", "B.US"])  # columns become index
 
 
+def test_recovery_periods_unrecovered_when_last_date_is_not_month_start(mocker):
+    """`recovery_periods` must return NA for an unrecovered drawdown at the last
+    period regardless of whether `self.last_date` is a month-start timestamp."""
+    from tests.asset_list.conftest import _FakeAsset, _FakeCurrencyAsset
+
+    idx = pd.period_range("2020-01", periods=6, freq="M")
+    # Monotonically declining asset: drawdown deepens every month, never recovers.
+    ror = pd.Series([-0.05] * 6, index=idx, name="DROP.US")
+
+    fake_assets = {"DROP.US": _FakeAsset("DROP.US", ror, currency="USD")}
+    mocker.patch("okama.common.make_asset_list.ListMaker._get_asset_obj_dict", return_value=fake_assets)
+    mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=_FakeCurrencyAsset)
+
+    al = ok.AssetList(["DROP.US"], ccy="USD", inflation=False)
+    # Simulate a code path where last_date is not aligned with Period start-of-month
+    # (e.g., user-supplied mid-month last_date that survives downstream).
+    al.last_date = al.last_date + pd.Timedelta(days=14)
+
+    rec = al.recovery_periods
+    assert pd.isna(rec["DROP.US"]), (
+        f"Expected NA for unrecovered drawdown at last period, got {rec['DROP.US']!r}"
+    )
+
+
 def test_cagr_and_cumulative_returns(synthetic_env):
     al = ok.AssetList(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False)
     cagr = al.get_cagr()

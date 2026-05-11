@@ -434,8 +434,9 @@ class AssetList(make_asset_list.ListMaker):
             s1 = s.where(s == 0).notnull().astype(int)
             s1_1 = s.where(s == 0).isnull().astype(int).cumsum()
             s2 = s1.groupby(s1_1).cumsum()
-            # Max recovery period date should not be in the border (it's not recovered)
-            max_period = s2.max() if s2.idxmax().to_timestamp() != self.last_date else np.nan
+            # Max recovery period must not be at the last available period (otherwise drawdown is not yet recovered).
+            # Compare PeriodIndex entries directly to avoid relying on `self.last_date` being a month-start Timestamp.
+            max_period = s2.max() if s2.idxmax() != s2.index[-1] else np.nan
             recovery_data[name] = max_period
         # Use Int64 (nullable integer) to support NaN values
         return pd.Series(recovery_data, dtype="Int64")
