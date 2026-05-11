@@ -316,9 +316,9 @@ def discount_monthly_cash_flow(
     reverse: bool = False,
 ) -> Union[pd.Series, pd.DataFrame]:  # noqa: UP007
     number_of_months = cash_flow_fv.shape[0]
-    monlthly_discount_rate = (1 + annual_effective_discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
+    monthly_discount_rate = (1 + annual_effective_discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
     if not reverse:
-        discount_factors = (1.0 + monlthly_discount_rate) ** np.arange(number_of_months)
+        discount_factors = (1.0 + monthly_discount_rate) ** np.arange(number_of_months)
     else:
-        discount_factors = (1.0 + monlthly_discount_rate) ** np.arange(number_of_months)[::-1]
+        discount_factors = (1.0 + monthly_discount_rate) ** np.arange(number_of_months)[::-1]
     return cash_flow_fv.div(discount_factors, axis=0)
