@@ -1670,8 +1670,3 @@ class Portfolio(make_asset_list.ListMaker):
         if self.rebalancing_strategy.rel_deviation is not None:
             query_params["rebalancing_rel_deviation"] = self.rebalancing_strategy.rel_deviation
         return f"https://okama.io/portfolio?{urlencode(query_params, safe=',')}"
-
-    def _clear_cf_cache(self):
-        self._monte_carlo_wealth = pd.DataFrame()
-        self._wealth_index = pd.DataFrame()
-        self._cash_flow_fv = pd.DataFrame()
