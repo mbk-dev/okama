@@ -1371,7 +1371,7 @@ class Portfolio(make_asset_list.ListMaker):
                 if dt >= self.first_date:
                     row = self.get_cagr(period=i).iloc[-1].to_dict()
                 else:
-                    row = dict.fromkeys(df.columns) if hasattr(self, "inflation") else {self.symbol: None}
+                    row = dict.fromkeys(df.columns, np.nan) if hasattr(self, "inflation") else {self.symbol: np.nan}
                 row.update(period=f"{i} years", property="CAGR")
                 rows_list.append(row)
             # CAGR for full period

@@ -189,7 +189,7 @@ class Frame:
         """
         if ror.shape[0] < 12:
             # CAGR is not defined for periods < 1 year. Return None or Series with NaNs.
-            return pd.Series(dict.fromkeys(ror.columns)) if isinstance(ror, pd.DataFrame) else None
+            return pd.Series(dict.fromkeys(ror.columns, np.nan)) if isinstance(ror, pd.DataFrame) else None
         return ((ror + 1.0).prod()) ** (settings._MONTHS_PER_YEAR / ror.shape[0]) - 1.0
 
     @staticmethod
