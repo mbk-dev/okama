@@ -42,8 +42,6 @@ grep -q '^READTHEDOCS_TOKEN=' .env 2>/dev/null || echo "WARN: no RTD token — P
 
 `.env` is gitignored. The RTD token lets Phase 10 query and poll Read the Docs builds via the v3 API. If it is missing, the skill falls back to checking only the public docs URL.
 
-Then ask the user once for the **current Jupyter kernel name** (used by `--nbmake-kernel=...`) and the **new kernel name** to register at the end (the plan suggests `ok<version>` once the new version is known, but ask explicitly — kernel names depend on which Python the user installed). Save both to a scratch variable for later phases. Do not infer them.
-
 ## Phase 1 — poetry update
 
 ```bash
@@ -54,11 +52,47 @@ If anything in `poetry.lock` changes meaningfully, mention it in the release not
 
 ## Phase 2 — Tests
 
-Run unit tests, then notebook tests with the kernel name from Phase 0.
+Both unit tests (`pytest`) **and** notebook tests (`pytest --nbmake examples`) are mandatory before any version bump. Notebook tests are the only thing that catches API drift in the user-facing examples — never skip them, even for a "doc-only" release.
+
+### 2a. Install current dev source into the env
+
+`pytest --nbmake` runs each notebook against a registered Jupyter kernel, and that kernel imports `okama` from the env. Without an explicit install the kernel may import a stale build of okama and miss the very changes you are about to release. Run `poetry install` first so the env reflects the current `dev` branch:
+
+```bash
+poetry install
+```
+
+Confirm the installed version matches `pyproject.toml` (`Installing the current project: okama (<NEW_VERSION>)`).
+
+### 2b. Resolve / register the Jupyter kernel
+
+Derive the kernel name from the env's Python version — do **not** ask the user, and do **not** hardcode a kernel name. The convention is `okama_poetry<MAJOR>.<MINOR>` (e.g. `okama_poetry3.14` for Python 3.14.x):
+
+```bash
+PYVER=$(poetry run python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+KERNEL_NAME="okama_poetry${PYVER}"
+```
+
+Check whether that kernel is already registered against the poetry env:
+
+```bash
+poetry run python -c "from jupyter_client.kernelspec import KernelSpecManager; \
+  ks=KernelSpecManager().get_all_specs(); print('FOUND' if '${KERNEL_NAME}' in ks else 'MISSING')"
+```
+
+If `MISSING`, register it from the poetry env so the kernel's `python` points at the okama venv:
+
+```bash
+poetry run python -m ipykernel install --user --name="${KERNEL_NAME}" --display-name="${KERNEL_NAME}"
+```
+
+If a stale kernel with a previous Python version exists (e.g. `okama_poetry3.13` after a 3.14 upgrade), leave it alone unless the user asks — old kernels do not break anything, but uninstalling someone else's tooling without consent does.
+
+### 2c. Run the tests
 
 ```bash
 poetry run pytest -n=auto
-poetry run pytest --nbmake --nbmake-kernel=<KERNEL_NAME> -n=auto examples
+poetry run pytest --nbmake --nbmake-kernel="${KERNEL_NAME}" -n=auto examples
 ```
 
 If tests fail: stop. Report the failures to the user. Do not attempt fixes — the user will decide. (Per `okama/AGENTS.md`, retry at most twice if the fix is obvious — but during a release, prefer to stop and let the user decide whether to defer.)
@@ -248,7 +282,7 @@ Verify by visiting <https://pypi.org/project/okama/> and confirming the new vers
 
 ## Phase 12 — Post-release
 
-Sync `dev` with `master` via fast-forward (the user explicitly chose this over delete-and-recreate). Then register the new Jupyter kernel.
+Sync `dev` with `master` via fast-forward (the user explicitly chose this over delete-and-recreate).
 
 ```bash
 git switch dev
@@ -258,11 +292,7 @@ git push
 
 If `--ff-only` fails, dev has diverged from master post-merge — stop and ask the user how to handle it. Do not force-push, do not rebase without permission.
 
-Register the new kernel using the new kernel name from Phase 0:
-
-```bash
-poetry run ipython kernel install --user --name=<NEW_KERNEL_NAME>
-```
+The Jupyter kernel was already registered in Phase 2b; no further kernel work is needed here.
 
 ## Reporting
 
@@ -273,7 +303,6 @@ At the end, give the user a one-paragraph summary:
 - GitHub Release URL (from `gh release view --json url -q .url`)
 - PyPI URL
 - whether `dev` is fast-forwarded
-- new kernel name registered
 - anything that was skipped or that needs manual follow-up (Read the Docs build, etc.)
 
 Do not list every command that ran — the user does not need a transcript.
