@@ -575,3 +575,39 @@ def test_plot_cml_has_expected_elements(ef_reb_ab):
     assert len(ax.collections) >= 1
     # Should have annotations (MSR label)
     assert len(ax.texts) >= 1
+
+
+# --- get_grid_portfolios tests (multi-period) ---
+
+
+def test_get_grid_portfolios_returns_dataframe(ef_reb_ab):
+    result = ef_reb_ab.get_grid_portfolios(step=0.50)
+    assert isinstance(result, pd.DataFrame)
+    assert list(result.columns) == ["Risk", "CAGR"]
+    assert len(result) == 3  # 2 assets, step 0.50 → 3 combos
+
+
+def test_get_grid_portfolios_row_count_three_assets(ef_reb_three):
+    result = ef_reb_three.get_grid_portfolios(step=0.50)
+    assert len(result) == 6  # 3 assets, step 0.50 → 6 combos
+
+
+def test_get_grid_portfolios_with_bounds(synthetic_env):
+    ef = ok.EfficientFrontier(
+        ["A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+        bounds=((0.25, 0.75), (0.25, 0.75)),
+    )
+    result = ef.get_grid_portfolios(step=0.25)
+    assert len(result) == 3  # bounds constrain to 3 combos
+    assert "Risk" in result.columns
+    assert "CAGR" in result.columns
+
+
+def test_get_grid_portfolios_risk_and_cagr_are_floats(ef_reb_ab):
+    result = ef_reb_ab.get_grid_portfolios(step=0.50)
+    assert result["Risk"].dtype == np.float64 or np.issubdtype(result["Risk"].dtype, np.floating)
+    assert result["CAGR"].dtype == np.float64 or np.issubdtype(result["CAGR"].dtype, np.floating)

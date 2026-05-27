@@ -950,6 +950,58 @@ class EfficientFrontierSingle(asset_list.AssetList):
         random_portfolios = helpers.Frame.change_columns_order(random_portfolios, ["Risk", second_column])
         return random_portfolios
 
+    def get_grid_portfolios(self, step: float = 0.10, kind: str = "mean") -> pd.DataFrame:
+        """
+        Generate portfolios for all weight combinations on a grid.
+
+        Weights are enumerated with a fixed step that must divide 1.0 evenly
+        (e.g. 0.05, 0.10, 0.20, 0.25, 0.50). Per-asset ``bounds`` are respected.
+
+        Parameters
+        ----------
+        step : float, default 0.10
+            Weight increment (e.g. 0.10 for 10 %).
+        kind : {'mean', 'cagr'}, default 'mean'
+            Use CAGR if kind='cagr', or annualized arithmetic mean if kind='mean'.
+
+        Returns
+        -------
+        DataFrame
+            Table with Risk, Return (or CAGR) and asset weights for every grid portfolio.
+
+        Examples
+        --------
+        >>> assets = ["SPY.US", "AGG.US", "GLD.US"]
+        >>> y = ok.EfficientFrontierSingle(assets, ccy="USD", last_date="2021-07")
+        >>> y.get_grid_portfolios(step=0.25)
+               Risk    Return    SPY.US    AGG.US    GLD.US
+        0  ...       ...       ...       ...       ...
+        """
+        weights_series = helpers.Float.get_grid_weights(
+            w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds
+        )
+        second_column = "Return" if kind == "mean" else "CAGR"
+        asset_labels = self.get_assets_tickers()
+        points_list = []
+        for weights in weights_series:
+            risk_monthly = helpers.Frame.get_portfolio_risk(weights, self.assets_ror)
+            mean_return_monthly = helpers.Frame.get_portfolio_mean_return(weights, self.assets_ror)
+            risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
+            mean_return = helpers.Float.annualize_return(mean_return_monthly)
+            point = dict(zip(asset_labels, weights))  # noqa: B905
+            point["Risk"] = risk
+            if kind.lower() == "cagr":
+                cagr = helpers.Float.approx_return_risk_adjusted(mean_return, risk)
+                point["CAGR"] = cagr
+            elif kind.lower() == "mean":
+                point["Return"] = mean_return
+            else:
+                raise ValueError('kind should be "mean" or "cagr"')
+            points_list.append(point)
+        grid_portfolios = pd.DataFrame.from_records(points_list)
+        grid_portfolios = helpers.Frame.change_columns_order(grid_portfolios, ["Risk", second_column])
+        return grid_portfolios
+
     def plot_transition_map(self, x_axe: str = "risk", figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
         """
         Plot Transition Map for optimized portfolios on the single period Efficient Frontier.

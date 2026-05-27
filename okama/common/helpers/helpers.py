@@ -1,3 +1,4 @@
+import itertools
 import math  # noqa: I001
 from typing import Union, Callable, Optional, Tuple, Literal  # noqa: UP035
 from functools import singledispatchmethod
@@ -132,6 +133,51 @@ class Float:
                     break
 
         return pd.Series([np.array(w) for w in weights[:n]])
+
+    @staticmethod
+    def get_grid_weights(
+        w_shape: int,
+        step: float,
+        bounds: tuple[tuple[float, float], ...] | None = None,
+    ) -> pd.Series:
+        """
+        Generate all weight combinations that sum to 1.0 with a fixed step.
+
+        Parameters
+        ----------
+        w_shape : int
+            Number of assets (dimension of each weight vector).
+        step : float
+            Weight increment, must divide 1.0 evenly (e.g. 0.10, 0.25, 0.50).
+        bounds : tuple of (min, max) tuples, optional
+            Per-asset weight constraints. Defaults to (0.0, 1.0) for each asset.
+
+        Returns
+        -------
+        pd.Series
+            Series of numpy arrays, each summing to 1.0.
+        """
+        if step < 0.01 or step > 1.0:
+            raise ValueError(f"step must be in [0.01, 1.0], got {step}")
+        n_steps = 1.0 / step
+        if abs(n_steps - round(n_steps)) > 1e-9:
+            raise ValueError(f"step {step} does not divide 1.0 evenly")
+        n_steps = int(round(n_steps))
+
+        if bounds is None:
+            bounds = tuple((0.0, 1.0) for _ in range(w_shape))
+
+        grid_values = []
+        for lo, hi in bounds:
+            lo_idx = int(math.ceil(lo / step - 1e-9))
+            hi_idx = int(math.floor(hi / step + 1e-9))
+            grid_values.append(range(lo_idx, hi_idx + 1))
+
+        weights = []
+        for combo in itertools.product(*grid_values):
+            if sum(combo) == n_steps:
+                weights.append(np.array([c * step for c in combo]))
+        return pd.Series(weights)
 
     @staticmethod
     def get_purchasing_power(inflation: float, value: float = 1000.0):
