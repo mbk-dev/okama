@@ -120,6 +120,11 @@ def test_get_monte_carlo_returns_dataframe(ef_reb_ab):
     rp = ef_reb_ab.get_monte_carlo(10)
     assert list(rp.columns)[:2] == ["Risk", "CAGR"]
     assert len(rp) == 10
+    # Weight columns present and sum to 1
+    assert "A.US" in rp.columns
+    assert "B.US" in rp.columns
+    for _, row in rp.iterrows():
+        assert_allclose(row["A.US"] + row["B.US"], 1.0, atol=1e-12)
 
 
 def test_plot_pair_ef_returns_axes(ef_reb_three):
@@ -583,8 +588,13 @@ def test_plot_cml_has_expected_elements(ef_reb_ab):
 def test_get_grid_portfolios_returns_dataframe(ef_reb_ab):
     result = ef_reb_ab.get_grid_portfolios(step=0.50)
     assert isinstance(result, pd.DataFrame)
-    assert list(result.columns) == ["Risk", "CAGR"]
+    assert list(result.columns)[:2] == ["Risk", "CAGR"]
     assert len(result) == 3  # 2 assets, step 0.50 → 3 combos
+    # Weight columns present and sum to 1
+    assert "A.US" in result.columns
+    assert "B.US" in result.columns
+    for _, row in result.iterrows():
+        assert_allclose(row["A.US"] + row["B.US"], 1.0, atol=1e-12)
 
 
 def test_get_grid_portfolios_row_count_three_assets(ef_reb_three):
