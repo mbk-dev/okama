@@ -90,9 +90,7 @@ def test_frame_get_cagr_short_history_returns_float_series_with_nan():
     Series with float dtype and NaN values (not an object Series of Nones,
     which would silently turn downstream numeric columns into `object`)."""
     idx = pd.period_range("2020-01", periods=6, freq="M")
-    ror = pd.DataFrame(
-        {"A.US": np.full(6, 0.01), "B.US": np.full(6, 0.02)}, index=idx
-    )
+    ror = pd.DataFrame({"A.US": np.full(6, 0.01), "B.US": np.full(6, 0.02)}, index=idx)
 
     result = helpers.Frame.get_cagr(ror)
 

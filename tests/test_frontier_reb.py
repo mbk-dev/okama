@@ -102,9 +102,7 @@ def test_minimize_risk_raises_runtimeerror_on_failure(ef_reb_ab):
     (no recursion is involved; RecursionError misrepresents the failure mode)."""
     with pytest.raises(RuntimeError) as excinfo:
         ef_reb_ab.minimize_risk(target_value=10.0)  # 1000% CAGR is infeasible
-    assert type(excinfo.value) is RuntimeError, (
-        f"Expected exact RuntimeError, got {type(excinfo.value).__name__}"
-    )
+    assert type(excinfo.value) is RuntimeError, f"Expected exact RuntimeError, got {type(excinfo.value).__name__}"
 
 
 def test_ef_points_shape_and_monotonicity(ef_reb_ab):

@@ -1306,9 +1306,7 @@ class EfficientFrontier(asset_list.AssetList):
                CAGR      Risk
         0  ...       ...
         """
-        weights_series = helpers.Float.get_grid_weights(
-            w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds
-        )
+        weights_series = helpers.Float.get_grid_weights(w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds)
         asset_labels = self.symbols if self.ticker_names else list(self.names.values())
         rows_list = []
         for weights in weights_series:

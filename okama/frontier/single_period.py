@@ -977,9 +977,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
                Risk    Return    SPY.US    AGG.US    GLD.US
         0  ...       ...       ...       ...       ...
         """
-        weights_series = helpers.Float.get_grid_weights(
-            w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds
-        )
+        weights_series = helpers.Float.get_grid_weights(w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds)
         second_column = "Return" if kind == "mean" else "CAGR"
         asset_labels = self.get_assets_tickers()
         points_list = []
