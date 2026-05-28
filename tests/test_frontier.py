@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 from numpy.testing import assert_allclose
 
@@ -198,3 +199,31 @@ def test_mean_return_range_when_full_frontier_false(ef_ab):
     assert rrange[-1] == pytest.approx(max_ret, rel=1e-8, abs=1e-12)
     # Monotonic non-decreasing
     assert np.all(np.diff(rrange) >= -1e-12)
+
+
+# --- get_grid_portfolios tests (single-period) ---
+
+
+def test_get_grid_portfolios_returns_dataframe_single(ef_ab):
+    result = ef_ab.get_grid_portfolios(step=0.50, kind="mean")
+    assert isinstance(result, pd.DataFrame)
+    assert list(result.columns)[:2] == ["Risk", "Return"]
+    assert len(result) == 3  # 2 assets, step 0.50 → 3 combos
+
+
+def test_get_grid_portfolios_cagr_mode_single(ef_ab):
+    result = ef_ab.get_grid_portfolios(step=0.50, kind="cagr")
+    assert list(result.columns)[:2] == ["Risk", "CAGR"]
+
+
+def test_get_grid_portfolios_includes_weight_columns_single(ef_ab):
+    result = ef_ab.get_grid_portfolios(step=0.50, kind="mean")
+    assert "A.US" in result.columns
+    assert "B.US" in result.columns
+    for _, row in result.iterrows():
+        assert_allclose(row["A.US"] + row["B.US"], 1.0, atol=1e-12)
+
+
+def test_get_grid_portfolios_three_assets_single(ef_three):
+    result = ef_three.get_grid_portfolios(step=0.50)
+    assert len(result) == 6  # 3 assets, step 0.50 → 6 combos

@@ -1259,18 +1259,68 @@ class EfficientFrontier(asset_list.AssetList):
         >>> plt.show()
         """
         weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
-        # Portfolio risk and cagr for each set of weights using cache
-        rows_list = []  # Collect all rows to create DataFrame once at the end
+        asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+        rows_list = []
         for weights in weights_series:
-            # Use cached portfolio return time series calculation
             portfolio_ror = self._get_portfolio_ror_ts(weights)
             risk_monthly = portfolio_ror.std()
             mean_return = portfolio_ror.mean()
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
             cagr = helpers.Frame.get_cagr(portfolio_ror)
-            row = {"Risk": risk, "CAGR": cagr}
+            row = dict(zip(asset_labels, weights))  # noqa: B905
+            row["Risk"] = risk
+            row["CAGR"] = cagr
             rows_list.append(row)
-        return pd.DataFrame.from_records(rows_list)
+        result = pd.DataFrame.from_records(rows_list)
+        return helpers.Frame.change_columns_order(result, ["Risk", "CAGR"])
+
+    def get_grid_portfolios(self, step: float = 0.10) -> pd.DataFrame:
+        """
+        Generate rebalanced portfolios for all weight combinations on a grid.
+
+        Weights are enumerated with a fixed step that must divide 1.0 evenly
+        (e.g. 0.05, 0.10, 0.20, 0.25, 0.50). Per-asset ``bounds`` are respected.
+
+        Parameters
+        ----------
+        step : float, default 0.10
+            Weight increment (e.g. 0.10 for 10 %).
+
+        Returns
+        -------
+        DataFrame
+            Table with Risk (annualized std) and CAGR for every grid portfolio.
+
+        Examples
+        --------
+        >>> ls_m = ["SPY.US", "GLD.US"]
+        >>> x = ok.EfficientFrontier(
+        ...     assets=ls_m,
+        ...     first_date="2005-01",
+        ...     last_date="2020-11",
+        ...     ccy="USD",
+        ...     rebalancing_strategy=ok.Rebalance(period="year"),
+        ... )
+        >>> grid = x.get_grid_portfolios(step=0.25)
+        >>> grid.head()
+               CAGR      Risk
+        0  ...       ...
+        """
+        weights_series = helpers.Float.get_grid_weights(w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds)
+        asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+        rows_list = []
+        for weights in weights_series:
+            portfolio_ror = self._get_portfolio_ror_ts(weights)
+            risk_monthly = portfolio_ror.std()
+            mean_return = portfolio_ror.mean()
+            risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
+            cagr = helpers.Frame.get_cagr(portfolio_ror)
+            row = dict(zip(asset_labels, weights))  # noqa: B905
+            row["Risk"] = risk
+            row["CAGR"] = cagr
+            rows_list.append(row)
+        result = pd.DataFrame.from_records(rows_list)
+        return helpers.Frame.change_columns_order(result, ["Risk", "CAGR"])
 
     def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
         """

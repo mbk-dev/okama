@@ -114,9 +114,7 @@ def test_recovery_periods_unrecovered_when_last_date_is_not_month_start(mocker):
     al.last_date = al.last_date + pd.Timedelta(days=14)
 
     rec = al.recovery_periods
-    assert pd.isna(rec["DROP.US"]), (
-        f"Expected NA for unrecovered drawdown at last period, got {rec['DROP.US']!r}"
-    )
+    assert pd.isna(rec["DROP.US"]), f"Expected NA for unrecovered drawdown at last period, got {rec['DROP.US']!r}"
 
 
 def test_cagr_and_cumulative_returns(synthetic_env):

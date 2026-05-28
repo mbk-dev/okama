@@ -102,9 +102,7 @@ def test_minimize_risk_raises_runtimeerror_on_failure(ef_reb_ab):
     (no recursion is involved; RecursionError misrepresents the failure mode)."""
     with pytest.raises(RuntimeError) as excinfo:
         ef_reb_ab.minimize_risk(target_value=10.0)  # 1000% CAGR is infeasible
-    assert type(excinfo.value) is RuntimeError, (
-        f"Expected exact RuntimeError, got {type(excinfo.value).__name__}"
-    )
+    assert type(excinfo.value) is RuntimeError, f"Expected exact RuntimeError, got {type(excinfo.value).__name__}"
 
 
 def test_ef_points_shape_and_monotonicity(ef_reb_ab):
@@ -120,6 +118,11 @@ def test_get_monte_carlo_returns_dataframe(ef_reb_ab):
     rp = ef_reb_ab.get_monte_carlo(10)
     assert list(rp.columns)[:2] == ["Risk", "CAGR"]
     assert len(rp) == 10
+    # Weight columns present and sum to 1
+    assert "A.US" in rp.columns
+    assert "B.US" in rp.columns
+    for _, row in rp.iterrows():
+        assert_allclose(row["A.US"] + row["B.US"], 1.0, atol=1e-12)
 
 
 def test_plot_pair_ef_returns_axes(ef_reb_three):
@@ -575,3 +578,44 @@ def test_plot_cml_has_expected_elements(ef_reb_ab):
     assert len(ax.collections) >= 1
     # Should have annotations (MSR label)
     assert len(ax.texts) >= 1
+
+
+# --- get_grid_portfolios tests (multi-period) ---
+
+
+def test_get_grid_portfolios_returns_dataframe(ef_reb_ab):
+    result = ef_reb_ab.get_grid_portfolios(step=0.50)
+    assert isinstance(result, pd.DataFrame)
+    assert list(result.columns)[:2] == ["Risk", "CAGR"]
+    assert len(result) == 3  # 2 assets, step 0.50 → 3 combos
+    # Weight columns present and sum to 1
+    assert "A.US" in result.columns
+    assert "B.US" in result.columns
+    for _, row in result.iterrows():
+        assert_allclose(row["A.US"] + row["B.US"], 1.0, atol=1e-12)
+
+
+def test_get_grid_portfolios_row_count_three_assets(ef_reb_three):
+    result = ef_reb_three.get_grid_portfolios(step=0.50)
+    assert len(result) == 6  # 3 assets, step 0.50 → 6 combos
+
+
+def test_get_grid_portfolios_with_bounds(synthetic_env):
+    ef = ok.EfficientFrontier(
+        ["A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+        bounds=((0.25, 0.75), (0.25, 0.75)),
+    )
+    result = ef.get_grid_portfolios(step=0.25)
+    assert len(result) == 3  # bounds constrain to 3 combos
+    assert "Risk" in result.columns
+    assert "CAGR" in result.columns
+
+
+def test_get_grid_portfolios_risk_and_cagr_are_floats(ef_reb_ab):
+    result = ef_reb_ab.get_grid_portfolios(step=0.50)
+    assert result["Risk"].dtype == np.float64 or np.issubdtype(result["Risk"].dtype, np.floating)
+    assert result["CAGR"].dtype == np.float64 or np.issubdtype(result["CAGR"].dtype, np.floating)

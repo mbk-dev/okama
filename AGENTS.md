@@ -1,17 +1,26 @@
 # okama — Development rules for AI agents
 
 ## environment
-- project uses poetry for the envirobment & dependecies management
-- new dependecy must be added in pyproject.toml and additionally to requirements.txt
+- project uses poetry for the environment & dependencies management
+- new dependency must be added in pyproject.toml and additionally to requirements.txt
 - Use interpreter in poetry env (poetry run python ...).
 - Always use "poetry add" instead of "pip install"
 
-### Test-Driven Development (TDD)
+## Test-Driven Development (TDD)
 Any change to production code (new feature, bugfix, refactor, behavior change) must follow TDD: **write a failing test first, then the minimal code that makes it pass**. This overrides the default "write code, then tests" workflow.
 
 The required workflow is the `superpowers:test-driven-development` skill. Cycle: **RED → verify RED → GREEN → verify GREEN → REFACTOR**.
 
-## After any code changes:
+Rules for this repo:
+- Tests run via: `pytest -q` (or `poetry run pytest -q` if not inside the poetry shell).
+- Before writing code, see the test fail for a real reason (`AssertionError` / missing function), not a typo/import error.
+- For bugfix: first a test reproducing the bug, then the fix. Without a reproducing test the bug is not considered fixed.
+- One test = one behavior. Test name describes the behavior meaningfully, no `test1` / `test_works`.
+- Real code instead of mocks wherever possible.
+- After GREEN, run the full test suite of the file/module to make sure nothing broke; output must be clean (no warnings/errors).
+- Exceptions where TDD can be skipped: only by explicit user request (one-time data migration scripts, generated code, throwaway prototypes). Notebooks — partial exception: cover the library code with tests, not the notebook rendering itself.
+
+## Post-change checklist
 1) Determine whether *executable Python code* was changed, not just comments or docstrings.
 2) If executable code was changed — always run tests: `pytest -q`.
 3) If only comments, docstrings or Jupyter Notebooks files were changed — do not run tests.
@@ -23,8 +32,22 @@ The required workflow is the `superpowers:test-driven-development` skill. Cycle:
    targeted `# noqa: <CODE>` comment on the offending line and include a brief rationale.
    Never disable rules globally or use a bare `# noqa`.
 
+## Project structure
+
+- `okama/` — library source code
+  - `api/` — data API client
+  - `common/` — shared utilities and helpers
+  - `frontier/` — efficient frontier optimization
+  - `portfolios/` — portfolio classes
+- `tests/` — pytest test suite (mirrors `okama/` layout: `asset_list/`, `helpers/`, `portfolio/`)
+- `examples/` — Jupyter Notebook examples (also published to Google Colab)
+- `docs/` — Sphinx documentation source
+
 ## Python style & modernization
 
+- Always write all code comments, docstrings, and documentation in **English**, even if the task description or existing code is in another language (e.g. Russian).
+- Use type hints for all function parameters and return types.
+- Use f-string formatting for all logging and print messages.
 - **Minimum supported Python version is taken from `pyproject.toml`** (the
   `python = "..."` constraint under `[tool.poetry.dependencies]`). All library
   code must run unchanged on that minimum version. For example, if
@@ -36,7 +59,8 @@ The required workflow is the `superpowers:test-driven-development` skill. Cycle:
   unchanged. Do not use 3.13-only syntax or stdlib features in notebooks
   (e.g. PEP 695 `type` statement improvements, `typing` additions introduced
   in 3.13). If a 3.13-only construct is genuinely needed, gate it behind a
-  `sys.version_info` check and provide a 3.12 fallback.
+  `sys.version_info` check and provide a 3.12 fallback. When editing notebook
+  examples, ensure that the code is up-to-date with the current codebase in the Git branch.
 - When the `pyproject.toml` minimum is bumped, update this section accordingly
   and re-evaluate which modern-syntax features can be used unconditionally.
 - Write new code with modern syntax and avoid legacy forms:
@@ -62,12 +86,4 @@ The required workflow is the `superpowers:test-driven-development` skill. Cycle:
 
 ## Preparing release notes
 - When you write a release description, always include the names of the specific classes and methods when describing new features and bug fixes.
-- When referencing Jupyter Notebooks at /examples always add links
-
-## Additional rules:
-- Always write all code comments, docstrings, and documentation in **English**, even if the task description or existing code is in another language (e.g. Russian).
-- Use type hints for all function parameters and return types.
-- Use f-string formatting for all logging and print messages.
-- When editing Jupyter Notebook examples in the `/examples` directory, ensure that the code examples are up-to-date with the current codebase in the Git branch.
-
-
+- When referencing Jupyter Notebooks at /examples always add links.
