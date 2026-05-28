@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "okama"
-version = "2.1.0"
+version = "2.1.1"
 description = "Investment portfolio analyzing & optimization tools"
 authors = ["Sergey Kikevich <chilango74@gmail.com>"]
 license = "MIT"
@@ -53,7 +53,7 @@ scipy-stubs = "*"  # for typehints
 optional = false
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "*"
+sphinx = "<9"  # Sphinx 9.x autodoc rewrite breaks on pandas DataFrame class attributes
 sphinx-rtd-theme = "*"
 numpydoc = "*"
 nbsphinx = "*"

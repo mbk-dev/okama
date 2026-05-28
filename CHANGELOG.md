@@ -5,6 +5,36 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-05
+
+Adds systematic (grid-based) enumeration of portfolio weights on the efficient
+frontier as a deterministic alternative to Monte-Carlo sampling, and enriches
+the frontier sampling outputs with per-asset weight columns.
+
+### Added
+- `EfficientFrontier.get_grid_portfolios()` (multi-period, rebalanced) and
+  `EfficientFrontierSingle.get_grid_portfolios()` (single-period) enumerate all
+  portfolios whose weights lie on a fixed percentage grid (`step`, default
+  `0.10`), respecting per-asset `bounds`. This complements the random
+  `get_monte_carlo()` with a reproducible, exhaustive sampling of the
+  feasible region.
+- `Float.get_grid_weights()` helper in `okama.common.helpers` — a reusable
+  generator of all weight vectors summing to 1.0 on a given grid step, honoring
+  per-asset bounds. The `step` is validated to lie in `[0.01, 1.0]` and to
+  divide 1.0 evenly.
+- Per-asset weight columns in the outputs of
+  `EfficientFrontier.get_monte_carlo()` and
+  `EfficientFrontier.get_grid_portfolios()` (multi-period), matching the
+  column layout already produced by `EfficientFrontierSingle.get_monte_carlo()`.
+
+### Tooling
+- Pinned `sphinx < 9` for the docs build: the Sphinx 9.x autodoc rewrite raises
+  `ValueError: The truth value of a DataFrame is ambiguous` on pandas
+  DataFrame class attributes (e.g. in `okama.common.make_asset_list`).
+- Bumped the pre-commit `ruff` hook to `v0.15.14` to match the poetry/CI ruff
+  version, so it stops re-applying fixes the project ruff already suppresses
+  via `# noqa: UP0xx` comments.
+
 ## [2.1.0] - 2026-05
 
 Feature release that switches `get_cagr` and `get_cumulative_return` to an

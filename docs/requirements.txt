@@ -1,4 +1,4 @@
-sphinx
+sphinx<9  # Sphinx 9.x autodoc rewrite breaks on pandas DataFrame class attributes
 sphinx_rtd_theme
 numpydoc
 nbsphinx
