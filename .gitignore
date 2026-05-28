@@ -7,7 +7,9 @@ __pycache__
 *.pyc
 poetry.lock
 /.idea_backup
+/.idea/
 /.ipynb_checkpoints
+ef_grid.png
 main.py
 main_notebook.ipynb
 .env
