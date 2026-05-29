@@ -950,7 +950,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         random_portfolios = helpers.Frame.change_columns_order(random_portfolios, ["Risk", second_column])
         return random_portfolios
 
-    def get_grid_portfolios(self, step: float = 0.10, kind: str = "mean") -> pd.DataFrame:
+    def get_grid_portfolios(self, step: float = 0.10, kind: str = "mean", max_points: int = 100_000) -> pd.DataFrame:
         """
         Generate portfolios for all weight combinations on a grid.
 
@@ -963,6 +963,11 @@ class EfficientFrontierSingle(asset_list.AssetList):
             Weight increment (e.g. 0.10 for 10 %).
         kind : {'mean', 'cagr'}, default 'mean'
             Use CAGR if kind='cagr', or annualized arithmetic mean if kind='mean'.
+        max_points : int, default 100_000
+            Guardrail on the number of grid portfolios. The point count grows
+            combinatorially with the number of assets and ``1 / step``; an
+            oversized request raises ``ValueError`` before enumeration instead
+            of hanging. Raise it to allow larger grids at the cost of runtime.
 
         Returns
         -------
@@ -977,7 +982,9 @@ class EfficientFrontierSingle(asset_list.AssetList):
                Risk    Return    SPY.US    AGG.US    GLD.US
         0  ...       ...       ...       ...       ...
         """
-        weights_series = helpers.Float.get_grid_weights(w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds)
+        weights_series = helpers.Float.get_grid_weights(
+            w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds, max_points=max_points
+        )
         second_column = "Return" if kind == "mean" else "CAGR"
         asset_labels = self.get_assets_tickers()
         points_list = []

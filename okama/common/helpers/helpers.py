@@ -138,6 +138,7 @@ class Float:
         w_shape: int,
         step: float,
         bounds: tuple[tuple[float, float], ...] | None = None,
+        max_points: int = 100_000,
     ) -> pd.Series:
         """
         Generate all weight combinations that sum to 1.0 with a fixed step.
@@ -150,6 +151,13 @@ class Float:
             Weight increment, must divide 1.0 evenly (e.g. 0.10, 0.25, 0.50).
         bounds : tuple of (min, max) tuples, optional
             Per-asset weight constraints. Defaults to (0.0, 1.0) for each asset.
+        max_points : int, default 100_000
+            Guardrail on the number of generated grid points. The number of
+            valid weight vectors grows combinatorially with ``w_shape`` and
+            ``1 / step``; if the (upper-bound) count exceeds ``max_points`` a
+            ``ValueError`` is raised before any enumeration, so an oversized
+            request fails fast instead of hanging. Raise it to allow larger
+            grids at the cost of runtime.
 
         Returns
         -------
@@ -162,6 +170,15 @@ class Float:
         if abs(n_steps - round(n_steps)) > 1e-9:
             raise ValueError(f"step {step} does not divide 1.0 evenly")
         n_steps = int(round(n_steps))
+
+        # Upper bound on the number of valid weight vectors (exact for default
+        # bounds; bounds only shrink the count). Reject oversized grids early.
+        predicted_max = math.comb(n_steps + w_shape - 1, w_shape - 1)
+        if predicted_max > max_points:
+            raise ValueError(
+                f"Grid would generate up to {predicted_max:,} portfolios (> max_points={max_points:,}). "
+                f"Increase `step`, tighten `bounds`, or raise `max_points`."
+            )
 
         if bounds is None:
             bounds = tuple((0.0, 1.0) for _ in range(w_shape))

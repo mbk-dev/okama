@@ -115,6 +115,25 @@ def test_get_grid_weights_scales_to_many_assets():
         assert w.shape == (8,)
 
 
+def test_get_grid_weights_raises_for_explosive_grid():
+    """A grid larger than the default ceiling must fail fast with ValueError
+    instead of enumerating hundreds of thousands of points (12 assets at
+    step 0.10 = comb(21, 11) = 352716 points)."""
+    with pytest.raises(ValueError, match="max_points"):
+        helpers.Float.get_grid_weights(w_shape=12, step=0.10)
+
+
+def test_get_grid_weights_max_points_is_configurable():
+    """max_points can be lowered to reject an otherwise-small grid, or raised
+    to allow a large one."""
+    # 8 assets at step 0.10 = 19448 points; a low ceiling rejects it.
+    with pytest.raises(ValueError, match="max_points"):
+        helpers.Float.get_grid_weights(w_shape=8, step=0.10, max_points=1_000)
+    # Raising the ceiling allows a grid that the default would reject.
+    result = helpers.Float.get_grid_weights(w_shape=12, step=0.10, max_points=500_000)
+    assert len(result) == comb(21, 11)  # 352716
+
+
 def test_frame_get_cagr_short_history_returns_float_series_with_nan():
     """For history shorter than 12 months, `Frame.get_cagr` must return a
     Series with float dtype and NaN values (not an object Series of Nones,
