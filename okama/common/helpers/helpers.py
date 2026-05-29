@@ -1,5 +1,4 @@
-import itertools
-import math  # noqa: I001
+import math
 from typing import Union, Callable, Optional, Tuple, Literal  # noqa: UP035
 from functools import singledispatchmethod
 
@@ -167,16 +166,37 @@ class Float:
         if bounds is None:
             bounds = tuple((0.0, 1.0) for _ in range(w_shape))
 
-        grid_values = []
-        for lo, hi in bounds:
-            lo_idx = int(math.ceil(lo / step - 1e-9))
-            hi_idx = int(math.floor(hi / step + 1e-9))
-            grid_values.append(range(lo_idx, hi_idx + 1))
+        # Per-asset bounds expressed in integer "step units".
+        lo_idx = [int(math.ceil(lo / step - 1e-9)) for lo, _ in bounds]
+        hi_idx = [int(math.floor(hi / step + 1e-9)) for _, hi in bounds]
 
-        weights = []
-        for combo in itertools.product(*grid_values):
-            if sum(combo) == n_steps:
-                weights.append(np.array([c * step for c in combo]))
+        # Suffix sums of the remaining assets' reachable min/max units, used to
+        # prune any branch whose remaining budget can no longer be satisfied.
+        suffix_min = [0] * (w_shape + 1)
+        suffix_max = [0] * (w_shape + 1)
+        for i in range(w_shape - 1, -1, -1):
+            suffix_min[i] = suffix_min[i + 1] + lo_idx[i]
+            suffix_max[i] = suffix_max[i + 1] + hi_idx[i]
+
+        weights: list[np.ndarray] = []
+        combo = [0] * w_shape
+
+        def _enumerate(i: int, remaining: int) -> None:
+            # Enumerate bounded weak compositions of ``n_steps`` units into
+            # ``w_shape`` parts. Only feasible nodes are visited, so the cost is
+            # O(valid points * w_shape), not O((n_steps + 1) ** w_shape).
+            if i == w_shape - 1:
+                if lo_idx[i] <= remaining <= hi_idx[i]:
+                    combo[i] = remaining
+                    weights.append(np.array([c * step for c in combo]))
+                return
+            low = max(lo_idx[i], remaining - suffix_max[i + 1])
+            high = min(hi_idx[i], remaining - suffix_min[i + 1])
+            for value in range(low, high + 1):
+                combo[i] = value
+                _enumerate(i + 1, remaining - value)
+
+        _enumerate(0, n_steps)
         return pd.Series(weights)
 
     @staticmethod

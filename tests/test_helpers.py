@@ -1,3 +1,6 @@
+import threading
+from math import comb
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -83,6 +86,33 @@ def test_get_grid_weights_step_out_of_range_raises():
         helpers.Float.get_grid_weights(w_shape=2, step=0.0)
     with pytest.raises(ValueError):
         helpers.Float.get_grid_weights(w_shape=2, step=1.5)
+
+
+def test_get_grid_weights_scales_to_many_assets():
+    """Generation cost must be O(valid points), not O((1/step + 1)**N).
+
+    With 8 assets and step 0.10 there are comb(17, 7) = 19448 valid weight
+    vectors, but 11**8 = 214 million points in the full Cartesian product.
+    A product-and-filter implementation cannot finish enumerating that in
+    seconds; a direct composition enumeration returns almost instantly.
+    """
+    result_holder: dict[str, pd.Series] = {}
+
+    def _run() -> None:
+        result_holder["weights"] = helpers.Float.get_grid_weights(w_shape=8, step=0.10)
+
+    worker = threading.Thread(target=_run, daemon=True)
+    worker.start()
+    worker.join(timeout=8.0)
+
+    if worker.is_alive():
+        pytest.fail("get_grid_weights did not scale: 8 assets did not finish within 8 seconds")
+
+    weights = result_holder["weights"]
+    assert len(weights) == comb(17, 7)  # 19448 valid compositions of 10 units into 8 parts
+    for w in weights:
+        assert_allclose(w.sum(), 1.0, atol=1e-12)
+        assert w.shape == (8,)
 
 
 def test_frame_get_cagr_short_history_returns_float_series_with_nan():
