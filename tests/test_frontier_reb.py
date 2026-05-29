@@ -624,6 +624,20 @@ def test_get_grid_portfolios_risk_and_cagr_are_floats(ef_reb_ab):
     assert result["CAGR"].dtype == np.float64 or np.issubdtype(result["CAGR"].dtype, np.floating)
 
 
+def test_get_grid_portfolios_does_not_grow_ror_cache(ef_reb_three):
+    """Grid enumeration yields only unique weight vectors, so it must not
+    populate the optimization ror cache (which would otherwise grow O(points))."""
+    ef_reb_three.get_grid_portfolios(step=0.50)
+    assert len(ef_reb_three._ror_cache) == 0
+
+
+def test_get_monte_carlo_does_not_grow_ror_cache(ef_reb_three):
+    """Monte-Carlo enumeration yields unique weight vectors, so it must not
+    populate the optimization ror cache."""
+    ef_reb_three.get_monte_carlo(n=20)
+    assert len(ef_reb_three._ror_cache) == 0
+
+
 # --- minimum-variance corner: min-risk asset is not the min-CAGR asset ---
 
 

@@ -1281,9 +1281,12 @@ class EfficientFrontier(asset_list.AssetList):
         """
         weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
         asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+        # Every enumerated weight vector is unique, so the ror cache would never
+        # hit and only grow O(points). Compute the series directly instead.
+        rebalance = Rebalance(period=self.rebalancing_strategy.period)
         rows_list = []
         for weights in weights_series:
-            portfolio_ror = self._get_portfolio_ror_ts(weights)
+            portfolio_ror = rebalance.return_ror_ts_ef(weights, self.assets_ror)
             risk_monthly = portfolio_ror.std()
             mean_return = portfolio_ror.mean()
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
@@ -1329,9 +1332,12 @@ class EfficientFrontier(asset_list.AssetList):
         """
         weights_series = helpers.Float.get_grid_weights(w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds)
         asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+        # Every grid weight vector is unique, so the ror cache would never hit
+        # and only grow O(points). Compute the series directly instead.
+        rebalance = Rebalance(period=self.rebalancing_strategy.period)
         rows_list = []
         for weights in weights_series:
-            portfolio_ror = self._get_portfolio_ror_ts(weights)
+            portfolio_ror = rebalance.return_ror_ts_ef(weights, self.assets_ror)
             risk_monthly = portfolio_ror.std()
             mean_return = portfolio_ror.mean()
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
