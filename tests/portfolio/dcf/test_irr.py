@@ -49,3 +49,12 @@ def test_irr_core_depleted_partial_recovery_is_negative():
     result = dcf_calculations.irr_of_cashflow_matrix(cf, periods_per_year=1)
     assert np.isfinite(result[0])
     assert result[0] < 0.0
+
+
+def test_irr_core_uses_brentq_fallback_when_newton_does_not_converge():
+    # A deliberately bad seed + a single Newton step cannot converge, so the column
+    # is routed to the brentq fallback, which must still find the textbook root.
+    cf = np.array([-100.0, 60.0, 60.0])
+    result = dcf_calculations.irr_of_cashflow_matrix(cf, periods_per_year=1, guess=1e6, max_iter=1)
+    x = (60.0 + np.sqrt(3600.0 + 24000.0)) / 200.0
+    assert result[0] == pytest.approx(x - 1.0, abs=1e-9)

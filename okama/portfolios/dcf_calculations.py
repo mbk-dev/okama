@@ -337,7 +337,7 @@ def _irr_initial_guess(cashflows: np.ndarray) -> np.ndarray:
     horizon = max(n_periods - 1, 1)
     inflows = np.where(cashflows > 0.0, cashflows, 0.0).sum(axis=0)
     outflows = -np.where(cashflows < 0.0, cashflows, 0.0).sum(axis=0)
-    with np.errstate(divide="ignore", invalid="ignore"):
+    with np.errstate(over="ignore", divide="ignore", invalid="ignore"):
         ratio = np.where(outflows > 0.0, inflows / outflows, 1.0)
     ratio = np.where(ratio > 0.0, ratio, 1.0)
     return ratio ** (1.0 / horizon) - 1.0
@@ -351,6 +351,7 @@ def _irr_brentq_column(cashflow_column: np.ndarray) -> float:
         return float((cashflow_column * (1.0 + rate) ** (-t)).sum())
 
     try:
+        # Upper bracket: any economically meaningful periodic rate is well below 1e6.
         return optimize.brentq(npv, -1.0 + 1e-9, 1e6, xtol=1e-12, maxiter=200)
     except (ValueError, RuntimeError):
         return float("nan")
@@ -391,6 +392,7 @@ def irr_of_cashflow_matrix(
     -------
     np.ndarray
         Shape ``(n_series,)``. Annualized effective IRR per column; NaN where no root.
+        A 1-D input is treated as a single column and returns shape ``(1,)``.
     """
     cf = np.asarray(cashflows, dtype=float)
     if cf.ndim == 1:
@@ -408,21 +410,25 @@ def irr_of_cashflow_matrix(
     eps = 1e-12
     has_sign_change = (cf > 0.0).any(axis=0) & (cf < 0.0).any(axis=0)
 
-    for _ in range(max_iter):
-        base = np.where(1.0 + rate <= eps, eps, 1.0 + rate)  # (n_series,)
-        disc = base[None, :] ** (-t)                         # (n_periods, n_series)
-        f = (cf * disc).sum(axis=0)                          # (n_series,)
-        fprime = -(t * cf * disc).sum(axis=0) / base         # (n_series,)
-        with np.errstate(divide="ignore", invalid="ignore"):
+    # A clipped iterate (rate -> -1 + eps) makes (1 + rate) ** (-t) overflow for large t.
+    # Such columns are detected below and resolved by brentq or set to NaN, so the
+    # intermediate overflow/invalid values are expected; silence their warnings.
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        for _ in range(max_iter):
+            base = np.where(1.0 + rate <= eps, eps, 1.0 + rate)  # (n_series,)
+            disc = base[None, :] ** (-t)                         # (n_periods, n_series)
+            f = (cf * disc).sum(axis=0)                          # (n_series,)
+            fprime = -(t * cf * disc).sum(axis=0) / base         # (n_series,)
             step = np.where(fprime != 0.0, f / fprime, 0.0)
-        rate = rate - step
-        rate = np.where(rate <= -1.0 + eps, -1.0 + eps, rate)
-        if np.nanmax(np.abs(step)) < xtol:
-            break
+            rate = rate - step
+            rate = np.where(rate <= -1.0 + eps, -1.0 + eps, rate)
+            finite_step = step[np.isfinite(step)]
+            if finite_step.size and np.abs(finite_step).max() < xtol:
+                break
 
-    # Validate convergence (scale-free residual) and retry stragglers with brentq.
-    base = np.where(1.0 + rate <= eps, eps, 1.0 + rate)
-    residual = (cf * base[None, :] ** (-t)).sum(axis=0)
+        # Validate convergence (scale-free residual) and retry stragglers with brentq.
+        base = np.where(1.0 + rate <= eps, eps, 1.0 + rate)
+        residual = (cf * base[None, :] ** (-t)).sum(axis=0)
     scale = np.abs(cf).sum(axis=0)
     scale = np.where(scale > 0.0, scale, 1.0)
     not_converged = np.abs(residual) / scale > 1e-8
