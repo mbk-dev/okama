@@ -84,3 +84,45 @@ def test_irr_raises_when_cashflow_parameters_none(pf_no_inflation):
     pf_no_inflation.dcf.cashflow_parameters = None
     with pytest.raises(AttributeError, match=r"'cashflow_parameters' is not defined\."):
         pf_no_inflation.dcf.irr()
+
+
+def _reference_irr(dcf_obj):
+    """Independent, slow reference: rebuild the vector and solve with scipy.brentq."""
+    from scipy import optimize
+
+    cash_flow = dcf_obj.cash_flow_ts("fv", remove_if_wealth_index_negative=True)
+    terminal = dcf_obj.wealth_index("fv", include_negative_values=False)[dcf_obj.parent.symbol].iloc[-1]
+    initial_investment = dcf_obj.cashflow_parameters.initial_investment
+    n_months = dcf_obj.parent.ror.shape[0]
+
+    v = np.empty(n_months + 1, dtype=float)
+    v[0] = -initial_investment
+    v[1:] = -cash_flow.reindex(dcf_obj.parent.ror.index).fillna(0.0).to_numpy()
+    v[-1] += terminal
+
+    t = np.arange(n_months + 1, dtype=float)
+
+    def npv(rate):
+        return float((v * (1.0 + rate) ** (-t)).sum())
+
+    monthly = optimize.brentq(npv, -1.0 + 1e-9, 1e6, xtol=1e-12, maxiter=200)
+    return (1.0 + monthly) ** _MONTHS_PER_YEAR - 1.0
+
+
+def test_irr_matches_brentq_reference_indexation(pf_no_inflation):
+    ind = ok.IndexationStrategy(pf_no_inflation)
+    ind.initial_investment = 10_000
+    ind.frequency = "year"
+    ind.amount = -500
+    ind.indexation = DEFAULT_DISCOUNT_RATE
+    pf_no_inflation.dcf.cashflow_parameters = ind
+    assert pf_no_inflation.dcf.irr() == pytest.approx(_reference_irr(pf_no_inflation.dcf), abs=1e-8)
+
+
+def test_irr_matches_brentq_reference_percentage(pf_no_inflation):
+    pc = ok.PercentageStrategy(pf_no_inflation)
+    pc.initial_investment = 50_000
+    pc.frequency = "half-year"
+    pc.percentage = -0.05
+    pf_no_inflation.dcf.cashflow_parameters = pc
+    assert pf_no_inflation.dcf.irr() == pytest.approx(_reference_irr(pf_no_inflation.dcf), abs=1e-8)
