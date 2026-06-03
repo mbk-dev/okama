@@ -137,6 +137,7 @@ class PortfolioDCF:
         distribution_parameters: Optional[tuple] = None,  # noqa: UP045
         period: int = 1,
         mc_number: int = 100,
+        seed: Optional[int] = None,  # noqa: UP045
     ):
         """
         Add Monte Carlo simulation parameters to PortfolioDCF.
@@ -164,6 +165,10 @@ class PortfolioDCF:
         mc_number : int, default 100
             Number of random wealth indexes to generate with Monte Carlo simulation.
 
+        seed : int or None, default None
+            Random seed for reproducible Monte Carlo draws. If None, each
+            regeneration draws fresh randomness.
+
         Examples
         --------
         >>> import matplotlib.pyplot as plt
@@ -187,6 +192,7 @@ class PortfolioDCF:
         self.mc.distribution_parameters = distribution_parameters
         self.mc.period = period
         self.mc.mc_number = mc_number
+        self.mc.seed = seed
 
     def wealth_index(
         self, discounting: Literal["fv", "pv"], include_negative_values: bool = False
