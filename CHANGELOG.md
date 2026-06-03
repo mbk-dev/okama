@@ -5,6 +5,49 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Adds money-weighted IRR (MWRR) for portfolio cash flows — both on historical
+data and across Monte Carlo forecast paths — and makes the Monte Carlo return
+draw cached and reproducible.
+
+### Added
+- `Portfolio.dcf.irr()` (`PortfolioDCF.irr`) — nominal annualized money-weighted
+  internal rate of return (IRR/MWRR) of the portfolio cash flow over the full
+  historical period, honoring the configured `CashFlow` strategy
+  (`IndexationStrategy`, `PercentageStrategy`, `VanguardDynamicSpending`,
+  `CutWithdrawalsIfDrawdown`, `TimeSeriesStrategy`). With no intermediate cash
+  flows it equals `Portfolio.get_cagr()` for the period.
+- `Portfolio.dcf.monte_carlo_irr()` (`PortfolioDCF.monte_carlo_irr`) — the
+  distribution (`pandas.Series`) of per-path money-weighted IRRs across Monte
+  Carlo forecast paths, the forward-looking counterpart of `PortfolioDCF.irr`.
+- `irr_of_cashflow_matrix()` in `okama.portfolios.dcf_calculations` — a
+  vectorized Newton solver (analytic derivative, `scipy.optimize.brentq`
+  fallback) computing IRR for an `(n_periods, n_series)` cash-flow matrix in one
+  pass; shared by both `PortfolioDCF.irr` and `PortfolioDCF.monte_carlo_irr`.
+- `seed` parameter for reproducible Monte Carlo draws: `MonteCarlo.seed` and the
+  new `seed` argument of `PortfolioDCF.set_mc_parameters()`.
+
+### Changed
+- The Monte Carlo return draw (`MonteCarlo.monte_carlo_returns_ts`) is now
+  generated once and cached — shared by `PortfolioDCF.monte_carlo_wealth`,
+  `monte_carlo_cash_flow`, `monte_carlo_survival_period`, `monte_carlo_irr` and
+  the CAGR-distribution methods — so all of them see one consistent scenario set
+  (previously each access regenerated fresh randomness). The cache is invalidated
+  when any Monte Carlo parameter changes (`distribution`,
+  `distribution_parameters`, `period`, `mc_number`, `seed`). As a consequence,
+  unseeded results of `PortfolioDCF.find_the_largest_withdrawals_size()` and of
+  the CAGR-distribution methods shift versus 2.1.1: the bisection in
+  `find_the_largest_withdrawals_size` now evaluates every candidate against the
+  same scenario set (removing the sampling noise that previously broke its
+  monotonicity). Use `set_mc_parameters(..., seed=...)` for reproducible runs.
+
+### Fixed
+- `PortfolioDCF.monte_carlo_cash_flow()` with `remove_if_wealth_index_negative=True`
+  previously masked a cash-flow draw against a wealth-index draw generated from
+  *different* randomness; with the shared cached draw the depletion mask is now
+  consistent per path.
+
 ## [2.1.1] - 2026-05
 
 Adds systematic (grid-based) enumeration of portfolio weights on the efficient
