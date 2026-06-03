@@ -4,6 +4,7 @@ import copy
 import logging
 from typing import Optional, Literal, Tuple  # noqa: UP035
 
+import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 
@@ -311,6 +312,63 @@ class PortfolioDCF:
             return dcf_calculations.discount_monthly_cash_flow(cash_flow_fv, self.discount_rate, reverse=False)
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
+
+    def irr(self) -> float:
+        """
+        Nominal internal rate of return (money-weighted return, MWRR) of the portfolio
+        cash flow over the full historical period, honoring the configured cash flow strategy.
+
+        The cash-flow vector (investor perspective) on a monthly grid ``t = 0 .. N``,
+        where ``N = portfolio.ror.shape[0]``, is:
+
+        - ``t = 0`` (one month before ``first_date``): ``-initial_investment``
+        - ``t = 1 .. N``: ``-cash_flow_ts`` (withdrawals become inflows, contributions outflows)
+        - ``t = N`` (``last_date``): additionally ``+`` the terminal wealth index value
+          (liquidation; floored at 0, so the terminal withdrawal happens only if there is
+          a positive balance left)
+
+        The annualized effective IRR is returned. With no intermediate cash flows the
+        result equals ``Portfolio.get_cagr`` for the full period.
+
+        IRR is a rate, so there is no future/present-value variant: discounting the flows
+        would yield the *real* rate (the ``get_cagr(real=True)`` axis), not "the IRR in PV".
+
+        Returns
+        -------
+        float
+            Annualized effective IRR. NaN if the cash flow has no sign change
+            (no real root, e.g. pure accumulation with a zero terminal value).
+            With contributions and withdrawals interleaved the equation may have several
+            real roots; the root nearest the solver's seed is returned.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], ccy="USD", last_date="2024-10")
+        >>> ind = ok.IndexationStrategy(pf)
+        >>> ind.initial_investment = 10_000
+        >>> ind.frequency = "year"
+        >>> ind.amount = -1_000
+        >>> pf.dcf.cashflow_parameters = ind
+        >>> pf.dcf.irr()
+        """
+        if self.cashflow_parameters is None:
+            raise AttributeError("'cashflow_parameters' is not defined.")
+
+        cash_flow = self.cash_flow_ts(discounting="fv", remove_if_wealth_index_negative=True)
+        terminal = self.wealth_index(discounting="fv", include_negative_values=False)[
+            self.parent.symbol
+        ].iloc[-1]
+        initial_investment = self.cashflow_parameters.initial_investment
+        n_months = self.parent.ror.shape[0]
+
+        flows = np.empty(n_months + 1, dtype=float)
+        flows[0] = -initial_investment
+        flows[1:] = -cash_flow.reindex(self.parent.ror.index).fillna(0.0).to_numpy()
+        flows[-1] += terminal
+
+        return float(
+            dcf_calculations.irr_of_cashflow_matrix(flows, periods_per_year=settings._MONTHS_PER_YEAR)[0]
+        )
 
     @property
     def wealth_index_fv_with_assets(self) -> pd.DataFrame:

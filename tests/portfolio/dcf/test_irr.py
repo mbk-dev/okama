@@ -58,3 +58,29 @@ def test_irr_core_uses_brentq_fallback_when_newton_does_not_converge():
     result = dcf_calculations.irr_of_cashflow_matrix(cf, periods_per_year=1, guess=1e6, max_iter=1)
     x = (60.0 + np.sqrt(3600.0 + 24000.0)) / 200.0
     assert result[0] == pytest.approx(x - 1.0, abs=1e-9)
+
+
+@pytest.fixture()
+def pf_no_inflation(synthetic_env):
+    """Two-asset portfolio, monthly rebalancing, no inflation (mocked data)."""
+    return ok.Portfolio(
+        ["A.US", "B.US"], ccy="USD", inflation=False, rebalancing_strategy=ok.Rebalance(period="month")
+    )
+
+
+def test_irr_equals_cagr_without_intermediate_cashflows(pf_no_inflation):
+    # MWRR with a single inflow and single outflow is identically the TWR/CAGR.
+    ind = ok.IndexationStrategy(pf_no_inflation)
+    ind.initial_investment = 10_000
+    ind.frequency = "none"  # no regular cash flow -> only initial_investment and terminal value
+    ind.indexation = DEFAULT_DISCOUNT_RATE
+    pf_no_inflation.dcf.cashflow_parameters = ind
+
+    expected_cagr = pf_no_inflation.get_cagr().iloc[-1].loc[pf_no_inflation.symbol]
+    assert pf_no_inflation.dcf.irr() == pytest.approx(expected_cagr, abs=1e-9)
+
+
+def test_irr_raises_when_cashflow_parameters_none(pf_no_inflation):
+    pf_no_inflation.dcf.cashflow_parameters = None
+    with pytest.raises(AttributeError, match=r"'cashflow_parameters' is not defined\."):
+        pf_no_inflation.dcf.irr()
