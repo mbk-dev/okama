@@ -828,6 +828,67 @@ class PortfolioDCF:
         dates: pd.Series = helpers.Frame.get_survival_date(s2, self.discount_rate, threshold)
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
 
+    def monte_carlo_irr(self) -> pd.Series:
+        """
+        Distribution of money-weighted IRRs across Monte Carlo forecast paths.
+
+        For each simulated path the nominal internal rate of return (MWRR) is computed
+        over the forecast horizon, honoring the configured cash flow strategy. It is the
+        forward-looking counterpart of :meth:`irr`.
+
+        All paths share a single Monte Carlo return draw (see `MonteCarlo.seed` for
+        reproducibility). The per-path investor cash-flow vector on a monthly grid
+        ``t = 0 .. M`` (``M = mc.period * 12``) is:
+
+        - ``t = 0`` (Monte Carlo start): ``-initial_investment``
+        - ``t = 1 .. M``: ``-monte_carlo_cash_flow`` (withdrawals become inflows)
+        - ``t = M``: additionally ``+`` the terminal wealth value (floored at 0)
+
+        With no intermediate cash flows each path's IRR equals that path's CAGR.
+
+        Returns
+        -------
+        Series
+            One annualized effective IRR per Monte Carlo path (length ``mc_number``).
+            NaN for paths whose cash flow has no sign change.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], ccy="USD")
+        >>> pf.dcf.set_mc_parameters(distribution="norm", period=20, mc_number=100, seed=0)
+        >>> ind = ok.IndexationStrategy(pf)
+        >>> ind.initial_investment = 10_000
+        >>> ind.frequency = "year"
+        >>> ind.amount = -500
+        >>> pf.dcf.cashflow_parameters = ind
+        >>> pf.dcf.monte_carlo_irr().quantile([0.1, 0.5, 0.9])
+        """
+        if self.cashflow_parameters is None:
+            raise AttributeError("'cashflow_parameters' is not defined.")
+        return_ts = self.mc.monte_carlo_returns_ts  # single shared (cached) draw
+        cashflow_parameters = self.cashflow_parameters
+        wealth = return_ts.apply(
+            dcf_calculations.get_wealth_indexes_fv_with_cashflow,
+            axis=0,
+            args=(None, None, cashflow_parameters, "monte_carlo"),
+        )
+        wealth = wealth.apply(dcf_calculations.remove_negative_values, axis=0).fillna(0.0)
+        cash_flow = return_ts.apply(
+            dcf_calculations.get_cash_flow_fv,
+            axis=0,
+            args=(self.parent.symbol, cashflow_parameters, "monte_carlo"),
+        )
+        # Zero a path's cash flow once its (floored) wealth is depleted, consistent per path.
+        cash_flow = cash_flow.where(wealth.reindex(cash_flow.index) != 0, 0.0)
+        terminal = wealth.iloc[-1]
+        n_months, n_paths = cash_flow.shape
+        flows = np.empty((n_months + 1, n_paths), dtype=float)
+        flows[0, :] = -cashflow_parameters.initial_investment
+        flows[1:, :] = -cash_flow.to_numpy()
+        flows[-1, :] += terminal.reindex(cash_flow.columns).to_numpy()
+        irr = dcf_calculations.irr_of_cashflow_matrix(flows, periods_per_year=settings._MONTHS_PER_YEAR)
+        return pd.Series(irr, index=cash_flow.columns, name="monte_carlo_irr")
+
     def find_the_largest_withdrawals_size(
         self,
         goal: Literal["maintain_balance_pv", "maintain_balance_fv", "survival_period"],
