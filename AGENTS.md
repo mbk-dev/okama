@@ -43,6 +43,28 @@ Rules for this repo:
 - `examples/` — Jupyter Notebook examples (also published to Google Colab)
 - `docs/` — Sphinx documentation source
 
+## Code search & navigation (codegraph MCP)
+
+This repo can be indexed by the **codegraph** MCP server (a symbol graph: functions, classes, methods, call edges). It is **optional local tooling** — its config (`.mcp.json`, `.codegraph/`) is git-ignored locally and not shipped with the package. When available, prefer it for *symbol-relationship* questions over plain text search; the two are complementary. The guidance below was validated by A/B runs.
+
+**Use codegraph when the question is about symbol relationships:**
+
+- **who calls a symbol** — `codegraph_callers` (returns the enclosing function/method, without import/comment noise).
+- **what breaks if a symbol changes** — `codegraph_impact` (transitive; depth-2 may include structural neighbours — sanity-check relevance).
+- **where a symbol is defined / find a symbol** — `codegraph_search`.
+- **relationship path between symbols** — `codegraph_trace`.
+- **quick map of a topic** (which classes/modules are involved) — `codegraph_context`.
+
+This pays off here because the library is class-heavy (`AssetList` / `Portfolio` / frontier hierarchies) and several modules are large (`asset_list.py`, `portfolios/core.py`, `frontier/*` run 1200–1800 lines) — jumping by symbol beats reading whole files.
+
+**Stay on Grep/Glob or read the file when:**
+
+- **what a function calls (`codegraph_callees`)** — the graph does **not** capture pandas/numpy method chains (`df.resample().mean()`, `.loc[...]`), so it under-reports dependencies in this data-heavy codebase. Read the body or grep instead.
+- **arbitrary text** — strings, config, docstrings, ruff `# noqa` markers; and when you need *every* literal match (codegraph ranks and truncates).
+- **external consumers** — the index covers this repo only; it won't show callers in okama-dash, notebooks, or downstream code.
+
+Name note: CLI subcommands are `query` / `callers` / `callees` / `impact` / `context`; MCP tools carry the `codegraph_` prefix (`codegraph_search` ≡ CLI `query`). Rebuild a stale index with `codegraph sync` (or `codegraph index`).
+
 ## Python style & modernization
 
 - Always write all code comments, docstrings, and documentation in **English**, even if the task description or existing code is in another language (e.g. Russian).
