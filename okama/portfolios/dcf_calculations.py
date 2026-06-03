@@ -348,11 +348,15 @@ def _irr_brentq_column(cashflow_column: np.ndarray) -> float:
     t = np.arange(cashflow_column.shape[0], dtype=float)
 
     def npv(rate: float) -> float:
-        return float((cashflow_column * (1.0 + rate) ** (-t)).sum())
+        # Overflow is expected for large negative rates and large t; silence the warning.
+        with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+            return float((cashflow_column * (1.0 + rate) ** (-t)).sum())
 
     try:
+        # Lower bracket: -50% per period is an extreme but finite loss. For longer horizons
+        # (t > ~200), more negative rates produce NaN in the NPV, so -0.5 is conservative.
         # Upper bracket: any economically meaningful periodic rate is well below 1e6.
-        return optimize.brentq(npv, -1.0 + 1e-9, 1e6, xtol=1e-12, maxiter=200)
+        return optimize.brentq(npv, -0.5, 1e6, xtol=1e-12, maxiter=200)
     except (ValueError, RuntimeError):
         return float("nan")
 

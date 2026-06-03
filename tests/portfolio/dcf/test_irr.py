@@ -1,9 +1,11 @@
+import warnings
+
 import numpy as np
 import pytest
 
-import okama as ok  # noqa: F401  (used by integration tests added in later tasks)
+import okama as ok
 from okama.portfolios import dcf_calculations
-from okama.settings import _MONTHS_PER_YEAR, DEFAULT_DISCOUNT_RATE  # noqa: F401
+from okama.settings import _MONTHS_PER_YEAR, DEFAULT_DISCOUNT_RATE
 
 
 def test_irr_core_single_in_single_out_matches_closed_form():
@@ -58,6 +60,20 @@ def test_irr_core_uses_brentq_fallback_when_newton_does_not_converge():
     result = dcf_calculations.irr_of_cashflow_matrix(cf, periods_per_year=1, guess=1e6, max_iter=1)
     x = (60.0 + np.sqrt(3600.0 + 24000.0)) / 200.0
     assert result[0] == pytest.approx(x - 1.0, abs=1e-9)
+
+
+def test_irr_core_brentq_fallback_long_column_no_overflow_warning():
+    # A ~20-year monthly column forced into the brentq fallback must not leak numpy
+    # warnings (brentq evaluates npv near rate=-1 where (1+rate)**(-t) overflows),
+    # and must still find the correct root: (1+r)**240 = 2 -> annual = 2**(1/20)-1.
+    n = 241
+    cf = np.zeros(n)
+    cf[0] = -1000.0
+    cf[-1] = 2000.0
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        result = dcf_calculations.irr_of_cashflow_matrix(cf, periods_per_year=12, guess=1e6, max_iter=1)
+    assert result[0] == pytest.approx(2 ** (1.0 / 20.0) - 1.0, abs=1e-9)
 
 
 @pytest.fixture()
