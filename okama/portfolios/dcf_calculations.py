@@ -4,6 +4,7 @@ from typing import Union, Optional, Literal
 
 import pandas as pd
 import numpy as np
+from scipy import optimize
 
 import okama.common.helpers.helpers as helpers
 import okama.portfolios.cashflow_strategies as cf
@@ -322,3 +323,111 @@ def discount_monthly_cash_flow(
     else:
         discount_factors = (1.0 + monthly_discount_rate) ** np.arange(number_of_months)[::-1]
     return cash_flow_fv.div(discount_factors, axis=0)
+
+
+def _irr_initial_guess(cashflows: np.ndarray) -> np.ndarray:
+    """
+    Cheap per-column periodic-rate seed for Newton IRR iteration.
+
+    For the dominant single-outflow/single-inflow case this equals
+    ``(total_in / total_out) ** (1 / horizon) - 1``, i.e. the true periodic rate,
+    so Newton converges in ~1 iteration.
+    """
+    n_periods = cashflows.shape[0]
+    horizon = max(n_periods - 1, 1)
+    inflows = np.where(cashflows > 0.0, cashflows, 0.0).sum(axis=0)
+    outflows = -np.where(cashflows < 0.0, cashflows, 0.0).sum(axis=0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ratio = np.where(outflows > 0.0, inflows / outflows, 1.0)
+    ratio = np.where(ratio > 0.0, ratio, 1.0)
+    return ratio ** (1.0 / horizon) - 1.0
+
+
+def _irr_brentq_column(cashflow_column: np.ndarray) -> float:
+    """Bracketing-solver fallback for a single cash-flow column. Returns NaN if no bracket."""
+    t = np.arange(cashflow_column.shape[0], dtype=float)
+
+    def npv(rate: float) -> float:
+        return float((cashflow_column * (1.0 + rate) ** (-t)).sum())
+
+    try:
+        return optimize.brentq(npv, -1.0 + 1e-9, 1e6, xtol=1e-12, maxiter=200)
+    except (ValueError, RuntimeError):
+        return float("nan")
+
+
+def irr_of_cashflow_matrix(
+    cashflows: np.ndarray,
+    periods_per_year: int = 12,
+    guess: Union[np.ndarray, float, None] = None,  # noqa: UP007
+    xtol: float = 1e-10,
+    max_iter: int = 50,
+) -> np.ndarray:
+    """
+    Annualized effective IRR for each column of a cash-flow matrix.
+
+    Solves, per column, the periodic rate ``r`` with ``sum_t cf[t] / (1 + r) ** t = 0``
+    (row index ``t`` = period number, row 0 = t0), then annualizes to
+    ``(1 + r) ** periods_per_year - 1``.
+
+    The Newton iteration runs over all columns simultaneously with the analytic
+    derivative. Columns that do not converge but have a sign change fall back to a
+    bracketing solver. Columns with no sign change (no real root) return NaN.
+
+    Parameters
+    ----------
+    cashflows : np.ndarray
+        Shape ``(n_periods, n_series)`` or ``(n_periods,)``. Each column is one series.
+    periods_per_year : int, default 12
+        Periods per year used for annualization (12 for monthly grids).
+    guess : np.ndarray or float or None, default None
+        Periodic-rate seed. If None, a ratio-based seed is used.
+    xtol : float, default 1e-10
+        Convergence tolerance on the Newton step (scale-free).
+    max_iter : int, default 50
+        Maximum Newton iterations.
+
+    Returns
+    -------
+    np.ndarray
+        Shape ``(n_series,)``. Annualized effective IRR per column; NaN where no root.
+    """
+    cf = np.asarray(cashflows, dtype=float)
+    if cf.ndim == 1:
+        cf = cf[:, None]
+    n_periods, n_series = cf.shape
+    t = np.arange(n_periods, dtype=float)[:, None]  # (n_periods, 1)
+
+    if guess is None:
+        rate = _irr_initial_guess(cf)
+    elif np.isscalar(guess):
+        rate = np.full(n_series, float(guess))
+    else:
+        rate = np.asarray(guess, dtype=float).copy()
+
+    eps = 1e-12
+    has_sign_change = (cf > 0.0).any(axis=0) & (cf < 0.0).any(axis=0)
+
+    for _ in range(max_iter):
+        base = np.where(1.0 + rate <= eps, eps, 1.0 + rate)  # (n_series,)
+        disc = base[None, :] ** (-t)                         # (n_periods, n_series)
+        f = (cf * disc).sum(axis=0)                          # (n_series,)
+        fprime = -(t * cf * disc).sum(axis=0) / base         # (n_series,)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            step = np.where(fprime != 0.0, f / fprime, 0.0)
+        rate = rate - step
+        rate = np.where(rate <= -1.0 + eps, -1.0 + eps, rate)
+        if np.nanmax(np.abs(step)) < xtol:
+            break
+
+    # Validate convergence (scale-free residual) and retry stragglers with brentq.
+    base = np.where(1.0 + rate <= eps, eps, 1.0 + rate)
+    residual = (cf * base[None, :] ** (-t)).sum(axis=0)
+    scale = np.abs(cf).sum(axis=0)
+    scale = np.where(scale > 0.0, scale, 1.0)
+    not_converged = np.abs(residual) / scale > 1e-8
+    for j in np.flatnonzero(not_converged & has_sign_change):
+        rate[j] = _irr_brentq_column(cf[:, j])
+
+    rate = np.where(has_sign_change, rate, np.nan)
+    return (1.0 + rate) ** periods_per_year - 1.0
