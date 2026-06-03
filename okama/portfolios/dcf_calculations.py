@@ -345,7 +345,13 @@ def _irr_initial_guess(cashflows: np.ndarray) -> np.ndarray:
 
 def _irr_brentq_column(cashflow_column: np.ndarray) -> float:
     """Bracketing-solver fallback for a single cash-flow column. Returns NaN if no bracket."""
-    t = np.arange(cashflow_column.shape[0], dtype=float)
+    n_periods = cashflow_column.shape[0]
+    t = np.arange(n_periods, dtype=float)
+    # Lower bracket: the rate closest to -1 for which (1 + rate) ** -(n_periods - 1) stays
+    # finite (float64 overflows past ~1e308, and inf * 0 would poison the NPV with NaN).
+    # Solving (1 + rate) > 10 ** (-300 / (n - 1)) keeps every brentq evaluation overflow-free
+    # while preserving the widest possible root range; short columns floor at -1 + 1e-9.
+    lower_bracket = -1.0 + max(1e-9, 10.0 ** (-300.0 / max(n_periods - 1, 1)))
 
     def npv(rate: float) -> float:
         # Overflow is expected for large negative rates and large t; silence the warning.
@@ -353,10 +359,8 @@ def _irr_brentq_column(cashflow_column: np.ndarray) -> float:
             return float((cashflow_column * (1.0 + rate) ** (-t)).sum())
 
     try:
-        # Lower bracket: -50% per period is an extreme but finite loss. For longer horizons
-        # (t > ~200), more negative rates produce NaN in the NPV, so -0.5 is conservative.
         # Upper bracket: any economically meaningful periodic rate is well below 1e6.
-        return optimize.brentq(npv, -0.5, 1e6, xtol=1e-12, maxiter=200)
+        return optimize.brentq(npv, lower_bracket, 1e6, xtol=1e-12, maxiter=200)
     except (ValueError, RuntimeError):
         return float("nan")
 
