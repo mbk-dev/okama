@@ -401,6 +401,15 @@ class MonteCarlo:
         DataFrame
             Table with n random rate of return monthly time series.
 
+        Notes
+        -----
+        The draw is generated once and cached: repeated accesses return the same
+        scenarios until a Monte Carlo parameter changes (`distribution`,
+        `distribution_parameters`, `period`, `mc_number` or `seed`), which invalidates
+        the cache. Set `seed` for reproducible draws (see `MonteCarlo.seed`). This
+        shared cache is what keeps `monte_carlo_wealth` and `monte_carlo_cash_flow`
+        consistent on the same scenario set.
+
         Examples
         --------
         >>> pf = ok.Portfolio(
