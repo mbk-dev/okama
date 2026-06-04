@@ -319,8 +319,8 @@ def _vds_withdrawal_vector(
     Mirrors `VanguardDynamicSpending._calculate_withdrawal_size` with
     last_withdrawal == 0, which is what `get_wealth_indexes_fv_with_cashflow`
     effectively passes for every period (it never updates the previous regular
-    cash flow — a known divergence from `get_cash_flow_fv`). At
-    last_withdrawal == 0 the floor/ceiling limits are inert and only the
+    cash flow — a known divergence from `get_cash_flow_fv`, GitHub issue #82).
+    At last_withdrawal == 0 the floor/ceiling limits are inert and only the
     min/max annual bounds apply.
     """
     withdrawal_by_percentage = balance * abs(cashflow_parameters.percentage)
@@ -371,9 +371,10 @@ def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
     tests), including two known quirks kept intentionally:
 
     - the first month of a resample period that contains extra cash flows
-      receives the cash flow but not the month's return;
+      receives the cash flow but not the month's return (GitHub issue #81);
     - VDS withdrawals are computed with last_withdrawal == 0 for every period
-      (the reference never updates it, unlike `get_cash_flow_fv`).
+      (the reference never updates it, unlike `get_cash_flow_fv`; GitHub
+      issue #82).
     """
     initial_investment = cashflow_parameters.initial_investment
     n_rows, n_cols = ror.shape
@@ -428,9 +429,9 @@ def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
         for n, (start, stop) in enumerate(_resample_slices(ror.index, cashflow_parameters._pandas_frequency)):
             start_balance = balance
             if np.any(extra_cf[start:stop] != 0):
-                # Reference quirk kept intentionally: the first month of a
-                # period with extra cash flows gets the cash flow but NOT the
-                # month's return.
+                # Reference quirk kept intentionally (GitHub issue #81): the
+                # first month of a period with extra cash flows gets the cash
+                # flow but NOT the month's return.
                 for k in range(start, stop):
                     if k == start:
                         balance = balance + extra_cf[k]

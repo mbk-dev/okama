@@ -51,6 +51,17 @@ draw cached and reproducible.
   the history of intermediate attempts in `Result.solutions` differs from the
   former bisection midpoints. `iter_max` values below 1 are now rejected with a
   `ValueError`.
+- Monte Carlo wealth simulation is vectorized: `Portfolio.dcf.monte_carlo_wealth()`
+  and everything built on it (`monte_carlo_survival_period()`,
+  `monte_carlo_cash_flow()`, `plot_forecast_monte_carlo()`,
+  `find_the_largest_withdrawals_size()`) now computes all
+  random paths in one pass (`get_wealth_indexes_fv_with_cashflow_mc` in
+  `okama.portfolios.dcf_calculations`) instead of a per-path pandas `apply`.
+  Results are unchanged (pinned by an equivalence-test grid across strategies,
+  frequencies and extra cash flows); measured speedup of one full simulation is
+  three to four orders of magnitude (×1400 for yearly and ×6800 for monthly
+  withdrawal frequencies on 1,000 paths × 30 years). The negative-balance
+  masking and the survival-date scan are vectorized as well.
 
 ### Fixed
 - `PortfolioDCF.monte_carlo_cash_flow()` with `remove_if_wealth_index_negative=True`
