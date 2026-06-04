@@ -476,6 +476,21 @@ def remove_negative_values(input_s: pd.Series) -> pd.Series:
     return s
 
 
+def zero_wealth_after_first_void(wealth: pd.DataFrame) -> pd.DataFrame:
+    """Vectorized frame counterpart of per-column `remove_negative_values` + `fillna(0)`.
+
+    For every column, the first non-positive value and everything after it are
+    replaced with 0. Returns a new DataFrame; the input is not modified.
+    """
+    values = wealth.to_numpy(dtype=float)
+    voided = values <= 0
+    has_void = voided.any(axis=0)
+    first_void = voided.argmax(axis=0)
+    rows = np.arange(values.shape[0])[:, None]
+    masked = np.where(has_void & (rows >= first_void), 0.0, values)
+    return pd.DataFrame(masked, index=wealth.index, columns=wealth.columns)
+
+
 def discount_monthly_cash_flow(
     cash_flow_fv: Union[pd.Series, pd.DataFrame],  # noqa: UP007
     annual_effective_discount_rate: float,

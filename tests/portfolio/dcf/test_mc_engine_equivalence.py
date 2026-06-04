@@ -159,3 +159,36 @@ def test_vectorized_engine_single_path_short_horizon(synthetic_env) -> None:
     )
 
     pd.testing.assert_frame_equal(result, reference, check_exact=False, rtol=1e-12, atol=1e-8)
+
+
+def test_monte_carlo_wealth_matches_per_path_reference(synthetic_env) -> None:
+    # Guard for the routing: the public API output must stay equal to the
+    # old per-path computation (passes before and after the engine switch).
+    pf = _make_portfolio()
+    params = _indexation(pf, "year")
+    pf.dcf.cashflow_parameters = params
+    pf.dcf.set_mc_parameters(distribution="norm", period=3, mc_number=8, seed=0)
+
+    reference = _reference_wealth(pf.dcf, params)
+    pf.dcf.cashflow_parameters = params  # restore after the reference run side effects
+    pf.dcf.cashflow_parameters._clear_cf_cache()
+    result = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=True)
+
+    pd.testing.assert_frame_equal(result, reference, check_exact=False, rtol=1e-12, atol=1e-8)
+
+
+def test_monte_carlo_wealth_zeroes_paths_after_first_void(synthetic_env) -> None:
+    # Guard for the vectorized negative-value masking: once a path hits a
+    # non-positive value, that month and everything after must read 0.
+    pf = _make_portfolio()
+    params = _indexation(pf, "year")
+    params.amount = -3_000  # large withdrawal: paths void within the horizon
+    pf.dcf.cashflow_parameters = params
+    pf.dcf.set_mc_parameters(distribution="norm", period=5, mc_number=8, seed=0)
+
+    fv = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=True)
+    masked = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+
+    expected = fv.apply(dcf_calculations.remove_negative_values, axis=0).fillna(0)
+    pd.testing.assert_frame_equal(masked, expected, check_exact=False, rtol=1e-12, atol=1e-8)
+    assert (masked.to_numpy() >= 0).all()

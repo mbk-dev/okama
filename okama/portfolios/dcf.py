@@ -612,22 +612,11 @@ class PortfolioDCF:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._monte_carlo_wealth_fv.empty:
             return_ts = self.mc.monte_carlo_returns_ts
-            self._monte_carlo_wealth_fv = return_ts.apply(
-                dcf_calculations.get_wealth_indexes_fv_with_cashflow,
-                axis=0,
-                args=(
-                    None,  # portfolio_symbol
-                    None,  # inflation_symbol
-                    self.cashflow_parameters,
-                    "monte_carlo",  # calculate wealth index for Monte Carlo
-                ),
+            self._monte_carlo_wealth_fv = dcf_calculations.get_wealth_indexes_fv_with_cashflow_mc(
+                return_ts, self.cashflow_parameters, self.discount_rate
             )
         if not include_negative_values:
-            wealth_index_fv = self._monte_carlo_wealth_fv.copy()
-            wealth_index_fv = wealth_index_fv.apply(dcf_calculations.remove_negative_values, axis=0)
-            # all_cells_are_nan = wealth_index_fv.isna().all(axis=1)
-            # monte_carlo_wealth_fv = wealth_index_fv[~all_cells_are_nan]
-            monte_carlo_wealth_fv = wealth_index_fv.fillna(0)
+            monte_carlo_wealth_fv = dcf_calculations.zero_wealth_after_first_void(self._monte_carlo_wealth_fv)
         else:
             monte_carlo_wealth_fv = self._monte_carlo_wealth_fv.copy()
         if discounting.lower() == "fv":
