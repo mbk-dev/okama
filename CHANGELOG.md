@@ -53,7 +53,7 @@ draw cached and reproducible.
   `ValueError`.
 - Monte Carlo wealth simulation is vectorized: `Portfolio.dcf.monte_carlo_wealth()`
   and everything built on it (`monte_carlo_survival_period()`,
-  `monte_carlo_cash_flow()`, `plot_forecast_monte_carlo()`,
+  `plot_forecast_monte_carlo()`,
   `find_the_largest_withdrawals_size()`) now computes all
   random paths in one pass (`get_wealth_indexes_fv_with_cashflow_mc` in
   `okama.portfolios.dcf_calculations`) instead of a per-path pandas `apply`.
@@ -62,12 +62,30 @@ draw cached and reproducible.
   three to four orders of magnitude (×1400 for yearly and ×6800 for monthly
   withdrawal frequencies on 1,000 paths × 30 years). The negative-balance
   masking and the survival-date scan are vectorized as well.
+- Monte Carlo cash-flow simulation is vectorized as well:
+  `Portfolio.dcf.monte_carlo_cash_flow()` builds its cache with the new
+  `get_cash_flow_fv_mc` (one pass for all paths, sharing a core with the
+  wealth engine), and `Portfolio.dcf.monte_carlo_irr()` now consumes the
+  shared `monte_carlo_wealth`/`monte_carlo_cash_flow` caches instead of two
+  per-path computations (measured end-to-end speedup of `monte_carlo_irr()`:
+  ×488 on 1,000 paths × 30 years).
 
 ### Fixed
 - `PortfolioDCF.monte_carlo_cash_flow()` with `remove_if_wealth_index_negative=True`
   previously masked a cash-flow draw against a wealth-index draw generated from
   *different* randomness; with the shared cached draw the depletion mask is now
   consistent per path.
+- In periodic-frequency simulations, the first month of a period containing
+  extra cash flows (`time_series`) skipped its return in
+  `get_wealth_indexes_fv_with_cashflow` (and additionally skipped the cash
+  flow in `get_cash_flow_fv` balance tracking). The recursion is now uniform
+  for every month; wealth indexes and cash flow series with extra cash flows
+  at `year`/`half-year`/`quarter` frequencies change accordingly (#81).
+- `VanguardDynamicSpending` `floor_ceiling` limits never bound in wealth-index
+  calculations (`wealth_index`, `monte_carlo_wealth` and everything built on
+  them): the previous withdrawal was always reported as 0. Wealth indexes for
+  VDS strategies with `floor_ceiling` change accordingly and are now
+  consistent with `cash_flow_ts` (#82).
 
 ## [2.1.1] - 2026-05
 
