@@ -67,6 +67,17 @@ def _vds(pf):
     )
 
 
+def _vds_indexed(pf):
+    return ok.VanguardDynamicSpending(
+        pf,
+        initial_investment=10_000,
+        percentage=-0.08,
+        indexation=0.03,
+        min_max_annual_withdrawals=(500.0, 900.0),
+        adjust_min_max=True,
+    )
+
+
 # Each case: (case_id, strategy_builder(pf) -> CashFlow, last_date, mc_period_years, extra_dic)
 # extra_dic dates must fall inside the Monte Carlo window (it starts the month
 # after the portfolio last_date: 2022-01 for full history, 2021-07 for last_date="2021-06").
@@ -85,6 +96,7 @@ CASES = [
     ("cwd_month", lambda pf: _cwd(pf, "month"), None, 3, None),
     ("vds_year", lambda pf: _vds(pf), None, 3, None),
     ("vds_year_partial", lambda pf: _vds(pf), "2021-06", 3, None),
+    ("vds_year_indexed", lambda pf: _vds_indexed(pf), None, 3, None),
 ]
 
 
@@ -125,6 +137,21 @@ def test_vectorized_engine_discounted_extra_cashflows(synthetic_env) -> None:
     params.time_series_discounted_values = True
     pf.dcf.cashflow_parameters = params
     pf.dcf.set_mc_parameters(distribution="norm", period=3, mc_number=8, seed=0)
+
+    reference = _reference_wealth(pf.dcf, params)
+    result = dcf_calculations.get_wealth_indexes_fv_with_cashflow_mc(
+        pf.dcf.mc.monte_carlo_returns_ts, params, pf.dcf.discount_rate
+    )
+
+    pd.testing.assert_frame_equal(result, reference, check_exact=False, rtol=1e-12, atol=1e-8)
+
+
+def test_vectorized_engine_single_path_short_horizon(synthetic_env) -> None:
+    # Edge shapes: one Monte Carlo path (single column) and a single resample group.
+    pf = _make_portfolio()
+    params = _indexation(pf, "year")
+    pf.dcf.cashflow_parameters = params
+    pf.dcf.set_mc_parameters(distribution="norm", period=1, mc_number=1, seed=0)
 
     reference = _reference_wealth(pf.dcf, params)
     result = dcf_calculations.get_wealth_indexes_fv_with_cashflow_mc(
