@@ -297,6 +297,171 @@ def get_cash_flow_fv(  # noqa: C901
     return cs_fv
 
 
+def _cwd_reduction_factor_matrix(cashflow_parameters: cf.CashFlow, drawdowns: np.ndarray) -> np.ndarray:
+    """Per-path CutWithdrawalsIfDrawdown reduction factors (1 - reduction), T x N.
+
+    `_crash_threshold_reduction_series` is sorted by threshold descending and the
+    scalar loop picks the first (deepest) threshold with |drawdown| >= threshold.
+    Iterating thresholds ascending and overwriting reproduces that choice.
+    """
+    factors = np.ones_like(drawdowns)
+    series = cashflow_parameters._crash_threshold_reduction_series.sort_index(ascending=True)
+    for threshold, reduction in series.items():
+        factors = np.where(np.abs(drawdowns) >= threshold, 1 - reduction, factors)
+    return factors
+
+
+def _vds_withdrawal_vector(
+    cashflow_parameters: cf.CashFlow, balance: np.ndarray, number_of_periods: int
+) -> np.ndarray:
+    """Vectorized VanguardDynamicSpending withdrawal for one period across paths.
+
+    Mirrors `VanguardDynamicSpending._calculate_withdrawal_size` with
+    last_withdrawal == 0, which is what `get_wealth_indexes_fv_with_cashflow`
+    effectively passes for every period (it never updates the previous regular
+    cash flow — a known divergence from `get_cash_flow_fv`). At
+    last_withdrawal == 0 the floor/ceiling limits are inert and only the
+    min/max annual bounds apply.
+    """
+    withdrawal_by_percentage = balance * abs(cashflow_parameters.percentage)
+    if cashflow_parameters.min_max_annual_withdrawals is not None:
+        min_withdrawal, max_withdrawal = cashflow_parameters.min_max_annual_withdrawals
+        if cashflow_parameters.adjust_min_max:
+            indexation_factor = (1 + cashflow_parameters.indexation) ** number_of_periods
+            min_withdrawal = abs(min_withdrawal) * indexation_factor
+            max_withdrawal = abs(max_withdrawal) * indexation_factor
+        else:
+            min_withdrawal, max_withdrawal = abs(min_withdrawal), abs(max_withdrawal)
+        return -np.clip(withdrawal_by_percentage, min_withdrawal, max_withdrawal)
+    return -withdrawal_by_percentage
+
+
+def _resample_slices(index: pd.PeriodIndex, pandas_frequency: str) -> list[tuple[int, int]]:
+    """Start/stop integer positions of the groups of `resample(rule, convention="start")`.
+
+    One cheap resample on a marker Series replaces N identical per-path resamples
+    and guarantees the exact same grouping as the per-path reference.
+    """
+    marker = pd.Series(np.zeros(len(index)), index=index)
+    slices = []
+    position = 0
+    for _, group in marker.resample(pandas_frequency, convention="start"):
+        if group.shape[0] == 0:
+            continue
+        slices.append((position, position + group.shape[0]))
+        position += group.shape[0]
+    return slices
+
+
+def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
+    ror: pd.DataFrame,
+    cashflow_parameters: cf.CashFlow,
+    discount_rate: float,
+) -> pd.DataFrame:
+    """
+    Vectorized Monte Carlo counterpart of `get_wealth_indexes_fv_with_cashflow`.
+
+    Computes wealth index future values (FV) for all random return paths at
+    once: a single Python loop over time steps with numpy operations across
+    paths, instead of a per-path pandas apply. Implements the "monte_carlo"
+    task semantics only: extra cash flows from `time_series` are compounded
+    with the discount rate unless `time_series_discounted_values` is True.
+
+    Replicates the per-path reference exactly (equivalence is pinned by
+    tests), including two known quirks kept intentionally:
+
+    - the first month of a resample period that contains extra cash flows
+      receives the cash flow but not the month's return;
+    - VDS withdrawals are computed with last_withdrawal == 0 for every period
+      (the reference never updates it, unlike `get_cash_flow_fv`).
+    """
+    initial_investment = cashflow_parameters.initial_investment
+    n_rows, n_cols = ror.shape
+    returns = ror.to_numpy(dtype=float)
+    frequency = cashflow_parameters.frequency
+    periods_per_year = settings.frequency_periods_per_year[frequency]
+    amount = getattr(cashflow_parameters, "amount", None)
+    indexation_per_period = 0.0
+    if hasattr(cashflow_parameters, "indexation") and frequency != "none":
+        indexation_per_period = (1 + cashflow_parameters.indexation) ** (1 / periods_per_year) - 1
+
+    # Extra cash flows from `time_series`, aligned to the simulation index.
+    extra_cf = np.zeros(n_rows)
+    cash_flow_ts = cashflow_parameters.time_series
+    if not (cash_flow_ts.empty or (cash_flow_ts == 0).all()):
+        aligned = cash_flow_ts.reindex(ror.index).fillna(0).to_numpy(dtype=float)
+        if not cashflow_parameters.time_series_discounted_values:
+            monthly_discount_rate = (1 + discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
+            aligned = aligned * (1.0 + monthly_discount_rate) ** np.arange(n_rows)
+        extra_cf = aligned
+
+    # Per-path drawdowns and reduction factors for the CWD strategy
+    # (they depend on the return paths only, so they are precomputed once).
+    if cashflow_parameters.NAME == "CWD":
+        wealth_for_dd = 1000 * np.cumprod(1 + returns, axis=0)
+        peaks = np.maximum.accumulate(wealth_for_dd, axis=0)
+        drawdowns = (wealth_for_dd - peaks) / peaks
+        cwd_factors = _cwd_reduction_factor_matrix(cashflow_parameters, drawdowns)
+
+    wealth = np.empty((n_rows, n_cols))
+    balance = np.full(n_cols, float(initial_investment))
+
+    if frequency in ("month", "none"):
+        for n in range(n_rows):
+            if frequency == "none":
+                cashflow: float | np.ndarray = 0.0
+            elif cashflow_parameters.NAME == "fixed_amount":
+                cashflow = amount * (1 + indexation_per_period) ** n
+            elif cashflow_parameters.NAME == "fixed_percentage":
+                cashflow = cashflow_parameters.percentage / periods_per_year * balance
+            elif cashflow_parameters.NAME == "time_series":
+                cashflow = 0.0
+            elif cashflow_parameters.NAME == "CWD":
+                base_withdrawal = amount * (1 + indexation_per_period) ** n
+                cashflow = base_withdrawal * np.where(drawdowns[n] < 0, cwd_factors[n], 1.0)
+            else:
+                raise ValueError("Wrong cashflow strategy name value.")
+            balance = balance * (1 + returns[n]) + cashflow + extra_cf[n]
+            wealth[n] = balance
+    else:
+        months_in_full_period = settings._MONTHS_PER_YEAR / cashflow_parameters.periods_per_year
+        for n, (start, stop) in enumerate(_resample_slices(ror.index, cashflow_parameters._pandas_frequency)):
+            start_balance = balance
+            if np.any(extra_cf[start:stop] != 0):
+                # Reference quirk kept intentionally: the first month of a
+                # period with extra cash flows gets the cash flow but NOT the
+                # month's return.
+                for k in range(start, stop):
+                    if k == start:
+                        balance = balance + extra_cf[k]
+                    else:
+                        balance = balance * (1 + returns[k]) + extra_cf[k]
+                    wealth[k] = balance
+            else:
+                segment = np.cumprod(1 + returns[start:stop], axis=0) * start_balance
+                wealth[start:stop] = segment
+                balance = segment[-1]
+            # Regular cash flow at the period end.
+            if cashflow_parameters.NAME == "fixed_amount":
+                cashflow_value: float | np.ndarray = amount * (1 + indexation_per_period) ** n
+            elif cashflow_parameters.NAME == "fixed_percentage":
+                cashflow_value = cashflow_parameters.percentage / periods_per_year * start_balance
+            elif cashflow_parameters.NAME == "VDS":
+                cashflow_value = _vds_withdrawal_vector(cashflow_parameters, start_balance, n)
+            elif cashflow_parameters.NAME == "CWD":
+                base_withdrawal = amount * (1 + indexation_per_period) ** n
+                cashflow_value = base_withdrawal * np.where(drawdowns[stop - 1] < 0, cwd_factors[stop - 1], 1.0)
+            else:
+                raise ValueError("Wrong cashflow_method value.")
+            cashflow_value = cashflow_value * ((stop - start) / months_in_full_period)
+            balance = balance + cashflow_value
+            wealth[stop - 1] = balance
+
+    out_index = ror.index.insert(0, ror.index[0] - 1)
+    data = np.vstack([np.full((1, n_cols), float(initial_investment)), wealth])
+    return pd.DataFrame(data, index=out_index, columns=ror.columns)
+
+
 def remove_negative_values(input_s: pd.Series) -> pd.Series:
     if not isinstance(input_s, pd.Series):
         raise TypeError("input_s must be a pd.Series")
