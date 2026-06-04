@@ -1020,7 +1020,9 @@ class PortfolioDCF:
         5         -937.5        0.09375   0.00442         -0.55134
         """
         # Validation
-        self._validate_parameters(withdrawals_range, target_survival_period, percentile, threshold, tolerance_rel)
+        self._validate_parameters(
+            withdrawals_range, target_survival_period, percentile, threshold, tolerance_rel, iter_max
+        )
 
         # Initialization
         backup_obj = self.cashflow_parameters
@@ -1126,6 +1128,7 @@ class PortfolioDCF:
         percentile: int,
         threshold: float,
         tolerance_rel: float,
+        iter_max: int,
     ) -> None:
         """Validate input parameters."""
         if withdrawals_range[0] > withdrawals_range[1]:
@@ -1144,6 +1147,8 @@ class PortfolioDCF:
             raise ValueError("percentile must be between 0 and 100")
         if not 0 <= threshold <= 1:
             raise ValueError("threshold must be between 0 and 1")
+        if iter_max < 1:
+            raise ValueError("iter_max must be at least 1.")
 
     def _calculate_goal_metrics(
         self, goal: str, percentile: int, threshold: float, start_investment: float, target_survival_period: int

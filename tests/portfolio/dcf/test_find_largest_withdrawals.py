@@ -95,3 +95,18 @@ def test_converges_on_smooth_maintain_balance_goal(dcf_solver) -> None:
     assert res.error_rel < 0.01
     assert res.solutions.shape[0] <= 12
     assert dcf_solver.cashflow_parameters.amount == pytest.approx(-1_200)
+
+
+def test_rejects_non_positive_iter_max(dcf_solver) -> None:
+    # iter_max is the evaluation budget; zero would crash the best-attempt
+    # reporting on an empty solutions history.
+    with pytest.raises(ValueError, match=r"iter_max"):
+        dcf_solver.find_the_largest_withdrawals_size(
+            goal="survival_period",
+            withdrawals_range=(0.0, 1.0),
+            target_survival_period=3,
+            percentile=50,
+            threshold=0,
+            tolerance_rel=0.25,
+            iter_max=0,
+        )
