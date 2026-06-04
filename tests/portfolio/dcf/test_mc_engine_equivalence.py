@@ -212,3 +212,13 @@ def test_survival_dates_frame_matches_per_column_scan(synthetic_env) -> None:
             {col: helpers.Frame.get_survival_date(wealth[col], pf.dcf.discount_rate, threshold) for col in wealth},
         )
         pd.testing.assert_series_equal(frame_result, per_column, check_names=False, check_dtype=False)
+
+
+def test_survival_dates_frame_rejects_empty_input() -> None:
+    # The vectorized scan needs at least one row; fail with a clear message
+    # instead of numpy's obscure argmax error.
+    from okama.common.helpers import helpers
+
+    empty = pd.DataFrame(columns=[0, 1], dtype=float)
+    with pytest.raises(ValueError, match=r"at least one row"):
+        helpers.Frame.get_survival_date(empty, 0.05, 0)

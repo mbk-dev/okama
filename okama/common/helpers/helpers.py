@@ -361,8 +361,11 @@ class Frame:
 
     @get_survival_date.register
     def _(wealth: pd.DataFrame, discount_rate: float, threshold: float = 0) -> pd.Series:
+        """Return the survival date of every column as a Series of Timestamps."""
         if threshold > 1 or threshold < 0:
             raise ValueError("threshold must be in range from 0 to 1.")
+        if wealth.shape[0] == 0:
+            raise ValueError("wealth must contain at least one row.")
         values = wealth.to_numpy(dtype=float)
         n_rows = values.shape[0]
         if threshold:
