@@ -5,6 +5,7 @@ balances with the canonical recursion `balance = balance * (1 + r) + cash_flow`
 applied to every month.
 """
 
+import numpy as np  # noqa: I001
 import pandas as pd
 import pytest
 import okama as ok
@@ -64,3 +65,54 @@ def test_cash_flow_fv_sizes_next_period_from_fully_compounded_balance(pf_single)
     # -0.12 * 10_000 = -1_200 at year end -> 2023 starts at 8_300.
     # Year 2023: regular withdrawal -0.12 * 8_300 = -996 at year end.
     assert result.loc[pd.Period("2023-12", freq="M")] == pytest.approx(-996.0)
+
+
+def test_vds_floor_ceiling_binds_in_wealth_index(pf_single) -> None:
+    # Issue #82: with floor_ceiling=(0, 0) every withdrawal must equal the
+    # previous one. With zero returns: 10_000 -> withdrawal 1_000 (first
+    # period, by percentage) -> 9_000 -> withdrawal forced to 1_000 again
+    # (not 0.10 * 9_000 = 900) -> 8_000.
+    vds = ok.VanguardDynamicSpending(
+        pf_single,
+        initial_investment=10_000,
+        percentage=-0.10,
+        floor_ceiling=(0.0, 0.0),
+        adjust_floor_ceiling=False,
+        indexation=0.0,
+    )
+    pf_single.dcf.cashflow_parameters = vds
+
+    idx = pd.period_range("2022-01", periods=24, freq="M")
+    ror = pd.Series(0.0, index=idx)
+
+    result = dcf_calculations.get_wealth_indexes_fv_with_cashflow(ror, None, None, vds, "monte_carlo")
+
+    assert result.loc[pd.Period("2022-12", freq="M")] == pytest.approx(9_000.0)
+    assert result.loc[pd.Period("2023-12", freq="M")] == pytest.approx(8_000.0)
+
+
+@pytest.mark.parametrize("floor_ceiling", [None, (-0.025, 0.05)])
+@pytest.mark.parametrize("min_max", [None, (500.0, 900.0)])
+@pytest.mark.parametrize("adjust_floor_ceiling", [False, True])
+def test_vds_withdrawal_vector_matches_scalar(pf_single, floor_ceiling, min_max, adjust_floor_ceiling) -> None:
+    vds = ok.VanguardDynamicSpending(
+        pf_single,
+        initial_investment=10_000,
+        percentage=-0.08,
+        floor_ceiling=floor_ceiling,
+        adjust_floor_ceiling=adjust_floor_ceiling,
+        min_max_annual_withdrawals=min_max,
+        adjust_min_max=True,
+        indexation=0.04,
+    )
+    balances = np.array([100.0, 4_000.0, 8_000.0, 12_000.0, 20_000.0])
+    last_withdrawals = np.array([0.0, -300.0, -700.0, -900.0, -1_500.0])
+    for n in (0, 3):
+        vector = dcf_calculations._vds_withdrawal_vector(vds, balances, last_withdrawals, n)
+        scalar = np.array(
+            [
+                vds._calculate_withdrawal_size(last_withdrawal=lw, balance=b, number_of_periods=n)
+                for b, lw in zip(balances, last_withdrawals, strict=True)
+            ]
+        )
+        np.testing.assert_allclose(vector, scalar, rtol=1e-12)

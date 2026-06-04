@@ -136,6 +136,7 @@ def get_wealth_indexes_fv_with_cashflow(  # noqa: C901
             else:
                 raise ValueError("Wrong cashflow_method value.")
             cashflow_value *= period_fraction  # adjust cash flow to the period length (months)
+            last_regular_cash_flow = cashflow_value
             period_final_balance = period_wealth_index.iloc[-1] + cashflow_value
             period_wealth_index.iloc[-1] = period_final_balance
             period_initial_amount = period_final_balance
@@ -308,28 +309,54 @@ def _cwd_reduction_factor_matrix(cashflow_parameters: cf.CashFlow, drawdowns: np
 
 
 def _vds_withdrawal_vector(
-    cashflow_parameters: cf.CashFlow, balance: np.ndarray, number_of_periods: int
+    cashflow_parameters: cf.CashFlow,
+    balance: np.ndarray,
+    last_withdrawal: float | np.ndarray,
+    number_of_periods: int,
 ) -> np.ndarray:
     """Vectorized VanguardDynamicSpending withdrawal for one period across paths.
 
-    Mirrors `VanguardDynamicSpending._calculate_withdrawal_size` with
-    last_withdrawal == 0, which is what `get_wealth_indexes_fv_with_cashflow`
-    effectively passes for every period (it never updates the previous regular
-    cash flow — a known divergence from `get_cash_flow_fv`, GitHub issue #82).
-    At last_withdrawal == 0 the floor/ceiling limits are inert and only the
-    min/max annual bounds apply.
+    Faithful translation of `VanguardDynamicSpending._calculate_withdrawal_size`
+    to numpy, preserving the scalar branch order (in-range -> percentage;
+    above max -> max; below min -> min). Scalar/vector parity is pinned by a
+    property test.
     """
     withdrawal_by_percentage = balance * abs(cashflow_parameters.percentage)
-    if cashflow_parameters.min_max_annual_withdrawals is not None:
+    last = np.abs(last_withdrawal)
+    has_floor_ceiling = cashflow_parameters.floor_ceiling is not None
+    has_min_max = cashflow_parameters.min_max_annual_withdrawals is not None
+    if has_floor_ceiling:
+        floor, ceiling = cashflow_parameters.floor_ceiling
+        adjust = (1 + cashflow_parameters.indexation) if cashflow_parameters.adjust_floor_ceiling else 1.0
+        floor_indexed = last * adjust * (1 + floor)
+        ceiling_indexed = last * adjust * (1 + ceiling)
+    if has_min_max:
         min_withdrawal, max_withdrawal = cashflow_parameters.min_max_annual_withdrawals
-        if cashflow_parameters.adjust_min_max:
-            indexation_factor = (1 + cashflow_parameters.indexation) ** number_of_periods
-            min_withdrawal = abs(min_withdrawal) * indexation_factor
-            max_withdrawal = abs(max_withdrawal) * indexation_factor
-        else:
-            min_withdrawal, max_withdrawal = abs(min_withdrawal), abs(max_withdrawal)
-        return -np.clip(withdrawal_by_percentage, min_withdrawal, max_withdrawal)
-    return -withdrawal_by_percentage
+        indexation_factor = (
+            (1 + cashflow_parameters.indexation) ** number_of_periods if cashflow_parameters.adjust_min_max else 1.0
+        )
+        min_indexed = abs(min_withdrawal) * indexation_factor
+        max_indexed = abs(max_withdrawal) * indexation_factor
+    if has_floor_ceiling and has_min_max:
+        max_final = np.where(
+            ceiling_indexed > max_indexed,
+            max_indexed,
+            np.where((min_indexed < ceiling_indexed) & (ceiling_indexed <= max_indexed), ceiling_indexed, max_indexed),
+        )
+        min_final = np.where(floor_indexed > min_indexed, floor_indexed, min_indexed)
+    elif has_min_max:
+        min_final, max_final = min_indexed, max_indexed
+    elif has_floor_ceiling:
+        min_final = floor_indexed
+        max_final = np.where(ceiling_indexed != 0, ceiling_indexed, withdrawal_by_percentage)
+    else:
+        return -withdrawal_by_percentage
+    withdrawal = np.where(
+        (min_final <= withdrawal_by_percentage) & (withdrawal_by_percentage <= max_final),
+        withdrawal_by_percentage,
+        np.where(withdrawal_by_percentage > max_final, max_final, min_final),
+    )
+    return -withdrawal
 
 
 def _resample_slices(index: pd.PeriodIndex, pandas_frequency: str) -> list[tuple[int, int]]:
@@ -363,12 +390,9 @@ def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
     task semantics only: extra cash flows from `time_series` are compounded
     with the discount rate unless `time_series_discounted_values` is True.
 
-    Replicates the per-path reference exactly (equivalence is pinned by
-    tests), including one known quirk kept intentionally:
-
-    - VDS withdrawals are computed with last_withdrawal == 0 for every period
-      (the reference never updates it, unlike `get_cash_flow_fv`; GitHub
-      issue #82).
+    Replicates the per-path reference exactly; equivalence is pinned by tests.
+    (The two historical reference quirks were fixed together with this engine —
+    see GitHub issues #81 and #82.)
     """
     initial_investment = cashflow_parameters.initial_investment
     n_rows, n_cols = ror.shape
@@ -420,6 +444,7 @@ def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
             wealth[n] = balance
     else:
         months_in_full_period = settings._MONTHS_PER_YEAR / cashflow_parameters.periods_per_year
+        last_regular_cashflow: float | np.ndarray = 0.0
         for n, (start, stop) in enumerate(_resample_slices(ror.index, cashflow_parameters._pandas_frequency)):
             start_balance = balance
             if np.any(extra_cf[start:stop] != 0):
@@ -436,13 +461,16 @@ def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow_value = cashflow_parameters.percentage / periods_per_year * start_balance
             elif cashflow_parameters.NAME == "VDS":
-                cashflow_value = _vds_withdrawal_vector(cashflow_parameters, start_balance, n)
+                cashflow_value = _vds_withdrawal_vector(
+                    cashflow_parameters, start_balance, last_regular_cashflow if n > 0 else 0.0, n
+                )
             elif cashflow_parameters.NAME == "CWD":
                 base_withdrawal = amount * (1 + indexation_per_period) ** n
                 cashflow_value = base_withdrawal * np.where(drawdowns[stop - 1] < 0, cwd_factors[stop - 1], 1.0)
             else:
                 raise ValueError("Wrong cashflow_method value.")
             cashflow_value = cashflow_value * ((stop - start) / months_in_full_period)
+            last_regular_cashflow = cashflow_value
             balance = balance + cashflow_value
             wealth[stop - 1] = balance
 

@@ -78,6 +78,19 @@ def _vds_indexed(pf):
     )
 
 
+def _vds_floor_ceiling(pf):
+    return ok.VanguardDynamicSpending(
+        pf,
+        initial_investment=10_000,
+        percentage=-0.08,
+        indexation=0.03,
+        floor_ceiling=(-0.025, 0.05),
+        adjust_floor_ceiling=True,
+        min_max_annual_withdrawals=(500.0, 900.0),
+        adjust_min_max=True,
+    )
+
+
 # Each case: (case_id, strategy_builder(pf) -> CashFlow, last_date, mc_period_years, extra_dic)
 # extra_dic dates must fall inside the Monte Carlo window (it starts the month
 # after the portfolio last_date: 2022-01 for full history, 2021-07 for last_date="2021-06").
@@ -97,6 +110,8 @@ CASES = [
     ("vds_year", lambda pf: _vds(pf), None, 3, None),
     ("vds_year_partial", lambda pf: _vds(pf), "2021-06", 3, None),
     ("vds_year_indexed", lambda pf: _vds_indexed(pf), None, 3, None),
+    ("vds_year_floor_ceiling", lambda pf: _vds_floor_ceiling(pf), None, 3, None),
+    ("vds_year_floor_ceiling_partial", lambda pf: _vds_floor_ceiling(pf), "2021-06", 3, None),
 ]
 
 
