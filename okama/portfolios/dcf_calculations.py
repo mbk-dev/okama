@@ -376,23 +376,18 @@ def _resample_slices(index: pd.PeriodIndex, pandas_frequency: str) -> list[tuple
     return slices
 
 
-def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
+def _simulate_paths_mc(  # noqa: C901
     ror: pd.DataFrame,
     cashflow_parameters: cf.CashFlow,
     discount_rate: float,
-) -> pd.DataFrame:
-    """
-    Vectorized Monte Carlo counterpart of `get_wealth_indexes_fv_with_cashflow`.
+) -> tuple[np.ndarray, np.ndarray]:
+    """One vectorized Monte Carlo pass over all paths.
 
-    Computes wealth index future values (FV) for all random return paths at
-    once: a single Python loop over time steps with numpy operations across
-    paths, instead of a per-path pandas apply. Implements the "monte_carlo"
-    task semantics only: extra cash flows from `time_series` are compounded
-    with the discount rate unless `time_series_discounted_values` is True.
-
-    Replicates the per-path reference exactly; equivalence is pinned by tests.
-    (The two historical reference quirks were fixed together with this engine —
-    see GitHub issues #81 and #82.)
+    Returns ``(wealth, cash_flow)`` matrices of shape (T, N): the wealth index
+    (without the prepended initial row) and the total cash flow recorded per
+    month (regular strategy cash flow at its due month plus extra cash flows
+    from `time_series`), matching `get_wealth_indexes_fv_with_cashflow` and
+    `get_cash_flow_fv` (task="monte_carlo") respectively.
     """
     initial_investment = cashflow_parameters.initial_investment
     n_rows, n_cols = ror.shape
@@ -423,6 +418,7 @@ def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
         cwd_factors = _cwd_reduction_factor_matrix(cashflow_parameters, drawdowns)
 
     wealth = np.empty((n_rows, n_cols))
+    cash_flow = np.zeros((n_rows, n_cols))
     balance = np.full(n_cols, float(initial_investment))
 
     if frequency in ("month", "none"):
@@ -440,13 +436,16 @@ def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
                 cashflow = base_withdrawal * np.where(drawdowns[n] < 0, cwd_factors[n], 1.0)
             else:
                 raise ValueError("Wrong cashflow strategy name value.")
-            balance = balance * (1 + returns[n]) + cashflow + extra_cf[n]
+            cs_value = cashflow + extra_cf[n]
+            cash_flow[n] = cs_value
+            balance = balance * (1 + returns[n]) + cs_value
             wealth[n] = balance
     else:
         months_in_full_period = settings._MONTHS_PER_YEAR / cashflow_parameters.periods_per_year
         last_regular_cashflow: float | np.ndarray = 0.0
         for n, (start, stop) in enumerate(_resample_slices(ror.index, cashflow_parameters._pandas_frequency)):
             start_balance = balance
+            cash_flow[start:stop] = extra_cf[start:stop][:, None]
             if np.any(extra_cf[start:stop] != 0):
                 for k in range(start, stop):
                     balance = balance * (1 + returns[k]) + extra_cf[k]
@@ -471,12 +470,52 @@ def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
                 raise ValueError("Wrong cashflow_method value.")
             cashflow_value = cashflow_value * ((stop - start) / months_in_full_period)
             last_regular_cashflow = cashflow_value
+            cash_flow[stop - 1] += cashflow_value
             balance = balance + cashflow_value
             wealth[stop - 1] = balance
 
+    return wealth, cash_flow
+
+
+def get_wealth_indexes_fv_with_cashflow_mc(
+    ror: pd.DataFrame,
+    cashflow_parameters: cf.CashFlow,
+    discount_rate: float,
+) -> pd.DataFrame:
+    """
+    Vectorized Monte Carlo counterpart of `get_wealth_indexes_fv_with_cashflow`.
+
+    Computes wealth index future values (FV) for all random return paths at
+    once; one Python loop over time steps with numpy operations across paths.
+    Implements the "monte_carlo" task semantics only: extra cash flows from
+    `time_series` are compounded with the discount rate unless
+    `time_series_discounted_values` is True. Replicates the per-path reference
+    exactly; equivalence is pinned by tests. (The two historical reference
+    quirks were fixed together with this engine — see GitHub issues #81, #82.)
+    """
+    wealth, _ = _simulate_paths_mc(ror, cashflow_parameters, discount_rate)
+    n_cols = ror.shape[1]
+    initial_investment = cashflow_parameters.initial_investment
     out_index = ror.index.insert(0, ror.index[0] - 1)
     data = np.vstack([np.full((1, n_cols), float(initial_investment)), wealth])
     return pd.DataFrame(data, index=out_index, columns=ror.columns)
+
+
+def get_cash_flow_fv_mc(
+    ror: pd.DataFrame,
+    cashflow_parameters: cf.CashFlow,
+    discount_rate: float,
+) -> pd.DataFrame:
+    """
+    Vectorized Monte Carlo counterpart of `get_cash_flow_fv`.
+
+    Returns the monthly cash flow (regular strategy cash flow plus extra cash
+    flows from `time_series`) for all random return paths at once, on the same
+    index as `ror` (no prepended initial row). Equivalence with the per-path
+    reference is pinned by tests.
+    """
+    _, cash_flow = _simulate_paths_mc(ror, cashflow_parameters, discount_rate)
+    return pd.DataFrame(cash_flow, index=ror.index, columns=ror.columns)
 
 
 def remove_negative_values(input_s: pd.Series) -> pd.Series:

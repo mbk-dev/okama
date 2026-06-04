@@ -192,6 +192,35 @@ def test_monte_carlo_wealth_matches_per_path_reference(synthetic_env) -> None:
     pd.testing.assert_frame_equal(result, reference, check_exact=False, rtol=1e-12, atol=1e-8)
 
 
+def _reference_cash_flow(dcf, params):
+    """Old per-column cash-flow engine output (the ground truth)."""
+    return_ts = dcf.mc.monte_carlo_returns_ts
+    return return_ts.apply(
+        dcf_calculations.get_cash_flow_fv,
+        axis=0,
+        args=(None, params, "monte_carlo"),
+    )
+
+
+@pytest.mark.parametrize(("case_id", "builder", "last_date", "period", "extra_dic"), CASES, ids=[c[0] for c in CASES])
+def test_vectorized_cash_flow_matches_per_path_reference(
+    synthetic_env, case_id, builder, last_date, period, extra_dic
+) -> None:
+    pf = _make_portfolio(last_date)
+    params = builder(pf)
+    if extra_dic is not None:
+        params.time_series_dic = extra_dic
+    pf.dcf.cashflow_parameters = params
+    pf.dcf.set_mc_parameters(distribution="norm", period=period, mc_number=8, seed=0)
+
+    reference = _reference_cash_flow(pf.dcf, params)
+    result = dcf_calculations.get_cash_flow_fv_mc(
+        pf.dcf.mc.monte_carlo_returns_ts, params, pf.dcf.discount_rate
+    )
+
+    pd.testing.assert_frame_equal(result, reference, check_exact=False, rtol=1e-12, atol=1e-8, check_names=False)
+
+
 def test_monte_carlo_wealth_zeroes_paths_after_first_void(synthetic_env) -> None:
     # Guard for the vectorized negative-value masking: once a path hits a
     # non-positive value, that month and everything after must read 0.
