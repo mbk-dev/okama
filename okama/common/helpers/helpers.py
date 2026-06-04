@@ -360,8 +360,21 @@ class Frame:
         return survival_date.to_timestamp(freq="M")
 
     @get_survival_date.register
-    def _(wealth: pd.DataFrame, discount_rate: float, threshold: float = 0) -> pd.Timestamp:
-        return wealth.apply(func=Frame.get_survival_date, axis=0, args=(discount_rate, threshold))
+    def _(wealth: pd.DataFrame, discount_rate: float, threshold: float = 0) -> pd.Series:
+        if threshold > 1 or threshold < 0:
+            raise ValueError("threshold must be in range from 0 to 1.")
+        values = wealth.to_numpy(dtype=float)
+        n_rows = values.shape[0]
+        if threshold:
+            factors = (1.0 + discount_rate / 12) ** np.arange(n_rows)
+            voided = values <= values[0] * factors[:, None] * threshold
+        else:
+            voided = values <= 0
+        has_void = voided.any(axis=0)
+        first_void = voided.argmax(axis=0)
+        positions = np.where(has_void, first_void, n_rows - 1)
+        dates = wealth.index[positions].to_timestamp(freq="M")
+        return pd.Series(dates, index=wealth.columns)
 
     # Risk metrics
 

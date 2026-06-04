@@ -192,3 +192,23 @@ def test_monte_carlo_wealth_zeroes_paths_after_first_void(synthetic_env) -> None
     expected = fv.apply(dcf_calculations.remove_negative_values, axis=0).fillna(0)
     pd.testing.assert_frame_equal(masked, expected, check_exact=False, rtol=1e-12, atol=1e-8)
     assert (masked.to_numpy() >= 0).all()
+
+
+def test_survival_dates_frame_matches_per_column_scan(synthetic_env) -> None:
+    # Guard: the DataFrame overload of get_survival_date must equal the
+    # per-column Series overload for both threshold modes.
+    from okama.common.helpers import helpers
+
+    pf = _make_portfolio()
+    params = _indexation(pf, "year")
+    params.amount = -3_000
+    pf.dcf.cashflow_parameters = params
+    pf.dcf.set_mc_parameters(distribution="norm", period=5, mc_number=8, seed=0)
+    wealth = pf.dcf.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+
+    for threshold in (0, 0.1):
+        frame_result = helpers.Frame.get_survival_date(wealth, pf.dcf.discount_rate, threshold)
+        per_column = pd.Series(
+            {col: helpers.Frame.get_survival_date(wealth[col], pf.dcf.discount_rate, threshold) for col in wealth},
+        )
+        pd.testing.assert_series_equal(frame_result, per_column, check_names=False, check_dtype=False)
