@@ -107,11 +107,9 @@ def get_wealth_indexes_fv_with_cashflow(  # noqa: C901
             # CashFlow inside period (Extra withdrawals/contributions)
             if (cashflow_ts_local != 0).any():
                 period_wealth_index = pd.Series(dtype=float, name=portfolio_symbol)
-                for k, (date, r) in enumerate(ror_ts.items()):
-                    if k == 0:
-                        month_balance = period_initial_amount + cashflow_ts_local[date]
-                    else:
-                        month_balance = month_balance * (r + 1) + cashflow_ts_local[date]
+                month_balance = period_initial_amount
+                for date, r in ror_ts.items():
+                    month_balance = month_balance * (r + 1) + cashflow_ts_local[date]
                     period_wealth_index[date] = month_balance
             else:
                 period_wealth_index = period_initial_amount * (1 + ror_ts).cumprod()
@@ -256,11 +254,9 @@ def get_cash_flow_fv(  # noqa: C901
             # CashFlow inside period (Extra cash flow)
             if (cashflow_ts_local != 0).any():
                 period_wealth_index = pd.Series(dtype=float, name=portfolio_symbol)
-                for k, (date, r) in enumerate(ror_ts.items()):
-                    if k == 0:
-                        month_balance = period_initial_amount
-                    else:
-                        month_balance = month_balance * (r + 1) + cashflow_ts_local[date]
+                month_balance = period_initial_amount
+                for date, r in ror_ts.items():
+                    month_balance = month_balance * (r + 1) + cashflow_ts_local[date]
                     period_wealth_index[date] = month_balance
             else:
                 period_wealth_index = period_initial_amount * (1 + ror_ts).cumprod()
@@ -368,10 +364,8 @@ def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
     with the discount rate unless `time_series_discounted_values` is True.
 
     Replicates the per-path reference exactly (equivalence is pinned by
-    tests), including two known quirks kept intentionally:
+    tests), including one known quirk kept intentionally:
 
-    - the first month of a resample period that contains extra cash flows
-      receives the cash flow but not the month's return (GitHub issue #81);
     - VDS withdrawals are computed with last_withdrawal == 0 for every period
       (the reference never updates it, unlike `get_cash_flow_fv`; GitHub
       issue #82).
@@ -429,14 +423,8 @@ def get_wealth_indexes_fv_with_cashflow_mc(  # noqa: C901
         for n, (start, stop) in enumerate(_resample_slices(ror.index, cashflow_parameters._pandas_frequency)):
             start_balance = balance
             if np.any(extra_cf[start:stop] != 0):
-                # Reference quirk kept intentionally (GitHub issue #81): the
-                # first month of a period with extra cash flows gets the cash
-                # flow but NOT the month's return.
                 for k in range(start, stop):
-                    if k == start:
-                        balance = balance + extra_cf[k]
-                    else:
-                        balance = balance * (1 + returns[k]) + extra_cf[k]
+                    balance = balance * (1 + returns[k]) + extra_cf[k]
                     wealth[k] = balance
             else:
                 segment = np.cumprod(1 + returns[start:stop], axis=0) * start_balance
