@@ -7,9 +7,11 @@ of the reference implementation (no return in the first month of a period with
 extra cash flows; VDS last_withdrawal pinned to 0). The VDS cases also pin the first-period initialization (last_withdrawal == 0).
 """
 
-import pandas as pd  # noqa: I001
+import numpy as np  # noqa: I001
+import pandas as pd
 import pytest
 import okama as ok
+from okama import settings
 from okama.portfolios import dcf_calculations
 
 
@@ -266,3 +268,48 @@ def test_survival_dates_frame_rejects_empty_input() -> None:
     empty = pd.DataFrame(columns=[0, 1], dtype=float)
     with pytest.raises(ValueError, match=r"at least one row"):
         helpers.Frame.get_survival_date(empty, 0.05, 0)
+
+
+def test_monte_carlo_cash_flow_matches_per_path_reference(synthetic_env) -> None:
+    # Guard for the routing: public API output must stay equal to the old
+    # per-path computation (passes before and after the engine switch).
+    pf = _make_portfolio()
+    params = _indexation(pf, "year")
+    params.time_series_dic = {"2022-03": -500}
+    pf.dcf.cashflow_parameters = params
+    pf.dcf.set_mc_parameters(distribution="norm", period=3, mc_number=8, seed=0)
+
+    reference = _reference_cash_flow(pf.dcf, params)
+    params._clear_cf_cache()
+    result = pf.dcf.monte_carlo_cash_flow(discounting="fv", remove_if_wealth_index_negative=False)
+
+    pd.testing.assert_frame_equal(result, reference, check_exact=False, rtol=1e-12, atol=1e-8, check_names=False)
+
+
+def test_monte_carlo_irr_matches_per_path_reference(synthetic_env) -> None:
+    # Guard for the routing: IRR distribution must stay equal to the inline
+    # per-path construction used by the pre-routing implementation.
+    pf = _make_portfolio()
+    params = _indexation(pf, "year")
+    pf.dcf.cashflow_parameters = params
+    pf.dcf.set_mc_parameters(distribution="norm", period=5, mc_number=8, seed=0)
+
+    wealth = _reference_wealth(pf.dcf, params)
+    wealth = wealth.apply(dcf_calculations.remove_negative_values, axis=0).fillna(0.0)
+    cash_flow = _reference_cash_flow(pf.dcf, params)
+    cash_flow = cash_flow.where(wealth.reindex(cash_flow.index) != 0, 0.0)
+    terminal = wealth.iloc[-1]
+    flows = np.empty((cash_flow.shape[0] + 1, cash_flow.shape[1]), dtype=float)
+    flows[0, :] = -params.initial_investment
+    flows[1:, :] = -cash_flow.to_numpy()
+    flows[-1, :] += terminal.reindex(cash_flow.columns).to_numpy()
+    expected = pd.Series(
+        dcf_calculations.irr_of_cashflow_matrix(flows, periods_per_year=settings._MONTHS_PER_YEAR),
+        index=cash_flow.columns,
+        name="monte_carlo_irr",
+    )
+
+    params._clear_cf_cache()
+    result = pf.dcf.monte_carlo_irr()
+
+    pd.testing.assert_series_equal(result, expected, rtol=1e-9)

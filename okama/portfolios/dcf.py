@@ -675,14 +675,8 @@ class PortfolioDCF:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._monte_carlo_cash_flow_fv.empty:
             return_ts = self.mc.monte_carlo_returns_ts
-            self._monte_carlo_cash_flow_fv = return_ts.apply(
-                dcf_calculations.get_cash_flow_fv,
-                axis=0,
-                args=(
-                    self.parent.symbol,  # portfolio_symbol
-                    self.cashflow_parameters,
-                    "monte_carlo",  # task
-                ),
+            self._monte_carlo_cash_flow_fv = dcf_calculations.get_cash_flow_fv_mc(
+                return_ts, self.cashflow_parameters, self.discount_rate
             )
         mc_cash_flow_fv = self._monte_carlo_cash_flow_fv.copy()
         if remove_if_wealth_index_negative:
@@ -863,19 +857,9 @@ class PortfolioDCF:
         """
         if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
-        return_ts = self.mc.monte_carlo_returns_ts  # single shared (cached) draw
         cashflow_parameters = self.cashflow_parameters
-        wealth = return_ts.apply(
-            dcf_calculations.get_wealth_indexes_fv_with_cashflow,
-            axis=0,
-            args=(None, None, cashflow_parameters, "monte_carlo"),
-        )
-        wealth = wealth.apply(dcf_calculations.remove_negative_values, axis=0).fillna(0.0)
-        cash_flow = return_ts.apply(
-            dcf_calculations.get_cash_flow_fv,
-            axis=0,
-            args=(self.parent.symbol, cashflow_parameters, "monte_carlo"),
-        )
+        wealth = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+        cash_flow = self.monte_carlo_cash_flow(discounting="fv", remove_if_wealth_index_negative=False)
         # Zero a path's cash flow once its (floored) wealth is depleted, consistent per path.
         cash_flow = cash_flow.where(wealth.reindex(cash_flow.index) != 0, 0.0)
         terminal = wealth.iloc[-1]
