@@ -930,7 +930,10 @@ class PortfolioDCF:
         - 'error_rel' - characterizes how accurately the goal is fulfilled.
         - 'solutions' - the history of attempts to find solutions (withdrawal values and error level).
 
-        The algorithm uses the bisection method to find the largest withdrawal size.
+        The algorithm evaluates the goal at both ends of `withdrawals_range` first
+        and stops early if the solution lies outside the range; otherwise it finds
+        the withdrawal size with Brent's method (`scipy.optimize.brentq`) over the
+        cached set of Monte Carlo scenarios.
 
         Parameters
         ----------
@@ -964,7 +967,8 @@ class PortfolioDCF:
             The value must be less than the MonteCarlo.priod parameter.
 
         iter_max : int, default 20
-            The maximum number of iterations to find the solution.
+            The maximum number of objective evaluations (each runs one Monte Carlo
+            simulation), including the two evaluations at the ends of `withdrawals_range`.
 
         tolerance_rel : float, default 0.10
             The allowed tolerance for the solution. The tolerance is the largest error for the achieved goal.
@@ -1009,6 +1013,8 @@ class PortfolioDCF:
         and `withdrawal_rel` is the relative withdrawal size (the first withdrawal value divided by the initial investment).
 
         If the solution was not found, it is still possible to see the intermediate steps.
+        The intermediate withdrawal values depend on the root-finding steps
+        (the values below are illustrative).
 
         >>> res.solutions
           withdrawal_abs withdrawal_rel error_rel error_rel_change

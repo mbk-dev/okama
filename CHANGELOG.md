@@ -41,6 +41,16 @@ draw cached and reproducible.
   `find_the_largest_withdrawals_size` now evaluates every candidate against the
   same scenario set (removing the sampling noise that previously broke its
   monotonicity). Use `set_mc_parameters(..., seed=...)` for reproducible runs.
+- `Portfolio.dcf.find_the_largest_withdrawals_size()` is faster: the bisection
+  search is replaced with Brent's method (`scipy.optimize.brentq`) on a signed
+  goal residual, and both ends of `withdrawals_range` are checked first so the
+  solver exits after 1–2 Monte Carlo simulations when the solution lies outside
+  the range. The public signature, the `Result` shape and the stopping rule
+  (`error_rel < tolerance_rel`) are unchanged; `iter_max` now caps objective
+  evaluations (Monte Carlo simulations), including the two range-end checks, so
+  the history of intermediate attempts in `Result.solutions` differs from the
+  former bisection midpoints. `iter_max` values below 1 are now rejected with a
+  `ValueError`.
 
 ### Fixed
 - `PortfolioDCF.monte_carlo_cash_flow()` with `remove_if_wealth_index_negative=True`
