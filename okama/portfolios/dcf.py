@@ -7,6 +7,7 @@ from typing import Optional, Literal, Tuple  # noqa: UP035
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
+from scipy import optimize
 
 import okama.portfolios.core as core
 import okama.portfolios.mc as mc
@@ -18,6 +19,14 @@ from okama.common.helpers import helpers
 from okama.common.solver import Result
 
 logger = logging.getLogger(__name__)
+
+
+class _SolverConverged(Exception):
+    """Internal signal: error_rel dropped below tolerance_rel during the root search."""
+
+
+class _SolverBudgetExhausted(Exception):
+    """Internal signal: the root search spent all iter_max objective evaluations."""
 
 
 # Constants for cashflow strategy types
@@ -1020,74 +1029,95 @@ class PortfolioDCF:
         expected_min_withdrawal, expected_max_withdrawal = self._get_withdrawal_bounds(
             withdrawals_range, start_investment
         )
-        self._set_main_parameter(expected_max_withdrawal)
+        # Both bounds are negative. The largest withdrawal (expected_max_withdrawal)
+        # is numerically the smallest value, which makes it the left end for brentq.
+        lower_m, upper_m = expected_max_withdrawal, expected_min_withdrawal
 
-        # Bisection search
         solutions = pd.DataFrame(columns=["withdrawal_abs", "withdrawal_rel", "error_rel", "error_rel_change"])
-        try:
-            for iteration in range(iter_max):
-                (
-                    withdrawal_abs,
-                    withdrawal_rel,
-                    error_rel,
-                    condition,
-                    expected_min_withdrawal,
-                    expected_max_withdrawal,
-                ) = self._bisection_iteration(
-                    goal,
-                    percentile,
-                    threshold,
-                    start_investment,
-                    target_survival_period,
-                    expected_min_withdrawal,
-                    expected_max_withdrawal,
-                )
+        residual_cache: dict[float, float] = {}
 
-                # Record solution
-                solutions.at[iteration, "withdrawal_abs"] = withdrawal_abs
-                solutions.at[iteration, "withdrawal_rel"] = withdrawal_rel
-                solutions.at[iteration, "error_rel"] = error_rel
-                gradient = (
-                    solutions.at[iteration, "error_rel"] - solutions.at[iteration - 1, "error_rel"]
-                    if iteration > 0
-                    else 0
-                )
-                solutions.at[iteration, "error_rel_change"] = gradient
+        def _evaluate(m: float) -> float:
+            """Signed residual of the goal at withdrawal parameter `m` (one MC simulation).
 
-                logger.info(f"Iteration {iteration}: error_rel={error_rel:.3f}, gradient={gradient:.3f}")
-
-                # Check convergence
-                if error_rel < tolerance_rel:
-                    logger.info(
-                        f"Solution found: {withdrawal_abs:.2f} or {withdrawal_rel * 100:.2f}% "
-                        f"after {iteration + 1} steps."
-                    )
-                    return Result(
-                        success=True,
-                        withdrawal_abs=withdrawal_abs,
-                        withdrawal_rel=withdrawal_rel,
-                        error_rel=error_rel,
-                        solutions=solutions,
-                    )
-
-            # No solution found - return best attempt
-            best_idx = solutions["error_rel"].idxmin()
-            best_result = solutions.loc[best_idx]
-            logger.warning(
-                f"Solution not found after {iter_max} steps. "
-                f"Best withdrawal: {best_result['withdrawal_abs']:.2f} ({best_result['withdrawal_rel'] * 100:.2f}%) "
-                f"with error: {best_result['error_rel'] * 100:.2f}%"
+            Positive when the goal is met (the withdrawal can be increased),
+            negative otherwise. Every fresh evaluation is recorded in `solutions`;
+            repeated points are served from the cache without spending budget.
+            """
+            if m in residual_cache:
+                return residual_cache[m]
+            iteration = solutions.shape[0]
+            if iteration >= iter_max:
+                raise _SolverBudgetExhausted
+            self._set_main_parameter(m)
+            condition, error_rel = self._calculate_goal_metrics(
+                goal, percentile, threshold, start_investment, target_survival_period
             )
+            withdrawal_abs, withdrawal_rel = self._calculate_withdrawal_metrics(m, start_investment)
+            solutions.at[iteration, "withdrawal_abs"] = withdrawal_abs
+            solutions.at[iteration, "withdrawal_rel"] = withdrawal_rel
+            solutions.at[iteration, "error_rel"] = error_rel
+            gradient = (
+                solutions.at[iteration, "error_rel"] - solutions.at[iteration - 1, "error_rel"]
+                if iteration > 0
+                else 0
+            )
+            solutions.at[iteration, "error_rel_change"] = gradient
+            logger.info(f"Evaluation {iteration}: m={m:.6f}, error_rel={error_rel:.3f}, gradient={gradient:.3f}")
+            if error_rel < tolerance_rel:
+                raise _SolverConverged
+            residual = error_rel if condition else -error_rel
+            residual_cache[m] = residual
+            return residual
 
+        try:
+            if _evaluate(lower_m) > 0:
+                # Even the largest allowed withdrawal sustains the goal:
+                # the root lies outside withdrawals_range.
+                return self._best_attempt_result(solutions)
+            if _evaluate(upper_m) < 0:
+                # Even the smallest allowed withdrawal fails the goal:
+                # there is no root inside withdrawals_range.
+                return self._best_attempt_result(solutions)
+            xtol = max(abs(upper_m - lower_m) * 1e-6, 1e-12)
+            optimize.brentq(_evaluate, lower_m, upper_m, xtol=xtol, maxiter=iter_max)
+            # brentq located the sign change with xtol precision, but error_rel
+            # never dropped below tolerance_rel (e.g. a steep step in the
+            # survival-period goal): report the best attempt.
+            return self._best_attempt_result(solutions)
+        except _SolverConverged:
+            last = solutions.iloc[-1]
+            logger.info(
+                f"Solution found: {last['withdrawal_abs']:.2f} or {last['withdrawal_rel'] * 100:.2f}% "
+                f"after {solutions.shape[0]} evaluations."
+            )
             return Result(
-                success=False,
-                withdrawal_abs=best_result["withdrawal_abs"],
-                withdrawal_rel=best_result["withdrawal_rel"],
-                error_rel=best_result["error_rel"],
+                success=True,
+                withdrawal_abs=float(last["withdrawal_abs"]),
+                withdrawal_rel=float(last["withdrawal_rel"]),
+                error_rel=float(last["error_rel"]),
                 solutions=solutions,
             )
+        except _SolverBudgetExhausted:
+            return self._best_attempt_result(solutions)
         finally:
             self._restore_cashflow_parameters_from_backup(backup_obj, backup_main_parameter)
+
+    def _best_attempt_result(self, solutions: pd.DataFrame) -> Result:
+        """Build a failure Result from the recorded attempt with the smallest error."""
+        best_idx = solutions["error_rel"].idxmin()
+        best_result = solutions.loc[best_idx]
+        logger.warning(
+            f"Solution not found after {solutions.shape[0]} evaluations. "
+            f"Best withdrawal: {best_result['withdrawal_abs']:.2f} ({best_result['withdrawal_rel'] * 100:.2f}%) "
+            f"with error: {best_result['error_rel'] * 100:.2f}%"
+        )
+        return Result(
+            success=False,
+            withdrawal_abs=float(best_result["withdrawal_abs"]),
+            withdrawal_rel=float(best_result["withdrawal_rel"]),
+            error_rel=float(best_result["error_rel"]),
+            solutions=solutions,
+        )
 
     def _validate_parameters(
         self,
@@ -1114,18 +1144,6 @@ class PortfolioDCF:
             raise ValueError("percentile must be between 0 and 100")
         if not 0 <= threshold <= 1:
             raise ValueError("threshold must be between 0 and 1")
-
-    def _update_parameter(self, delta: float, increase: bool) -> None:
-        """Update withdrawal parameter using bisection step."""
-        sign = -1 if increase else 1
-        if isinstance(self.cashflow_parameters, cf.IndexationStrategy):
-            self.cashflow_parameters.amount += sign * delta / 2
-        elif isinstance(self.cashflow_parameters, cf.PercentageStrategy):
-            self.cashflow_parameters.percentage += sign * delta / 2
-        else:
-            raise ValueError(
-                "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only."
-            )
 
     def _calculate_goal_metrics(
         self, goal: str, percentile: int, threshold: float, start_investment: float, target_survival_period: int
@@ -1180,43 +1198,6 @@ class PortfolioDCF:
             )
 
         return withdrawal_abs, withdrawal_rel
-
-    def _bisection_iteration(
-        self,
-        goal: str,
-        percentile: int,
-        threshold: float,
-        start_investment: float,
-        target_survival_period: int,
-        expected_min_withdrawal: float,
-        expected_max_withdrawal: float,
-    ) -> Tuple[float, float, float, bool, float, float]:  # noqa: UP006
-        """Perform one iteration of bisection search.
-
-        Returns
-        -------
-        Tuple containing: withdrawal_abs, withdrawal_rel, error_rel, condition,
-                          new_min_withdrawal, new_max_withdrawal
-        """
-        main_parameter = self._get_main_parameter()
-        condition, error_rel = self._calculate_goal_metrics(
-            goal, percentile, threshold, start_investment, target_survival_period
-        )
-        withdrawal_abs, withdrawal_rel = self._calculate_withdrawal_metrics(main_parameter, start_investment)
-
-        # Update bounds based on condition
-        if condition:
-            expected_min_withdrawal = main_parameter
-            delta = abs(expected_max_withdrawal - main_parameter)
-            self._update_parameter(delta, increase=True)
-            logger.debug("Increasing withdrawal")
-        else:
-            expected_max_withdrawal = main_parameter
-            delta = abs(main_parameter - expected_min_withdrawal)
-            self._update_parameter(delta, increase=False)
-            logger.debug("Decreasing withdrawal")
-
-        return (withdrawal_abs, withdrawal_rel, error_rel, condition, expected_min_withdrawal, expected_max_withdrawal)
 
     def _restore_cashflow_parameters_from_backup(
         self, backup_obj: cf.CashFlow | None, backup_main_parameter: float | None = None
