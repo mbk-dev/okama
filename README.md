@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mbk-dev/okama/images/images/Okama2.jpg" alt="okama — investment portfolio analysis and optimization library" width="600">
+</p>
+
 # Okama
 
 [![Documentation Status](https://img.shields.io/readthedocs/okama.svg?style=popout)](https://okama.readthedocs.io/)
@@ -30,6 +34,7 @@ _okama_ provides access to **free** end-of-day historical market data and macroe
 - [Examples](#examples)
 - [Documentation](#documentation)
 - [Financial Widgets](#financial-widgets)
+- [MCP server](#mcp-server)
 - [Roadmap](#roadmap)
 - [Contributing to okama](#contributing-to-okama)
 - [Communication](#communication)
@@ -91,6 +96,13 @@ For many countries (China, USA, United Kingdom, European Union, Russia, Israel e
 
 ```bash
 pip install okama
+```
+
+Or with [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv add okama          # add to a uv-managed project
+uv pip install okama  # or pip-style install into the active environment
 ```
 
 ### Install the latest development version from GitHub
@@ -208,6 +220,20 @@ built with the _okama_ package and [Dash (plotly)](https://github.com/plotly/das
 [okama.io](https://okama.io/).
 
 ![](https://github.com/mbk-dev/okama-dash/blob/images/images/main_page.jpg?raw=true) 
+
+## MCP server
+
+[okama-mcp](https://github.com/mbk-dev/okama-mcp) is an MCP (Model Context Protocol) server that exposes
+the _okama_ toolkit to AI assistants — Claude Desktop, Claude Code, Cursor, and any other MCP-compatible
+client. Ask the AI to backtest a portfolio, build an efficient frontier, or run a Monte Carlo retirement
+forecast — it calls _okama_ directly, no Python code needed.
+
+```bash
+uvx okama-mcp stdio  # run straight from PyPI
+```
+
+okama-mcp is free and open source — no hosted service, no registration; you run it yourself, locally or
+on your own server. See [mcp.okama.io](https://mcp.okama.io) for installation and client configuration.
 
 ## Roadmap
 
