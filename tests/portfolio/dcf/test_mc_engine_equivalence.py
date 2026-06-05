@@ -216,9 +216,7 @@ def test_vectorized_cash_flow_matches_per_path_reference(
     pf.dcf.set_mc_parameters(distribution="norm", period=period, mc_number=8, seed=0)
 
     reference = _reference_cash_flow(pf.dcf, params)
-    result = dcf_calculations.get_cash_flow_fv_mc(
-        pf.dcf.mc.monte_carlo_returns_ts, params, pf.dcf.discount_rate
-    )
+    result = dcf_calculations.get_cash_flow_fv_mc(pf.dcf.mc.monte_carlo_returns_ts, params, pf.dcf.discount_rate)
 
     pd.testing.assert_frame_equal(result, reference, check_exact=False, rtol=1e-12, atol=1e-8, check_names=False)
 

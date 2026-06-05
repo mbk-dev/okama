@@ -370,9 +370,7 @@ class PortfolioDCF:
             raise AttributeError("'cashflow_parameters' is not defined.")
 
         cash_flow = self.cash_flow_ts(discounting="fv", remove_if_wealth_index_negative=True)
-        terminal = self.wealth_index(discounting="fv", include_negative_values=False)[
-            self.parent.symbol
-        ].iloc[-1]
+        terminal = self.wealth_index(discounting="fv", include_negative_values=False)[self.parent.symbol].iloc[-1]
         initial_investment = self.cashflow_parameters.initial_investment
         n_months = self.parent.ror.shape[0]
 
@@ -381,9 +379,7 @@ class PortfolioDCF:
         flows[1:] = -cash_flow.reindex(self.parent.ror.index).fillna(0.0).to_numpy()
         flows[-1] += terminal
 
-        return float(
-            dcf_calculations.irr_of_cashflow_matrix(flows, periods_per_year=settings._MONTHS_PER_YEAR)[0]
-        )
+        return float(dcf_calculations.irr_of_cashflow_matrix(flows, periods_per_year=settings._MONTHS_PER_YEAR)[0])
 
     @property
     def wealth_index_fv_with_assets(self) -> pd.DataFrame:
@@ -1039,9 +1035,7 @@ class PortfolioDCF:
             solutions.at[iteration, "withdrawal_rel"] = withdrawal_rel
             solutions.at[iteration, "error_rel"] = error_rel
             gradient = (
-                solutions.at[iteration, "error_rel"] - solutions.at[iteration - 1, "error_rel"]
-                if iteration > 0
-                else 0
+                solutions.at[iteration, "error_rel"] - solutions.at[iteration - 1, "error_rel"] if iteration > 0 else 0
             )
             solutions.at[iteration, "error_rel_change"] = gradient
             logger.info(f"Evaluation {iteration}: m={m:.6f}, error_rel={error_rel:.3f}, gradient={gradient:.3f}")

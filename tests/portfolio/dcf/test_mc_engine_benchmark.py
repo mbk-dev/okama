@@ -62,9 +62,7 @@ def test_benchmark_monte_carlo_irr(synthetic_env) -> None:
     reference_wealth = return_ts.apply(
         dcf_calculations.get_wealth_indexes_fv_with_cashflow, axis=0, args=(None, None, ind, "monte_carlo")
     )
-    reference_cash_flow = return_ts.apply(
-        dcf_calculations.get_cash_flow_fv, axis=0, args=(None, ind, "monte_carlo")
-    )
+    reference_cash_flow = return_ts.apply(dcf_calculations.get_cash_flow_fv, axis=0, args=(None, ind, "monte_carlo"))
     reference_seconds = time.perf_counter() - started
     assert reference_wealth.shape[1] == reference_cash_flow.shape[1]
 

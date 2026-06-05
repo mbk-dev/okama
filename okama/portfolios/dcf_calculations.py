@@ -660,9 +660,9 @@ def irr_of_cashflow_matrix(
     with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
         for _ in range(max_iter):
             base = np.where(1.0 + rate <= eps, eps, 1.0 + rate)  # (n_series,)
-            disc = base[None, :] ** (-t)                         # (n_periods, n_series)
-            f = (cf * disc).sum(axis=0)                          # (n_series,)
-            fprime = -(t * cf * disc).sum(axis=0) / base         # (n_series,)
+            disc = base[None, :] ** (-t)  # (n_periods, n_series)
+            f = (cf * disc).sum(axis=0)  # (n_series,)
+            fprime = -(t * cf * disc).sum(axis=0) / base  # (n_series,)
             step = np.where(fprime != 0.0, f / fprime, 0.0)
             rate = rate - step
             rate = np.where(rate <= -1.0 + eps, -1.0 + eps, rate)

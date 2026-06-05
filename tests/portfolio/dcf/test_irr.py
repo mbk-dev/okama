@@ -79,9 +79,7 @@ def test_irr_core_brentq_fallback_long_column_no_overflow_warning():
 @pytest.fixture()
 def pf_no_inflation(synthetic_env):
     """Two-asset portfolio, monthly rebalancing, no inflation (mocked data)."""
-    return ok.Portfolio(
-        ["A.US", "B.US"], ccy="USD", inflation=False, rebalancing_strategy=ok.Rebalance(period="month")
-    )
+    return ok.Portfolio(["A.US", "B.US"], ccy="USD", inflation=False, rebalancing_strategy=ok.Rebalance(period="month"))
 
 
 def test_irr_equals_cagr_without_intermediate_cashflows(pf_no_inflation):
