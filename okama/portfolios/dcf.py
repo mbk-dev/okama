@@ -966,8 +966,8 @@ class PortfolioDCF:
         >>> pc.frequency = "year"
         >>> # Assign a strategy
         >>> pf.dcf.cashflow_parameters = pc
-        >>> # Set Monte Carlo parameters
-        >>> pf.dcf.set_mc_parameters(distribution="norm", period=50, mc_number=200)
+        >>> # Set Monte Carlo parameters (seed makes the search reproducible)
+        >>> pf.dcf.set_mc_parameters(distribution="norm", period=50, mc_number=200, seed=42)
         >>> res = pf.dcf.find_the_largest_withdrawals_size(
         ...     percentile=50,
         ...     goal="survival_period",
@@ -975,28 +975,29 @@ class PortfolioDCF:
         ...     target_survival_period=25,
         ... )
         >>> res
-        success                True
-        withdrawal_abs   -917.96875
-        withdrawal_rel     0.091797
-        error_rel           0.00442
-        attempts                 10
+        success                  True
+        withdrawal_abs   -1598.947236
+        withdrawal_rel       0.159895
+        error_rel               0.048
+        attempts                    7
         dtype: object
 
         In the result, `withdrawal_abs` is the absolute value of the withdrawal (the first withdrawal value),
         and `withdrawal_rel` is the relative withdrawal size (the first withdrawal value divided by the initial investment).
 
-        If the solution was not found, it is still possible to see the intermediate steps.
-        The intermediate withdrawal values depend on the root-finding steps
-        (the values below are illustrative).
+        Even if the solution was not found, it is still possible to see the intermediate steps:
+        the two evaluations at the range ends followed by the Brent root-finding steps.
+        Exact values depend on the historical data window the distribution is fitted to.
 
         >>> res.solutions
           withdrawal_abs withdrawal_rel error_rel error_rel_change
-        0       -10000.0              1     0.968                0
-        1        -5000.0            0.5     0.848            -0.12
-        2        -2500.0           0.25    0.6082          -0.2398
-        3        -1250.0          0.125   0.24816         -0.36004
-        4         -625.0         0.0625   0.55576           0.3076
-        5         -937.5        0.09375   0.00442         -0.55134
+        0       -10000.0              1     0.928                0
+        1            0.0              0       1.0            0.072
+        2   -5186.721992       0.518672     0.768           -0.232
+        3   -2593.360996       0.259336      0.46           -0.308
+        4   -1296.680498       0.129668     0.276           -0.184
+        5   -1782.935685       0.178294     0.168           -0.108
+        6   -1598.947236       0.159895     0.048            -0.12
         """
         # Validation
         self._validate_parameters(
