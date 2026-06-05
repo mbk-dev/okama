@@ -227,3 +227,10 @@ def test_get_grid_portfolios_includes_weight_columns_single(ef_ab):
 def test_get_grid_portfolios_three_assets_single(ef_three):
     result = ef_three.get_grid_portfolios(step=0.50)
     assert len(result) == 6  # 3 assets, step 0.50 → 6 combos
+
+
+def test_get_grid_portfolios_respects_max_points_single(ef_three):
+    """get_grid_portfolios forwards max_points to the grid generator so an
+    oversized request fails fast (3 assets, step 0.50 = 6 points > 2)."""
+    with pytest.raises(ValueError, match="max_points"):
+        ef_three.get_grid_portfolios(step=0.50, max_points=2)

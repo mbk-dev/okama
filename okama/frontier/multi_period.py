@@ -724,13 +724,22 @@ class EfficientFrontier(asset_list.AssetList):
         """
 
         n = self.assets_ror.shape[1]  # number of assets
-        init_guess = np.repeat(1 / n, n)  # initial weights
 
-        max_ratio_data = self._max_ratio_asset_right_to_max_cagr
-
-        if max_ratio_data is not None:
-            init_guess = np.repeat(0, n)  # clear weights
-            init_guess[self._min_ratio_asset["list_position"]] = 1.0
+        # Multi-start initial guesses. A single equal-weights start makes SLSQP settle in a
+        # high-risk basin near the minimum-variance corner when the lowest-risk asset is not
+        # the lowest-CAGR asset, missing the true (lower-risk) single-asset solution. Adding the
+        # minimum-variance asset vertex as a start lets the optimizer reach that corner.
+        lows = np.array([lo for lo, _ in self.bounds])
+        highs = np.array([hi for _, hi in self.bounds])
+        asset_risk = helpers.Float.annualize_risk(self.assets_ror.std(), self.assets_ror.mean())
+        min_variance_vertex = np.zeros(n)
+        min_variance_vertex[self.assets_ror.columns.get_loc(asset_risk.idxmin())] = 1.0
+        init_guesses = [np.repeat(1 / n, n), min_variance_vertex]
+        if self._max_ratio_asset_right_to_max_cagr is not None:
+            min_ratio_vertex = np.zeros(n)
+            min_ratio_vertex[self._min_ratio_asset["list_position"]] = 1.0
+            init_guesses.append(min_ratio_vertex)
+        init_guesses = [np.clip(ig, lows, highs) for ig in init_guesses]
 
         def objective_function(w):
             # annual risk
@@ -745,32 +754,37 @@ class EfficientFrontier(asset_list.AssetList):
             "type": "eq",
             "fun": lambda weights: target_value - self._get_cagr(weights),
         }
-        # for i in range(4):
-        weights = minimize(
-            objective_function,
-            init_guess,
-            method="SLSQP",
-            options={
-                "disp": False,
-                "maxiter": 80,
-                "ftol": self._FTOL[0],
-            },
-            constraints=(weights_sum_to_1, cagr_is_target),
-            bounds=self.bounds,
-        )
 
-        # Calculate points of EF given optimal weights
-        if weights.success:
-            asset_labels = self.symbols if self.ticker_names else list(self.names.values())
-            point = dict(zip(asset_labels, weights.x))  # noqa: B905
-            point["CAGR"] = target_value
-            point["Mean return"] = objective_function.mean_return * settings._MONTHS_PER_YEAR
-            point["Risk"] = weights.fun
-            point["Weights"] = weights.x
-            point["iterations"] = weights.nit
-            # break
-        if not weights.success:
+        best = None
+        for init_guess in init_guesses:
+            candidate = minimize(
+                objective_function,
+                init_guess,
+                method="SLSQP",
+                options={
+                    "disp": False,
+                    "maxiter": 80,
+                    "ftol": self._FTOL[0],
+                },
+                constraints=(weights_sum_to_1, cagr_is_target),
+                bounds=self.bounds,
+            )
+            if candidate.success and (best is None or candidate.fun < best.fun):
+                best = candidate
+
+        if best is None:
             raise RuntimeError(f"No solution found for target CAGR value: {target_value}.")
+
+        # Recompute the mean return for the selected (best) weights, as objective_function
+        # caches it as a side effect of the most recent evaluation.
+        mean_return = self._get_portfolio_ror_ts(best.x).mean()
+        asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+        point = dict(zip(asset_labels, best.x))  # noqa: B905
+        point["CAGR"] = target_value
+        point["Mean return"] = mean_return * settings._MONTHS_PER_YEAR
+        point["Risk"] = best.fun
+        point["Weights"] = best.x
+        point["iterations"] = best.nit
         return point
 
     def _maximize_risk(self, target_return: float) -> Dict[str, float]:  # noqa: UP006
@@ -975,7 +989,14 @@ class EfficientFrontier(asset_list.AssetList):
         else:
             min_cagr = self.gmv_annual_values[1]
         max_cagr = self.global_max_return_portfolio["CAGR"]
-        return np.linspace(min_cagr, max_cagr, self.n_points)
+        target_range = np.linspace(min_cagr, max_cagr, self.n_points)
+        # Ensure the minimum-variance asset's CAGR is sampled so the frontier passes through
+        # that asset; otherwise the lowest-risk single asset can fall just outside the polyline.
+        asset_risk = helpers.Float.annualize_risk(self.assets_ror.std(), self.assets_ror.mean())
+        min_variance_cagr = helpers.Frame.get_cagr(self.assets_ror)[asset_risk.idxmin()]
+        if min_cagr < min_variance_cagr < max_cagr:
+            target_range = np.unique(np.append(target_range, min_variance_cagr))
+        return target_range
 
     @property
     def _target_cagr_range_right(self) -> Optional[np.ndarray]:  # noqa: UP045
@@ -1260,9 +1281,12 @@ class EfficientFrontier(asset_list.AssetList):
         """
         weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
         asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+        # Every enumerated weight vector is unique, so the ror cache would never
+        # hit and only grow O(points). Compute the series directly instead.
+        rebalance = Rebalance(period=self.rebalancing_strategy.period)
         rows_list = []
         for weights in weights_series:
-            portfolio_ror = self._get_portfolio_ror_ts(weights)
+            portfolio_ror = rebalance.return_ror_ts_ef(weights, self.assets_ror)
             risk_monthly = portfolio_ror.std()
             mean_return = portfolio_ror.mean()
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
@@ -1274,7 +1298,7 @@ class EfficientFrontier(asset_list.AssetList):
         result = pd.DataFrame.from_records(rows_list)
         return helpers.Frame.change_columns_order(result, ["Risk", "CAGR"])
 
-    def get_grid_portfolios(self, step: float = 0.10) -> pd.DataFrame:
+    def get_grid_portfolios(self, step: float = 0.10, max_points: int = 100_000) -> pd.DataFrame:
         """
         Generate rebalanced portfolios for all weight combinations on a grid.
 
@@ -1285,6 +1309,11 @@ class EfficientFrontier(asset_list.AssetList):
         ----------
         step : float, default 0.10
             Weight increment (e.g. 0.10 for 10 %).
+        max_points : int, default 100_000
+            Guardrail on the number of grid portfolios. The point count grows
+            combinatorially with the number of assets and ``1 / step``; an
+            oversized request raises ``ValueError`` before enumeration instead
+            of hanging. Raise it to allow larger grids at the cost of runtime.
 
         Returns
         -------
@@ -1306,11 +1335,16 @@ class EfficientFrontier(asset_list.AssetList):
                CAGR      Risk
         0  ...       ...
         """
-        weights_series = helpers.Float.get_grid_weights(w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds)
+        weights_series = helpers.Float.get_grid_weights(
+            w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds, max_points=max_points
+        )
         asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+        # Every grid weight vector is unique, so the ror cache would never hit
+        # and only grow O(points). Compute the series directly instead.
+        rebalance = Rebalance(period=self.rebalancing_strategy.period)
         rows_list = []
         for weights in weights_series:
-            portfolio_ror = self._get_portfolio_ror_ts(weights)
+            portfolio_ror = rebalance.return_ror_ts_ef(weights, self.assets_ror)
             risk_monthly = portfolio_ror.std()
             mean_return = portfolio_ror.mean()
             risk = helpers.Float.annualize_risk(risk_monthly, mean_return)

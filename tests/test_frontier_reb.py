@@ -4,6 +4,8 @@ import pytest
 from numpy.testing import assert_allclose
 
 import okama as ok
+from okama.common.helpers import helpers
+from tests.helpers.factories import FakeAsset, FakeCurrencyAsset
 
 
 @pytest.fixture()
@@ -303,7 +305,8 @@ def test_target_cagr_range_left_properties(ef_reb_ab):
     """Test _target_cagr_range_left returns proper array."""
     r = ef_reb_ab._target_cagr_range_left
     assert isinstance(r, np.ndarray)
-    assert len(r) == ef_reb_ab.n_points
+    # n_points samples, plus possibly the minimum-variance asset's CAGR
+    assert len(r) >= ef_reb_ab.n_points
     # Should be non-decreasing
     assert np.all(np.diff(r) >= -1e-12)
 
@@ -619,3 +622,107 @@ def test_get_grid_portfolios_risk_and_cagr_are_floats(ef_reb_ab):
     result = ef_reb_ab.get_grid_portfolios(step=0.50)
     assert result["Risk"].dtype == np.float64 or np.issubdtype(result["Risk"].dtype, np.floating)
     assert result["CAGR"].dtype == np.float64 or np.issubdtype(result["CAGR"].dtype, np.floating)
+
+
+def test_get_grid_portfolios_does_not_grow_ror_cache(ef_reb_three):
+    """Grid enumeration yields only unique weight vectors, so it must not
+    populate the optimization ror cache (which would otherwise grow O(points))."""
+    ef_reb_three.get_grid_portfolios(step=0.50)
+    assert len(ef_reb_three._ror_cache) == 0
+
+
+def test_get_monte_carlo_does_not_grow_ror_cache(ef_reb_three):
+    """Monte-Carlo enumeration yields unique weight vectors, so it must not
+    populate the optimization ror cache."""
+    ef_reb_three.get_monte_carlo(n=20)
+    assert len(ef_reb_three._ror_cache) == 0
+
+
+def test_get_grid_portfolios_respects_max_points(ef_reb_three):
+    """get_grid_portfolios forwards max_points to the grid generator so an
+    oversized request fails fast (3 assets, step 0.50 = 6 points > 2)."""
+    with pytest.raises(ValueError, match="max_points"):
+        ef_reb_three.get_grid_portfolios(step=0.50, max_points=2)
+
+
+# --- minimum-variance corner: min-risk asset is not the min-CAGR asset ---
+
+
+@pytest.fixture()
+def ef_min_variance_corner(mocker):
+    """EfficientFrontier where the lowest-risk asset is NOT the lowest-CAGR asset.
+
+    DEP.US  - very low volatility, moderate CAGR  (true minimum-variance vertex)
+    GLD.US  - the lowest CAGR                      (sets the left end of the CAGR range)
+    STK.US  - high CAGR
+    VOL.US  - extreme volatility, high CAGR
+
+    DEP's CAGR sits in the interior of the target-CAGR range, and a high-risk
+    DEP/VOL blend reproduces the same CAGR as pure DEP. A single equal-weights start
+    lets SLSQP settle in that high-risk basin instead of the true minimum (pure DEP).
+    """
+    idx = pd.period_range("2010-01", periods=180, freq="M")
+    n = len(idx)
+    even = np.arange(n) % 2 == 0
+    rng = np.random.default_rng(12)
+    dep = pd.Series(0.009 + 0.001 * np.where(even, 1.0, -1.0), index=idx, name="DEP.US")
+    gld = pd.Series(rng.normal(0.010, 0.07, n), index=idx, name="GLD.US")
+    stk = pd.Series(rng.normal(0.016, 0.05, n), index=idx, name="STK.US")
+    vol = pd.Series(np.where(even, 0.22, -0.15), index=idx, name="VOL.US")
+    fake = {
+        "DEP.US": FakeAsset("DEP.US", dep, currency="USD", name="Deposit"),
+        "GLD.US": FakeAsset("GLD.US", gld, currency="USD", name="Gold-like"),
+        "STK.US": FakeAsset("STK.US", stk, currency="USD", name="Stock"),
+        "VOL.US": FakeAsset("VOL.US", vol, currency="USD", name="Volatile"),
+    }
+
+    def _get(symbols, first_date=None, last_date=None):
+        out = {}
+        for s in symbols:
+            key = s.symbol if hasattr(s, "symbol") else s
+            out[key] = fake[key]
+        return out
+
+    mocker.patch("okama.common.make_asset_list.ListMaker._get_asset_obj_dict", side_effect=_get)
+    mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=FakeCurrencyAsset)
+    return ok.EfficientFrontier(
+        ["STK.US", "GLD.US", "DEP.US", "VOL.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=20,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+    )
+
+
+def test_minimize_risk_reaches_minimum_variance_asset(ef_min_variance_corner):
+    """minimize_risk at the min-variance asset's CAGR must return that asset's own risk.
+
+    The lowest-risk single asset is itself a feasible portfolio at its own CAGR, so it is
+    the global risk minimum for that CAGR target. A single equal-weights start makes SLSQP
+    settle in a high-risk basin and miss it; the result must not exceed the asset's risk.
+    """
+    ef = ef_min_variance_corner
+    cagr = helpers.Frame.get_cagr(ef.assets_ror)
+    risk = helpers.Float.annualize_risk(ef.assets_ror.std(), ef.assets_ror.mean())
+    min_risk_asset = risk.idxmin()
+    # precondition: the min-risk asset is not also the min-CAGR asset (otherwise no corner)
+    assert cagr.idxmin() != min_risk_asset
+
+    result = ef.minimize_risk(float(cagr[min_risk_asset]))
+
+    assert result["Risk"] == pytest.approx(float(risk[min_risk_asset]), abs=1e-3)
+
+
+def test_ef_points_pass_through_minimum_variance_asset(ef_min_variance_corner):
+    """The lowest-risk single asset must lie on the frontier, not just outside it.
+
+    The target-CAGR sampling must include the minimum-variance asset's CAGR so the drawn
+    frontier passes through that asset instead of cutting the corner near it.
+    """
+    ef = ef_min_variance_corner
+    cagr = helpers.Frame.get_cagr(ef.assets_ror)
+    risk = helpers.Float.annualize_risk(ef.assets_ror.std(), ef.assets_ror.mean())
+    mva = risk.idxmin()
+    pts = ef.ef_points
+    distance = np.sqrt((pts["Risk"] - float(risk[mva])) ** 2 + (pts["CAGR"] - float(cagr[mva])) ** 2).min()
+    assert distance == pytest.approx(0.0, abs=1e-3)

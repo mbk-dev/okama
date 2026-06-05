@@ -77,12 +77,15 @@ class MonteCarlo:
         distribution_parameters: Optional[tuple] = None,  # noqa: UP045
         period: int = 25,
         mc_number: int = 100,
+        seed: Optional[int] = None,  # noqa: UP045
     ):
         self.parent = parent
         self._distribution = distribution
         self._distribution_parameters = distribution_parameters
         self._period = period
         self._mc_number = mc_number
+        self._seed = seed
+        self._returns_ts_cache: Optional[pd.DataFrame] = None  # noqa: UP045
         self.ror = self.parent.parent.ror
 
     def __repr__(self):
@@ -190,9 +193,33 @@ class MonteCarlo:
         self._clear_cf_cache()
         self._mc_number = mc_number
 
+    @property
+    def seed(self) -> Optional[int]:  # noqa: UP045
+        """
+        Random seed for Monte Carlo return generation.
+
+        If `None`, each regeneration draws fresh randomness. Set an integer for
+        reproducible scenarios. Changing the seed (or any other Monte Carlo
+        parameter) invalidates the cached return draw.
+
+        Returns
+        -------
+        int or None
+            The configured random seed.
+        """
+        return self._seed
+
+    @seed.setter
+    def seed(self, seed):
+        if seed is not None:
+            validators.validate_integer("seed", seed)
+        self._clear_cf_cache()
+        self._seed = seed
+
     def _clear_cf_cache(self):
         self.parent._monte_carlo_wealth_fv = pd.DataFrame(dtype=float)
         self.parent._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
+        self._returns_ts_cache = None
 
     def backtesting_error(self, var_level: int = 5) -> dict:
         """
@@ -374,6 +401,15 @@ class MonteCarlo:
         DataFrame
             Table with n random rate of return monthly time series.
 
+        Notes
+        -----
+        The draw is generated once and cached: repeated accesses return the same
+        scenarios until a Monte Carlo parameter changes (`distribution`,
+        `distribution_parameters`, `period`, `mc_number` or `seed`), which invalidates
+        the cache. Set `seed` for reproducible draws (see `MonteCarlo.seed`). This
+        shared cache is what keeps `monte_carlo_wealth` and `monte_carlo_cash_flow`
+        consistent on the same scenario set.
+
         Examples
         --------
         >>> pf = ok.Portfolio(
@@ -381,7 +417,7 @@ class MonteCarlo:
         ...     weights=[0.60, 0.35, 0.05],
         ...     rebalancing_strategy=ok.Rebalance(period="month"),
         ... )
-        >>> pf.dcf.set_mc_parameters(period=8, mc_number=5000)
+        >>> pf.dcf.set_mc_parameters(period=8, mc_number=5000, seed=0)
         >>> pf.dcf.mc.monte_carlo_returns_ts
                          0         1         2     ...      4997      4998      4999
         2021-07 -0.008383 -0.013167 -0.031659  ...  0.046717  0.065675  0.017933
@@ -397,18 +433,25 @@ class MonteCarlo:
         2029-06 -0.016740 -0.007955  0.002862  ... -0.027956 -0.012339  0.048974
         [96 rows x 5000 columns]
         """
+        if self._returns_ts_cache is None:
+            self._returns_ts_cache = self._generate_returns_ts()
+        return self._returns_ts_cache
+
+    def _generate_returns_ts(self) -> pd.DataFrame:
+        """Draw one Monte Carlo return matrix using ``np.random.default_rng(self.seed)``."""
         period_months, ts_index = self._forecast_preparation()
         parameters = self.get_parameters_for_distribution()
+        rng = np.random.default_rng(self.seed)
         match self.distribution:
             case "norm":
-                random_returns = np.random.normal(parameters[0], parameters[1], (period_months, self.mc_number))
+                random_returns = rng.normal(parameters[0], parameters[1], (period_months, self.mc_number))
             case "lognorm":
                 random_returns = scipy.stats.lognorm(parameters[0], loc=parameters[1], scale=parameters[2]).rvs(
-                    size=[period_months, self.mc_number]
+                    size=[period_months, self.mc_number], random_state=rng
                 )
             case "t":
                 random_returns = scipy.stats.t(df=parameters[0], loc=parameters[1], scale=parameters[2]).rvs(
-                    size=[period_months, self.mc_number]
+                    size=[period_months, self.mc_number], random_state=rng
                 )
             case _:
                 raise ValueError("Unknown distribution type.")

@@ -1,5 +1,4 @@
-import itertools
-import math  # noqa: I001
+import math
 from typing import Union, Callable, Optional, Tuple, Literal  # noqa: UP035
 from functools import singledispatchmethod
 
@@ -139,6 +138,7 @@ class Float:
         w_shape: int,
         step: float,
         bounds: tuple[tuple[float, float], ...] | None = None,
+        max_points: int = 100_000,
     ) -> pd.Series:
         """
         Generate all weight combinations that sum to 1.0 with a fixed step.
@@ -151,6 +151,13 @@ class Float:
             Weight increment, must divide 1.0 evenly (e.g. 0.10, 0.25, 0.50).
         bounds : tuple of (min, max) tuples, optional
             Per-asset weight constraints. Defaults to (0.0, 1.0) for each asset.
+        max_points : int, default 100_000
+            Guardrail on the number of generated grid points. The number of
+            valid weight vectors grows combinatorially with ``w_shape`` and
+            ``1 / step``; if the (upper-bound) count exceeds ``max_points`` a
+            ``ValueError`` is raised before any enumeration, so an oversized
+            request fails fast instead of hanging. Raise it to allow larger
+            grids at the cost of runtime.
 
         Returns
         -------
@@ -164,19 +171,49 @@ class Float:
             raise ValueError(f"step {step} does not divide 1.0 evenly")
         n_steps = int(round(n_steps))
 
+        # Upper bound on the number of valid weight vectors (exact for default
+        # bounds; bounds only shrink the count). Reject oversized grids early.
+        predicted_max = math.comb(n_steps + w_shape - 1, w_shape - 1)
+        if predicted_max > max_points:
+            raise ValueError(
+                f"Grid would generate up to {predicted_max:,} portfolios (> max_points={max_points:,}). "
+                f"Increase `step`, tighten `bounds`, or raise `max_points`."
+            )
+
         if bounds is None:
             bounds = tuple((0.0, 1.0) for _ in range(w_shape))
 
-        grid_values = []
-        for lo, hi in bounds:
-            lo_idx = int(math.ceil(lo / step - 1e-9))
-            hi_idx = int(math.floor(hi / step + 1e-9))
-            grid_values.append(range(lo_idx, hi_idx + 1))
+        # Per-asset bounds expressed in integer "step units".
+        lo_idx = [int(math.ceil(lo / step - 1e-9)) for lo, _ in bounds]
+        hi_idx = [int(math.floor(hi / step + 1e-9)) for _, hi in bounds]
 
-        weights = []
-        for combo in itertools.product(*grid_values):
-            if sum(combo) == n_steps:
-                weights.append(np.array([c * step for c in combo]))
+        # Suffix sums of the remaining assets' reachable min/max units, used to
+        # prune any branch whose remaining budget can no longer be satisfied.
+        suffix_min = [0] * (w_shape + 1)
+        suffix_max = [0] * (w_shape + 1)
+        for i in range(w_shape - 1, -1, -1):
+            suffix_min[i] = suffix_min[i + 1] + lo_idx[i]
+            suffix_max[i] = suffix_max[i + 1] + hi_idx[i]
+
+        weights: list[np.ndarray] = []
+        combo = [0] * w_shape
+
+        def _enumerate(i: int, remaining: int) -> None:
+            # Enumerate bounded weak compositions of ``n_steps`` units into
+            # ``w_shape`` parts. Only feasible nodes are visited, so the cost is
+            # O(valid points * w_shape), not O((n_steps + 1) ** w_shape).
+            if i == w_shape - 1:
+                if lo_idx[i] <= remaining <= hi_idx[i]:
+                    combo[i] = remaining
+                    weights.append(np.array([c * step for c in combo]))
+                return
+            low = max(lo_idx[i], remaining - suffix_max[i + 1])
+            high = min(hi_idx[i], remaining - suffix_min[i + 1])
+            for value in range(low, high + 1):
+                combo[i] = value
+                _enumerate(i + 1, remaining - value)
+
+        _enumerate(0, n_steps)
         return pd.Series(weights)
 
     @staticmethod
@@ -323,8 +360,24 @@ class Frame:
         return survival_date.to_timestamp(freq="M")
 
     @get_survival_date.register
-    def _(wealth: pd.DataFrame, discount_rate: float, threshold: float = 0) -> pd.Timestamp:
-        return wealth.apply(func=Frame.get_survival_date, axis=0, args=(discount_rate, threshold))
+    def _(wealth: pd.DataFrame, discount_rate: float, threshold: float = 0) -> pd.Series:
+        """Return the survival date of every column as a Series of Timestamps."""
+        if threshold > 1 or threshold < 0:
+            raise ValueError("threshold must be in range from 0 to 1.")
+        if wealth.shape[0] == 0:
+            raise ValueError("wealth must contain at least one row.")
+        values = wealth.to_numpy(dtype=float)
+        n_rows = values.shape[0]
+        if threshold:
+            factors = (1.0 + discount_rate / 12) ** np.arange(n_rows)
+            voided = values <= values[0] * factors[:, None] * threshold
+        else:
+            voided = values <= 0
+        has_void = voided.any(axis=0)
+        first_void = voided.argmax(axis=0)
+        positions = np.where(has_void, first_void, n_rows - 1)
+        dates = wealth.index[positions].to_timestamp(freq="M")
+        return pd.Series(dates, index=wealth.columns)
 
     # Risk metrics
 

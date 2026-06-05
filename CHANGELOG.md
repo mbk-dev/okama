@@ -5,6 +5,108 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-06
+
+Makes Monte Carlo cash-flow simulations dramatically faster (vectorized wealth
+and cash-flow engines, a Brent-based withdrawal solver — three to four orders
+of magnitude per simulation), adds money-weighted IRR (MWRR) for portfolio
+cash flows — both on historical data and across Monte Carlo forecast paths —
+makes the Monte Carlo return draw cached and reproducible, and fixes three
+cash-flow calculation bugs.
+
+### Added
+- `Portfolio.dcf.irr()` (`PortfolioDCF.irr`) — nominal annualized money-weighted
+  internal rate of return (IRR/MWRR) of the portfolio cash flow over the full
+  historical period, honoring the configured `CashFlow` strategy
+  (`IndexationStrategy`, `PercentageStrategy`, `VanguardDynamicSpending`,
+  `CutWithdrawalsIfDrawdown`, `TimeSeriesStrategy`). With no intermediate cash
+  flows it equals `Portfolio.get_cagr()` for the period.
+- `Portfolio.dcf.monte_carlo_irr()` (`PortfolioDCF.monte_carlo_irr`) — the
+  distribution (`pandas.Series`) of per-path money-weighted IRRs across Monte
+  Carlo forecast paths, the forward-looking counterpart of `PortfolioDCF.irr`.
+- `irr_of_cashflow_matrix()` in `okama.portfolios.dcf_calculations` — a
+  vectorized Newton solver (analytic derivative, `scipy.optimize.brentq`
+  fallback) computing IRR for an `(n_periods, n_series)` cash-flow matrix in one
+  pass; shared by both `PortfolioDCF.irr` and `PortfolioDCF.monte_carlo_irr`.
+- `seed` parameter for reproducible Monte Carlo draws: `MonteCarlo.seed` and the
+  new `seed` argument of `PortfolioDCF.set_mc_parameters()`.
+
+### Changed
+- The Monte Carlo return draw (`MonteCarlo.monte_carlo_returns_ts`) is now
+  generated once and cached — shared by `PortfolioDCF.monte_carlo_wealth`,
+  `monte_carlo_cash_flow`, `monte_carlo_survival_period`, `monte_carlo_irr` and
+  the CAGR-distribution methods — so all of them see one consistent scenario set
+  (previously each access regenerated fresh randomness). The cache is invalidated
+  when any Monte Carlo parameter changes (`distribution`,
+  `distribution_parameters`, `period`, `mc_number`, `seed`). As a consequence,
+  unseeded results of `PortfolioDCF.find_the_largest_withdrawals_size()` and of
+  the CAGR-distribution methods shift versus 2.1.1: the bisection in
+  `find_the_largest_withdrawals_size` now evaluates every candidate against the
+  same scenario set (removing the sampling noise that previously broke its
+  monotonicity). Use `set_mc_parameters(..., seed=...)` for reproducible runs.
+- `Portfolio.dcf.find_the_largest_withdrawals_size()` is faster: the bisection
+  search is replaced with Brent's method (`scipy.optimize.brentq`) on a signed
+  goal residual, and both ends of `withdrawals_range` are checked first so the
+  solver exits after 1–2 Monte Carlo simulations when the solution lies outside
+  the range. The public signature, the `Result` shape and the stopping rule
+  (`error_rel < tolerance_rel`) are unchanged; `iter_max` now caps objective
+  evaluations (Monte Carlo simulations), including the two range-end checks, so
+  the history of intermediate attempts in `Result.solutions` differs from the
+  former bisection midpoints. `iter_max` values below 1 are now rejected with a
+  `ValueError`.
+- Monte Carlo wealth simulation is vectorized: `Portfolio.dcf.monte_carlo_wealth()`
+  and everything built on it (`monte_carlo_survival_period()`,
+  `plot_forecast_monte_carlo()`,
+  `find_the_largest_withdrawals_size()`) now computes all
+  random paths in one pass (`get_wealth_indexes_fv_with_cashflow_mc` in
+  `okama.portfolios.dcf_calculations`) instead of a per-path pandas `apply`.
+  Results are unchanged (pinned by an equivalence-test grid across strategies,
+  frequencies and extra cash flows); measured speedup of one full simulation is
+  three to four orders of magnitude (×1400 for yearly and ×6800 for monthly
+  withdrawal frequencies on 1,000 paths × 30 years). The negative-balance
+  masking and the survival-date scan are vectorized as well.
+- Monte Carlo cash-flow simulation is vectorized as well:
+  `Portfolio.dcf.monte_carlo_cash_flow()` builds its cache with the new
+  `get_cash_flow_fv_mc` (one pass for all paths, sharing a core with the
+  wealth engine), and `Portfolio.dcf.monte_carlo_irr()` now consumes the
+  shared `monte_carlo_wealth`/`monte_carlo_cash_flow` caches instead of two
+  per-path computations (measured end-to-end speedup of `monte_carlo_irr()`:
+  ×488 on 1,000 paths × 30 years).
+
+### Fixed
+- `PortfolioDCF.monte_carlo_cash_flow()` with `remove_if_wealth_index_negative=True`
+  previously masked a cash-flow draw against a wealth-index draw generated from
+  *different* randomness; with the shared cached draw the depletion mask is now
+  consistent per path.
+- In periodic-frequency simulations, the first month of a period containing
+  extra cash flows (`time_series`) skipped its return in
+  `get_wealth_indexes_fv_with_cashflow` (and additionally skipped the cash
+  flow in `get_cash_flow_fv` balance tracking). The recursion is now uniform
+  for every month; wealth indexes and cash flow series with extra cash flows
+  at `year`/`half-year`/`quarter` frequencies change accordingly (#81).
+- `VanguardDynamicSpending` `floor_ceiling` limits never bound in wealth-index
+  calculations (`wealth_index`, `monte_carlo_wealth` and everything built on
+  them): the previous withdrawal was always reported as 0. Wealth indexes for
+  VDS strategies with `floor_ceiling` change accordingly and are now
+  consistent with `cash_flow_ts` (#82).
+- `VanguardDynamicSpending.__init__` bypassed the validating setters for
+  `floor_ceiling`, `min_max_annual_withdrawals` and `adjust_min_max`, so
+  out-of-contract limits (e.g. a non-negative floor or `min > max`) were
+  silently accepted at construction. The constructor now routes through the
+  public setters, and both limit setters accept `None` (meaning "limit
+  disabled") so the documented defaults remain valid (#83).
+
+### Security
+- Dependency floor `idna >= 3.15` to close CVE-2026-45409.
+
+### Docs
+- New "IRR — money-weighted return" section in the
+  [04 investment portfolios with DCF](https://github.com/mbk-dev/okama/blob/master/examples/04%20investment%20portfolios%20with%20DCF.ipynb)
+  notebook demonstrating `Portfolio.dcf.irr()` and
+  `Portfolio.dcf.monte_carlo_irr()`.
+- The `find_the_largest_withdrawals_size()` docstring example now shows a real,
+  seeded solver run (range-end checks followed by Brent steps).
+
 ## [2.1.1] - 2026-05
 
 Adds systematic (grid-based) enumeration of portfolio weights on the efficient

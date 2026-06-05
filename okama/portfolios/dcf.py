@@ -4,8 +4,10 @@ import copy
 import logging
 from typing import Optional, Literal, Tuple  # noqa: UP035
 
+import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
+from scipy import optimize
 
 import okama.portfolios.core as core
 import okama.portfolios.mc as mc
@@ -17,6 +19,14 @@ from okama.common.helpers import helpers
 from okama.common.solver import Result
 
 logger = logging.getLogger(__name__)
+
+
+class _SolverConverged(Exception):
+    """Internal signal: error_rel dropped below tolerance_rel during the root search."""
+
+
+class _SolverBudgetExhausted(Exception):
+    """Internal signal: the root search spent all iter_max objective evaluations."""
 
 
 # Constants for cashflow strategy types
@@ -136,6 +146,7 @@ class PortfolioDCF:
         distribution_parameters: Optional[tuple] = None,  # noqa: UP045
         period: int = 1,
         mc_number: int = 100,
+        seed: Optional[int] = None,  # noqa: UP045
     ):
         """
         Add Monte Carlo simulation parameters to PortfolioDCF.
@@ -163,6 +174,10 @@ class PortfolioDCF:
         mc_number : int, default 100
             Number of random wealth indexes to generate with Monte Carlo simulation.
 
+        seed : int or None, default None
+            Random seed for reproducible Monte Carlo draws. If None, each
+            regeneration draws fresh randomness.
+
         Examples
         --------
         >>> import matplotlib.pyplot as plt
@@ -186,6 +201,7 @@ class PortfolioDCF:
         self.mc.distribution_parameters = distribution_parameters
         self.mc.period = period
         self.mc.mc_number = mc_number
+        self.mc.seed = seed
 
     def wealth_index(
         self, discounting: Literal["fv", "pv"], include_negative_values: bool = False
@@ -311,6 +327,59 @@ class PortfolioDCF:
             return dcf_calculations.discount_monthly_cash_flow(cash_flow_fv, self.discount_rate, reverse=False)
         else:
             raise ValueError("'discounting' must be either 'fv' or 'pv'")
+
+    def irr(self) -> float:
+        """
+        Nominal internal rate of return (money-weighted return, MWRR) of the portfolio
+        cash flow over the full historical period, honoring the configured cash flow strategy.
+
+        The cash-flow vector (investor perspective) on a monthly grid ``t = 0 .. N``,
+        where ``N = portfolio.ror.shape[0]``, is:
+
+        - ``t = 0`` (one month before ``first_date``): ``-initial_investment``
+        - ``t = 1 .. N``: ``-cash_flow_ts`` (withdrawals become inflows, contributions outflows)
+        - ``t = N`` (``last_date``): additionally ``+`` the terminal wealth index value
+          (liquidation; floored at 0, so the terminal withdrawal happens only if there is
+          a positive balance left)
+
+        The annualized effective IRR is returned. With no intermediate cash flows the
+        result equals ``Portfolio.get_cagr`` for the full period.
+
+        IRR is a rate, so there is no future/present-value variant: discounting the flows
+        would yield the *real* rate (the ``get_cagr(real=True)`` axis), not "the IRR in PV".
+
+        Returns
+        -------
+        float
+            Annualized effective IRR. NaN if the cash flow has no sign change
+            (no real root, e.g. pure accumulation with a zero terminal value).
+            With contributions and withdrawals interleaved the equation may have several
+            real roots; the root nearest the solver's seed is returned.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], ccy="USD", last_date="2024-10")
+        >>> ind = ok.IndexationStrategy(pf)
+        >>> ind.initial_investment = 10_000
+        >>> ind.frequency = "year"
+        >>> ind.amount = -1_000
+        >>> pf.dcf.cashflow_parameters = ind
+        >>> pf.dcf.irr()
+        """
+        if self.cashflow_parameters is None:
+            raise AttributeError("'cashflow_parameters' is not defined.")
+
+        cash_flow = self.cash_flow_ts(discounting="fv", remove_if_wealth_index_negative=True)
+        terminal = self.wealth_index(discounting="fv", include_negative_values=False)[self.parent.symbol].iloc[-1]
+        initial_investment = self.cashflow_parameters.initial_investment
+        n_months = self.parent.ror.shape[0]
+
+        flows = np.empty(n_months + 1, dtype=float)
+        flows[0] = -initial_investment
+        flows[1:] = -cash_flow.reindex(self.parent.ror.index).fillna(0.0).to_numpy()
+        flows[-1] += terminal
+
+        return float(dcf_calculations.irr_of_cashflow_matrix(flows, periods_per_year=settings._MONTHS_PER_YEAR)[0])
 
     @property
     def wealth_index_fv_with_assets(self) -> pd.DataFrame:
@@ -539,22 +608,11 @@ class PortfolioDCF:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._monte_carlo_wealth_fv.empty:
             return_ts = self.mc.monte_carlo_returns_ts
-            self._monte_carlo_wealth_fv = return_ts.apply(
-                dcf_calculations.get_wealth_indexes_fv_with_cashflow,
-                axis=0,
-                args=(
-                    None,  # portfolio_symbol
-                    None,  # inflation_symbol
-                    self.cashflow_parameters,
-                    "monte_carlo",  # calculate wealth index for Monte Carlo
-                ),
+            self._monte_carlo_wealth_fv = dcf_calculations.get_wealth_indexes_fv_with_cashflow_mc(
+                return_ts, self.cashflow_parameters, self.discount_rate
             )
         if not include_negative_values:
-            wealth_index_fv = self._monte_carlo_wealth_fv.copy()
-            wealth_index_fv = wealth_index_fv.apply(dcf_calculations.remove_negative_values, axis=0)
-            # all_cells_are_nan = wealth_index_fv.isna().all(axis=1)
-            # monte_carlo_wealth_fv = wealth_index_fv[~all_cells_are_nan]
-            monte_carlo_wealth_fv = wealth_index_fv.fillna(0)
+            monte_carlo_wealth_fv = dcf_calculations.zero_wealth_after_first_void(self._monte_carlo_wealth_fv)
         else:
             monte_carlo_wealth_fv = self._monte_carlo_wealth_fv.copy()
         if discounting.lower() == "fv":
@@ -613,14 +671,8 @@ class PortfolioDCF:
             raise AttributeError("'cashflow_parameters' is not defined.")
         if self._monte_carlo_cash_flow_fv.empty:
             return_ts = self.mc.monte_carlo_returns_ts
-            self._monte_carlo_cash_flow_fv = return_ts.apply(
-                dcf_calculations.get_cash_flow_fv,
-                axis=0,
-                args=(
-                    self.parent.symbol,  # portfolio_symbol
-                    self.cashflow_parameters,
-                    "monte_carlo",  # task
-                ),
+            self._monte_carlo_cash_flow_fv = dcf_calculations.get_cash_flow_fv_mc(
+                return_ts, self.cashflow_parameters, self.discount_rate
             )
         mc_cash_flow_fv = self._monte_carlo_cash_flow_fv.copy()
         if remove_if_wealth_index_negative:
@@ -764,6 +816,57 @@ class PortfolioDCF:
         dates: pd.Series = helpers.Frame.get_survival_date(s2, self.discount_rate, threshold)
         return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
 
+    def monte_carlo_irr(self) -> pd.Series:
+        """
+        Distribution of money-weighted IRRs across Monte Carlo forecast paths.
+
+        For each simulated path the nominal internal rate of return (MWRR) is computed
+        over the forecast horizon, honoring the configured cash flow strategy. It is the
+        forward-looking counterpart of :meth:`irr`.
+
+        All paths share a single Monte Carlo return draw (see `MonteCarlo.seed` for
+        reproducibility). The per-path investor cash-flow vector on a monthly grid
+        ``t = 0 .. M`` (``M = mc.period * 12``) is:
+
+        - ``t = 0`` (Monte Carlo start): ``-initial_investment``
+        - ``t = 1 .. M``: ``-monte_carlo_cash_flow`` (withdrawals become inflows)
+        - ``t = M``: additionally ``+`` the terminal wealth value (floored at 0)
+
+        With no intermediate cash flows each path's IRR equals that path's CAGR.
+
+        Returns
+        -------
+        Series
+            One annualized effective IRR per Monte Carlo path (length ``mc_number``).
+            NaN for paths whose cash flow has no sign change.
+
+        Examples
+        --------
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], ccy="USD")
+        >>> pf.dcf.set_mc_parameters(distribution="norm", period=20, mc_number=100, seed=0)
+        >>> ind = ok.IndexationStrategy(pf)
+        >>> ind.initial_investment = 10_000
+        >>> ind.frequency = "year"
+        >>> ind.amount = -500
+        >>> pf.dcf.cashflow_parameters = ind
+        >>> pf.dcf.monte_carlo_irr().quantile([0.1, 0.5, 0.9])
+        """
+        if self.cashflow_parameters is None:
+            raise AttributeError("'cashflow_parameters' is not defined.")
+        cashflow_parameters = self.cashflow_parameters
+        wealth = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+        cash_flow = self.monte_carlo_cash_flow(discounting="fv", remove_if_wealth_index_negative=False)
+        # Zero a path's cash flow once its (floored) wealth is depleted, consistent per path.
+        cash_flow = cash_flow.where(wealth.reindex(cash_flow.index) != 0, 0.0)
+        terminal = wealth.iloc[-1]
+        n_months, n_paths = cash_flow.shape
+        flows = np.empty((n_months + 1, n_paths), dtype=float)
+        flows[0, :] = -cashflow_parameters.initial_investment
+        flows[1:, :] = -cash_flow.to_numpy()
+        flows[-1, :] += terminal.reindex(cash_flow.columns).to_numpy()
+        irr = dcf_calculations.irr_of_cashflow_matrix(flows, periods_per_year=settings._MONTHS_PER_YEAR)
+        return pd.Series(irr, index=cash_flow.columns, name="monte_carlo_irr")
+
     def find_the_largest_withdrawals_size(
         self,
         goal: Literal["maintain_balance_pv", "maintain_balance_fv", "survival_period"],
@@ -796,7 +899,10 @@ class PortfolioDCF:
         - 'error_rel' - characterizes how accurately the goal is fulfilled.
         - 'solutions' - the history of attempts to find solutions (withdrawal values and error level).
 
-        The algorithm uses the bisection method to find the largest withdrawal size.
+        The algorithm evaluates the goal at both ends of `withdrawals_range` first
+        and stops early if the solution lies outside the range; otherwise it finds
+        the withdrawal size with Brent's method (`scipy.optimize.brentq`) over the
+        cached set of Monte Carlo scenarios.
 
         Parameters
         ----------
@@ -830,7 +936,8 @@ class PortfolioDCF:
             The value must be less than the MonteCarlo.priod parameter.
 
         iter_max : int, default 20
-            The maximum number of iterations to find the solution.
+            The maximum number of objective evaluations (each runs one Monte Carlo
+            simulation), including the two evaluations at the ends of `withdrawals_range`.
 
         tolerance_rel : float, default 0.10
             The allowed tolerance for the solution. The tolerance is the largest error for the achieved goal.
@@ -855,8 +962,8 @@ class PortfolioDCF:
         >>> pc.frequency = "year"
         >>> # Assign a strategy
         >>> pf.dcf.cashflow_parameters = pc
-        >>> # Set Monte Carlo parameters
-        >>> pf.dcf.set_mc_parameters(distribution="norm", period=50, mc_number=200)
+        >>> # Set Monte Carlo parameters (seed makes the search reproducible)
+        >>> pf.dcf.set_mc_parameters(distribution="norm", period=50, mc_number=200, seed=42)
         >>> res = pf.dcf.find_the_largest_withdrawals_size(
         ...     percentile=50,
         ...     goal="survival_period",
@@ -864,29 +971,34 @@ class PortfolioDCF:
         ...     target_survival_period=25,
         ... )
         >>> res
-        success                True
-        withdrawal_abs   -917.96875
-        withdrawal_rel     0.091797
-        error_rel           0.00442
-        attempts                 10
+        success                  True
+        withdrawal_abs   -1598.947236
+        withdrawal_rel       0.159895
+        error_rel               0.048
+        attempts                    7
         dtype: object
 
         In the result, `withdrawal_abs` is the absolute value of the withdrawal (the first withdrawal value),
         and `withdrawal_rel` is the relative withdrawal size (the first withdrawal value divided by the initial investment).
 
-        If the solution was not found, it is still possible to see the intermediate steps.
+        Even if the solution was not found, it is still possible to see the intermediate steps:
+        the two evaluations at the range ends followed by the Brent root-finding steps.
+        Exact values depend on the historical data window the distribution is fitted to.
 
         >>> res.solutions
           withdrawal_abs withdrawal_rel error_rel error_rel_change
-        0       -10000.0              1     0.968                0
-        1        -5000.0            0.5     0.848            -0.12
-        2        -2500.0           0.25    0.6082          -0.2398
-        3        -1250.0          0.125   0.24816         -0.36004
-        4         -625.0         0.0625   0.55576           0.3076
-        5         -937.5        0.09375   0.00442         -0.55134
+        0       -10000.0              1     0.928                0
+        1            0.0              0       1.0            0.072
+        2   -5186.721992       0.518672     0.768           -0.232
+        3   -2593.360996       0.259336      0.46           -0.308
+        4   -1296.680498       0.129668     0.276           -0.184
+        5   -1782.935685       0.178294     0.168           -0.108
+        6   -1598.947236       0.159895     0.048            -0.12
         """
         # Validation
-        self._validate_parameters(withdrawals_range, target_survival_period, percentile, threshold, tolerance_rel)
+        self._validate_parameters(
+            withdrawals_range, target_survival_period, percentile, threshold, tolerance_rel, iter_max
+        )
 
         # Initialization
         backup_obj = self.cashflow_parameters
@@ -895,74 +1007,93 @@ class PortfolioDCF:
         expected_min_withdrawal, expected_max_withdrawal = self._get_withdrawal_bounds(
             withdrawals_range, start_investment
         )
-        self._set_main_parameter(expected_max_withdrawal)
+        # Both bounds are negative. The largest withdrawal (expected_max_withdrawal)
+        # is numerically the smallest value, which makes it the left end for brentq.
+        lower_m, upper_m = expected_max_withdrawal, expected_min_withdrawal
 
-        # Bisection search
         solutions = pd.DataFrame(columns=["withdrawal_abs", "withdrawal_rel", "error_rel", "error_rel_change"])
-        try:
-            for iteration in range(iter_max):
-                (
-                    withdrawal_abs,
-                    withdrawal_rel,
-                    error_rel,
-                    condition,
-                    expected_min_withdrawal,
-                    expected_max_withdrawal,
-                ) = self._bisection_iteration(
-                    goal,
-                    percentile,
-                    threshold,
-                    start_investment,
-                    target_survival_period,
-                    expected_min_withdrawal,
-                    expected_max_withdrawal,
-                )
+        residual_cache: dict[float, float] = {}
 
-                # Record solution
-                solutions.at[iteration, "withdrawal_abs"] = withdrawal_abs
-                solutions.at[iteration, "withdrawal_rel"] = withdrawal_rel
-                solutions.at[iteration, "error_rel"] = error_rel
-                gradient = (
-                    solutions.at[iteration, "error_rel"] - solutions.at[iteration - 1, "error_rel"]
-                    if iteration > 0
-                    else 0
-                )
-                solutions.at[iteration, "error_rel_change"] = gradient
+        def _evaluate(m: float) -> float:
+            """Signed residual of the goal at withdrawal parameter `m` (one MC simulation).
 
-                logger.info(f"Iteration {iteration}: error_rel={error_rel:.3f}, gradient={gradient:.3f}")
-
-                # Check convergence
-                if error_rel < tolerance_rel:
-                    logger.info(
-                        f"Solution found: {withdrawal_abs:.2f} or {withdrawal_rel * 100:.2f}% "
-                        f"after {iteration + 1} steps."
-                    )
-                    return Result(
-                        success=True,
-                        withdrawal_abs=withdrawal_abs,
-                        withdrawal_rel=withdrawal_rel,
-                        error_rel=error_rel,
-                        solutions=solutions,
-                    )
-
-            # No solution found - return best attempt
-            best_idx = solutions["error_rel"].idxmin()
-            best_result = solutions.loc[best_idx]
-            logger.warning(
-                f"Solution not found after {iter_max} steps. "
-                f"Best withdrawal: {best_result['withdrawal_abs']:.2f} ({best_result['withdrawal_rel'] * 100:.2f}%) "
-                f"with error: {best_result['error_rel'] * 100:.2f}%"
+            Positive when the goal is met (the withdrawal can be increased),
+            negative otherwise. Every fresh evaluation is recorded in `solutions`;
+            repeated points are served from the cache without spending budget.
+            """
+            if m in residual_cache:
+                return residual_cache[m]
+            iteration = solutions.shape[0]
+            if iteration >= iter_max:
+                raise _SolverBudgetExhausted
+            self._set_main_parameter(m)
+            condition, error_rel = self._calculate_goal_metrics(
+                goal, percentile, threshold, start_investment, target_survival_period
             )
+            withdrawal_abs, withdrawal_rel = self._calculate_withdrawal_metrics(m, start_investment)
+            solutions.at[iteration, "withdrawal_abs"] = withdrawal_abs
+            solutions.at[iteration, "withdrawal_rel"] = withdrawal_rel
+            solutions.at[iteration, "error_rel"] = error_rel
+            gradient = (
+                solutions.at[iteration, "error_rel"] - solutions.at[iteration - 1, "error_rel"] if iteration > 0 else 0
+            )
+            solutions.at[iteration, "error_rel_change"] = gradient
+            logger.info(f"Evaluation {iteration}: m={m:.6f}, error_rel={error_rel:.3f}, gradient={gradient:.3f}")
+            if error_rel < tolerance_rel:
+                raise _SolverConverged
+            residual = error_rel if condition else -error_rel
+            residual_cache[m] = residual
+            return residual
 
+        try:
+            if _evaluate(lower_m) > 0:
+                # Even the largest allowed withdrawal sustains the goal:
+                # the root lies outside withdrawals_range.
+                return self._best_attempt_result(solutions)
+            if _evaluate(upper_m) < 0:
+                # Even the smallest allowed withdrawal fails the goal:
+                # there is no root inside withdrawals_range.
+                return self._best_attempt_result(solutions)
+            xtol = max(abs(upper_m - lower_m) * 1e-6, 1e-12)
+            optimize.brentq(_evaluate, lower_m, upper_m, xtol=xtol, maxiter=iter_max)
+            # brentq located the sign change with xtol precision, but error_rel
+            # never dropped below tolerance_rel (e.g. a steep step in the
+            # survival-period goal): report the best attempt.
+            return self._best_attempt_result(solutions)
+        except _SolverConverged:
+            last = solutions.iloc[-1]
+            logger.info(
+                f"Solution found: {last['withdrawal_abs']:.2f} or {last['withdrawal_rel'] * 100:.2f}% "
+                f"after {solutions.shape[0]} evaluations."
+            )
             return Result(
-                success=False,
-                withdrawal_abs=best_result["withdrawal_abs"],
-                withdrawal_rel=best_result["withdrawal_rel"],
-                error_rel=best_result["error_rel"],
+                success=True,
+                withdrawal_abs=float(last["withdrawal_abs"]),
+                withdrawal_rel=float(last["withdrawal_rel"]),
+                error_rel=float(last["error_rel"]),
                 solutions=solutions,
             )
+        except _SolverBudgetExhausted:
+            return self._best_attempt_result(solutions)
         finally:
             self._restore_cashflow_parameters_from_backup(backup_obj, backup_main_parameter)
+
+    def _best_attempt_result(self, solutions: pd.DataFrame) -> Result:
+        """Build a failure Result from the recorded attempt with the smallest error."""
+        best_idx = solutions["error_rel"].idxmin()
+        best_result = solutions.loc[best_idx]
+        logger.warning(
+            f"Solution not found after {solutions.shape[0]} evaluations. "
+            f"Best withdrawal: {best_result['withdrawal_abs']:.2f} ({best_result['withdrawal_rel'] * 100:.2f}%) "
+            f"with error: {best_result['error_rel'] * 100:.2f}%"
+        )
+        return Result(
+            success=False,
+            withdrawal_abs=float(best_result["withdrawal_abs"]),
+            withdrawal_rel=float(best_result["withdrawal_rel"]),
+            error_rel=float(best_result["error_rel"]),
+            solutions=solutions,
+        )
 
     def _validate_parameters(
         self,
@@ -971,6 +1102,7 @@ class PortfolioDCF:
         percentile: int,
         threshold: float,
         tolerance_rel: float,
+        iter_max: int,
     ) -> None:
         """Validate input parameters."""
         if withdrawals_range[0] > withdrawals_range[1]:
@@ -989,18 +1121,8 @@ class PortfolioDCF:
             raise ValueError("percentile must be between 0 and 100")
         if not 0 <= threshold <= 1:
             raise ValueError("threshold must be between 0 and 1")
-
-    def _update_parameter(self, delta: float, increase: bool) -> None:
-        """Update withdrawal parameter using bisection step."""
-        sign = -1 if increase else 1
-        if isinstance(self.cashflow_parameters, cf.IndexationStrategy):
-            self.cashflow_parameters.amount += sign * delta / 2
-        elif isinstance(self.cashflow_parameters, cf.PercentageStrategy):
-            self.cashflow_parameters.percentage += sign * delta / 2
-        else:
-            raise ValueError(
-                "This method works with IndexationStrategy, PercentageStrategy cash flow strategies and their subclasses only."
-            )
+        if iter_max < 1:
+            raise ValueError("iter_max must be at least 1.")
 
     def _calculate_goal_metrics(
         self, goal: str, percentile: int, threshold: float, start_investment: float, target_survival_period: int
@@ -1055,43 +1177,6 @@ class PortfolioDCF:
             )
 
         return withdrawal_abs, withdrawal_rel
-
-    def _bisection_iteration(
-        self,
-        goal: str,
-        percentile: int,
-        threshold: float,
-        start_investment: float,
-        target_survival_period: int,
-        expected_min_withdrawal: float,
-        expected_max_withdrawal: float,
-    ) -> Tuple[float, float, float, bool, float, float]:  # noqa: UP006
-        """Perform one iteration of bisection search.
-
-        Returns
-        -------
-        Tuple containing: withdrawal_abs, withdrawal_rel, error_rel, condition,
-                          new_min_withdrawal, new_max_withdrawal
-        """
-        main_parameter = self._get_main_parameter()
-        condition, error_rel = self._calculate_goal_metrics(
-            goal, percentile, threshold, start_investment, target_survival_period
-        )
-        withdrawal_abs, withdrawal_rel = self._calculate_withdrawal_metrics(main_parameter, start_investment)
-
-        # Update bounds based on condition
-        if condition:
-            expected_min_withdrawal = main_parameter
-            delta = abs(expected_max_withdrawal - main_parameter)
-            self._update_parameter(delta, increase=True)
-            logger.debug("Increasing withdrawal")
-        else:
-            expected_max_withdrawal = main_parameter
-            delta = abs(main_parameter - expected_min_withdrawal)
-            self._update_parameter(delta, increase=False)
-            logger.debug("Decreasing withdrawal")
-
-        return (withdrawal_abs, withdrawal_rel, error_rel, condition, expected_min_withdrawal, expected_max_withdrawal)
 
     def _restore_cashflow_parameters_from_backup(
         self, backup_obj: cf.CashFlow | None, backup_main_parameter: float | None = None

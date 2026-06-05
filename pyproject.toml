@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "okama"
-version = "2.1.1"
+version = "2.2.0"
 description = "Investment portfolio analyzing & optimization tools"
 authors = ["Sergey Kikevich <chilango74@gmail.com>"]
 license = "MIT"
@@ -38,6 +38,7 @@ joblib = "*"
 pandas-stubs = "*"
 arch = ">=7.2.0"
 statsmodels = ">=0.14.5"
+idna = ">=3.15"
 
 [tool.poetry.group.test]
 optional = false
