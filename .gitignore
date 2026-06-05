@@ -2,6 +2,7 @@
 /docs/source/
 /docs/stubs/
 /docs/superpowers/
+/tmp/
 !/main_notebook.ipynb
 dist/
 __pycache__
