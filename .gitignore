@@ -1,7 +1,6 @@
 /docs/_build/
 /docs/source/
 /docs/stubs/
-/docs/superpowers/
 /tmp/
 !/main_notebook.ipynb
 dist/
