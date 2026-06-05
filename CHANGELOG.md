@@ -5,11 +5,14 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.2.0] - 2026-06
 
-Adds money-weighted IRR (MWRR) for portfolio cash flows — both on historical
-data and across Monte Carlo forecast paths — and makes the Monte Carlo return
-draw cached and reproducible.
+Makes Monte Carlo cash-flow simulations dramatically faster (vectorized wealth
+and cash-flow engines, a Brent-based withdrawal solver — three to four orders
+of magnitude per simulation), adds money-weighted IRR (MWRR) for portfolio
+cash flows — both on historical data and across Monte Carlo forecast paths —
+makes the Monte Carlo return draw cached and reproducible, and fixes three
+cash-flow calculation bugs.
 
 ### Added
 - `Portfolio.dcf.irr()` (`PortfolioDCF.irr`) — nominal annualized money-weighted
@@ -92,6 +95,17 @@ draw cached and reproducible.
   silently accepted at construction. The constructor now routes through the
   public setters, and both limit setters accept `None` (meaning "limit
   disabled") so the documented defaults remain valid (#83).
+
+### Security
+- Dependency floor `idna >= 3.15` to close CVE-2026-45409.
+
+### Docs
+- New "IRR — money-weighted return" section in the
+  [04 investment portfolios with DCF](https://github.com/mbk-dev/okama/blob/master/examples/04%20investment%20portfolios%20with%20DCF.ipynb)
+  notebook demonstrating `Portfolio.dcf.irr()` and
+  `Portfolio.dcf.monte_carlo_irr()`.
+- The `find_the_largest_withdrawals_size()` docstring example now shows a real,
+  seeded solver run (range-end checks followed by Brent steps).
 
 ## [2.1.1] - 2026-05
 
