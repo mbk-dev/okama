@@ -86,6 +86,12 @@ draw cached and reproducible.
   them): the previous withdrawal was always reported as 0. Wealth indexes for
   VDS strategies with `floor_ceiling` change accordingly and are now
   consistent with `cash_flow_ts` (#82).
+- `VanguardDynamicSpending.__init__` bypassed the validating setters for
+  `floor_ceiling`, `min_max_annual_withdrawals` and `adjust_min_max`, so
+  out-of-contract limits (e.g. a non-negative floor or `min > max`) were
+  silently accepted at construction. The constructor now routes through the
+  public setters, and both limit setters accept `None` (meaning "limit
+  disabled") so the documented defaults remain valid (#83).
 
 ## [2.1.1] - 2026-05
 

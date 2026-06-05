@@ -68,15 +68,17 @@ def test_cash_flow_fv_sizes_next_period_from_fully_compounded_balance(pf_single)
 
 
 def test_vds_floor_ceiling_binds_in_wealth_index(pf_single) -> None:
-    # Issue #82: with floor_ceiling=(0, 0) every withdrawal must equal the
-    # previous one. With zero returns: 10_000 -> withdrawal 1_000 (first
-    # period, by percentage) -> 9_000 -> withdrawal forced to 1_000 again
-    # (not 0.10 * 9_000 = 900) -> 8_000.
+    # Issue #82: with a (practically) zero-width floor/ceiling band every
+    # withdrawal must equal the previous one. With zero returns:
+    # 10_000 -> withdrawal 1_000 (first period, by percentage) -> 9_000 ->
+    # withdrawal forced to ~1_000 again (not 0.10 * 9_000 = 900) -> ~8_000.
+    # The validating setter requires floor < 0 < ceiling (issue #83), so the
+    # band is epsilon-wide rather than exactly zero.
     vds = ok.VanguardDynamicSpending(
         pf_single,
         initial_investment=10_000,
         percentage=-0.10,
-        floor_ceiling=(0.0, 0.0),
+        floor_ceiling=(-1e-9, 1e-9),
         adjust_floor_ceiling=False,
         indexation=0.0,
     )

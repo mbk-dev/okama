@@ -101,6 +101,39 @@ def test_vds_percentage_validation_positive_assignment_raises(pf_single_monthly)
         vds.percentage = 0.1
 
 
+def test_vds_constructor_validates_floor_ceiling(pf_single_monthly):
+    """The constructor must route floor_ceiling through the validating setter."""
+    with pytest.raises(ValueError, match=r"Floor must be negative"):
+        ok.VanguardDynamicSpending(pf_single_monthly, percentage=-0.05, floor_ceiling=(0.5, 0.1))
+
+
+def test_vds_constructor_validates_min_max_annual_withdrawals(pf_single_monthly):
+    """The constructor must route min_max_annual_withdrawals through the validating setter."""
+    with pytest.raises(ValueError, match=r"Minimum withdrawal cannot be greater"):
+        ok.VanguardDynamicSpending(pf_single_monthly, percentage=-0.05, min_max_annual_withdrawals=(900.0, 500.0))
+
+
+def test_vds_limit_setters_accept_none(pf_single_monthly):
+    """None means "limit disabled" and must be assignable after construction."""
+    vds = ok.VanguardDynamicSpending(
+        pf_single_monthly,
+        percentage=-0.05,
+        floor_ceiling=(-0.10, 0.10),
+        min_max_annual_withdrawals=(500.0, 900.0),
+    )
+    vds.floor_ceiling = None
+    vds.min_max_annual_withdrawals = None
+    assert vds.floor_ceiling is None
+    assert vds.min_max_annual_withdrawals is None
+
+
+def test_vds_adjust_floor_ceiling_error_names_the_right_attribute(pf_single_monthly):
+    """The type error for adjust_floor_ceiling must not name adjust_min_max."""
+    vds = ok.VanguardDynamicSpending(pf_single_monthly, percentage=-0.05)
+    with pytest.raises(TypeError, match=r"adjust_floor_ceiling"):
+        vds.adjust_floor_ceiling = "yes"
+
+
 def test_find_the_largest_withdrawals_size_supports_cwid(pf_single_monthly) -> None:
     cwid = ok.CutWithdrawalsIfDrawdown(
         pf_single_monthly,

@@ -546,9 +546,9 @@ class VanguardDynamicSpending(PercentageStrategy):
             percentage=percentage,
         )
         self.portfolio = self.parent
-        self._min_max_annual_withdrawals = min_max_annual_withdrawals
-        self._adjust_min_max = adjust_min_max
-        self._floor_ceiling = floor_ceiling
+        self.min_max_annual_withdrawals = min_max_annual_withdrawals
+        self.adjust_min_max = adjust_min_max
+        self.floor_ceiling = floor_ceiling
         self.adjust_floor_ceiling = adjust_floor_ceiling
         self.indexation = indexation
 
@@ -621,8 +621,13 @@ class VanguardDynamicSpending(PercentageStrategy):
 
     @min_max_annual_withdrawals.setter
     def min_max_annual_withdrawals(self, value: Optional[tuple[float, float]]):  # noqa: UP045
+        if value is None:
+            # None disables the absolute min/max annual withdrawal limits.
+            self._clear_cf_cache()
+            self._min_max_annual_withdrawals = None
+            return
         if not isinstance(value, tuple):
-            raise TypeError("min_max_annual_withdrawals must be a tuple (float, float).")
+            raise TypeError("min_max_annual_withdrawals must be a tuple (float, float) or None.")
         min_w = value[0]
         max_w = value[1]
         validators.validate_real("minimum annual withdrawal", min_w)
@@ -659,8 +664,13 @@ class VanguardDynamicSpending(PercentageStrategy):
 
     @floor_ceiling.setter
     def floor_ceiling(self, value: Optional[tuple[float, float]]):  # noqa: UP045
+        if value is None:
+            # None disables the year-over-year floor/ceiling limits.
+            self._clear_cf_cache()
+            self._floor_ceiling = None
+            return
         if not isinstance(value, tuple):
-            raise TypeError("floor_ceiling must be a tuple (float, float).")
+            raise TypeError("floor_ceiling must be a tuple (float, float) or None.")
         floor = value[0]
         ceiling = value[1]
         validators.validate_real("floor", floor)
@@ -682,7 +692,7 @@ class VanguardDynamicSpending(PercentageStrategy):
     @adjust_floor_ceiling.setter
     def adjust_floor_ceiling(self, value):
         if not isinstance(value, bool):
-            raise TypeError("adjust_min_max must be a True or False.")
+            raise TypeError("adjust_floor_ceiling must be True or False.")
         self._clear_cf_cache()
         self._adjust_floor_ceiling = value
 
