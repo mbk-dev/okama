@@ -1,6 +1,7 @@
 /docs/_build/
 /docs/source/
 /docs/stubs/
+/docs/superpowers/
 !/main_notebook.ipynb
 dist/
 __pycache__
