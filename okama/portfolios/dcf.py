@@ -888,7 +888,7 @@ class PortfolioDCF:
           defined in Monte Carlo parameters.
         - 'survival_period' to keep a positive balance for a period defined by `target_survival_period`.
 
-        The method works with IndexationStrategy and PercentageStrategy only.
+        The method works with IndexationStrategy, PercentageStrategy and their subclasses only.
 
         The withdrawal size defined in cash flow strategy must be negative.
 
