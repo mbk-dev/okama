@@ -272,13 +272,25 @@ For the new tagged version (`v<NEW_VERSION>`), RTD may keep it inactive by defau
 
 ## Phase 11 — PyPI publish
 
-**CONFIRM GATE 4** — before `poetry publish`. PyPI does not allow re-uploading the same version, even if you delete it. Once this command succeeds, `<NEW_VERSION>` is permanent.
+**CONFIRM GATE 4** — before `poetry publish`. PyPI does not allow re-uploading the same version, even if you delete it. Once the publish succeeds, `<NEW_VERSION>` is permanent.
+
+Build and publish as **two separate steps** — do **not** use the combined `poetry publish --build`. During the v2.2.1 release (2026-06-06) the combined command hung indefinitely before even producing artifacts (95% CPU for 20+ minutes, nothing in `dist/`), while the separate commands completed in seconds. Two steps also let you inspect the artifacts before the irreversible upload.
 
 ```bash
-poetry publish --build
+poetry build      # writes okama-<NEW_VERSION>.tar.gz and .whl into dist/ — takes seconds
+ls -la dist/      # sanity check: both <NEW_VERSION> artifacts are present
+poetry publish    # uploads the current pyproject.toml version from dist/
 ```
 
-Verify by visiting <https://pypi.org/project/okama/> and confirming the new version is listed. The skill cannot do this automatically, but `pip index versions okama` (if available) can be a quick check.
+If either command takes more than a couple of minutes, kill it and investigate — that is not normal for this package.
+
+`poetry publish` uploads only the artifacts matching the current `pyproject.toml` version; stale files of older versions in `dist/` are ignored (observed in the v2.2.1 release with v2.2.0 files present).
+
+Verify by visiting <https://pypi.org/project/okama/> and confirming the new version is listed, or query the JSON API:
+
+```bash
+curl -s https://pypi.org/pypi/okama/json | python3 -c "import json,sys; print(json.load(sys.stdin)['info']['version'])"
+```
 
 ## Phase 12 — Post-release
 
@@ -324,5 +336,5 @@ If something fails between phases 8–12, the state is partially-released. Tell 
 - **Tagged locally, not pushed**: `git tag -d v<NEW_VERSION>` is safe.
 - **Tag pushed, no GitHub Release**: `gh release create` can still run, or delete the remote tag with `git push --delete origin v<NEW_VERSION>` (ask first).
 - **GitHub Release created, RTD build failed**: do not publish to PyPI. Fix the docs on master, RTD will rebuild automatically on the next push; once green, resume from Phase 11.
-- **GitHub Release created, PyPI publish failed**: do not delete the GitHub Release — fix the PyPI issue (auth, network) and rerun `poetry publish --build`. PyPI will accept the same version only if the previous attempt did not actually upload.
+- **GitHub Release created, PyPI publish failed**: do not delete the GitHub Release — fix the PyPI issue (auth, network) and rerun `poetry build` + `poetry publish`. PyPI will accept the same version only if the previous attempt did not actually upload.
 - **PyPI publish succeeded, post-release sync failed**: the release is done; just finish Phase 12 manually.
