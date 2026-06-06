@@ -71,7 +71,7 @@ def symbols_in_namespace(namespace: str = settings.default_namespace, response_f
     list_of_symbols = json.loads(string_response)
     if response_format.lower() == "frame":
         df = pd.DataFrame(list_of_symbols[1:], columns=list_of_symbols[0])
-        return df.astype("string", copy=False)
+        return df.astype("string")
     elif response_format.lower() == "json":
         return list_of_symbols
     else:

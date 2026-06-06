@@ -723,5 +723,5 @@ class Index:
                 break
             windows_result = fn(df_window).iloc[-1, :]
             results_list.append(windows_result.to_frame().T)
-        output = pd.concat(results_list, copy=False) if results_list else pd.DataFrame()
+        output = pd.concat(results_list) if results_list else pd.DataFrame()
         return output
