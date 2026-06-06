@@ -777,40 +777,6 @@ class Portfolio(make_asset_list.ListMaker):
         )
 
     @property
-    def assets_close_monthly(self) -> pd.DataFrame:
-        """
-        Show assets monthly close time series adjusted to the base currency.
-
-        Returns
-        -------
-        DataFrame
-            Assets monthly close time series adjusted to the base currency.
-
-        Examples
-        --------
-        >>> import matplotlib.pyplot as plt
-
-        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD")
-        >>> pf.assets_close_monthly.plot()
-        >>> plt.show()
-        """
-        series_list = []  # Collect all series to concatenate once at the end
-        for x in self.asset_obj_dict.values():
-            series = (
-                x.close_monthly
-                if x.currency == self.currency
-                else self._adjust_price_to_currency_monthly(x.close_monthly, x.currency)
-            )
-            series = series.rename(x.symbol)
-            series_list.append(series)
-        if len(series_list) == 1:
-            assets_close_monthly = series_list[0].to_frame()
-        else:
-            assets_close_monthly = pd.concat(series_list, axis=1, join="inner")
-        assets_close_monthly = assets_close_monthly[self.first_date : self.last_date]
-        return assets_close_monthly
-
-    @property
     def close_monthly(self) -> pd.Series:
         """
         Portfolio size monthly time series.
@@ -1263,6 +1229,78 @@ class Portfolio(make_asset_list.ListMaker):
             Drawdowns time series for the portfolio
         """
         return helpers.Frame.get_drawdowns(self.ror)
+
+    @property
+    def real_drawdowns(self) -> pd.Series:
+        """
+        Calculate real (inflation-adjusted) drawdowns time series for the portfolio.
+
+        The real drawdown is the percent decline from a previous peak
+        in the inflation-adjusted wealth index.
+        Portfolio should be initiated with `inflation=True` for real drawdowns.
+
+        Returns
+        -------
+        Series
+            Real drawdowns time series for the portfolio.
+
+        See Also
+        --------
+        drawdowns : Calculate drawdowns (not adjusted for inflation).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], inflation=True, last_date="2021-08")
+        >>> pf.real_drawdowns.plot()
+        >>> plt.show()
+        """
+        real_ror = self._make_real_return_time_series(self._add_inflation())
+        return helpers.Frame.get_drawdowns(real_ror[self.symbol])
+
+    @property
+    def price_drawdowns(self) -> pd.Series:
+        """
+        Calculate price drawdowns time series for the portfolio.
+
+        The price drawdown is the percent decline from a previous peak in the portfolio
+        price index. The price index is built from the assets close prices (not adjusted
+        for dividends) with the same weights and rebalancing strategy as the portfolio,
+        hence price drawdowns may significantly differ from `drawdowns`
+        (based on total return) for portfolios with high dividend assets.
+
+        The price index is anchored at the first month of the period, so price drawdowns
+        cover the same months as `drawdowns`.
+
+        Returns
+        -------
+        Series
+            Price drawdowns time series for the portfolio.
+
+        See Also
+        --------
+        drawdowns : Calculate drawdowns from total return (with dividends reinvested).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD", last_date="2021-08")
+        >>> pf.price_drawdowns.plot()
+        >>> plt.show()
+        """
+        price_ror = self.assets_close_monthly.pct_change().iloc[1:]
+        if not self._condition_for_rebalancing:
+            # Fast calculation
+            s = helpers.Frame.get_portfolio_return_ts(self.weights, price_ror)
+        else:
+            s = self.rebalancing_strategy.return_ror_ts(self.weights, price_ror)
+        s = s.rename(self.symbol)
+        # Anchor the price index at the first month of the period (lost to pct_change),
+        # so that price drawdowns cover the same months as the total-return drawdowns.
+        wealth = helpers.Frame.get_wealth_indexes(s)
+        return helpers.Frame.get_drawdowns_from_wealth(wealth)
 
     @property
     def recovery_period(self) -> pd.Series:

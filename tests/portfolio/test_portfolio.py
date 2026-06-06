@@ -29,6 +29,12 @@ def pf_three_monthly(synthetic_env):
     )
 
 
+@pytest.fixture()
+def pf_ab_inflation(synthetic_env):
+    """Two-asset Portfolio with monthly rebalancing and synthetic inflation (mocked data)."""
+    return ok.Portfolio(["A.US", "B.US"], ccy="USD", inflation=True, rebalancing_strategy=ok.Rebalance(period="month"))
+
+
 def test_initialization_failing_weights_number(synthetic_env):
     with pytest.raises(
         ValueError,
@@ -145,6 +151,56 @@ def test_drawdowns_and_recovery_period(pf_three_monthly):
     assert isinstance(rp, pd.Series)
     assert rp.dtype.kind in {"i", "u"}  # integer types
     assert (rp.values >= 0).all()
+
+
+def test_real_drawdowns_match_inflation_adjusted_returns(pf_ab_inflation):
+    """real_drawdowns must be the drawdowns of the inflation-adjusted wealth index (issue #51)."""
+    pf = pf_ab_inflation
+    dd_real = pf.real_drawdowns
+    # For Portfolio real_drawdowns is a Series named by the portfolio symbol (as `drawdowns`)
+    assert isinstance(dd_real, pd.Series)
+    assert dd_real.name == pf.symbol
+    # Expected: drawdowns of the wealth index built from inflation-adjusted returns
+    real_ror = (1.0 + pf.ror).divide(1.0 + pf.inflation_ts, axis=0) - 1.0
+    wealth = 1000.0 * (1.0 + real_ror).cumprod()
+    expected = (wealth - wealth.cummax()) / wealth.cummax()
+    assert np.allclose(dd_real.values, expected.values)
+    # Synthetic inflation is positive: real drawdowns are deeper than nominal ones
+    assert dd_real.min() < pf.drawdowns.min()
+
+
+def test_real_drawdowns_require_inflation_data(pf_ab_monthly):
+    with pytest.raises(ValueError, match="Real Return is not defined"):
+        _ = pf_ab_monthly.real_drawdowns
+
+
+def test_price_drawdowns_use_close_price_portfolio_returns(pf_ab_monthly):
+    """price_drawdowns must be built from close-price returns with portfolio weights (issue #44)."""
+    pf = pf_ab_monthly
+    n = len(pf.ror)
+    idx = pf.ror.index
+    # Replace A.US close prices: rise for 12 months, then fall to 100 and stay flat.
+    prices = pd.Series([100.0 + k for k in range(12)] + [100.0] * (n - 12), index=idx, name="A.US")
+    pf.asset_obj_dict["A.US"].close_monthly = prices
+
+    dd = pf.price_drawdowns
+
+    assert isinstance(dd, pd.Series)
+    assert dd.name == pf.symbol
+    # Same months as the total-return drawdowns: the price index is anchored
+    # at the first month of the period, so no month is lost to pct_change
+    assert len(dd) == n
+    assert dd.index.equals(pf.drawdowns.index)
+    # Expected: monthly-rebalanced equal-weight price index anchored at 1000
+    price_ror = pf.assets_close_monthly.pct_change().iloc[1:]
+    port_ror = price_ror @ [0.5, 0.5]
+    wealth = 1000.0 * (1.0 + port_ror).cumprod()
+    wealth.loc[wealth.index[0] - 1] = 1000.0  # the base point at the first month
+    wealth = wealth.sort_index()
+    expected = (wealth - wealth.cummax()) / wealth.cummax()
+    assert np.allclose(dd.values, expected.values)
+    # Total-return drawdowns are different: they include reinvested dividends
+    assert not np.allclose(dd.values, pf.drawdowns.values)
 
 
 def test_cagr_and_cumulative_returns(pf_ab_monthly):

@@ -95,6 +95,39 @@ def test_var_cvar_drawdowns_recovery_periods(synthetic_env):
     assert all(x in var.index for x in ["IDX.US", "A.US", "B.US"])  # columns become index
 
 
+def test_assets_close_monthly_returns_close_prices_in_base_currency(synthetic_env):
+    """assets_close_monthly must expose monthly close prices for each asset (issue #44)."""
+    al = ok.AssetList(["A.US", "B.US"], ccy="USD", inflation=False)
+    cm = al.assets_close_monthly
+    assert isinstance(cm, pd.DataFrame)
+    assert list(cm.columns) == ["A.US", "B.US"]
+    # FakeAsset close prices are 100 * cumprod(1 + ror); currencies match, no conversion
+    expected_a = 100.0 * (1.0 + synthetic_env["series"]["A.US"]).cumprod()
+    assert np.allclose(cm["A.US"].values, expected_a.values)
+
+
+def test_price_drawdowns_follow_close_prices_not_total_returns(synthetic_env):
+    """price_drawdowns must be computed from close prices, not from total returns (issue #44)."""
+    al = ok.AssetList(["A.US", "B.US"], ccy="USD", inflation=False)
+    n = len(al.assets_ror)
+    idx = al.assets_ror.index
+    # Replace A.US close prices: rise for 12 months, then fall to 100 and stay flat.
+    prices = pd.Series([100.0 + k for k in range(12)] + [100.0] * (n - 12), index=idx, name="A.US")
+    al.asset_obj_dict["A.US"].close_monthly = prices
+
+    dd = al.price_drawdowns
+
+    assert isinstance(dd, pd.DataFrame)
+    # Same months as the total-return drawdowns: price drawdowns are computed from price levels
+    assert dd.index.equals(al.drawdowns.index)
+    peaks = prices.cummax()
+    expected = (prices - peaks) / peaks
+    pd.testing.assert_series_equal(dd["A.US"], expected)
+    assert dd["A.US"].min() == pytest.approx((100.0 - 111.0) / 111.0)
+    # Total-return drawdowns are different: they include reinvested dividends
+    assert not np.allclose(dd["A.US"].values, al.drawdowns["A.US"].values)
+
+
 def test_recovery_periods_unrecovered_when_last_date_is_not_month_start(mocker):
     """`recovery_periods` must return NA for an unrecovered drawdown at the last
     period regardless of whether `self.last_date` is a month-start timestamp."""

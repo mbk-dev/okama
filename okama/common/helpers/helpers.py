@@ -447,8 +447,15 @@ class Frame:
         Get drawdowns from return time series.
         """
         wealth_index = 1000 * (1 + ror).cumprod()
-        previous_peaks = wealth_index.cummax()
-        return (wealth_index - previous_peaks) / previous_peaks
+        return Frame.get_drawdowns_from_wealth(wealth_index)
+
+    @staticmethod
+    def get_drawdowns_from_wealth(wealth: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:  # noqa: UP007
+        """
+        Get drawdowns from wealth index (or price) time series.
+        """
+        previous_peaks = wealth.cummax()
+        return (wealth - previous_peaks) / previous_peaks
 
     @staticmethod
     def change_columns_order(df: pd.DataFrame, selected_columns: list, position: str = "first") -> pd.DataFrame:

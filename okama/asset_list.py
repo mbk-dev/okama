@@ -395,6 +395,64 @@ class AssetList(make_asset_list.ListMaker):
         return helpers.Frame.get_drawdowns(self.assets_ror)
 
     @property
+    def real_drawdowns(self) -> pd.DataFrame:
+        """
+        Calculate real (inflation-adjusted) drawdowns time series for the assets.
+
+        The real drawdown is the percent decline from a previous peak
+        in the inflation-adjusted wealth index.
+        AssetList should be initiated with `inflation=True` for real drawdowns.
+
+        Returns
+        -------
+        DataFrame
+            Time series of real drawdowns.
+
+        See Also
+        --------
+        drawdowns : Calculate drawdowns (not adjusted for inflation).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+
+        >>> al = ok.AssetList(["SPY.US", "BND.US"], inflation=True, last_date="2021-08")
+        >>> al.real_drawdowns.plot()
+        >>> plt.show()
+        """
+        real_ror = self._make_real_return_time_series(self._add_inflation())
+        return helpers.Frame.get_drawdowns(real_ror)
+
+    @property
+    def price_drawdowns(self) -> pd.DataFrame:
+        """
+        Calculate price drawdowns time series for the assets.
+
+        The price drawdown is the percent decline from a previous peak in close price.
+        Close prices are not adjusted for corporate actions (dividends and splits),
+        hence price drawdowns may significantly differ from `drawdowns`
+        (based on total return) for assets with high dividends.
+
+        Returns
+        -------
+        DataFrame
+            Time series of price drawdowns.
+
+        See Also
+        --------
+        drawdowns : Calculate drawdowns from total return (with dividends reinvested).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+
+        >>> al = ok.AssetList(["SPY.US", "BND.US"], last_date="2021-08")
+        >>> al.price_drawdowns.plot()
+        >>> plt.show()
+        """
+        return helpers.Frame.get_drawdowns_from_wealth(self.assets_close_monthly)
+
+    @property
     def recovery_periods(self) -> pd.Series:
         """
         Calculate the longest recovery periods for the assets.

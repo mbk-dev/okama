@@ -149,6 +149,18 @@ def test_frame_get_cagr_short_history_returns_float_series_with_nan():
     assert list(result.index) == ["A.US", "B.US"]
 
 
+def test_frame_get_drawdowns_from_wealth_measures_decline_from_peak():
+    """`Frame.get_drawdowns_from_wealth` must compute drawdowns directly from a
+    wealth index (or price) time series, keeping the first observation."""
+    idx = pd.period_range("2020-01", periods=4, freq="M")
+    wealth = pd.Series([100.0, 110.0, 99.0, 121.0], index=idx, name="A.US")
+
+    result = helpers.Frame.get_drawdowns_from_wealth(wealth)
+
+    expected = pd.Series([0.0, 0.0, -0.1, 0.0], index=idx, name="A.US")
+    pd.testing.assert_series_equal(result, expected)
+
+
 def test_index_rolling_fn_emits_no_pandas4warning():
     """pd.concat 'copy' keyword is deprecated on pandas 3 — the rolling-window
     concat must stay warning-free (GH #85)."""
