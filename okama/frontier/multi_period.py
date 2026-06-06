@@ -867,9 +867,50 @@ class EfficientFrontier(asset_list.AssetList):
                 solution["init_guess"] = init_guess_key
                 break
 
+        # Corner guard: when the target CAGR equals a single asset's own CAGR (the terminal
+        # point of the right part), the 100% single-asset portfolio is feasible and is the
+        # maximum-risk solution, while SLSQP started exactly at this vertex of the bounds
+        # can fail spuriously and the fallback start converges to an interior local maximum
+        # with lower risk, drawing a dominated hook next to the asset point.
+        corner = self._single_asset_corner_portfolio(target_return)
+        if corner is not None and (solution is None or corner["Risk"] > solution["Risk"]):
+            corner["init_guess"] = "single_asset_corner"
+            solution = corner
+
         if solution is None:
             raise RuntimeError(f"No solution found for target CAGR value: {target_return}.")
         return solution
+
+    def _single_asset_corner_portfolio(self, target_value: float) -> Optional[dict]:  # noqa: UP045
+        """
+        Return the single-asset portfolio point whose CAGR equals the target value, if any.
+
+        The 100% single-asset portfolio is always feasible at its own CAGR (when allowed
+        by the bounds), so it is a deterministic candidate for the frontier corner points
+        where the SLSQP optimizer started at (or near) this vertex of the bounds can fail
+        spuriously or converge to an interior local optimum.
+        """
+        cagr = helpers.Frame.get_cagr(self.assets_ror)
+        lows = np.array([lo for lo, _ in self.bounds])
+        highs = np.array([hi for _, hi in self.bounds])
+        for position, ticker in enumerate(self.assets_ror.columns):
+            if not np.isclose(cagr[ticker], target_value, rtol=0, atol=1e-10):
+                continue
+            weights = np.zeros(self.assets_ror.shape[1])
+            weights[position] = 1.0
+            if np.any(weights < lows - 1e-12) or np.any(weights > highs + 1e-12):
+                continue  # the single-asset portfolio is not allowed by the bounds
+            ts = self._get_portfolio_ror_ts(weights)
+            mean_return_monthly = ts.mean()
+            asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+            point = dict(zip(asset_labels, weights))  # noqa: B905
+            point["CAGR"] = target_value
+            point["Mean return"] = mean_return_monthly * settings._MONTHS_PER_YEAR
+            point["Risk"] = helpers.Float.annualize_risk(ts.std(), mean_return_monthly)
+            point["Weights"] = weights
+            point["iterations"] = 0
+            return point
+        return None
 
     @property
     def _max_cagr_asset(self) -> dict:
@@ -990,12 +1031,13 @@ class EfficientFrontier(asset_list.AssetList):
             min_cagr = self.gmv_annual_values[1]
         max_cagr = self.global_max_return_portfolio["CAGR"]
         target_range = np.linspace(min_cagr, max_cagr, self.n_points)
-        # Ensure the minimum-variance asset's CAGR is sampled so the frontier passes through
-        # that asset; otherwise the lowest-risk single asset can fall just outside the polyline.
-        asset_risk = helpers.Float.annualize_risk(self.assets_ror.std(), self.assets_ror.mean())
-        min_variance_cagr = helpers.Frame.get_cagr(self.assets_ror)[asset_risk.idxmin()]
-        if min_cagr < min_variance_cagr < max_cagr:
-            target_range = np.unique(np.append(target_range, min_variance_cagr))
+        # Ensure every asset's CAGR inside the range is sampled exactly, so the frontier
+        # passes through single-asset points lying on its boundary (e.g. the minimum-variance
+        # asset) instead of cutting the corner near them.
+        asset_cagrs = helpers.Frame.get_cagr(self.assets_ror)
+        interior_cagrs = asset_cagrs[(asset_cagrs > min_cagr) & (asset_cagrs < max_cagr)]
+        if not interior_cagrs.empty:
+            target_range = np.unique(np.append(target_range, interior_cagrs.to_numpy()))
         return target_range
 
     @property
@@ -1011,6 +1053,9 @@ class EfficientFrontier(asset_list.AssetList):
                 k = abs((self._target_cagr_range_left[0] - self._target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
                 # we don't want too many points in the right range. Therefore if k < 1 n_points value is used
                 number_of_points = round(self.n_points / k) + 1 if k > 1 else self.n_points
+                # At least two points, so that the range keeps its terminal value (the right
+                # asset's own CAGR) after the first point is dropped below.
+                number_of_points = max(number_of_points, 2)
                 target_range = np.linspace(max_cagr, ticker_cagr, number_of_points)
                 return target_range[1:]  # skip the first point (max cagr) as it presents in the left part of the EF
         return None
