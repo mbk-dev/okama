@@ -833,3 +833,117 @@ def test_target_cagr_range_right_keeps_terminal_for_small_n_points(ef_right_corn
     rr = ef._target_cagr_range_right
     assert rr is not None and len(rr) >= 1
     assert np.isclose(rr[-1], right["max_asset_cagr"], rtol=0, atol=1e-15)
+
+
+# --- pairwise EF gap: mix barely beats the best asset (issue #87) ---
+
+
+@pytest.fixture()
+def ef_pair_small_bonus(mocker):
+    """Two-asset EfficientFrontier where the yearly-rebalanced mix barely beats the best asset.
+
+    HIVOL.US - higher volatility, lower CAGR
+    MODV.US  - the best single asset; the global max-CAGR portfolio is a HIVOL/MODV mix
+               whose CAGR exceeds MODV's by less than 1% *relative* (a small rebalancing
+               bonus), while its risk is several percent lower than MODV's.
+
+    This is the issue #87 geometry (MCFTR.INDX/GC.COMM pair): the 1% CAGR tolerance in
+    `_max_ratio_asset_right_to_max_cagr` treats the mix as "being" the asset, the right
+    part of the frontier is skipped, and the frontier line stops at the mix instead of
+    descending to the MODV corner.
+    """
+    idx = pd.period_range("2005-01", periods=240, freq="M")
+    rng = np.random.default_rng(4)
+
+    def make_ror(loc, scale):
+        # Standardize the draw so the realized mean and std match loc/scale exactly.
+        z = rng.normal(0, 1, len(idx))
+        z = (z - z.mean()) / z.std(ddof=1)
+        return loc + scale * z
+
+    hivol = pd.Series(make_ror(0.005, 0.06), index=idx, name="HIVOL.US")
+    modv = pd.Series(make_ror(0.00807, 0.05), index=idx, name="MODV.US")
+    fake = {
+        "HIVOL.US": FakeAsset("HIVOL.US", hivol, currency="USD", name="High vol"),
+        "MODV.US": FakeAsset("MODV.US", modv, currency="USD", name="Moderate vol"),
+    }
+
+    def _get(symbols, first_date=None, last_date=None):
+        out = {}
+        for s in symbols:
+            key = s.symbol if hasattr(s, "symbol") else s
+            out[key] = fake[key]
+        return out
+
+    mocker.patch("okama.common.make_asset_list.ListMaker._get_asset_obj_dict", side_effect=_get)
+    mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=FakeCurrencyAsset)
+    return ok.EfficientFrontier(
+        ["HIVOL.US", "MODV.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=20,
+        full_frontier=True,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+    )
+
+
+def test_right_asset_detected_when_mix_barely_beats_best_asset(ef_pair_small_bonus):
+    """An asset with a big risk gap to the global max point must bound the right part.
+
+    The asset 'is' the global max portfolio only when both its CAGR and its risk match
+    the global max point. A sub-1% CAGR edge of the best mix with a multi-percent risk
+    gap must not suppress the right part of the frontier (issue #87).
+    """
+    ef = ef_pair_small_bonus
+    cagr = helpers.Frame.get_cagr(ef.assets_ror)
+    risk = helpers.Float.annualize_risk(ef.assets_ror.std(), ef.assets_ror.mean())
+    gm = ef.global_max_return_portfolio
+    best = cagr.idxmax()
+    # preconditions: the global max is a mix with a small CAGR edge and a big risk gap
+    assert 0 < 1 - float(cagr[best]) / gm["CAGR"] < 0.01
+    assert float(risk[best]) > gm["Risk"] * 1.01
+
+    right = ef._max_ratio_asset_right_to_max_cagr
+
+    assert right is not None
+    assert right["ticker_with_largest_cagr"] == best
+
+
+def test_pair_ef_points_reach_best_asset_corner_for_small_bonus(ef_pair_small_bonus):
+    """The two-asset frontier must terminate at the best asset point, not at the mix.
+
+    A 100% single-asset portfolio is always a member of the two-asset opportunity set,
+    so the frontier line has no reason to stop short of the asset dot (issue #87).
+    """
+    ef = ef_pair_small_bonus
+    cagr = helpers.Frame.get_cagr(ef.assets_ror)
+    risk = helpers.Float.annualize_risk(ef.assets_ror.std(), ef.assets_ror.mean())
+    best = cagr.idxmax()
+
+    last = ef.ef_points.iloc[-1]
+
+    assert last["Risk"] == pytest.approx(float(risk[best]), abs=1e-3)
+    assert last["CAGR"] == pytest.approx(float(cagr[best]), abs=1e-4)
+
+
+def test_plot_pair_ef_uses_parent_rebalancing_strategy(synthetic_env, mocker):
+    """plot_pair_ef must compute pair frontiers with the parent's rebalancing strategy.
+
+    Pair EfficientFrontier objects were created without rebalancing_strategy, silently
+    falling back to the default yearly rebalancing whatever the parent uses.
+    """
+    ef = ok.EfficientFrontier(
+        ["IDX.US", "A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=12,
+        rebalancing_strategy=ok.Rebalance(period="month"),
+    )
+    spy = mocker.spy(ok.EfficientFrontier, "__init__")
+
+    ef.plot_pair_ef(tickers="tickers")
+
+    assert len(spy.call_args_list) == 3  # one per asset pair
+    for call in spy.call_args_list:
+        strategy = call.kwargs.get("rebalancing_strategy")
+        assert strategy is not None and strategy.period == "month"

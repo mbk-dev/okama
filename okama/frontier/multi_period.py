@@ -972,24 +972,24 @@ class EfficientFrontier(asset_list.AssetList):
         risk_monthly = self.assets_ror.std()
         mean_return = self.assets_ror.mean()
         risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
-        tolerance = 0.01
 
         global_max_cagr = self.global_max_return_portfolio["CAGR"]
         global_max_risk = self.global_max_return_portfolio["Risk"]
-        # TODO: global_max_cagr_is_not_asset must be TRUE if CAGR difference is small but RISK difference is big
-        global_max_cagr_is_not_asset = (cagr < global_max_cagr * (1 - tolerance)).all()
-        if global_max_cagr_is_not_asset:
+        # The global max point "is" an asset only when both its CAGR and its risk match.
+        # A small CAGR edge of the best mix (rebalancing bonus below 1%) with a large risk
+        # gap still leaves the asset to the right of the frontier end, and the right part
+        # must be built to reach it (issue #87).
+        global_max_is_asset = (
+            np.isclose(cagr, global_max_cagr, rtol=1e-3, atol=1e-5)
+            & np.isclose(risk, global_max_risk, rtol=1e-3, atol=1e-5)
+        ).any()
+        if not global_max_is_asset:
             cagr_diff = cagr - global_max_cagr
             risk_diff = risk - global_max_risk
-
-            if risk_diff is not None and (risk_diff == 0).any():
-                risk_diff += 0.0001  # to avoid division by zero
-
-            ratio = cagr_diff / risk_diff
-            right_assets = risk_diff > 0
+            right_assets = (risk_diff > 0) & (cagr_diff < 0)
 
             if right_assets.any():
-                valid_ratios = ratio[right_assets]
+                valid_ratios = cagr_diff[right_assets] / risk_diff[right_assets]
                 max_ticker = valid_ratios.idxmax()
                 return {
                     "max_asset_cagr": cagr[max_ticker],
@@ -1049,7 +1049,9 @@ class EfficientFrontier(asset_list.AssetList):
         if self._max_ratio_asset_right_to_max_cagr:
             ticker_cagr = self._max_ratio_asset_right_to_max_cagr["max_asset_cagr"]
             max_cagr = self.global_max_return_portfolio["CAGR"]
-            if not np.isclose(max_cagr, ticker_cagr, rtol=1e-3, atol=1e-05):
+            # Skip only a truly degenerate (zero) span: a narrow-but-real CAGR span still
+            # has to be drawn, as the risk gap to the asset corner can be large (issue #87).
+            if max_cagr - ticker_cagr > 1e-12:
                 k = abs((self._target_cagr_range_left[0] - self._target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
                 # we don't want too many points in the right range. Therefore if k < 1 n_points value is used
                 number_of_points = round(self.n_points / k) + 1 if k > 1 else self.n_points
@@ -1471,6 +1473,7 @@ class EfficientFrontier(asset_list.AssetList):
                 full_frontier=True,
                 n_points=self.n_points,
                 bounds=bounds_pair,
+                rebalancing_strategy=self.rebalancing_strategy,
             ).ef_points
             ax.plot(ef["Risk"], ef["CAGR"])
         self.plot_assets(kind="cagr", tickers=tickers)
