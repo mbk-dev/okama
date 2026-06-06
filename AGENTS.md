@@ -63,6 +63,8 @@ This pays off here because the library is class-heavy (`AssetList` / `Portfolio`
 - **arbitrary text** — strings, config, docstrings, ruff `# noqa` markers; and when you need *every* literal match (codegraph ranks and truncates).
 - **external consumers** — the index covers this repo only; it won't show callers in okama-dash, notebooks, or downstream code.
 
+**Scoping text searches:** when looking for *production code only*, scope the search to the library dir — `rg <pattern> okama/` (or Grep with `path: okama/`) — instead of searching the whole repo; use `rg -g '!tests/'` for one-off exclusions. Do **not** add a global ignore file (`.rgignore` / `.ignore`) that hides `tests/` or `examples/`: ripgrep-based search would skip them silently, and this repo's TDD workflow depends on finding existing tests and fixtures ("no matches" must mean "no tests cover this", not "tests were excluded"). Repo-wide search is already fast (~0.03 s); scoping is about result noise, not speed.
+
 Name note: CLI subcommands are `query` / `callers` / `callees` / `impact` / `context`; MCP tools carry the `codegraph_` prefix (`codegraph_search` ≡ CLI `query`). Rebuild a stale index with `codegraph sync` (or `codegraph index`).
 
 ## Python style & modernization
