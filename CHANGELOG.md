@@ -5,6 +5,50 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2026-06
+
+Fixes the multi-period Efficient Frontier around single-asset corner points —
+the right part of the frontier now always terminates at the corner asset
+(no dominated "hook", no silently missing right part, pairwise frontiers reach
+the asset dots) — and removes pandas 3 deprecation warnings.
+
+### Fixed
+
+- `EfficientFrontier.ef_points` drew a dominated hook near the max-CAGR corner
+  (#84): SLSQP started exactly at the optimal vertex of the bounds fails
+  spuriously, and the fallback start converged to an interior local maximum.
+  `EfficientFrontier._maximize_risk()` now keeps the better of the optimizer
+  result and the 100% single-asset portfolio whenever the target CAGR equals an
+  asset's own CAGR, so the right part of the frontier ends exactly at the
+  corner asset with monotonically increasing risk.
+- The right part of `EfficientFrontier.ef_points` could silently disappear
+  together with its corner point when the right CAGR span was much narrower
+  than the left one (the point-count formula produced an empty target range).
+- Pairwise efficient frontiers (`EfficientFrontier.plot_pair_ef()`) stopped
+  short of the asset point when the best rebalanced mix beat the asset by less
+  than 1% of CAGR (#87). An asset is now considered to be the global max-CAGR
+  point only when both its CAGR and its risk match it, and a narrow-but-real
+  right CAGR span is drawn instead of being treated as degenerate.
+- `EfficientFrontier.plot_pair_ef()` ignored the parent's
+  `rebalancing_strategy`, always computing pair frontiers with the default
+  yearly rebalancing.
+- `Pandas4Warning` on pandas 3 (#85): dropped the deprecated `copy` keyword in
+  `symbols_in_namespace()` and `Index.rolling_fn()` (slated for removal in
+  pandas 4.0).
+
+### Changed
+
+- The `EfficientFrontier.ef_points` target grid now samples every asset's CAGR
+  lying inside the range (previously only the minimum-variance asset's), so the
+  frontier polyline passes exactly through single-asset points on the boundary.
+  The number of rows in `ef_points` / `mdp_points` can therefore slightly
+  exceed `n_points`.
+
+### Docs
+
+- README refreshed: fixed broken images on PyPI, added a hero image, an MCP
+  server section and a uv install option.
+
 ## [2.2.0] - 2026-06
 
 Makes Monte Carlo cash-flow simulations dramatically faster (vectorized wealth

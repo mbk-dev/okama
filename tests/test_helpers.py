@@ -147,3 +147,18 @@ def test_frame_get_cagr_short_history_returns_float_series_with_nan():
     assert result.dtype == np.float64, f"expected float64, got {result.dtype}"
     assert result.isna().all()
     assert list(result.index) == ["A.US", "B.US"]
+
+
+def test_index_rolling_fn_emits_no_pandas4warning():
+    """pd.concat 'copy' keyword is deprecated on pandas 3 — the rolling-window
+    concat must stay warning-free (GH #85)."""
+    import warnings
+
+    idx = pd.period_range("2020-01", periods=14, freq="M")
+    df = pd.DataFrame({"A.US": np.full(14, 0.01)}, index=idx)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", pd.errors.Pandas4Warning)
+        result = helpers.Index.rolling_fn(df, window=12, fn=lambda d: d.cumsum())
+
+    assert not result.empty
