@@ -376,3 +376,55 @@ def test_percentile_functions(pf_ab_monthly):
     assert list(pc.columns) == [10, 50, 90]
     assert list(pc.index) == [1, 2]
     assert pc.notna().all(axis=None)
+
+
+def test_tracking_error_matches_asset_list_workaround(pf_ab_monthly):
+    """Portfolio.tracking_error equals the documented AssetList([benchmark, pf]) workaround."""
+    te = pf_ab_monthly.tracking_error(benchmark="IDX.US")
+    al = ok.AssetList(["IDX.US", pf_ab_monthly], ccy="USD", inflation=False)
+    expected = al.tracking_error()[pf_ab_monthly.symbol]
+    assert isinstance(te, pd.Series)
+    assert te.name == pf_ab_monthly.symbol
+    pd.testing.assert_series_equal(te, expected)
+
+
+def test_tracking_error_std_matches_manual_computation(pf_ab_monthly, synthetic_env):
+    """method='std' equals the centered std (ddof=1) of portfolio-vs-benchmark differences."""
+    te = pf_ab_monthly.tracking_error(benchmark="IDX.US", method="std")
+    diff = pf_ab_monthly.ror - synthetic_env["series"]["IDX.US"]
+    assert te.iloc[-1] == pytest.approx(diff.std(ddof=1) * np.sqrt(12))
+    # The first expanding point is dropped for the std method
+    assert len(te) == len(diff) - 1
+
+
+def test_tracking_error_rolling_matches_asset_list_workaround(pf_ab_monthly):
+    te = pf_ab_monthly.tracking_error(benchmark="IDX.US", rolling_window=12)
+    al = ok.AssetList(["IDX.US", pf_ab_monthly], ccy="USD", inflation=False)
+    expected = al.tracking_error(rolling_window=12)[pf_ab_monthly.symbol]
+    pd.testing.assert_series_equal(te, expected)
+
+
+def test_tracking_error_with_asset_like_benchmark(pf_ab_monthly, synthetic_env):
+    """Benchmark can be an asset-like object (anything with .symbol and .ror)."""
+    from tests.helpers.factories import FakeAsset
+
+    bench = FakeAsset("IDX.US", synthetic_env["series"]["IDX.US"], currency="USD")
+    te_obj = pf_ab_monthly.tracking_error(benchmark=bench)
+    te_str = pf_ab_monthly.tracking_error(benchmark="IDX.US")
+    pd.testing.assert_series_equal(te_obj, te_str)
+
+
+def test_tracking_error_with_portfolio_benchmark(pf_ab_monthly, synthetic_env):
+    """Benchmark can be another Portfolio object."""
+    bench_pf = ok.Portfolio(["IDX.US"], ccy="USD", inflation=False, symbol="bench.PF")
+    te = pf_ab_monthly.tracking_error(benchmark=bench_pf)
+    assert isinstance(te, pd.Series)
+    assert te.name == pf_ab_monthly.symbol
+    diff = pf_ab_monthly.ror - bench_pf.ror
+    expected_last = np.sqrt((diff**2).sum() / len(diff)) * np.sqrt(12)
+    assert te.iloc[-1] == pytest.approx(expected_last)
+
+
+def test_tracking_error_invalid_method_raises(pf_ab_monthly):
+    with pytest.raises(ValueError, match="method"):
+        pf_ab_monthly.tracking_error(benchmark="IDX.US", method="mad")

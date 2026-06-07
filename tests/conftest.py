@@ -137,14 +137,13 @@ def synthetic_env(mocker):
                     result[s.symbol] = s
                 else:
                     # Pass through the original object for symbols not in fake_assets
-                    # This is needed for tests that create their own test objects
-                    from okama.common.make_asset_list import ListMaker
-
-                    # Call the original unmocked method
-                    original_result = ListMaker.__dict__["_get_asset_obj_dict"].__func__(
-                        [s], first_date=first_date, last_date=last_date
-                    )
-                    result.update(original_result)
+                    # This is needed for tests that create their own test objects (FakeAsset, Portfolio, etc.)
+                    # The real _get_asset_obj_dict just checks hasattr(symbol, "symbol") and hasattr(symbol, "ror")
+                    # and passes through such objects, so we do the same
+                    if hasattr(s, "ror"):
+                        result[s.symbol] = s
+                    else:
+                        raise ValueError(f"Asset-like object {s.symbol} has no 'ror' attribute")
             else:
                 # Otherwise, it's a symbol string -> take from our predefined fake_assets
                 result[s] = fake_assets[s]
