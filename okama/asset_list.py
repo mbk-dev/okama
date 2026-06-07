@@ -1394,8 +1394,8 @@ class AssetList(make_asset_list.ListMaker):
 
         Tracking error is an ex-post measure of how closely the assets follow the benchmark.
         It is computed from the realized monthly return differences between each asset and
-        the benchmark, and is annualized (multiplied by sqrt(12)). Tracking error is
-        measured in percents.
+        the benchmark, and is annualized (multiplied by sqrt(12)). Tracking error values
+        are decimal fractions: 0.05 corresponds to 5% annualized.
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 

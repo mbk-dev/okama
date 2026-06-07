@@ -1658,7 +1658,7 @@ class Portfolio(make_asset_list.ListMaker):
         Tracking error is an ex-post (backward-looking) measure of how closely the portfolio
         follows the benchmark. It is computed from the realized monthly return differences
         between the portfolio and the benchmark, and is annualized (multiplied by sqrt(12)).
-        Tracking error is measured in percents.
+        Tracking error values are decimal fractions: 0.05 corresponds to 5% annualized.
 
         Two formulas are available (`method` parameter):
 
