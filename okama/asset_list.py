@@ -1,4 +1,5 @@
-from typing import Optional, Union, Tuple  # noqa: I001, UP035
+from typing import Optional, Union, Tuple, Literal  # noqa: I001, UP035
+from functools import partial
 
 import numpy as np
 import pandas as pd
@@ -1383,20 +1384,40 @@ class AssetList(make_asset_list.ListMaker):
         result.index = result.index.asfreq("Y")
         return result
 
-    def tracking_error(self, rolling_window: Optional[int] = None) -> pd.DataFrame:  # noqa: UP045
+    def tracking_error(
+        self,
+        rolling_window: Optional[int] = None,  # noqa: UP045
+        method: Literal["rms", "std"] = "rms",
+    ) -> pd.DataFrame:
         """
         Calculate tracking error time series for the rate of return of assets.
 
-        Tracking error is defined as the standard deviation of the difference between the returns of the asset
-        and the returns of the benchmark. Tracking error is measured in percents.
+        Tracking error is an ex-post measure of how closely the assets follow the benchmark.
+        It is computed from the realized monthly return differences between each asset and
+        the benchmark, and is annualized (multiplied by sqrt(12)). Tracking error is
+        measured in percents.
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
+
+        Two formulas are available (`method` parameter):
+
+        - "rms" (default): root-mean-square of the return differences. The differences are
+          not centered around their mean, hence the systematic lag between an asset and
+          the benchmark (tracking difference) is included in the result.
+        - "std": sample standard deviation of the return differences with Bessel's
+          correction — the classic tracking error definition (Hwang & Satchell,
+          "Tracking Error: Ex-Ante versus Ex-Post Measures", 2001, eq. 2) measuring
+          the pure volatility of deviations from the benchmark. The first point of the
+          expanding time series is dropped (a single observation has no standard deviation).
 
         Parameters
         ----------
         rolling_window : int or None, default None
             Size of the moving window in months. Must be at least 12 months.
             If None calculate expanding tracking error.
+        method : {"rms", "std"}, default "rms"
+            Tracking error formula: "rms" for the uncentered root-mean-square of return
+            differences, "std" for the centered sample standard deviation.
 
         Returns
         -------
@@ -1413,18 +1434,18 @@ class AssetList(make_asset_list.ListMaker):
 
         To calculate rolling tracking error set `rolling_window` to a number of months (moving window size):
 
-        >>> x.tracking_error(rolling_window=12 * 5).plot()
+        >>> x.tracking_error(rolling_window=12 * 5, method="std").plot()
         >>> plt.show()
         """
         if rolling_window:
             return helpers.Index.rolling_fn(
                 df=self.assets_ror,
                 window=rolling_window,
-                fn=helpers.Index.tracking_error,
+                fn=partial(helpers.Index.tracking_error, method=method),
                 window_below_year=False,  # small windows below 12 months are not allowed
             )
         else:
-            return helpers.Index.tracking_error(self.assets_ror)
+            return helpers.Index.tracking_error(self.assets_ror, method=method)
 
     def index_corr(self, rolling_window: Optional[int] = None) -> pd.DataFrame:  # noqa: UP045
         """

@@ -224,3 +224,18 @@ def test_tracking_error_short_period_raises_for_both_methods():
     for m in ("rms", "std"):
         with pytest.raises(ShortPeriodLengthError):
             helpers.Index.tracking_error(ror, method=m)
+
+
+def test_tracking_error_std_keeps_rows_when_one_column_has_shorter_history():
+    """dropna(how='all') must keep rows where at least one asset has a valid std value."""
+    ror = _make_two_asset_ror()
+    late = ror["FUND.US"].copy()
+    late.iloc[:6] = np.nan  # the second fund enters 6 months later
+    late.name = "LATE.US"
+    ror3 = pd.concat([ror, late], axis=1)
+    result = helpers.Index.tracking_error(ror3, method="std")
+    # Rows where FUND.US already has a valid expanding std are kept...
+    assert len(result) == len(ror3) - 1
+    # ...even though LATE.US is still NaN there
+    assert result["LATE.US"].iloc[:6].isna().all()
+    assert result["FUND.US"].iloc[:6].notna().all()

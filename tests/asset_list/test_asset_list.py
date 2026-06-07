@@ -367,3 +367,36 @@ def test_tracking_difference_annualized_and_annual(synthetic_env2):
     # Annualized expanding series may have fewer rows due to GIPS 12m requirement
     assert 1 <= tda.shape[0] <= al.assets_ror.shape[0]
     assert tdan.shape[0] >= 1
+
+
+def test_tracking_error_std_method(synthetic_env):
+    """method='std' returns the centered sample std (ddof=1) of return differences, annualized."""
+    al = ok.AssetList(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False)
+    te = al.tracking_error(method="std")
+    assert isinstance(te, pd.DataFrame)
+    assert list(te.columns) == ["A.US", "B.US"]
+    d = al.assets_ror["A.US"] - al.assets_ror["IDX.US"]
+    assert te["A.US"].iloc[-1] == pytest.approx(d.std(ddof=1) * np.sqrt(12))
+    # The first expanding point is dropped for the std method
+    assert len(te) == len(al.assets_ror) - 1
+
+
+def test_tracking_error_rms_default_unchanged(synthetic_env):
+    """Calling without arguments equals method='rms' and reproduces the legacy formula."""
+    al = ok.AssetList(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False)
+    d = al.assets_ror["A.US"] - al.assets_ror["IDX.US"]
+    expected_last = np.sqrt((d**2).sum() / len(d)) * np.sqrt(12)
+    te_default = al.tracking_error()
+    te_rms = al.tracking_error(method="rms")
+    pd.testing.assert_frame_equal(te_default, te_rms)
+    assert te_default["A.US"].iloc[-1] == pytest.approx(expected_last)
+
+
+def test_tracking_error_rolling_with_std_method(synthetic_env):
+    """Rolling tracking error supports method='std' (window >= 12 months)."""
+    al = ok.AssetList(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False)
+    te = al.tracking_error(rolling_window=12, method="std")
+    assert isinstance(te, pd.DataFrame)
+    assert list(te.columns) == ["A.US", "B.US"]
+    assert len(te) > 0
+    assert te.notna().all(axis=None)
