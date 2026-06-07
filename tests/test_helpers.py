@@ -174,3 +174,53 @@ def test_index_rolling_fn_emits_no_pandas4warning():
         result = helpers.Index.rolling_fn(df, window=12, fn=lambda d: d.cumsum())
 
     assert not result.empty
+
+
+# --- Index.tracking_error tests ---
+
+
+def _make_two_asset_ror(months: int = 24) -> pd.DataFrame:
+    """Benchmark in the first column + a fund tracking it with noise."""
+    rng = np.random.default_rng(42)
+    idx = pd.period_range("2020-01", periods=months, freq="M")
+    bench = pd.Series(rng.normal(0.01, 0.03, size=months), index=idx, name="BENCH.INDX")
+    fund = pd.Series(bench.values + rng.normal(0.001, 0.01, size=months), index=idx, name="FUND.US")
+    return pd.concat([bench, fund], axis=1)
+
+
+def test_tracking_error_rms_default_matches_legacy_formula():
+    """Default method and method='rms' produce the historical uncentered RMS values."""
+    ror = _make_two_asset_ror()
+    d = ror["FUND.US"] - ror["BENCH.INDX"]
+    expected_last = np.sqrt((d**2).sum() / len(d)) * np.sqrt(12)
+    result_default = helpers.Index.tracking_error(ror)
+    result_rms = helpers.Index.tracking_error(ror, method="rms")
+    pd.testing.assert_frame_equal(result_default, result_rms)
+    assert result_default["FUND.US"].iloc[-1] == pytest.approx(expected_last)
+    assert len(result_default) == len(ror)
+
+
+def test_tracking_error_std_is_centered_with_bessel_correction():
+    """method='std' is the centered sample std of differences (ddof=1), annualized."""
+    ror = _make_two_asset_ror()
+    d = ror["FUND.US"] - ror["BENCH.INDX"]
+    expected_last = d.std(ddof=1) * np.sqrt(12)
+    result = helpers.Index.tracking_error(ror, method="std")
+    assert result["FUND.US"].iloc[-1] == pytest.approx(expected_last)
+    # The first expanding point (std of a single observation) is dropped
+    assert len(result) == len(ror) - 1
+
+
+def test_tracking_error_invalid_method_raises_value_error():
+    ror = _make_two_asset_ror()
+    with pytest.raises(ValueError, match="method"):
+        helpers.Index.tracking_error(ror, method="mad")
+
+
+def test_tracking_error_short_period_raises_for_both_methods():
+    from okama.common.error import ShortPeriodLengthError
+
+    ror = _make_two_asset_ror(months=11)
+    for m in ("rms", "std"):
+        with pytest.raises(ShortPeriodLengthError):
+            helpers.Index.tracking_error(ror, method=m)

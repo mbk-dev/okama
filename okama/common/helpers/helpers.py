@@ -648,19 +648,41 @@ class Index:
         return diff.iloc[settings._MONTHS_PER_YEAR - 1 :]  # returns for the first 11 months can't be annualized
 
     @staticmethod
-    def tracking_error(ror: pd.DataFrame) -> pd.DataFrame:
+    def tracking_error(ror: pd.DataFrame, method: str = "rms") -> pd.DataFrame:
         """
-        Returns tracking error for a rate of return time series.
+        Return expanding tracking error time series for a rate of return time series.
+
         Assets are compared with the index or another benchmark.
         Index should be in the first position (first column).
+
+        Tracking error is an ex-post measure: it is computed from the realized (historical)
+        monthly return differences `d` between each asset and the benchmark.
+        Two formulas are available:
+
+        - "rms" (default): expanding root-mean-square of the differences, sqrt(mean(d²)).
+          The differences are not centered around their mean, hence the systematic lag
+          between an asset and the benchmark (tracking difference) is included in the result.
+        - "std": expanding sample standard deviation of the differences with Bessel's
+          correction, sqrt(sum((d - mean(d))²) / (n - 1)) — the classic tracking error
+          definition (Hwang & Satchell, "Tracking Error: Ex-Ante versus Ex-Post Measures",
+          2001, eq. 2) measuring the pure volatility of deviations. The first expanding
+          point is dropped (a single observation has no standard deviation).
+
+        The result is annualized for monthly time series (multiplied by sqrt(12)).
         """
         if ror.shape[1] < 2:
             raise ValueError("At least 2 symbols should be provided to calculate Tracking Error.")
         if ror.shape[0] < 12:
             raise ShortPeriodLengthError("Tracking Error is not defined for time periods < 1 year")
-        cumsum = ror.subtract(ror.iloc[:, 0], axis=0).pow(2, axis=0).cumsum()
-        cumsum = cumsum.drop(cumsum.columns[0], axis=1)  # drop the first column (stock index data)
-        tracking_error = cumsum.divide((1.0 + np.arange(ror.shape[0])), axis=0).pow(0.5, axis=0)
+        difference = ror.subtract(ror.iloc[:, 0], axis=0)
+        difference = difference.drop(difference.columns[0], axis=1)  # drop the first column (stock index data)
+        if method == "rms":
+            cumsum = difference.pow(2, axis=0).cumsum()
+            tracking_error = cumsum.divide((1.0 + np.arange(ror.shape[0])), axis=0).pow(0.5, axis=0)
+        elif method == "std":
+            tracking_error = difference.expanding().std().dropna(how="all")
+        else:
+            raise ValueError(f"method must be 'rms' or 'std', got '{method}'.")
         return tracking_error * np.sqrt(12)
 
     @staticmethod
