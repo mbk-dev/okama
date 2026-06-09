@@ -1150,6 +1150,52 @@ class Portfolio(make_asset_list.ListMaker):
         mean_return_ts = self.ror.expanding().mean()
         return helpers.Float.annualize_risk(risk_ts, mean_return_ts).iloc[1:]
 
+    def get_ex_ante_tracking_error(self, benchmark: Portfolio) -> float:
+        """
+        Calculate annualized ex-ante Tracking Error against a benchmark portfolio.
+
+        Ex-ante Tracking Error is estimated from planned active weights:
+
+        ``TE = sqrt((a - b)' * Sigma * (a - b))``
+
+        where ``a`` is the portfolio weight vector, ``b`` is the benchmark
+        weight vector, and ``Sigma`` is the annualized sample covariance matrix
+        of historical monthly asset returns.
+
+        The benchmark must be another ``Portfolio`` over the same assets. Per
+        Hwang & Satchell (2001), ex-ante Tracking Error can systematically
+        underestimate ex-post Tracking Error because realized portfolio weights
+        may drift between rebalancings.
+
+        Parameters
+        ----------
+        benchmark : Portfolio
+            Benchmark portfolio with the same assets and base currency.
+
+        Returns
+        -------
+        float
+            Annualized ex-ante Tracking Error.
+        """
+        if not isinstance(benchmark, Portfolio):
+            raise TypeError("benchmark must be a Portfolio instance.")
+        if set(self.symbols) != set(benchmark.symbols):
+            raise ValueError("benchmark portfolio must have the same assets as the portfolio.")
+        if self.currency != benchmark.currency:
+            raise ValueError("benchmark portfolio must have the same base currency as the portfolio.")
+
+        common_index = self.assets_ror.index.intersection(benchmark.assets_ror.index)
+        if len(common_index) < 2:
+            raise ValueError("At least two overlapping monthly return observations are required.")
+
+        asset_returns = self.assets_ror.loc[common_index, self.symbols]
+        portfolio_weights = pd.Series(self.weights, index=self.symbols)
+        benchmark_weights = pd.Series(benchmark.weights, index=benchmark.symbols).reindex(self.symbols)
+        active_weights = portfolio_weights - benchmark_weights
+        annual_cov = asset_returns.cov() * settings._MONTHS_PER_YEAR
+        variance = float(active_weights.T @ annual_cov @ active_weights)
+        return float(np.sqrt(max(variance, 0.0)))
+
     @property
     def semideviation_monthly(self) -> float:
         """

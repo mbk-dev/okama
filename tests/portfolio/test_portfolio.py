@@ -125,6 +125,27 @@ def test_mean_return_and_risk_consistency(pf_ab_monthly):
     assert pytest.approx(rk_a, rel=1e-6, abs=1e-10) == expected_rk_a
 
 
+def test_ex_ante_tracking_error_uses_annualized_active_weight_covariance(synthetic_env):
+    pf = ok.Portfolio(["A.US", "B.US", "IDX.US"], weights=[0.50, 0.30, 0.20], ccy="USD", inflation=False)
+    benchmark = ok.Portfolio(["IDX.US", "A.US", "B.US"], weights=[0.60, 0.20, 0.20], ccy="USD", inflation=False)
+
+    active_weights = pd.Series(pf.weights, index=pf.symbols) - pd.Series(
+        benchmark.weights, index=benchmark.symbols
+    ).reindex(pf.symbols)
+    annual_cov = pf.assets_ror.cov() * 12
+    expected = np.sqrt(active_weights.T @ annual_cov @ active_weights)
+
+    assert pytest.approx(pf.get_ex_ante_tracking_error(benchmark), rel=1e-12) == expected
+
+
+def test_ex_ante_tracking_error_requires_same_asset_universe(synthetic_env):
+    pf = ok.Portfolio(["A.US", "B.US"], ccy="USD", inflation=False)
+    benchmark = ok.Portfolio(["A.US", "IDX.US"], ccy="USD", inflation=False)
+
+    with pytest.raises(ValueError, match="same assets"):
+        pf.get_ex_ante_tracking_error(benchmark)
+
+
 def test_semideviation_and_tail_risks(pf_three_monthly):
     sd_m = pf_three_monthly.semideviation_monthly
     sd_a = pf_three_monthly.semideviation_annual
