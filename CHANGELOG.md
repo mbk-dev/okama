@@ -5,6 +5,51 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2026-06
+
+Adds new analytics — ex-post tracking error for `Portfolio` and an RMS/std
+`method` switch for tracking error across `Index`, `AssetList`, and `Portfolio`,
+plus inflation-adjusted and price-only drawdown views — and fixes the
+`maintain_balance` goals of `find_the_largest_withdrawals_size()` together with
+duplicated efficient-frontier points under a thread backend.
+
+### Added
+
+- `Portfolio.tracking_error(benchmark, rolling_window, method)` — ex-post
+  tracking error of a portfolio against a benchmark (#61). The benchmark may be
+  a string ticker or an asset-like object (`Asset`, `Portfolio`); the method
+  delegates to `AssetList`.
+- `method` parameter for `AssetList.tracking_error` and the underlying
+  `helpers.Index.tracking_error`: `"rms"` (default, legacy uncentered
+  root-mean-square) or `"std"` (centered sample standard deviation with
+  Bessel's correction).
+- `AssetList.real_drawdowns` and `Portfolio.real_drawdowns` — drawdowns of the
+  inflation-adjusted wealth index, exposing purchasing-power losses hidden by
+  nominal growth (requires `inflation=True`) (#51).
+- `AssetList.price_drawdowns` and `Portfolio.price_drawdowns` — drawdowns based
+  on close prices not adjusted for dividends, which can differ markedly from the
+  total-return `drawdowns` for high-dividend assets (#44).
+
+### Fixed
+
+- `PortfolioDCF.find_the_largest_withdrawals_size()` raised
+  `ValueError: target_survival_period must be less than Monte Carlo simulation period`
+  for the `maintain_balance_pv` and `maintain_balance_fv` goals on any Monte
+  Carlo period ≤ 27, even though those goals never use `target_survival_period`
+  and the caller never passed it (#90). The parameter is now validated only for
+  the `survival_period` goal.
+- `EfficientFrontier.ef_points` produced duplicated right-part points under a
+  thread-based joblib backend, because the right-part worker both appended its
+  row to the shared list and returned it (#86). The worker now only returns the
+  row, matching the left-part worker.
+
+### Docs
+
+- Clarified that `tracking_error` values are decimal fractions, not percentages.
+- `PortfolioDCF.find_the_largest_withdrawals_size()` docstring now notes that
+  `IndexationStrategy` / `PercentageStrategy` subclasses (e.g.
+  `CutWithdrawalsIfDrawdown`, `VanguardDynamicSpending`) are supported.
+
 ## [2.2.1] - 2026-06
 
 Fixes the multi-period Efficient Frontier around single-asset corner points —
