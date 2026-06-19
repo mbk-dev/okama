@@ -97,6 +97,27 @@ def test_converges_on_smooth_maintain_balance_goal(dcf_solver) -> None:
     assert dcf_solver.cashflow_parameters.amount == pytest.approx(-1_200)
 
 
+@pytest.mark.parametrize("goal", ["maintain_balance_fv", "maintain_balance_pv"])
+def test_maintain_balance_goals_ignore_default_target_survival_period(dcf_solver, goal) -> None:
+    # Regression for #90: target_survival_period (default 25) is irrelevant to
+    # the maintain_balance goals, yet it was validated against the MC period for
+    # every goal. With the fixture's short MC period (5), the default 25 used to
+    # raise "target_survival_period must be less than Monte Carlo simulation
+    # period" before the call could run, even though it is never passed.
+    res = dcf_solver.find_the_largest_withdrawals_size(
+        goal=goal,
+        withdrawals_range=(0.0, 1.0),
+        percentile=50,
+        threshold=0,
+        tolerance_rel=0.01,
+        iter_max=12,
+    )
+    # The solver ran and recorded evaluations instead of raising before it
+    # started; whether it converges is unrelated to this validation bug.
+    assert not res.solutions.empty
+    assert dcf_solver.cashflow_parameters.amount == pytest.approx(-1_200)
+
+
 def test_rejects_non_positive_iter_max(dcf_solver) -> None:
     # iter_max is the evaluation budget; zero would crash the best-attempt
     # reporting on an empty solutions history.

@@ -932,8 +932,9 @@ class PortfolioDCF:
             Important for the "fixed_percentage" Cash flow strategy.
 
         target_survival_period : int, default 25
-            The smallest acceptable survival period. It works with the 'survival_period' goal only.
-            The value must be less than the MonteCarlo.priod parameter.
+            The smallest acceptable survival period. It works with the 'survival_period' goal only
+            and is ignored for the 'maintain_balance_pv' and 'maintain_balance_fv' goals.
+            For the 'survival_period' goal the value must be less than the MonteCarlo.period parameter.
 
         iter_max : int, default 20
             The maximum number of objective evaluations (each runs one Monte Carlo
@@ -997,7 +998,7 @@ class PortfolioDCF:
         """
         # Validation
         self._validate_parameters(
-            withdrawals_range, target_survival_period, percentile, threshold, tolerance_rel, iter_max
+            goal, withdrawals_range, target_survival_period, percentile, threshold, tolerance_rel, iter_max
         )
 
         # Initialization
@@ -1097,6 +1098,7 @@ class PortfolioDCF:
 
     def _validate_parameters(
         self,
+        goal: str,
         withdrawals_range: Tuple[float, float],  # noqa: UP006
         target_survival_period: int,
         percentile: int,
@@ -1109,7 +1111,9 @@ class PortfolioDCF:
             raise ValueError("withdrawals_range[0] must be smaller than withdrawals_range[1]")
         if withdrawals_range[0] < 0 or withdrawals_range[1] > 1:
             raise ValueError("withdrawals_range[0] and withdrawals_range[1] must be in range from 0 to 1.")
-        if target_survival_period > self.mc.period * (1 - tolerance_rel):
+        if goal == WithdrawalGoal.SURVIVAL_PERIOD and target_survival_period > self.mc.period * (1 - tolerance_rel):
+            # target_survival_period only constrains the 'survival_period' goal; the
+            # 'maintain_balance_*' goals never read it (see _calculate_goal_metrics).
             # The Monte Carlo period length must be greater than target_survival_period by at least the tolerance_rel.
             # Otherwise, solutions with very low withdrawal rates will be successful,
             # since for them, survival_period will be equal to the Monte Carlo period,
