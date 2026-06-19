@@ -149,6 +149,18 @@ def test_frame_get_cagr_short_history_returns_float_series_with_nan():
     assert list(result.index) == ["A.US", "B.US"]
 
 
+def test_frame_get_drawdowns_from_wealth_measures_decline_from_peak():
+    """`Frame.get_drawdowns_from_wealth` must compute drawdowns directly from a
+    wealth index (or price) time series, keeping the first observation."""
+    idx = pd.period_range("2020-01", periods=4, freq="M")
+    wealth = pd.Series([100.0, 110.0, 99.0, 121.0], index=idx, name="A.US")
+
+    result = helpers.Frame.get_drawdowns_from_wealth(wealth)
+
+    expected = pd.Series([0.0, 0.0, -0.1, 0.0], index=idx, name="A.US")
+    pd.testing.assert_series_equal(result, expected)
+
+
 def test_index_rolling_fn_emits_no_pandas4warning():
     """pd.concat 'copy' keyword is deprecated on pandas 3 — the rolling-window
     concat must stay warning-free (GH #85)."""
@@ -162,3 +174,68 @@ def test_index_rolling_fn_emits_no_pandas4warning():
         result = helpers.Index.rolling_fn(df, window=12, fn=lambda d: d.cumsum())
 
     assert not result.empty
+
+
+# --- Index.tracking_error tests ---
+
+
+def _make_two_asset_ror(months: int = 24) -> pd.DataFrame:
+    """Benchmark in the first column + a fund tracking it with noise."""
+    rng = np.random.default_rng(42)
+    idx = pd.period_range("2020-01", periods=months, freq="M")
+    bench = pd.Series(rng.normal(0.01, 0.03, size=months), index=idx, name="BENCH.INDX")
+    fund = pd.Series(bench.values + rng.normal(0.001, 0.01, size=months), index=idx, name="FUND.US")
+    return pd.concat([bench, fund], axis=1)
+
+
+def test_tracking_error_rms_default_matches_legacy_formula():
+    """Default method and method='rms' produce the historical uncentered RMS values."""
+    ror = _make_two_asset_ror()
+    d = ror["FUND.US"] - ror["BENCH.INDX"]
+    expected_last = np.sqrt((d**2).sum() / len(d)) * np.sqrt(12)
+    result_default = helpers.Index.tracking_error(ror)
+    result_rms = helpers.Index.tracking_error(ror, method="rms")
+    pd.testing.assert_frame_equal(result_default, result_rms)
+    assert result_default["FUND.US"].iloc[-1] == pytest.approx(expected_last)
+    assert len(result_default) == len(ror)
+
+
+def test_tracking_error_std_is_centered_with_bessel_correction():
+    """method='std' is the centered sample std of differences (ddof=1), annualized."""
+    ror = _make_two_asset_ror()
+    d = ror["FUND.US"] - ror["BENCH.INDX"]
+    expected_last = d.std(ddof=1) * np.sqrt(12)
+    result = helpers.Index.tracking_error(ror, method="std")
+    assert result["FUND.US"].iloc[-1] == pytest.approx(expected_last)
+    # The first expanding point (std of a single observation) is dropped
+    assert len(result) == len(ror) - 1
+
+
+def test_tracking_error_invalid_method_raises_value_error():
+    ror = _make_two_asset_ror()
+    with pytest.raises(ValueError, match="method"):
+        helpers.Index.tracking_error(ror, method="mad")
+
+
+def test_tracking_error_short_period_raises_for_both_methods():
+    from okama.common.error import ShortPeriodLengthError
+
+    ror = _make_two_asset_ror(months=11)
+    for m in ("rms", "std"):
+        with pytest.raises(ShortPeriodLengthError):
+            helpers.Index.tracking_error(ror, method=m)
+
+
+def test_tracking_error_std_keeps_rows_when_one_column_has_shorter_history():
+    """dropna(how='all') must keep rows where at least one asset has a valid std value."""
+    ror = _make_two_asset_ror()
+    late = ror["FUND.US"].copy()
+    late.iloc[:6] = np.nan  # the second fund enters 6 months later
+    late.name = "LATE.US"
+    ror3 = pd.concat([ror, late], axis=1)
+    result = helpers.Index.tracking_error(ror3, method="std")
+    # Rows where FUND.US already has a valid expanding std are kept...
+    assert len(result) == len(ror3) - 1
+    # ...even though LATE.US is still NaN there
+    assert result["LATE.US"].iloc[:6].isna().all()
+    assert result["FUND.US"].iloc[:6].notna().all()

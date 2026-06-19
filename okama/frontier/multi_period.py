@@ -1187,7 +1187,6 @@ class EfficientFrontier(asset_list.AssetList):
             def compute_right_part_of_ef(i, target_cagr):
                 start_time = time.time()
                 row = self._maximize_risk(target_cagr)
-                ef_points_records.append(row)
                 end_time = time.time()
                 if self.verbose:
                     logger.info(

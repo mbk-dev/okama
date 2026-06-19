@@ -1,7 +1,7 @@
 from __future__ import annotations  # noqa: I001
 
 from random import randint
-from typing import Optional, List, Union, Tuple, Literal  # noqa: UP035
+from typing import Optional, List, Union, Tuple, Literal, Type  # noqa: UP035
 from urllib.parse import urlencode
 
 import numpy as np
@@ -14,6 +14,7 @@ from okama import settings
 from okama.common.helpers.rebalancing import Rebalance
 from okama.common import make_asset_list, validators
 from okama.common.helpers import helpers, ratios
+from okama.asset_list import AssetList
 
 
 class Portfolio(make_asset_list.ListMaker):
@@ -777,40 +778,6 @@ class Portfolio(make_asset_list.ListMaker):
         )
 
     @property
-    def assets_close_monthly(self) -> pd.DataFrame:
-        """
-        Show assets monthly close time series adjusted to the base currency.
-
-        Returns
-        -------
-        DataFrame
-            Assets monthly close time series adjusted to the base currency.
-
-        Examples
-        --------
-        >>> import matplotlib.pyplot as plt
-
-        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD")
-        >>> pf.assets_close_monthly.plot()
-        >>> plt.show()
-        """
-        series_list = []  # Collect all series to concatenate once at the end
-        for x in self.asset_obj_dict.values():
-            series = (
-                x.close_monthly
-                if x.currency == self.currency
-                else self._adjust_price_to_currency_monthly(x.close_monthly, x.currency)
-            )
-            series = series.rename(x.symbol)
-            series_list.append(series)
-        if len(series_list) == 1:
-            assets_close_monthly = series_list[0].to_frame()
-        else:
-            assets_close_monthly = pd.concat(series_list, axis=1, join="inner")
-        assets_close_monthly = assets_close_monthly[self.first_date : self.last_date]
-        return assets_close_monthly
-
-    @property
     def close_monthly(self) -> pd.Series:
         """
         Portfolio size monthly time series.
@@ -1265,6 +1232,78 @@ class Portfolio(make_asset_list.ListMaker):
         return helpers.Frame.get_drawdowns(self.ror)
 
     @property
+    def real_drawdowns(self) -> pd.Series:
+        """
+        Calculate real (inflation-adjusted) drawdowns time series for the portfolio.
+
+        The real drawdown is the percent decline from a previous peak
+        in the inflation-adjusted wealth index.
+        Portfolio should be initiated with `inflation=True` for real drawdowns.
+
+        Returns
+        -------
+        Series
+            Real drawdowns time series for the portfolio.
+
+        See Also
+        --------
+        drawdowns : Calculate drawdowns (not adjusted for inflation).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], inflation=True, last_date="2021-08")
+        >>> pf.real_drawdowns.plot()
+        >>> plt.show()
+        """
+        real_ror = self._make_real_return_time_series(self._add_inflation())
+        return helpers.Frame.get_drawdowns(real_ror[self.symbol])
+
+    @property
+    def price_drawdowns(self) -> pd.Series:
+        """
+        Calculate price drawdowns time series for the portfolio.
+
+        The price drawdown is the percent decline from a previous peak in the portfolio
+        price index. The price index is built from the assets close prices (not adjusted
+        for dividends) with the same weights and rebalancing strategy as the portfolio,
+        hence price drawdowns may significantly differ from `drawdowns`
+        (based on total return) for portfolios with high dividend assets.
+
+        The price index is anchored at the first month of the period, so price drawdowns
+        cover the same months as `drawdowns`.
+
+        Returns
+        -------
+        Series
+            Price drawdowns time series for the portfolio.
+
+        See Also
+        --------
+        drawdowns : Calculate drawdowns from total return (with dividends reinvested).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+
+        >>> pf = ok.Portfolio(["SPY.US", "BND.US"], ccy="USD", last_date="2021-08")
+        >>> pf.price_drawdowns.plot()
+        >>> plt.show()
+        """
+        price_ror = self.assets_close_monthly.pct_change().iloc[1:]
+        if not self._condition_for_rebalancing:
+            # Fast calculation
+            s = helpers.Frame.get_portfolio_return_ts(self.weights, price_ror)
+        else:
+            s = self.rebalancing_strategy.return_ror_ts(self.weights, price_ror)
+        s = s.rename(self.symbol)
+        # Anchor the price index at the first month of the period (lost to pct_change),
+        # so that price drawdowns cover the same months as the total-return drawdowns.
+        wealth = helpers.Frame.get_wealth_indexes(s)
+        return helpers.Frame.get_drawdowns_from_wealth(wealth)
+
+    @property
     def recovery_period(self) -> pd.Series:
         """
         Get recovery period time series for the portfolio value.
@@ -1606,6 +1645,70 @@ class Portfolio(make_asset_list.ListMaker):
             t_return=t_return,
             semi_deviation=semideviation,
         )
+
+    def tracking_error(
+        self,
+        benchmark: str | Type,  # noqa: UP006
+        rolling_window: int | None = None,
+        method: Literal["rms", "std"] = "rms",
+    ) -> pd.Series:
+        """
+        Calculate ex-post tracking error time series of the portfolio against a benchmark.
+
+        Tracking error is an ex-post (backward-looking) measure of how closely the portfolio
+        follows the benchmark. It is computed from the realized monthly return differences
+        between the portfolio and the benchmark, and is annualized (multiplied by sqrt(12)).
+        Tracking error values are decimal fractions: 0.05 corresponds to 5% annualized.
+
+        Two formulas are available (`method` parameter):
+
+        - "rms" (default): root-mean-square of the return differences. The differences are
+          not centered around their mean, hence the systematic lag between the portfolio
+          and the benchmark (tracking difference) is included in the result.
+        - "std": sample standard deviation of the return differences with Bessel's
+          correction — the classic tracking error definition (Hwang & Satchell,
+          "Tracking Error: Ex-Ante versus Ex-Post Measures", 2001, eq. 2) measuring
+          the pure volatility of deviations from the benchmark. The first point of the
+          expanding time series is dropped (a single observation has no standard deviation).
+
+        The benchmark rate of return is converted to the portfolio base currency, and the
+        time period is limited to the intersection of the portfolio and benchmark
+        available histories.
+
+        Parameters
+        ----------
+        benchmark : str, Asset, Portfolio
+            Benchmark ticker (e.g. "SP500TR.INDX") or an asset-like object
+            (`Asset`, `Portfolio`).
+        rolling_window : int or None, default None
+            Size of the moving window in months. Must be at least 12 months.
+            If None calculate expanding tracking error.
+        method : {"rms", "std"}, default "rms"
+            Tracking error formula: "rms" for the uncentered root-mean-square of return
+            differences, "std" for the centered sample standard deviation.
+
+        Returns
+        -------
+        Series
+            Expanding or rolling annualized tracking error time series.
+            The series is named after the portfolio symbol.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], weights=[0.60, 0.40], last_date="2024-01")
+        >>> pf.tracking_error(benchmark="SP500TR.INDX").plot()
+        >>> plt.show()
+
+        To calculate rolling tracking error set `rolling_window` to a number of months (moving window size):
+
+        >>> pf.tracking_error(benchmark="SP500TR.INDX", rolling_window=24, method="std").plot()
+        >>> plt.show()
+        """
+        al = AssetList([benchmark, self], ccy=self.currency, inflation=False)
+        tracking_error = al.tracking_error(rolling_window=rolling_window, method=method)
+        return tracking_error[self.symbol]
 
     @property
     def diversification_ratio(self) -> float:

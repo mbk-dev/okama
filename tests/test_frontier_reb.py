@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from joblib import parallel_config
 from numpy.testing import assert_allclose
 
 import okama as ok
@@ -833,6 +834,21 @@ def test_target_cagr_range_right_keeps_terminal_for_small_n_points(ef_right_corn
     rr = ef._target_cagr_range_right
     assert rr is not None and len(rr) >= 1
     assert np.isclose(rr[-1], right["max_asset_cagr"], rtol=0, atol=1e-15)
+
+
+def test_ef_points_right_rows_not_duplicated_under_threading_backend(ef_right_corner):
+    """The right-part worker must only return its row, never append it itself (issue #86).
+
+    With a thread-based joblib backend the worker shares the records list with the caller,
+    so a worker-side append lands in the shared list and the `+=` collection of the
+    Parallel results adds every right-part row a second time.
+    """
+    ef = ef_right_corner
+    ef.n_points = 4  # keep the optimizer runs few; the right part is what matters
+    assert ef._target_cagr_range_right is not None  # precondition: the right part exists
+    with parallel_config(backend="threading"):
+        pts = ef.ef_points
+    assert not pts[["Risk", "CAGR"]].duplicated().any()
 
 
 # --- pairwise EF gap: mix barely beats the best asset (issue #87) ---

@@ -111,3 +111,56 @@ def test_real_metrics_with_inflation_parametrized(_inflation_env, compute_metric
 
     else:
         raise AssertionError("Unknown metric param")
+
+
+def _patch_constant_inflation_env(mocker, r_a: float, r_i: float, months: int = 24) -> pd.PeriodIndex:
+    """Patch ListMaker assets and macro.Inflation with constant monthly rates (offline).
+
+    Single asset A.US has constant monthly return r_a; inflation is constant monthly r_i.
+    Returns the monthly PeriodIndex of the environment.
+    """
+    idx = pd.period_range("2020-01", periods=months, freq="M")
+    asset_ror = pd.Series(r_a, index=idx, name="A.US")
+    infl_monthly = pd.Series(r_i, index=idx.to_timestamp(how="end"), name="USD.INFL")
+
+    fake_assets = {"A.US": _FakeAsset("A.US", asset_ror)}
+    mocker.patch("okama.common.make_asset_list.ListMaker._get_asset_obj_dict", return_value=fake_assets)
+    mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=_FakeCurrencyAsset)
+
+    class _FakeInflation:
+        def __init__(self, symbol: str, first_date=None, last_date=None):
+            self.symbol = symbol
+            self.first_date = infl_monthly.index[0].to_period("M").to_timestamp(how="start")
+            self.last_date = infl_monthly.index[-1].to_period("M").to_timestamp(how="start")
+            self.values_monthly = infl_monthly.to_period("M")
+
+    mocker.patch("okama.common.make_asset_list.macro.Inflation", side_effect=_FakeInflation)
+    return idx
+
+
+def test_real_drawdowns_reveal_losses_hidden_by_nominal_growth(mocker):
+    """real_drawdowns must show inflation-adjusted losses absent in nominal drawdowns (issue #51).
+
+    The asset price grows +0.1% per month while inflation is +0.5% per month:
+    nominal drawdowns stay at zero, but the inflation-adjusted wealth index declines
+    by the constant real rate every month after the first one.
+    """
+    r_a, r_i = 0.001, 0.005
+    idx = _patch_constant_inflation_env(mocker, r_a=r_a, r_i=r_i)
+    al = ok.AssetList(["A.US"], ccy="USD", inflation=True)
+
+    dd_nominal = al.drawdowns
+    dd_real = al.real_drawdowns
+
+    assert (dd_nominal["A.US"] == 0).all()  # rising price: no nominal drawdown
+    assert isinstance(dd_real, pd.DataFrame)
+    assert list(dd_real.columns) == ["A.US"]
+    real_rate = (1.0 + r_a) / (1.0 + r_i) - 1.0
+    expected = pd.Series([(1.0 + real_rate) ** k - 1.0 for k in range(len(idx))], index=idx, name="A.US")
+    pd.testing.assert_series_equal(dd_real["A.US"], expected)
+
+
+def test_real_drawdowns_require_inflation_data(list_basic_patches):
+    al = ok.AssetList(["A.US", "B.US"], ccy="USD", inflation=False)
+    with pytest.raises(ValueError, match="Real Return is not defined"):
+        _ = al.real_drawdowns

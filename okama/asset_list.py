@@ -1,4 +1,5 @@
-from typing import Optional, Union, Tuple  # noqa: I001, UP035
+from typing import Optional, Union, Tuple, Literal  # noqa: I001, UP035
+from functools import partial
 
 import numpy as np
 import pandas as pd
@@ -393,6 +394,64 @@ class AssetList(make_asset_list.ListMaker):
         >>> plt.show()
         """
         return helpers.Frame.get_drawdowns(self.assets_ror)
+
+    @property
+    def real_drawdowns(self) -> pd.DataFrame:
+        """
+        Calculate real (inflation-adjusted) drawdowns time series for the assets.
+
+        The real drawdown is the percent decline from a previous peak
+        in the inflation-adjusted wealth index.
+        AssetList should be initiated with `inflation=True` for real drawdowns.
+
+        Returns
+        -------
+        DataFrame
+            Time series of real drawdowns.
+
+        See Also
+        --------
+        drawdowns : Calculate drawdowns (not adjusted for inflation).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+
+        >>> al = ok.AssetList(["SPY.US", "BND.US"], inflation=True, last_date="2021-08")
+        >>> al.real_drawdowns.plot()
+        >>> plt.show()
+        """
+        real_ror = self._make_real_return_time_series(self._add_inflation())
+        return helpers.Frame.get_drawdowns(real_ror)
+
+    @property
+    def price_drawdowns(self) -> pd.DataFrame:
+        """
+        Calculate price drawdowns time series for the assets.
+
+        The price drawdown is the percent decline from a previous peak in close price.
+        Close prices are not adjusted for corporate actions (dividends and splits),
+        hence price drawdowns may significantly differ from `drawdowns`
+        (based on total return) for assets with high dividends.
+
+        Returns
+        -------
+        DataFrame
+            Time series of price drawdowns.
+
+        See Also
+        --------
+        drawdowns : Calculate drawdowns from total return (with dividends reinvested).
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+
+        >>> al = ok.AssetList(["SPY.US", "BND.US"], last_date="2021-08")
+        >>> al.price_drawdowns.plot()
+        >>> plt.show()
+        """
+        return helpers.Frame.get_drawdowns_from_wealth(self.assets_close_monthly)
 
     @property
     def recovery_periods(self) -> pd.Series:
@@ -1325,20 +1384,40 @@ class AssetList(make_asset_list.ListMaker):
         result.index = result.index.asfreq("Y")
         return result
 
-    def tracking_error(self, rolling_window: Optional[int] = None) -> pd.DataFrame:  # noqa: UP045
+    def tracking_error(
+        self,
+        rolling_window: Optional[int] = None,  # noqa: UP045
+        method: Literal["rms", "std"] = "rms",
+    ) -> pd.DataFrame:
         """
         Calculate tracking error time series for the rate of return of assets.
 
-        Tracking error is defined as the standard deviation of the difference between the returns of the asset
-        and the returns of the benchmark. Tracking error is measured in percents.
+        Tracking error is an ex-post measure of how closely the assets follow the benchmark.
+        It is computed from the realized monthly return differences between each asset and
+        the benchmark, and is annualized (multiplied by sqrt(12)). Tracking error values
+        are decimal fractions: 0.05 corresponds to 5% annualized.
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
+
+        Two formulas are available (`method` parameter):
+
+        - "rms" (default): root-mean-square of the return differences. The differences are
+          not centered around their mean, hence the systematic lag between an asset and
+          the benchmark (tracking difference) is included in the result.
+        - "std": sample standard deviation of the return differences with Bessel's
+          correction — the classic tracking error definition (Hwang & Satchell,
+          "Tracking Error: Ex-Ante versus Ex-Post Measures", 2001, eq. 2) measuring
+          the pure volatility of deviations from the benchmark. The first point of the
+          expanding time series is dropped (a single observation has no standard deviation).
 
         Parameters
         ----------
         rolling_window : int or None, default None
             Size of the moving window in months. Must be at least 12 months.
             If None calculate expanding tracking error.
+        method : {"rms", "std"}, default "rms"
+            Tracking error formula: "rms" for the uncentered root-mean-square of return
+            differences, "std" for the centered sample standard deviation.
 
         Returns
         -------
@@ -1355,18 +1434,18 @@ class AssetList(make_asset_list.ListMaker):
 
         To calculate rolling tracking error set `rolling_window` to a number of months (moving window size):
 
-        >>> x.tracking_error(rolling_window=12 * 5).plot()
+        >>> x.tracking_error(rolling_window=12 * 5, method="std").plot()
         >>> plt.show()
         """
         if rolling_window:
             return helpers.Index.rolling_fn(
                 df=self.assets_ror,
                 window=rolling_window,
-                fn=helpers.Index.tracking_error,
+                fn=partial(helpers.Index.tracking_error, method=method),
                 window_below_year=False,  # small windows below 12 months are not allowed
             )
         else:
-            return helpers.Index.tracking_error(self.assets_ror)
+            return helpers.Index.tracking_error(self.assets_ror, method=method)
 
     def index_corr(self, rolling_window: Optional[int] = None) -> pd.DataFrame:  # noqa: UP045
         """

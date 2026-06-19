@@ -570,6 +570,40 @@ class ListMaker(ABC):
         return self._assets_ror
 
     @property
+    def assets_close_monthly(self) -> pd.DataFrame:
+        """
+        Show assets monthly close time series adjusted to the base currency.
+
+        Returns
+        -------
+        DataFrame
+            Assets monthly close time series adjusted to the base currency.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+
+        >>> al = ok.AssetList(["SPY.US", "BND.US"], ccy="USD")
+        >>> al.assets_close_monthly.plot()
+        >>> plt.show()
+        """
+        series_list = []  # Collect all series to concatenate once at the end
+        for x in self.asset_obj_dict.values():
+            series = (
+                x.close_monthly
+                if x.currency == self.currency
+                else self._adjust_price_to_currency_monthly(x.close_monthly, x.currency)
+            )
+            series = series.rename(x.symbol)
+            series_list.append(series)
+        if len(series_list) == 1:
+            assets_close_monthly = series_list[0].to_frame()
+        else:
+            assets_close_monthly = pd.concat(series_list, axis=1, join="inner")
+        assets_close_monthly = assets_close_monthly[self.first_date : self.last_date]
+        return assets_close_monthly
+
+    @property
     def symbols(self) -> List[str]:  # noqa: UP006
         """
         Return a list of used financial symbols.
