@@ -42,6 +42,13 @@ duplicated efficient-frontier points under a thread backend.
   thread-based joblib backend, because the right-part worker both appended its
   row to the shared list and returned it (#86). The worker now only returns the
   row, matching the left-part worker.
+- `Frame.kstest_series` (used by `kstest_for_all_distributions` and the
+  distribution-fit properties of `AssetList` / `Portfolio`) raised
+  `TypeError: ndtr() takes from 1 to 2 positional arguments but 3 were given`
+  with scipy 1.18.0 on Python ≥ 3.12, which routes the named-distribution
+  `kstest(..., "norm", args=...)` call through the `ndtr` ufunc. The
+  Kolmogorov–Smirnov test now passes a frozen-distribution CDF, which is
+  numerically equivalent and compatible with scipy 1.17 and 1.18.
 
 ### Docs
 

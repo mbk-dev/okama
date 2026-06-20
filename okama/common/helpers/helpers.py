@@ -551,16 +551,23 @@ class Frame:
         Returns:
             {'statistics': The test statistic, 'p-value': The p-value for the hypothesis test}
         """
+        # Pass a frozen-distribution CDF instead of the (distribution name, args=...)
+        # form: scipy 1.18 routes the named-distribution + args path through the
+        # `ndtr` ufunc for the normal distribution, which rejects the (loc, scale)
+        # positional arguments and raises TypeError. The frozen CDF is numerically
+        # equivalent and works across scipy versions.
         if distr == "norm":
-            kstest = scipy.stats.kstest(ror, distr, args=scipy.stats.norm.fit(ror))
+            loc, scale = scipy.stats.norm.fit(ror)
+            kstest = scipy.stats.kstest(ror, scipy.stats.norm(loc=loc, scale=scale).cdf)
         elif distr == "lognorm":
             # For lognormal distribution we must use strictly positive data.
             # Apply the test to gross returns (growth factors): R = 1 + r, and fit with floc=0.
             gross = ror + 1.0
             shape, loc, scale = scipy.stats.lognorm.fit(gross, floc=0)
-            kstest = scipy.stats.kstest(gross, distr, args=(shape, loc, scale))
+            kstest = scipy.stats.kstest(gross, scipy.stats.lognorm(shape, loc=loc, scale=scale).cdf)
         elif distr == "t":
-            kstest = scipy.stats.kstest(ror, distr, args=scipy.stats.t.fit(ror))
+            df, loc, scale = scipy.stats.t.fit(ror)
+            kstest = scipy.stats.kstest(ror, scipy.stats.t(df, loc=loc, scale=scale).cdf)
         else:
             raise ValueError('distr should be "norm" (default), "lognormal" or "t".')
         return {"statistic": kstest[0], "p-value": kstest[1]}
