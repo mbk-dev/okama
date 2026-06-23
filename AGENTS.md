@@ -111,3 +111,18 @@ Name note: CLI subcommands are `query` / `callers` / `callees` / `impact` / `con
 ## Preparing release notes
 - When you write a release description, always include the names of the specific classes and methods when describing new features and bug fixes.
 - When referencing Jupyter Notebooks at /examples always add links.
+
+## Maintaining this file
+This file is a stable reference, not a worklog. It follows a global
+instruction-file maintenance policy: route each kind of information to its
+proper home and link here instead of copying. Project specifics:
+- **Task tracker** — GitHub Issues at `mbk-dev/okama`. Issue status and numbers
+  live there, not in this file. Keep here only a short list of active directions
+  if needed.
+- **History of changes** — `CHANGELOG.md` plus git history. Commit hashes, merge
+  dates, and "what was done when" go there, never into this file.
+- **Reference data** (ad-hoc findings, per-agent notes, access details) — the
+  project's Claude Code memory, not this file. Stable conventions that belong
+  here (Python style, project structure) are already inlined above.
+- **Drafts and scratch artifacts** — `tmp/` (gitignored); clean these up when the
+  task is done rather than letting them accumulate.
