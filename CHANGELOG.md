@@ -5,6 +5,18 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- `EfficientFrontier.minimize_risk` (rebalanced/multi-period frontier) raised
+  `RuntimeError: No solution found for target CAGR value: ...` at the leftmost
+  frontier point when the target CAGR equalled the minimum-CAGR asset's own CAGR
+  and SLSQP failed to converge to that single-asset vertex from the multi-start
+  initial guesses. The method now falls back to the deterministic single-asset
+  corner portfolio (mirroring the existing guard in `_maximize_risk`), so the
+  efficient frontier is drawn for such asset sets instead of failing.
+
 ## [2.2.2] - 2026-06
 
 Adds new analytics — ex-post tracking error for `Portfolio` and an RMS/std

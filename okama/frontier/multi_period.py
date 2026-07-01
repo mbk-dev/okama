@@ -772,6 +772,16 @@ class EfficientFrontier(asset_list.AssetList):
             if candidate.success and (best is None or candidate.fun < best.fun):
                 best = candidate
 
+        # Corner guard: when the target CAGR equals a single asset's own CAGR (e.g. the
+        # leftmost frontier point, whose target is the minimum asset CAGR), the 100%
+        # single-asset portfolio is feasible and is a valid minimum-risk candidate, while
+        # SLSQP started away from this vertex of the bounds can fail to converge to it
+        # (drifting to a neighbouring asset whose CAGR misses the equality target and
+        # returning no solution). This mirrors the corner guard in _maximize_risk.
+        corner = self._single_asset_corner_portfolio(target_value)
+        if corner is not None and (best is None or corner["Risk"] < best.fun):
+            return corner
+
         if best is None:
             raise RuntimeError(f"No solution found for target CAGR value: {target_value}.")
 
