@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   initial guesses. The method now falls back to the deterministic single-asset
   corner portfolio (mirroring the existing guard in `_maximize_risk`), so the
   efficient frontier is drawn for such asset sets instead of failing.
+- `EfficientFrontierSingle.minimize_risk` (single-period frontier) raised
+  `RuntimeError: No solutions were found` at the maximum-return frontier point
+  when the target return equalled a single asset's own mean return and SLSQP
+  failed to converge to that single-asset vertex from the equal-weights start
+  (surfaced by the stricter SLSQP in scipy 1.18). The method now falls back to
+  the deterministic single-asset corner portfolio, so `EfficientFrontierSingle.ef_points`
+  is drawn for such asset sets instead of failing.
 
 ## [2.2.2] - 2026-06
 

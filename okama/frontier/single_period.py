@@ -646,23 +646,62 @@ class EfficientFrontierSingle(asset_list.AssetList):
             bounds=self.bounds,
             options={"disp": False, "ftol": tolerance},
         )
-        if weights.success:
-            # Calculate point of EF given optimal weights
-            risk = weights.fun
-            # Annualize risk and return
-            a_r = helpers.Float.annualize_return(target_return)
-            a_risk = helpers.Float.annualize_risk(risk=risk, mean_return=target_return)
-            # CAGR calculation
-            portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(weights.x, ror)
-            cagr = helpers.Frame.get_cagr(portfolio_return_ts)
-            asset_labels = self.get_assets_tickers()
-            point = dict(zip(asset_labels, weights.x))  # noqa: B905
-            point["Mean return"] = a_r
-            point["CAGR"] = cagr
-            point["Risk"] = a_risk
-        else:
+        best_x = weights.x if weights.success else None
+        best_risk = weights.fun if weights.success else None
+
+        # Corner guard: when the target return equals a single asset's own mean return
+        # (e.g. the max-return frontier point), the 100% single-asset portfolio is feasible
+        # and is a valid minimum-risk candidate, while SLSQP from the single equal-weights
+        # start can fail to converge to that vertex of the bounds (scipy 1.18 reports
+        # "Inequality constraints incompatible" there). Mirrors the guard in the rebalanced
+        # EfficientFrontier.minimize_risk.
+        corner_x = self._single_asset_corner_weights(target_return)
+        if corner_x is not None:
+            corner_risk = objective_function(corner_x)
+            if best_x is None or corner_risk < best_risk:
+                best_x, best_risk = corner_x, corner_risk
+
+        if best_x is None:
             raise RuntimeError("No solutions were found")
+
+        # Calculate point of EF given optimal weights
+        a_r = helpers.Float.annualize_return(target_return)
+        a_risk = helpers.Float.annualize_risk(risk=best_risk, mean_return=target_return)
+        # CAGR calculation
+        portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(best_x, ror)
+        cagr = helpers.Frame.get_cagr(portfolio_return_ts)
+        asset_labels = self.get_assets_tickers()
+        point = dict(zip(asset_labels, best_x, strict=True))
+        point["Mean return"] = a_r
+        point["CAGR"] = cagr
+        point["Risk"] = a_risk
         return point
+
+    def _single_asset_corner_weights(self, target_return: float) -> np.ndarray | None:
+        """
+        Return the 100% single-asset weights whose monthly mean return equals target_return.
+
+        The 100% single-asset portfolio is always feasible at its own mean return (when
+        allowed by the bounds), so it is a deterministic candidate for the frontier corner
+        points (e.g. the maximum-return point) where SLSQP started at the equal-weights
+        vertex of the bounds can fail to converge. Returns None when no asset's mean return
+        matches the target or the single-asset portfolio is outside the bounds.
+        """
+        ror = self.assets_ror
+        means = ror.mean()
+        bounds = self.bounds
+        for position, ticker in enumerate(ror.columns):
+            if not np.isclose(means[ticker], target_return, rtol=0, atol=1e-12):
+                continue
+            weights = np.zeros(ror.shape[1])
+            weights[position] = 1.0
+            if bounds:
+                lows = np.array([lo for lo, _ in bounds])
+                highs = np.array([hi for _, hi in bounds])
+                if np.any(weights < lows - 1e-12) or np.any(weights > highs + 1e-12):
+                    continue  # the single-asset portfolio is not allowed by the bounds
+            return weights
+        return None
 
     def get_assets_tickers(self) -> list:
         if not self.labels_are_tickers:

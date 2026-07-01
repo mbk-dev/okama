@@ -96,6 +96,43 @@ def test_minimize_risk_reaches_target(ef_ab):
     assert achieved == pytest.approx(target, rel=1e-2, abs=1e-3)
 
 
+def test_minimize_risk_returns_single_asset_corner_when_optimizer_fails(synthetic_env, mocker):
+    """At a target return equal to a single asset's own mean return (e.g. the max-return
+    frontier point), the 100% single-asset portfolio is feasible and must be returned as
+    the minimum-risk corner even when SLSQP fails to converge to it from the equal-weights
+    start. Reproduces the scipy 1.18 'Inequality constraints incompatible' failure that
+    raised 'No solutions were found' at the rightmost single-period frontier point.
+    """
+    ef = ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], ccy="USD", inflation=False, n_points=20)
+    means = ef.assets_ror.mean()
+    corner_ticker = means.idxmax()
+    target = float(means[corner_ticker])
+
+    # Force the risk-minimisation problem (the SLSQP call in minimize_risk, identified by
+    # its two equality constraints) to report failure, leaving the setup optimisations
+    # (each using a single constraint) intact.
+    from scipy.optimize import minimize as _real_minimize
+
+    def _fail_return_target(*args, **kwargs):
+        res = _real_minimize(*args, **kwargs)
+        if len(kwargs.get("constraints", ())) == 2:
+            res.success = False
+            res.status = 4
+            res.message = "Inequality constraints incompatible"
+        return res
+
+    mocker.patch("okama.frontier.single_period.minimize", side_effect=_fail_return_target)
+
+    point = ef.minimize_risk(target, monthly_return=True)
+
+    labels = ef.get_assets_tickers()
+    weights = np.array([point[label] for label in labels])
+    corner_pos = list(ef.assets_ror.columns).index(corner_ticker)
+    assert weights[corner_pos] == pytest.approx(1.0)
+    assert weights.sum() == pytest.approx(1.0)
+    assert point["Risk"] > 0
+
+
 def test_mean_return_range_is_valid(ef_ab):
     rrange = ef_ab.mean_return_range
     lo, hi = rrange[0], rrange[-1]
