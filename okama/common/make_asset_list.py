@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List, Any, Type, Union  # noqa: I001, UP035
+from typing import Any  # noqa: I001
 from abc import ABC, abstractmethod
 from joblib import Parallel, delayed
 
@@ -39,10 +39,10 @@ class ListMaker(ABC):
 
     def __init__(
         self,
-        assets: Optional[List[Union[str, Type]]] = None,  # noqa: UP006, UP007, UP045
+        assets: list[str | type] | None = None,
         *,
-        first_date: Optional[str] = None,  # noqa: UP045
-        last_date: Optional[str] = None,  # noqa: UP045
+        first_date: str | None = None,
+        last_date: str | None = None,
         ccy: str = "USD",
         inflation: bool = True,
     ):
@@ -129,8 +129,8 @@ class ListMaker(ABC):
     @staticmethod
     def _get_asset_obj_dict(
         ls: list,
-        first_date: Optional[str] = None,  # noqa: UP045
-        last_date: Optional[str] = None,  # noqa: UP045
+        first_date: str | None = None,
+        last_date: str | None = None,
     ) -> dict:
         """
         Create a dictionary of Asset objects from a list of symbols or Asset-like objects.
@@ -192,7 +192,7 @@ class ListMaker(ABC):
         asset_obj_list = Parallel(n_jobs=-1, backend="threading")(delayed(get_item)(s) for s in ls)
         return {obj.symbol: obj for obj in asset_obj_list}
 
-    def _make_list(self, first_date: Optional[str], last_date: Optional[str]) -> dict:  # noqa: UP045
+    def _make_list(self, first_date: str | None, last_date: str | None) -> dict:
         """
         Make an asset list from a list of symbols.
 
@@ -213,17 +213,17 @@ class ListMaker(ABC):
         currency_first_date: pd.Timestamp = self._currency.first_date
         currency_last_date: pd.Timestamp = self._currency.last_date
 
-        own_first_dates: Dict[str, pd.Timestamp] = {}  # noqa: UP006
-        own_last_dates: Dict[str, pd.Timestamp] = {}  # noqa: UP006
-        first_dates: Dict[str, pd.Timestamp] = {}  # noqa: UP006
-        last_dates: Dict[str, pd.Timestamp] = {}  # noqa: UP006
-        names: Dict[str, str] = {}  # noqa: UP006
-        currencies: Dict[str, str] = {}  # noqa: UP006
+        own_first_dates: dict[str, pd.Timestamp] = {}
+        own_last_dates: dict[str, pd.Timestamp] = {}
+        first_dates: dict[str, pd.Timestamp] = {}
+        last_dates: dict[str, pd.Timestamp] = {}
+        names: dict[str, str] = {}
+        currencies: dict[str, str] = {}
         input_first_date = pd.to_datetime(first_date) if first_date else None
         input_last_date = pd.to_datetime(last_date) if last_date else None
 
         # Collect all rate of return series first, then concatenate once (more efficient)
-        ror_series_list: List[pd.Series] = []  # noqa: UP006
+        ror_series_list: list[pd.Series] = []
         for asset_item in self.asset_obj_dict.values():
             # get asset own first and last dates
             asset_own_first_date = asset_item.first_date
@@ -370,7 +370,7 @@ class ListMaker(ABC):
         return merged.iloc[:, 0].multiply(merged[ccy_symbol], axis=0)
 
     @staticmethod
-    def _define_symbol_list(assets: List[Union[str, Type]]) -> List[str]:  # noqa: UP006, UP007
+    def _define_symbol_list(assets: list[str | type]) -> list[str]:
         """
         Extract symbols from a list of assets.
 
@@ -544,7 +544,7 @@ class ListMaker(ABC):
         return self._dividend_yield
 
     @property
-    def _list_of_asset_like_objects(self) -> List[Union[str, Type]]:  # noqa: UP006, UP007
+    def _list_of_asset_like_objects(self) -> list[str | type]:
         """
         Return list which may include tickers or asset like objects (Portfolio, Asset).
 
@@ -604,7 +604,7 @@ class ListMaker(ABC):
         return assets_close_monthly
 
     @property
-    def symbols(self) -> List[str]:  # noqa: UP006
+    def symbols(self) -> list[str]:
         """
         Return a list of used financial symbols.
 
@@ -621,7 +621,7 @@ class ListMaker(ABC):
         return self._define_symbol_list(self._list_of_asset_like_objects)
 
     @property
-    def tickers(self) -> List[str]:  # noqa: UP006
+    def tickers(self) -> list[str]:
         """
         Return a list of used tickers (symbols without a namespace).
 
@@ -654,7 +654,7 @@ class ListMaker(ABC):
     def plot_assets(
         self,
         kind: str = "mean",
-        tickers: Union[str, list] = "tickers",  # noqa: UP007
+        tickers: str | list = "tickers",
         pct_values: bool = False,
         xy_text: tuple = (0, 10),
         **kwargs,

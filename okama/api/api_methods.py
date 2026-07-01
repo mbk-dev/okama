@@ -1,4 +1,3 @@
-from typing import Union  # noqa: I001
 
 import pandas as pd
 import requests
@@ -36,8 +35,8 @@ class API:
         cls,
         endpoint: str = endpoint_ror,
         symbol: str = settings.default_ticker,
-        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
-        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        first_date: str | pd.Timestamp | None = None,
+        last_date: str | pd.Timestamp | None = None,
         period: str = "d",
     ) -> str:
         session = requests.session()
@@ -80,8 +79,8 @@ class API:
     def get_ror(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
-        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        first_date: str | pd.Timestamp | None = None,
+        last_date: str | pd.Timestamp | None = None,
         period: str = "m",
     ):
         return cls.connect(
@@ -96,8 +95,8 @@ class API:
     def get_adjusted_close(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
-        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        first_date: str | pd.Timestamp | None = None,
+        last_date: str | pd.Timestamp | None = None,
         period: str = "m",
     ):
         return cls.connect(
@@ -112,8 +111,8 @@ class API:
     def get_close(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
-        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        first_date: str | pd.Timestamp | None = None,
+        last_date: str | pd.Timestamp | None = None,
         period: str = "m",
     ):
         return cls.connect(
@@ -128,8 +127,8 @@ class API:
     def get_dividends(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
-        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        first_date: str | pd.Timestamp | None = None,
+        last_date: str | pd.Timestamp | None = None,
     ):
         return cls.connect(
             endpoint=cls.endpoint_dividends,
@@ -142,8 +141,8 @@ class API:
     def get_nav(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
-        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        first_date: str | pd.Timestamp | None = None,
+        last_date: str | pd.Timestamp | None = None,
         period: str = "m",
     ):
         return cls.connect(
@@ -158,8 +157,8 @@ class API:
     def get_macro(
         cls,
         symbol: str = settings.default_ticker,
-        first_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
-        last_date: Union[str, pd.Timestamp, None] = None,  # noqa: UP007
+        first_date: str | pd.Timestamp | None = None,
+        last_date: str | pd.Timestamp | None = None,
         period: str = "m",
     ):
         """

@@ -1,6 +1,5 @@
 from __future__ import annotations  # noqa: I001
 
-from typing import Optional
 import logging
 
 import pandas as pd
@@ -74,10 +73,10 @@ class MonteCarlo:
         self,
         parent: dcf.PortfolioDCF,
         distribution: str = "norm",
-        distribution_parameters: Optional[tuple] = None,  # noqa: UP045
+        distribution_parameters: tuple | None = None,
         period: int = 25,
         mc_number: int = 100,
-        seed: Optional[int] = None,  # noqa: UP045
+        seed: int | None = None,
     ):
         self.parent = parent
         self._distribution = distribution
@@ -85,7 +84,7 @@ class MonteCarlo:
         self._period = period
         self._mc_number = mc_number
         self._seed = seed
-        self._returns_ts_cache: Optional[pd.DataFrame] = None  # noqa: UP045
+        self._returns_ts_cache: pd.DataFrame | None = None
         self.ror = self.parent.parent.ror
 
     def __repr__(self):
@@ -194,7 +193,7 @@ class MonteCarlo:
         self._mc_number = mc_number
 
     @property
-    def seed(self) -> Optional[int]:  # noqa: UP045
+    def seed(self) -> int | None:
         """
         Random seed for Monte Carlo return generation.
 
@@ -811,7 +810,7 @@ class MonteCarlo:
         var_level: int = 5,
         bootstrap_size_var: int = 2000,
         zoom_to_left_tail: int = 20,
-        figsize: Optional[tuple] = None,  # noqa: UP045
+        figsize: tuple | None = None,
     ) -> Axes:
         """
         Generate a quantile-quantile (Q-Q) plot of portfolio monthly rate of return against quantiles of a given
