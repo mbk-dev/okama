@@ -5,7 +5,14 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.2.3] - 2026-07
+
+Fixes two efficient-frontier failures where the risk optimizer could not reach a
+single-asset corner point — the leftmost (minimum-CAGR) point of the rebalanced
+`EfficientFrontier` and the maximum-return point of `EfficientFrontierSingle` — so
+both frontiers are drawn for the affected asset sets instead of raising a
+`RuntimeError`. The second failure surfaced with the stricter SLSQP solver in
+scipy 1.18.
 
 ### Fixed
 
