@@ -1,4 +1,3 @@
-
 import pandas as pd
 import requests
 from urllib3.util.retry import Retry

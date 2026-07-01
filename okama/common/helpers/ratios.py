@@ -1,6 +1,5 @@
 """Portfolio ratios"""
 
-
 import pandas as pd
 
 
