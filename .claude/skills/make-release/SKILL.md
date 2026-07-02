@@ -45,14 +45,18 @@ test -z "$(git status --porcelain)" || echo "FAIL: dirty tree"
 # 3) gh CLI authenticated
 gh auth status
 
-# 4) PyPI token configured for poetry
-poetry config pypi-token.pypi 2>/dev/null | grep -q . || echo "FAIL: no pypi token"
+# 4) PyPI token configured for poetry (poetry config OR auth.toml)
+poetry config pypi-token.pypi 2>/dev/null | grep -q . \
+  || grep -q '^\[pypi-token\]' ~/.config/pypoetry/auth.toml 2>/dev/null \
+  || echo "FAIL: no pypi token"
 
 # 5) Read the Docs API token available in .env
 grep -q '^READTHEDOCS_TOKEN=' .env 2>/dev/null || echo "WARN: no RTD token — Phase 10 will be skipped"
 ```
 
 `.env` is gitignored. The RTD token lets Phase 10 query and poll Read the Docs builds via the v3 API. If it is missing, the skill falls back to checking only the public docs URL.
+
+**PyPI-token false negative:** `poetry config pypi-token.pypi` can print nothing even when the token is present and `poetry publish` works, because the token lives in `~/.config/pypoetry/auth.toml` under a `[pypi-token]` section rather than in poetry's config store (observed during the v2.2.3 release, 2026-07). The check above therefore also accepts the `auth.toml` `[pypi-token]` section. If it still reports FAIL, confirm by inspecting `~/.config/pypoetry/auth.toml` for a `[pypi-token]` entry (do not print its value) before stopping — a real absence, not a false negative, is what blocks Phase 11.
 
 ## Phase 1 — poetry update
 

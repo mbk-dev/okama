@@ -193,7 +193,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         if weights.success:
             return weights.x
         else:
-            raise RuntimeError("No solutions where found")
+            raise RuntimeError("No solutions were found")
 
     @property
     def gmv_annual_weights(self) -> np.ndarray:
@@ -238,7 +238,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         if weights.success:
             return weights.x
         else:
-            raise RuntimeError("No solutions where found")
+            raise RuntimeError("No solutions were found")
 
     @property
     def gmv_monthly(self) -> tuple[float, float]:
@@ -386,7 +386,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
                 "Risk": objective_function.risk,
             }
         else:
-            raise RuntimeError("No solutions where found")
+            raise RuntimeError("No solutions were found")
 
     def get_most_diversified_portfolio(
         self,
@@ -496,7 +496,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
             point["Diversification ratio"] = -weights.fun
             return point
         else:
-            raise RuntimeError("No solutions where found")
+            raise RuntimeError("No solutions were found")
 
     def optimize_return(self, option: str = "max") -> dict:
         """
@@ -572,7 +572,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
             }
             return point
         else:
-            raise RuntimeError("No solutions where found")
+            raise RuntimeError("No solutions were found")
 
     def minimize_risk(
         self,
