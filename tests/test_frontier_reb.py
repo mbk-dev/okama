@@ -447,6 +447,48 @@ def test_get_most_diversified_portfolio_with_target_return(ef_reb_ab):
     assert_allclose(np.sum(weights), 1.0, atol=1e-8)
 
 
+def test_get_most_diversified_portfolio_returns_single_asset_corner_when_optimizer_fails(synthetic_env, mocker):
+    """At a target CAGR equal to a single asset's own CAGR (e.g. the leftmost MDP point,
+    whose target is the minimum asset CAGR), the 100% single-asset portfolio is the only
+    feasible point — diversification ratio 1 — and must be returned even when SLSQP fails
+    to converge to that vertex from the equal-weights start, instead of raising and
+    aborting the whole mdp_points line.
+    """
+    ef = ok.EfficientFrontier(
+        ["IDX.US", "A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+        ticker_names=True,
+    )
+    cagr = helpers.Frame.get_cagr(ef.assets_ror)
+    corner_ticker = cagr.idxmin()
+    target = float(cagr[corner_ticker])
+
+    # Force the target-CAGR problem (identified by its two equality constraints) to fail,
+    # leaving the single-constraint setup optimizations intact.
+    from scipy.optimize import minimize as _real_minimize
+
+    def _fail_cagr_target(*args, **kwargs):
+        res = _real_minimize(*args, **kwargs)
+        if len(kwargs.get("constraints", ())) == 2:
+            res.success = False
+            res.status = 9
+            res.message = "forced failure"
+        return res
+
+    mocker.patch("okama.frontier.multi_period.minimize", side_effect=_fail_cagr_target)
+
+    point = ef.get_most_diversified_portfolio(target_return=target)
+
+    weights = {ticker: point[ticker] for ticker in ef.symbols}
+    assert weights[corner_ticker] == pytest.approx(1.0)
+    assert_allclose(np.sum(list(weights.values())), 1.0, atol=1e-8)
+    assert point["Diversification ratio"] == pytest.approx(1.0, abs=1e-6)
+    assert point["CAGR"] == pytest.approx(target, rel=1e-3)
+
+
 def test_get_most_diversified_portfolio_weights_sum_to_one(ef_reb_ab):
     """Test that weights in MDP sum to 1."""
     dic = ef_reb_ab.get_most_diversified_portfolio()

@@ -402,8 +402,23 @@ class EfficientFrontier(asset_list.AssetList):
             point["Risk"] = objective_function.annual_risk
             point["Diversification ratio"] = -weights.fun
             return point
-        else:
-            raise RuntimeError("No solutions where found")
+
+        # Corner fallback: at a single-asset-CAGR corner (e.g. the leftmost MDP point, whose
+        # target is the minimum asset CAGR) the 100% single-asset portfolio is the only
+        # feasible point — diversification ratio 1 — but SLSQP from the equal-weights start
+        # can fail to reach that vertex of the bounds. Mirrors the guard in minimize_risk.
+        corner = self._single_asset_corner_portfolio(target_return) if target_return is not None else None
+        if corner is not None:
+            corner_weights = corner["Weights"]
+            diversification_ratio = -objective_function(corner_weights)
+            asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+            point = dict(zip(asset_labels, corner_weights, strict=True))
+            point["CAGR"] = self._get_cagr(corner_weights)
+            point["Risk"] = objective_function.annual_risk
+            point["Diversification ratio"] = diversification_ratio
+            return point
+
+        raise RuntimeError("No solutions were found")
 
     def get_tangency_portfolio(self, rf_return: float = 0, rate_of_return: str = "cagr") -> dict:
         """

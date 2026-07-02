@@ -5,6 +5,19 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- `EfficientFrontier.get_most_diversified_portfolio` (rebalanced/multi-period)
+  raised `RuntimeError` at the leftmost point of the Most Diversified Portfolios
+  line (`mdp_points`), where the target CAGR equals the minimum-CAGR asset's own
+  CAGR: there the 100% single-asset portfolio is the only feasible point
+  (diversification ratio 1) and SLSQP from the equal-weights start could not reach
+  it, aborting the whole line. The method now falls back to the deterministic
+  single-asset corner portfolio (the error-message typo "where" → "were" was also
+  fixed).
+
 ## [2.2.3] - 2026-07
 
 Fixes two efficient-frontier failures where the risk optimizer could not reach a
