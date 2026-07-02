@@ -249,17 +249,23 @@ set -a; source .env; set +a   # exports READTHEDOCS_TOKEN
 
 API="https://readthedocs.org/api/v3/projects/okama"
 AUTH="Authorization: Token $READTHEDOCS_TOKEN"
-SHA=$(git rev-parse HEAD)     # the merge commit on master
+export VER="v<NEW_VERSION>"
 
-# Find the build for our commit; RTD usually creates it within 30s of the push
-BUILD_ID=$(curl -s -H "$AUTH" "$API/builds/?limit=20" \
-  | python3 -c "import json,sys,os; sha=os.environ['SHA']; \
-       print(next((b['id'] for b in json.load(sys.stdin)['results'] if b['commit']==sha), ''))")
+# Find the build for the NEW VERSION specifically — NOT just any build matching the merge
+# commit. RTD builds latest/stable/master AND the vX.Y.Z tag from the same commit and
+# CANCELS the vX.Y.Z build as a duplicate of latest/master (observed for v2.2.4, 2026-07),
+# so keying on the commit picks the successful latest build and reports a false green while
+# en/vX.Y.Z/ 404s. Key on the version instead:
+BUILD_ID=$(curl -s -H "$AUTH" "$API/builds/?limit=30" \
+  | python3 -c "import json,sys,os; ver=os.environ['VER']; \
+       print(next((b['id'] for b in json.load(sys.stdin).get('results',[]) if (b.get('version') or '')==ver), ''))")
 ```
 
 If `BUILD_ID` is empty, wait 30s and retry — RTD is sometimes slow to register the webhook. Give up after ~5 minutes and tell the user to check the dashboard manually.
 
-Once the ID is found, poll until state is `finished`:
+Once the ID is found, poll until the build reaches a terminal state. Because the
+`$VER` build is often **cancelled** as a duplicate of latest/master, re-trigger it when
+that happens — a cancelled (or failed) version build leaves `en/$VER/` 404ing:
 
 ```bash
 while :; do
@@ -267,24 +273,26 @@ while :; do
     | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['state']['code'], d['success'])")
   echo "$STATE"
   case "$STATE" in
-    "finished True")  echo "RTD build OK"; break ;;
-    "finished False") echo "RTD build FAILED"; exit 1 ;;
+    "finished True")  echo "RTD $VER OK"; break ;;
+    "finished False") echo "RTD $VER build FAILED"; exit 1 ;;
+    cancelled*)       echo "version build cancelled — re-triggering"; \
+      BUILD_ID=$(curl -s -X POST -H "$AUTH" "$API/versions/$VER/builds/" \
+        | python3 -c "import json,sys; print(json.load(sys.stdin).get('build',{}).get('id',''))") ;;
   esac
   sleep 30
 done
 ```
 
-If the build fails: stop. Show the user `error` and the build URL (`https://app.readthedocs.org/projects/okama/builds/$BUILD_ID/`). Do not proceed to PyPI — fix the docs first, push a fix to master, wait for the new build to pass, then resume from Phase 11.
+If a real build (not a cancellation) fails: stop. Show the user the build URL (`https://app.readthedocs.org/projects/okama/builds/$BUILD_ID/`). Do not proceed to PyPI — fix the docs first, push a fix to master, wait for the new build to pass, then resume from Phase 11.
 
-If the build passes, also do a quick public-docs sanity check:
+The success criterion for the release is that the **version's own** docs page returns `200`, not just `latest`. Confirm both:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" "https://okama.readthedocs.io/en/latest/"
+curl -s -o /dev/null -w "latest:%{http_code}\n" "https://okama.readthedocs.io/en/latest/"
+curl -s -o /dev/null -w "$VER:%{http_code}\n"    "https://okama.readthedocs.io/en/$VER/"
 ```
 
-Should be `200`. Anything else (typically `404` or `5xx`) is a CDN issue worth noting but not blocking.
-
-For the new tagged version (`v<NEW_VERSION>`), RTD may keep it inactive by default. If `https://okama.readthedocs.io/en/v<NEW_VERSION>/` returns 404 even after the build, mention it in the final report — the user activates the version in the RTD dashboard.
+`latest` is rebuilt on every master push and should be `200`. If `en/$VER/` is still `404` after the version build finished, the version may be inactive: check `GET $API/versions/$VER/` for `active`/`built`, activate it (PATCH `{"active": true}` or the RTD dashboard), then re-trigger its build. Do not treat a green `latest` as proof the tagged version is served.
 
 ## Phase 11 — PyPI publish
 
