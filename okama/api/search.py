@@ -1,5 +1,4 @@
 import json  # noqa: I001
-from typing import Optional
 from functools import lru_cache
 
 import pandas as pd
@@ -7,8 +6,8 @@ import pandas as pd
 from okama.api import api_methods, namespaces
 
 
-@lru_cache()  # noqa: UP011
-def search(search_string: str, namespace: Optional[str] = None, response_format: str = "frame") -> json:  # noqa: UP045
+@lru_cache
+def search(search_string: str, namespace: str | None = None, response_format: str = "frame") -> json:
     """
     Search symbols by ticker, name, or ISIN.
 

@@ -1,6 +1,5 @@
 import time  # noqa: I001
 import itertools
-from typing import List, Tuple, Dict, Optional  # noqa: UP035
 
 import numpy as np
 import pandas as pd
@@ -82,12 +81,12 @@ class EfficientFrontier(asset_list.AssetList):
 
     def __init__(
         self,
-        assets: Optional[List[str]] = None,  # noqa: UP006, UP045
+        assets: list[str] | None = None,
         *,
-        first_date: Optional[str] = None,  # noqa: UP045
-        last_date: Optional[str] = None,  # noqa: UP045
+        first_date: str | None = None,
+        last_date: str | None = None,
         ccy: str = "USD",
-        bounds: Optional[Tuple[Tuple[float, ...], ...]] = None,  # noqa: UP006, UP045
+        bounds: tuple[tuple[float, ...], ...] | None = None,
         inflation: bool = False,
         full_frontier: bool = True,
         rebalancing_strategy: Rebalance = Rebalance(period="year"),  # noqa: B008
@@ -114,7 +113,7 @@ class EfficientFrontier(asset_list.AssetList):
         self.full_frontier = full_frontier
         self._ef_points = pd.DataFrame(dtype=float)
         self._mdp_points = pd.DataFrame(dtype=float)
-        self._ror_cache: Dict[tuple, pd.Series] = {}  # Cache for portfolio return time series by weights  # noqa: UP006
+        self._ror_cache: dict[tuple, pd.Series] = {}  # Cache for portfolio return time series by weights
 
     def __repr__(self):
         dic = {
@@ -133,7 +132,7 @@ class EfficientFrontier(asset_list.AssetList):
         return repr(pd.Series(dic))
 
     @property
-    def bounds(self) -> Tuple[Tuple[float, ...], ...]:  # noqa: UP006
+    def bounds(self) -> tuple[tuple[float, ...], ...]:
         """
         Return bounds for the assets weights.
 
@@ -312,8 +311,8 @@ class EfficientFrontier(asset_list.AssetList):
 
     def get_most_diversified_portfolio(
         self,
-        target_return: Optional[float] = None,  # noqa: UP045
-    ) -> Dict[str, float]:  # noqa: UP006
+        target_return: float | None = None,
+    ) -> dict[str, float]:
         """
         Calculate assets weights and portfolio metrics for the most diversified portfolio within bounds.
 
@@ -583,7 +582,7 @@ class EfficientFrontier(asset_list.AssetList):
         )
         return weights.x
 
-    def _get_gmv_monthly(self) -> Tuple[float, float]:  # noqa: UP006
+    def _get_gmv_monthly(self) -> tuple[float, float]:
         """
         Calculate the risk and geometric mean of the Global Minimum Volatility portfolio.
 
@@ -594,7 +593,7 @@ class EfficientFrontier(asset_list.AssetList):
         return ts.std(), geometric_mean_return
 
     @property
-    def gmv_annual_values(self) -> Tuple[float, float]:  # noqa: UP006
+    def gmv_annual_values(self) -> tuple[float, float]:
         """
         Calculate the annualized risk (standard deviation) and CAGR of the Global Minimum Volatility portfolio.
 
@@ -683,7 +682,7 @@ class EfficientFrontier(asset_list.AssetList):
         acc_return = (ts + 1.0).prod() - 1.0
         return (1.0 + acc_return) ** (settings._MONTHS_PER_YEAR / ts.shape[0]) - 1.0
 
-    def minimize_risk(self, target_value: float) -> Dict[str, float]:  # noqa: UP006
+    def minimize_risk(self, target_value: float) -> dict[str, float]:
         """
         Calculate the portfolio properties to minimize annualized risk at the target CAGR.
 
@@ -772,6 +771,16 @@ class EfficientFrontier(asset_list.AssetList):
             if candidate.success and (best is None or candidate.fun < best.fun):
                 best = candidate
 
+        # Corner guard: when the target CAGR equals a single asset's own CAGR (e.g. the
+        # leftmost frontier point, whose target is the minimum asset CAGR), the 100%
+        # single-asset portfolio is feasible and is a valid minimum-risk candidate, while
+        # SLSQP started away from this vertex of the bounds can fail to converge to it
+        # (drifting to a neighbouring asset whose CAGR misses the equality target and
+        # returning no solution). This mirrors the corner guard in _maximize_risk.
+        corner = self._single_asset_corner_portfolio(target_value)
+        if corner is not None and (best is None or corner["Risk"] < best.fun):
+            return corner
+
         if best is None:
             raise RuntimeError(f"No solution found for target CAGR value: {target_value}.")
 
@@ -787,7 +796,7 @@ class EfficientFrontier(asset_list.AssetList):
         point["iterations"] = best.nit
         return point
 
-    def _maximize_risk(self, target_return: float) -> Dict[str, float]:  # noqa: UP006
+    def _maximize_risk(self, target_return: float) -> dict[str, float]:
         """
         Calculate the portfolio properties to maximize annualized value of risk at the target CAGR.
 
@@ -881,7 +890,7 @@ class EfficientFrontier(asset_list.AssetList):
             raise RuntimeError(f"No solution found for target CAGR value: {target_return}.")
         return solution
 
-    def _single_asset_corner_portfolio(self, target_value: float) -> Optional[dict]:  # noqa: UP045
+    def _single_asset_corner_portfolio(self, target_value: float) -> dict | None:
         """
         Return the single-asset portfolio point whose CAGR equals the target value, if any.
 
@@ -963,7 +972,7 @@ class EfficientFrontier(asset_list.AssetList):
         }
 
     @property
-    def _max_ratio_asset_right_to_max_cagr(self) -> Optional[dict]:  # noqa: UP045
+    def _max_ratio_asset_right_to_max_cagr(self) -> dict | None:
         """
         The asset with the maximum ratio between CAGR and risk among assets that are to the right
         of the portfolio with the maximum CAGR on the Efficient Frontier.
@@ -1041,7 +1050,7 @@ class EfficientFrontier(asset_list.AssetList):
         return target_range
 
     @property
-    def _target_cagr_range_right(self) -> Optional[np.ndarray]:  # noqa: UP045
+    def _target_cagr_range_right(self) -> np.ndarray | None:
         """
         Range of CAGR values from the Global CAGR max to the max asset cagr
         to the right of the max CAGR point (if exists).
@@ -1402,7 +1411,7 @@ class EfficientFrontier(asset_list.AssetList):
         result = pd.DataFrame.from_records(rows_list)
         return helpers.Frame.change_columns_order(result, ["Risk", "CAGR"])
 
-    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
+    def plot_pair_ef(self, tickers="tickers", figsize: tuple | None = None) -> Axes:
         """
         Plot Efficient Frontier for every pair of assets.
 
@@ -1478,7 +1487,7 @@ class EfficientFrontier(asset_list.AssetList):
         self.plot_assets(kind="cagr", tickers=tickers)
         return ax
 
-    def plot_cml(self, rf_return: float = 0, figsize: Optional[tuple] = None):  # noqa: UP045
+    def plot_cml(self, rf_return: float = 0, figsize: tuple | None = None):
         """
         Plot Capital Market Line (CML).
 
@@ -1539,7 +1548,7 @@ class EfficientFrontier(asset_list.AssetList):
         self.plot_assets(kind="cagr")
         return ax
 
-    def plot_transition_map(self, x_axe: str = "risk", figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
+    def plot_transition_map(self, x_axe: str = "risk", figsize: tuple | None = None) -> Axes:
         """
         Plot Transition Map for optimized portfolios on the Efficient Frontier.
 

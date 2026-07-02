@@ -19,6 +19,18 @@ All other steps run without prompting unless they fail.
 
 The package lives at `/home/chilango/pyprojects/okama_projects/okama`. Run all commands from that directory. Verify with `pwd` if unsure — running poetry from a wrong directory silently uses the wrong env.
 
+## Environment: disable the keyring backend (WSL2 poetry hang)
+
+On WSL2 (and other headless Linux without an unlocked Secret Service / D-Bus session), `poetry` can hang **indefinitely** on a keyring lookup — the process sits in `do_epoll_wait` at 0% CPU with no output, which is easily mistaken for slow dependency resolution. Observed on this laptop during the v2.2.2 release (2026-06-19): `poetry update` hung ~15 min with zero progress until killed.
+
+Run **every** `poetry` command in this workflow with the keyring backend disabled, by prefixing it (shell env does not persist between steps):
+
+```bash
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry <cmd>
+```
+
+This only skips the OS keyring; the PyPI token is still read from `~/.config/pypoetry/auth.toml` (or env / config), so `poetry publish` works unchanged. The command blocks below already include the prefix — keep it. If any `poetry` command produces no output for more than a minute, suspect this hang first (kill it and retry with the prefix), rather than waiting it out.
+
 ## Phase 0 — Preflight
 
 Run these checks first. If any fails, stop and report — do not try to fix automatically.
@@ -45,7 +57,7 @@ grep -q '^READTHEDOCS_TOKEN=' .env 2>/dev/null || echo "WARN: no RTD token — P
 ## Phase 1 — poetry update
 
 ```bash
-poetry update
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry update
 ```
 
 If anything in `poetry.lock` changes meaningfully, mention it in the release notes draft later.
@@ -59,7 +71,7 @@ Both unit tests (`pytest`) **and** notebook tests (`pytest --nbmake examples`) a
 `pytest --nbmake` runs each notebook against a registered Jupyter kernel, and that kernel imports `okama` from the env. Without an explicit install the kernel may import a stale build of okama and miss the very changes you are about to release. Run `poetry install` first so the env reflects the current `dev` branch:
 
 ```bash
-poetry install
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry install
 ```
 
 Confirm the installed version matches `pyproject.toml` (`Installing the current project: okama (<NEW_VERSION>)`).
@@ -277,9 +289,9 @@ For the new tagged version (`v<NEW_VERSION>`), RTD may keep it inactive by defau
 Build and publish as **two separate steps** — do **not** use the combined `poetry publish --build`. During the v2.2.1 release (2026-06-06) the combined command hung indefinitely before even producing artifacts (95% CPU for 20+ minutes, nothing in `dist/`), while the separate commands completed in seconds. Two steps also let you inspect the artifacts before the irreversible upload.
 
 ```bash
-poetry build      # writes okama-<NEW_VERSION>.tar.gz and .whl into dist/ — takes seconds
-ls -la dist/      # sanity check: both <NEW_VERSION> artifacts are present
-poetry publish    # uploads the current pyproject.toml version from dist/
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry build      # writes okama-<NEW_VERSION>.tar.gz and .whl into dist/ — takes seconds
+ls -la dist/                                                           # sanity check: both <NEW_VERSION> artifacts are present
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry publish    # uploads the current pyproject.toml version from dist/
 ```
 
 If either command takes more than a couple of minutes, kill it and investigate — that is not normal for this package.

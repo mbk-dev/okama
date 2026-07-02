@@ -1,5 +1,4 @@
 import itertools  # noqa: I001
-from typing import Optional, Tuple, Dict, List, Union, Type  # noqa: UP035
 
 import pandas as pd
 import numpy as np
@@ -67,12 +66,12 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
     def __init__(
         self,
-        assets: Optional[List[Union[str, Type]]] = None,  # noqa: UP006, UP007, UP045
+        assets: list[str | type] | None = None,
         *,
-        first_date: Optional[str] = None,  # noqa: UP045
-        last_date: Optional[str] = None,  # noqa: UP045
+        first_date: str | None = None,
+        last_date: str | None = None,
         ccy: str = "USD",
-        bounds: Optional[Tuple[Tuple[float, ...], ...]] = None,  # noqa: UP006, UP045
+        bounds: tuple[tuple[float, ...], ...] | None = None,
         inflation: bool = False,
         full_frontier: bool = True,
         n_points: int = 20,
@@ -110,7 +109,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         return repr(pd.Series(dic))
 
     @property
-    def bounds(self) -> Tuple[Tuple[float, ...], ...]:  # noqa: UP006
+    def bounds(self) -> tuple[tuple[float, ...], ...]:
         """
         Return bounds for the assets weights.
 
@@ -242,7 +241,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
             raise RuntimeError("No solutions where found")
 
     @property
-    def gmv_monthly(self) -> Tuple[float, float]:  # noqa: UP006
+    def gmv_monthly(self) -> tuple[float, float]:
         """
         Calculate the monthly risk and return of the Global Minimum Volatility (GMV) portfolio within given bounds.
 
@@ -271,7 +270,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         )
 
     @property
-    def gmv_annualized(self) -> Tuple[float, float]:  # noqa: UP006
+    def gmv_annualized(self) -> tuple[float, float]:
         """
         Calculate the annualized risk and return of the Global Minimum Volatility (GMV) portfolio within given bounds.
 
@@ -391,7 +390,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
 
     def get_most_diversified_portfolio(
         self,
-        target_return: Optional[float] = None,  # noqa: UP045
+        target_return: float | None = None,
         monthly_return: bool = False,
     ) -> dict:
         """
@@ -580,7 +579,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         target_return: float,
         monthly_return: bool = False,
         tolerance: float = 1e-08,
-    ) -> Dict[str, float]:  # noqa: UP006
+    ) -> dict[str, float]:
         """
         Find minimal risk given the target return within given bounds.
 
@@ -647,23 +646,62 @@ class EfficientFrontierSingle(asset_list.AssetList):
             bounds=self.bounds,
             options={"disp": False, "ftol": tolerance},
         )
-        if weights.success:
-            # Calculate point of EF given optimal weights
-            risk = weights.fun
-            # Annualize risk and return
-            a_r = helpers.Float.annualize_return(target_return)
-            a_risk = helpers.Float.annualize_risk(risk=risk, mean_return=target_return)
-            # CAGR calculation
-            portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(weights.x, ror)
-            cagr = helpers.Frame.get_cagr(portfolio_return_ts)
-            asset_labels = self.get_assets_tickers()
-            point = dict(zip(asset_labels, weights.x))  # noqa: B905
-            point["Mean return"] = a_r
-            point["CAGR"] = cagr
-            point["Risk"] = a_risk
-        else:
+        best_x = weights.x if weights.success else None
+        best_risk = weights.fun if weights.success else None
+
+        # Corner guard: when the target return equals a single asset's own mean return
+        # (e.g. the max-return frontier point), the 100% single-asset portfolio is feasible
+        # and is a valid minimum-risk candidate, while SLSQP from the single equal-weights
+        # start can fail to converge to that vertex of the bounds (scipy 1.18 reports
+        # "Inequality constraints incompatible" there). Mirrors the guard in the rebalanced
+        # EfficientFrontier.minimize_risk.
+        corner_x = self._single_asset_corner_weights(target_return)
+        if corner_x is not None:
+            corner_risk = objective_function(corner_x)
+            if best_x is None or corner_risk < best_risk:
+                best_x, best_risk = corner_x, corner_risk
+
+        if best_x is None:
             raise RuntimeError("No solutions were found")
+
+        # Calculate point of EF given optimal weights
+        a_r = helpers.Float.annualize_return(target_return)
+        a_risk = helpers.Float.annualize_risk(risk=best_risk, mean_return=target_return)
+        # CAGR calculation
+        portfolio_return_ts = helpers.Frame.get_portfolio_return_ts(best_x, ror)
+        cagr = helpers.Frame.get_cagr(portfolio_return_ts)
+        asset_labels = self.get_assets_tickers()
+        point = dict(zip(asset_labels, best_x, strict=True))
+        point["Mean return"] = a_r
+        point["CAGR"] = cagr
+        point["Risk"] = a_risk
         return point
+
+    def _single_asset_corner_weights(self, target_return: float) -> np.ndarray | None:
+        """
+        Return the 100% single-asset weights whose monthly mean return equals target_return.
+
+        The 100% single-asset portfolio is always feasible at its own mean return (when
+        allowed by the bounds), so it is a deterministic candidate for the frontier corner
+        points (e.g. the maximum-return point) where SLSQP started at the equal-weights
+        vertex of the bounds can fail to converge. Returns None when no asset's mean return
+        matches the target or the single-asset portfolio is outside the bounds.
+        """
+        ror = self.assets_ror
+        means = ror.mean()
+        bounds = self.bounds
+        for position, ticker in enumerate(ror.columns):
+            if not np.isclose(means[ticker], target_return, rtol=0, atol=1e-12):
+                continue
+            weights = np.zeros(ror.shape[1])
+            weights[position] = 1.0
+            if bounds:
+                lows = np.array([lo for lo, _ in bounds])
+                highs = np.array([hi for _, hi in bounds])
+                if np.any(weights < lows - 1e-12) or np.any(weights > highs + 1e-12):
+                    continue  # the single-asset portfolio is not allowed by the bounds
+            return weights
+        return None
 
     def get_assets_tickers(self) -> list:
         if not self.labels_are_tickers:
@@ -1007,7 +1045,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         grid_portfolios = helpers.Frame.change_columns_order(grid_portfolios, ["Risk", second_column])
         return grid_portfolios
 
-    def plot_transition_map(self, x_axe: str = "risk", figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
+    def plot_transition_map(self, x_axe: str = "risk", figsize: tuple | None = None) -> Axes:
         """
         Plot Transition Map for optimized portfolios on the single period Efficient Frontier.
 
@@ -1075,7 +1113,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         fig.tight_layout()
         return ax
 
-    def plot_pair_ef(self, tickers="tickers", figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
+    def plot_pair_ef(self, tickers="tickers", figsize: tuple | None = None) -> Axes:
         """
         Plot Efficient Frontier of every pair of assets.
 
@@ -1152,7 +1190,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         self.plot_assets(kind="mean", tickers=tickers)
         return ax
 
-    def plot_cml(self, rf_return: float = 0, y_axe: str = "cagr", figsize: Optional[tuple] = None) -> Axes:  # noqa: UP045
+    def plot_cml(self, rf_return: float = 0, y_axe: str = "cagr", figsize: tuple | None = None) -> Axes:
         """
         Plot Capital Market Line (CML).
 

@@ -108,6 +108,51 @@ def test_minimize_risk_raises_runtimeerror_on_failure(ef_reb_ab):
     assert type(excinfo.value) is RuntimeError, f"Expected exact RuntimeError, got {type(excinfo.value).__name__}"
 
 
+def test_minimize_risk_returns_single_asset_corner_when_optimizer_fails(synthetic_env, mocker):
+    """At a target CAGR equal to a single asset's own CAGR (e.g. the leftmost frontier
+    point, whose target is the minimum asset CAGR), the 100% single-asset portfolio is
+    feasible and must be returned as the minimum-risk corner even when SLSQP fails to
+    converge to it from every multi-start initial guess. This mirrors the corner guard
+    already present in _maximize_risk and reproduces the real-data failure that raised
+    'No solution found for target CAGR value: ...' at the leftmost frontier point.
+    """
+    ef = ok.EfficientFrontier(
+        ["IDX.US", "A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=10,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+        ticker_names=True,
+    )
+    cagr = helpers.Frame.get_cagr(ef.assets_ror)
+    corner_ticker = cagr.idxmin()
+    target = float(cagr[corner_ticker])
+
+    # Reproduce the optimizer's inability to reach the single-asset corner: force only the
+    # CAGR-target problem (the SLSQP call in minimize_risk, identified by its two equality
+    # constraints) to report failure, while leaving the frontier's setup optimizations
+    # (GMV, global max return, min/max ratio assets — each using a single constraint) intact.
+    from scipy.optimize import minimize as _real_minimize
+
+    def _fail_cagr_target(*args, **kwargs):
+        res = _real_minimize(*args, **kwargs)
+        if len(kwargs.get("constraints", ())) == 2:
+            res.success = False
+            res.status = 8
+            res.message = "forced failure"
+        return res
+
+    mocker.patch("okama.frontier.multi_period.minimize", side_effect=_fail_cagr_target)
+
+    result = ef.minimize_risk(target)
+
+    weights = dict(zip(ef.symbols, result["Weights"], strict=True))
+    assert weights[corner_ticker] == pytest.approx(1.0)
+    assert_allclose(np.sum(np.asarray(result["Weights"])), 1.0, atol=1e-12)
+    assert result["CAGR"] == pytest.approx(target)
+    assert result["Risk"] > 0
+
+
 def test_ef_points_shape_and_monotonicity(ef_reb_ab):
     pts = ef_reb_ab.ef_points
     # At least n_points rows (can be larger if right part exists)

@@ -5,6 +5,32 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.3] - 2026-07
+
+Fixes two efficient-frontier failures where the risk optimizer could not reach a
+single-asset corner point — the leftmost (minimum-CAGR) point of the rebalanced
+`EfficientFrontier` and the maximum-return point of `EfficientFrontierSingle` — so
+both frontiers are drawn for the affected asset sets instead of raising a
+`RuntimeError`. The second failure surfaced with the stricter SLSQP solver in
+scipy 1.18.
+
+### Fixed
+
+- `EfficientFrontier.minimize_risk` (rebalanced/multi-period frontier) raised
+  `RuntimeError: No solution found for target CAGR value: ...` at the leftmost
+  frontier point when the target CAGR equalled the minimum-CAGR asset's own CAGR
+  and SLSQP failed to converge to that single-asset vertex from the multi-start
+  initial guesses. The method now falls back to the deterministic single-asset
+  corner portfolio (mirroring the existing guard in `_maximize_risk`), so the
+  efficient frontier is drawn for such asset sets instead of failing.
+- `EfficientFrontierSingle.minimize_risk` (single-period frontier) raised
+  `RuntimeError: No solutions were found` at the maximum-return frontier point
+  when the target return equalled a single asset's own mean return and SLSQP
+  failed to converge to that single-asset vertex from the equal-weights start
+  (surfaced by the stricter SLSQP in scipy 1.18). The method now falls back to
+  the deterministic single-asset corner portfolio, so `EfficientFrontierSingle.ef_points`
+  is drawn for such asset sets instead of failing.
+
 ## [2.2.2] - 2026-06
 
 Adds new analytics — ex-post tracking error for `Portfolio` and an RMS/std

@@ -1,6 +1,6 @@
 from __future__ import annotations  # noqa: I001
 
-from typing import Union, Optional, Literal
+from typing import Literal
 
 import pandas as pd
 import numpy as np
@@ -12,12 +12,12 @@ from okama import settings
 
 
 def get_wealth_indexes_fv_with_cashflow(  # noqa: C901
-    ror: Union[pd.Series, pd.DataFrame],  # noqa: UP007
-    portfolio_symbol: Optional[str],  # noqa: UP045
-    inflation_symbol: Optional[str],  # noqa: UP045
+    ror: pd.Series | pd.DataFrame,
+    portfolio_symbol: str | None,
+    inflation_symbol: str | None,
     cashflow_parameters: cf.CashFlow,
     task: Literal["backtest", "monte_carlo"],
-) -> Union[pd.Series, pd.DataFrame]:  # noqa: UP007
+) -> pd.Series | pd.DataFrame:
     """
     Calculate wealth index Future Values (FV) for a series of returns with cash flows (withdrawals/contributions).
 
@@ -162,11 +162,11 @@ def get_wealth_indexes_fv_with_cashflow(  # noqa: C901
 
 
 def get_cash_flow_fv(  # noqa: C901
-    ror: Union[pd.Series, pd.DataFrame],  # noqa: UP007
-    portfolio_symbol: Optional[str],  # noqa: UP045
+    ror: pd.Series | pd.DataFrame,
+    portfolio_symbol: str | None,
     cashflow_parameters: cf.CashFlow,
     task: Literal["backtest", "monte_carlo"],
-) -> Union[pd.Series, pd.DataFrame]:  # noqa: UP007
+) -> pd.Series | pd.DataFrame:
     """
     Calculate cash flow future values (FV) for a series of returns according to withdrawal/contributions strategies.
     """
@@ -548,10 +548,10 @@ def zero_wealth_after_first_void(wealth: pd.DataFrame) -> pd.DataFrame:
 
 
 def discount_monthly_cash_flow(
-    cash_flow_fv: Union[pd.Series, pd.DataFrame],  # noqa: UP007
+    cash_flow_fv: pd.Series | pd.DataFrame,
     annual_effective_discount_rate: float,
     reverse: bool = False,
-) -> Union[pd.Series, pd.DataFrame]:  # noqa: UP007
+) -> pd.Series | pd.DataFrame:
     number_of_months = cash_flow_fv.shape[0]
     monthly_discount_rate = (1 + annual_effective_discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
     if not reverse:
@@ -604,7 +604,7 @@ def _irr_brentq_column(cashflow_column: np.ndarray) -> float:
 def irr_of_cashflow_matrix(
     cashflows: np.ndarray,
     periods_per_year: int = 12,
-    guess: Union[np.ndarray, float, None] = None,  # noqa: UP007
+    guess: np.ndarray | float | None = None,
     xtol: float = 1e-10,
     max_iter: int = 50,
 ) -> np.ndarray:

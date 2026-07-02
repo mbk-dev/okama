@@ -1,4 +1,3 @@
-from typing import Optional, Tuple, Union  # noqa: I001, UP035
 from dataclasses import dataclass
 
 import numpy as np
@@ -62,7 +61,7 @@ class Rebalance:
         self,
         period: str = "year",
         abs_deviation: float | None = None,
-        rel_deviation: Optional[float] = None,  # noqa: UP045
+        rel_deviation: float | None = None,
     ):
         self.abs_deviation = abs_deviation
         self.rel_deviation = rel_deviation
@@ -216,7 +215,7 @@ class Rebalance:
 
     def _rebalance_by_condition(
         self, ror, target_weights, initial_inv, calculate_assets_wealth_indexes: bool = False
-    ) -> Tuple[pd.Series, pd.DataFrame, pd.Series]:  # noqa: UP006
+    ) -> tuple[pd.Series, pd.DataFrame, pd.Series]:
         target_weights_np = np.asarray(target_weights)
         portfolio_wealth_index = pd.Series(dtype="float64")
         assets_wealth_indexes_local = pd.DataFrame(columns=ror.columns, dtype="float64")
@@ -254,7 +253,7 @@ class Rebalance:
         assets_wealth_indexes_local,
         portfolio_wealth_index_local,
         target_weights,
-    ) -> Tuple[bool, bool]:  # noqa: UP006
+    ) -> tuple[bool, bool]:
         try:
             # DataFrame
             weights = assets_wealth_indexes_local.iloc[-1].divide(portfolio_wealth_index_local.iloc[-1], axis=0)
@@ -300,7 +299,7 @@ class Rebalance:
         reb = self.wealth_ts(target_weights=target_weights, ror=ror, calculate_assets_wealth_indexes=True)
         return reb.assets_wealth_indexes.divide(reb.portfolio_wealth_index, axis=0)
 
-    def return_ror_ts(self, target_weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:  # noqa: UP007
+    def return_ror_ts(self, target_weights: list | np.ndarray, ror: pd.DataFrame) -> pd.Series:
         """
         Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
 
@@ -379,7 +378,7 @@ class Rebalance:
 
         return wealth_index
 
-    def return_ror_ts_ef(self, weights: Union[list, np.ndarray], ror: pd.DataFrame) -> pd.Series:  # noqa: UP007
+    def return_ror_ts_ef(self, weights: list | np.ndarray, ror: pd.DataFrame) -> pd.Series:
         """
         Return monthly rate of return time series of rebalanced portfolio given returns time series of the assets.
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-from typing import Optional, Union
 
 import pandas as pd
 
@@ -25,7 +24,7 @@ class CashFlow:
     def __init__(
         self,
         parent: core.Portfolio,
-        frequency: Optional[str] = "none",  # noqa: UP045
+        frequency: str | None = "none",
         initial_investment: float = 1000.0,
         time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
@@ -204,12 +203,12 @@ class IndexationStrategy(CashFlow):
     def __init__(
         self,
         parent: core.Portfolio,
-        frequency: Optional[str] = "none",  # noqa: UP045
+        frequency: str | None = "none",
         initial_investment: float = 1000.0,
         time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
         amount: float = 0,
-        indexation: Optional[Union[str, float]] = None,  # noqa: UP007, UP045
+        indexation: str | float | None = None,
     ):
         """
         Initialize the IndexationStrategy.
@@ -292,7 +291,7 @@ class IndexationStrategy(CashFlow):
         return self._indexation
 
     @indexation.setter
-    def indexation(self, indexation: Optional[float]):  # noqa: UP045
+    def indexation(self, indexation: float | None):
         if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
             self._indexation = self.portfolio.get_cagr().iloc[-1].loc[self.portfolio.inflation]
         elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
@@ -345,7 +344,7 @@ class PercentageStrategy(CashFlow):
     def __init__(
         self,
         parent: core.Portfolio,
-        frequency: Optional[str] = "none",  # noqa: UP045
+        frequency: str | None = "none",
         initial_investment: float = 1000.0,
         time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
@@ -526,11 +525,11 @@ class VanguardDynamicSpending(PercentageStrategy):
         time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
         percentage: float = 0.0,
-        min_max_annual_withdrawals: Optional[tuple[float, float]] = None,  # noqa: UP045
+        min_max_annual_withdrawals: tuple[float, float] | None = None,
         adjust_min_max: bool = True,
-        floor_ceiling: Optional[tuple[float, float]] = None,  # noqa: UP045
+        floor_ceiling: tuple[float, float] | None = None,
         adjust_floor_ceiling: bool = False,
-        indexation: Optional[Union[str, float]] = None,  # noqa: UP007, UP045
+        indexation: str | float | None = None,
     ):
         """
         Initialize the VanguardDynamicSpending strategy.
@@ -620,7 +619,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         return self._min_max_annual_withdrawals
 
     @min_max_annual_withdrawals.setter
-    def min_max_annual_withdrawals(self, value: Optional[tuple[float, float]]):  # noqa: UP045
+    def min_max_annual_withdrawals(self, value: tuple[float, float] | None):
         if value is None:
             # None disables the absolute min/max annual withdrawal limits.
             self._clear_cf_cache()
@@ -663,7 +662,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         return self._floor_ceiling
 
     @floor_ceiling.setter
-    def floor_ceiling(self, value: Optional[tuple[float, float]]):  # noqa: UP045
+    def floor_ceiling(self, value: tuple[float, float] | None):
         if value is None:
             # None disables the year-over-year floor/ceiling limits.
             self._clear_cf_cache()
@@ -709,7 +708,7 @@ class VanguardDynamicSpending(PercentageStrategy):
         return self._indexation
 
     @indexation.setter
-    def indexation(self, indexation: Optional[float]):  # noqa: UP045
+    def indexation(self, indexation: float | None):
         if indexation in [None, "inflation"] and hasattr(self.portfolio, "inflation"):
             self._indexation = self.portfolio.get_cagr().iloc[-1].loc[self.portfolio.inflation]
         elif indexation == "inflation" and not hasattr(self.portfolio, "inflation"):
@@ -870,12 +869,12 @@ class CutWithdrawalsIfDrawdown(IndexationStrategy):
     def __init__(
         self,
         parent: core.Portfolio,
-        frequency: Optional[str] = "year",  # noqa: UP045
+        frequency: str | None = "year",
         initial_investment: float = 1000.0,
         time_series_dic: dict = {},  # noqa: B006
         time_series_discounted_values: bool = False,
         amount: float = 0.0,
-        indexation: Optional[Union[str, float]] = None,  # noqa: UP007, UP045
+        indexation: str | float | None = None,
         crash_threshold_reduction: list[tuple[float, float]] = [  # noqa: B006
             (0.20, 0.40),
             (0.50, 1),

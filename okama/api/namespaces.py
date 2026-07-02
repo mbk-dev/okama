@@ -7,7 +7,7 @@ from okama.api import api_methods
 from okama import settings
 
 
-@lru_cache()  # noqa: UP011
+@lru_cache
 def get_namespaces():
     """
     Return the namespace mapping exposed as ``ok.namespaces``.
@@ -32,7 +32,7 @@ def get_namespaces():
     return json.loads(string_response)
 
 
-@lru_cache()  # noqa: UP011
+@lru_cache
 def symbols_in_namespace(namespace: str = settings.default_namespace, response_format: str = "frame") -> pd.DataFrame:
     """
     Return all symbols available in a namespace.
@@ -78,19 +78,19 @@ def symbols_in_namespace(namespace: str = settings.default_namespace, response_f
         raise ValueError('response_format must be "json" or "frame"')
 
 
-@lru_cache()  # noqa: UP011
+@lru_cache
 def get_assets_namespaces():
     string_response = api_methods.API.get_assets_namespaces()
     return json.loads(string_response)
 
 
-@lru_cache()  # noqa: UP011
+@lru_cache
 def get_macro_namespaces():
     string_response = api_methods.API.get_macro_namespaces()
     return json.loads(string_response)
 
 
-@lru_cache()  # noqa: UP011
+@lru_cache
 def no_dividends_namespaces():
     string_response = api_methods.API.get_no_dividends_namespaces()
     return json.loads(string_response)
