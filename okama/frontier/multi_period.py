@@ -511,7 +511,7 @@ class EfficientFrontier(asset_list.AssetList):
                 "Risk": objective_function.risk,
             }
         else:
-            raise RuntimeError("No solutions where found")
+            raise RuntimeError("No solutions were found")
 
     @property
     def gmv_monthly_weights(self) -> np.ndarray:
