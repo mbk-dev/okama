@@ -60,13 +60,15 @@ def cvar_t(alpha: float, v: float, loc: float = 0.0, scale: float = 1.0) -> floa
     Compute left-tail CVaR (Conditional VaR, Expected Shortfall) at level alpha
     for a Student's t distribution with degrees of freedom df, location loc, and scale scale.
 
-    Parameterization (SciPy):
+    Parameterization (SciPy)::
+
       If X ~ t(df, loc, scale), then X = loc + scale * T, where T ~ t(df) (standardized).
       VaR_alpha = loc + scale * q, where q = t_ppf(alpha; df).
       Left-tail CVaR (alpha) = E[X | X <= VaR_alpha]
                              = loc + scale * E[T | T <= q].
 
-    Closed-form for standard t (df > 1):
+    Closed-form for standard t (df > 1)::
+
       E[T | T <= q] = - ((df + q^2) / ((df - 1) * alpha)) * f(q),
       where q = t_ppf(alpha; df), f(q) = t_pdf(q; df).
 
@@ -102,12 +104,14 @@ def cvar_lognorm(alpha: float, shape: float, loc: float, scale: float) -> float:
     Compute left-tail CVaR (Conditional VaR, Expected Shortfall) at level alpha
     for a lognormal RV in SciPy's parameterization: lognorm(s, loc, scale).
 
-    Parameterization:
+    Parameterization::
+
       X ~ lognorm(s, loc, scale) means: X = loc + Y, where ln(Y) ~ N(mu, sigma^2),
       sigma = s and mu = ln(scale). Support is X > loc.
 
     CVaR at level alpha is E[X | X <= q], where q = VaR_X(alpha).
-    Let y_cap = q - loc (so y_cap > 0). Then:
+    Let y_cap = q - loc (so y_cap > 0). Then::
+
       E[Y | Y <= y_cap] = exp(mu + 0.5*sigma^2)
                           * Phi((ln(y_cap) - mu - sigma^2)/sigma)
                           / Phi((ln(y_cap) - mu)/sigma),

@@ -148,10 +148,12 @@ class MacroABC(ABC):  # noqa: B024
     def describe(self, years: tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
         """
         Generate descriptive statistics for YTD and given periods.
+
         Statistics includes:
-         - arithmetic mean
-         - median
-         - max and min values
+
+        - arithmetic mean
+        - median
+        - max and min values
 
         Parameters
         ----------
@@ -377,7 +379,9 @@ class Inflation(MacroABC):
     def describe(self, years: tuple[int, ...] = (1, 5, 10)) -> pd.DataFrame:
         """
         Generate descriptive inflation statistics for YTD and a given list of periods.
+
         Statistics includes:
+
         - YTD compound inflation
         - Annual inflation (geometric mean) for a given list of periods
         - max 12 months inflation for the periods
