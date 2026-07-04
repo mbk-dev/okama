@@ -1,3 +1,5 @@
+import re
+
 import numpy as np  # noqa: I001
 import pandas as pd
 import pytest
@@ -257,19 +259,37 @@ def test_okamaio_link_serializes_rebalancing_strategy(pf_ab_monthly):
     pf_ab_monthly.rebalancing_strategy = ok.Rebalance(period="quarter", abs_deviation=0.05, rel_deviation=0.1)
     query = parse_qs(urlparse(pf_ab_monthly.okamaio_link).query)
 
+    # okama.io/portfolio expects abs_dev/rel_dev as percentages (0-100)
     assert query["rebal"] == ["quarter"]
-    assert query["rebalancing_period"] == ["quarter"]
-    assert query["rebalancing_abs_deviation"] == ["0.05"]
-    assert query["rebalancing_rel_deviation"] == ["0.1"]
+    assert query["abs_dev"] == ["5"]
+    assert query["rel_dev"] == ["10"]
+    # legacy params unknown to okama.io must not be emitted
+    assert "rebalancing_period" not in query
+    assert "rebalancing_abs_deviation" not in query
+    assert "rebalancing_rel_deviation" not in query
 
 
 def test_okamaio_link_omits_empty_rebalancing_thresholds(pf_ab_monthly):
     query = parse_qs(urlparse(pf_ab_monthly.okamaio_link).query)
 
     assert query["rebal"] == ["month"]
-    assert query["rebalancing_period"] == ["month"]
-    assert "rebalancing_abs_deviation" not in query
-    assert "rebalancing_rel_deviation" not in query
+    assert "abs_dev" not in query
+    assert "rel_dev" not in query
+
+
+def test_okamaio_link_dates_are_year_month(pf_ab_monthly):
+    query = parse_qs(urlparse(pf_ab_monthly.okamaio_link).query)
+
+    # okama.io/portfolio expects dates as YYYY-MM
+    assert re.fullmatch(r"\d{4}-\d{2}", query["first_date"][0])
+    assert re.fullmatch(r"\d{4}-\d{2}", query["last_date"][0])
+
+
+def test_okamaio_link_weights_have_no_trailing_zero(pf_ab_monthly):
+    query = parse_qs(urlparse(pf_ab_monthly.okamaio_link).query)
+
+    # okama.io/portfolio links carry integer-like weights without ".0"
+    assert query["weights"] == ["50,50"]
 
 
 # ---------------- New tests for additional Portfolio API -----------------

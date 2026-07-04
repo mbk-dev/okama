@@ -1755,21 +1755,21 @@ class Portfolio(make_asset_list.ListMaker):
         ...     rebalancing_strategy=ok.Rebalance(period="year", abs_deviation=0.05),
         ... )
         >>> pf.okamaio_link
-        'https://okama.io/portfolio?tickers=SPY.US,AGG.US&weights=60.0,40.0&ccy=USD&first_date=2003-10-01&last_date=2024-08-01&rebal=year&rebalancing_period=year&rebalancing_abs_deviation=0.05&symbol=portfolio_6323.PF'
+        'https://okama.io/portfolio?tickers=SPY.US,AGG.US&ccy=USD&first_date=2003-10&last_date=2024-08&weights=60,40&rebal=year&abs_dev=5&symbol=portfolio_6323.PF'
         """
-        weights_percent = [w * 100 for w in self.weights]
+        # Query params follow the okama.io/portfolio vocabulary: dates are YYYY-MM,
+        # weights and rebalancing deviations (abs_dev/rel_dev) are percentages 0-100.
         query_params = {
             "tickers": ",".join(str(symbol) for symbol in self.symbols),
-            "weights": ",".join(str(weight) for weight in weights_percent),
             "ccy": self.currency,
-            "first_date": self.first_date.strftime("%Y-%m-%d"),
-            "last_date": self.last_date.strftime("%Y-%m-%d"),
+            "first_date": self.first_date.strftime("%Y-%m"),
+            "last_date": self.last_date.strftime("%Y-%m"),
+            "weights": ",".join(f"{weight * 100:g}" for weight in self.weights),
             "rebal": self.rebalancing_strategy.period,
-            "rebalancing_period": self.rebalancing_strategy.period,
-            "symbol": self.symbol,
         }
         if self.rebalancing_strategy.abs_deviation is not None:
-            query_params["rebalancing_abs_deviation"] = self.rebalancing_strategy.abs_deviation
+            query_params["abs_dev"] = f"{self.rebalancing_strategy.abs_deviation * 100:g}"
         if self.rebalancing_strategy.rel_deviation is not None:
-            query_params["rebalancing_rel_deviation"] = self.rebalancing_strategy.rel_deviation
+            query_params["rel_dev"] = f"{self.rebalancing_strategy.rel_deviation * 100:g}"
+        query_params["symbol"] = self.symbol
         return f"https://okama.io/portfolio?{urlencode(query_params, safe=',')}"
