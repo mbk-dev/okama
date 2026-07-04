@@ -152,6 +152,14 @@ Read the current version from `pyproject.toml` (the `version = "X.Y.Z"` line und
 
 The user picks. Then update `pyproject.toml` (single line edit). Do not edit any other version field — okama uses `pyproject.toml` as the single source of truth. The new version is `<NEW_VERSION>` for the rest of the workflow.
 
+Immediately after the bump, re-install the project so the env's package metadata matches:
+
+```bash
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry install
+```
+
+`okama.__version__` is read from the installed distribution metadata (`importlib.metadata.version("okama")` in `okama/__init__.py`), which is written only at install time. The editable install keeps the *code* current, but bumping `pyproject.toml` alone leaves the env — and every Jupyter kernel pointing at it — reporting the previous version (observed after v2.2.4: the env still said 2.2.3). Confirm the output ends with `Installing the current project: okama (<NEW_VERSION>)`.
+
 ## Phase 6 — Release notes & CHANGELOG
 
 Generate a draft from git history since the last tag, then have the user edit it.
@@ -328,7 +336,23 @@ git push
 
 If `--ff-only` fails, dev has diverged from master post-merge — stop and ask the user how to handle it. Do not force-push, do not rebase without permission.
 
-The Jupyter kernel was already registered in Phase 2b; no further kernel work is needed here.
+### Per-release Jupyter kernel
+
+Register a new Jupyter kernel named after the released okama version. This is a separate kernel from the Python-version-keyed test kernel of Phase 2b (`okama_poetry<X.Y>`) — that one stays as is; this one gives the user a kernel labelled with the release in Jupyter's kernel list.
+
+First verify the env metadata matches the release — this guards against the bump-without-reinstall desync (Phase 5 must have run `poetry install` after editing `pyproject.toml`):
+
+```bash
+poetry run python -c "import okama; v=okama.__version__; assert v=='<NEW_VERSION>', f'env metadata says {v}'; print('okama', v)"
+```
+
+If the assert fails, run `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry install` and re-check. Do not register the kernel until it passes. Then:
+
+```bash
+poetry run python -m ipykernel install --user --name="okama<NEW_VERSION>" --display-name="okama<NEW_VERSION>"
+```
+
+The name follows the `okama<X.Y.Z>` convention (e.g. `okama2.2.4` for v2.2.4). Run it via `poetry run` so the kernel's `python` points at the okama poetry env. The command form is the same as in Phase 2b (`python -m ipykernel install`) — only the name convention differs. Leave kernels of previous releases alone — same rule as in Phase 2b: old kernels do not break anything, and uninstalling the user's tooling without consent is not OK.
 
 ## Reporting
 
@@ -339,6 +363,7 @@ At the end, give the user a one-paragraph summary:
 - GitHub Release URL (from `gh release view --json url -q .url`)
 - PyPI URL
 - whether `dev` is fast-forwarded
+- the per-release Jupyter kernel name that was registered (e.g. `okama2.2.4`)
 - anything that was skipped or that needs manual follow-up (Read the Docs build, etc.)
 
 Do not list every command that ran — the user does not need a transcript.
