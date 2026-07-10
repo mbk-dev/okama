@@ -215,7 +215,7 @@ More examples are available as [Jupyter Notebooks](https://github.com/mbk-dev/ok
 The official documentation is hosted on readthedocs.org: [https://okama.readthedocs.io/](https://okama.readthedocs.io/)
 
 ## Financial Widgets
-[okama-dash](https://github.com/mbk-dev/okama-dash) repository has interactive financial widgets (multi-page web application) 
+[okama.io](https://okama.io) offers interactive financial widgets (multi-page web application) 
 built with the _okama_ package and [Dash (plotly)](https://github.com/plotly/dash) framework. Working example is available at 
 [okama.io](https://okama.io/).
 
