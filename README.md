@@ -219,7 +219,7 @@ The official documentation is hosted on readthedocs.org: [https://okama.readthed
 built with the _okama_ package and [Dash (plotly)](https://github.com/plotly/dash) framework. Working example is available at 
 [okama.io](https://okama.io/).
 
-![](https://github.com/mbk-dev/okama-dash/blob/images/images/main_page.jpg?raw=true) 
+![](https://raw.githubusercontent.com/mbk-dev/okama/images/images/main_page.jpg) 
 
 ## MCP server
 
