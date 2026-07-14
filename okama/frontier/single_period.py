@@ -91,7 +91,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         self.bounds = bounds
         self.full_frontier = full_frontier
         self.n_points = n_points
-        self.labels_are_tickers = ticker_names
+        self._labels_mode: str = self._labels_mode_from_bool(ticker_names)
         self._ef_points = pd.DataFrame(dtype=float)
         self._mdp_points = pd.DataFrame(dtype=float)
 
@@ -152,6 +152,26 @@ class EfficientFrontierSingle(asset_list.AssetList):
             self._bounds = bounds
         else:
             self._bounds = ((0.0, 1.0),) * len(self.symbols)  # an N-tuple of 2-tuples
+
+    @property
+    def labels(self) -> str:
+        """Label mode for reports/charts: 'ticker', 'name' or 'local_name'."""
+        return self._labels_mode
+
+    @labels.setter
+    def labels(self, mode: str) -> None:
+        if mode not in ("ticker", "name", "local_name"):
+            raise ValueError("labels must be 'ticker', 'name' or 'local_name'.")
+        self._labels_mode = mode
+
+    @property
+    def labels_are_tickers(self) -> bool:
+        """Legacy flag: True shows tickers, False shows names."""
+        return self._labels_mode == "ticker"
+
+    @labels_are_tickers.setter
+    def labels_are_tickers(self, value: bool) -> None:
+        self._labels_mode = self._labels_mode_from_bool(value)
 
     @property
     def gmv_monthly_weights(self) -> np.ndarray:
@@ -704,11 +724,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         return None
 
     def get_assets_tickers(self) -> list:
-        if not self.labels_are_tickers:
-            asset_labels = list(self.names.values())
-        else:
-            asset_labels = self.symbols
-        return asset_labels
+        return self._asset_labels(self._labels_mode)
 
     @property
     def mean_return_range(self) -> np.ndarray:

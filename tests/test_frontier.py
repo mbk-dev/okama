@@ -271,3 +271,37 @@ def test_get_grid_portfolios_respects_max_points_single(ef_three):
     oversized request fails fast (3 assets, step 0.50 = 6 points > 2)."""
     with pytest.raises(ValueError, match="max_points"):
         ef_three.get_grid_portfolios(step=0.50, max_points=2)
+
+
+def test_frontier_labels_mode_single(synthetic_env):
+    ef = ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], inflation=False, n_points=3)
+    ef.local_names = {"IDX.US": "Индекс", "A.US": "Актив", "B.US": "Б"}
+    ef.labels = "local_name"
+    assert ef.get_assets_tickers() == ["Индекс", "Актив", "Б"]
+    # legacy shim round-trip
+    ef.labels_are_tickers = True
+    assert ef._labels_mode == "ticker"
+    assert ef.labels_are_tickers is True
+    ef.labels_are_tickers = False
+    assert ef._labels_mode == "name"
+
+
+def test_frontier_labels_mode_multi(synthetic_env):
+    ef = ok.EfficientFrontier(["IDX.US", "A.US", "B.US"], inflation=False)
+    ef.local_names = {"IDX.US": "Индекс", "A.US": "Актив", "B.US": "Б"}
+    ef.labels = "local_name"
+    assert ef._asset_labels(ef._labels_mode) == ["Индекс", "Актив", "Б"]
+    # legacy ticker_names round-trip + validation
+    ef.ticker_names = False
+    assert ef._labels_mode == "name" and ef.ticker_names is False
+    ef.ticker_names = True
+    assert ef._labels_mode == "ticker" and ef.ticker_names is True
+    with pytest.raises(ValueError):
+        ef.ticker_names = "yes"
+
+
+def test_frontier_ctor_ticker_names_default(synthetic_env):
+    ef = ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], inflation=False, n_points=3)
+    assert ef._labels_mode == "ticker"        # default ticker_names=True
+    ef2 = ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], inflation=False, n_points=3, ticker_names=False)
+    assert ef2._labels_mode == "name"

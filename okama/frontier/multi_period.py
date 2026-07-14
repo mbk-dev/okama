@@ -273,23 +273,26 @@ class EfficientFrontier(asset_list.AssetList):
             raise ValueError("rebalancing_strategy must be of type Rebalance")
 
     @property
-    def ticker_names(self):
-        """
-        Return or set whether to show tickers or full stock names in the reports.
-
-        Returns
-        -------
-        bool
-            True - for tickers.
-            False - for full stock (index) names.
-        """
-        return self._tickers
+    def ticker_names(self) -> bool:
+        """Legacy flag: True shows tickers, False shows full names."""
+        return self._labels_mode == "ticker"
 
     @ticker_names.setter
-    def ticker_names(self, tickers: bool):
+    def ticker_names(self, tickers: bool) -> None:
         if not isinstance(tickers, bool):
             raise ValueError("tickers should be True or False")
-        self._tickers = tickers
+        self._labels_mode = self._labels_mode_from_bool(tickers)
+
+    @property
+    def labels(self) -> str:
+        """Label mode for reports/charts: 'ticker', 'name' or 'local_name'."""
+        return self._labels_mode
+
+    @labels.setter
+    def labels(self, mode: str) -> None:
+        if mode not in ("ticker", "name", "local_name"):
+            raise ValueError("labels must be 'ticker', 'name' or 'local_name'.")
+        self._labels_mode = mode
 
     @property
     def verbose(self):
@@ -396,7 +399,7 @@ class EfficientFrontier(asset_list.AssetList):
         if weights.success:
             # CAGR calculation
             cagr = self._get_cagr(weights.x)
-            asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+            asset_labels = self._asset_labels(self._labels_mode)
             point = dict(zip(asset_labels, weights.x))  # noqa: B905
             point["CAGR"] = cagr
             point["Risk"] = objective_function.annual_risk
@@ -411,7 +414,7 @@ class EfficientFrontier(asset_list.AssetList):
         if corner is not None:
             corner_weights = corner["Weights"]
             diversification_ratio = -objective_function(corner_weights)
-            asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+            asset_labels = self._asset_labels(self._labels_mode)
             point = dict(zip(asset_labels, corner_weights, strict=True))
             point["CAGR"] = self._get_cagr(corner_weights)
             point["Risk"] = objective_function.annual_risk
@@ -802,7 +805,7 @@ class EfficientFrontier(asset_list.AssetList):
         # Recompute the mean return for the selected (best) weights, as objective_function
         # caches it as a side effect of the most recent evaluation.
         mean_return = self._get_portfolio_ror_ts(best.x).mean()
-        asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+        asset_labels = self._asset_labels(self._labels_mode)
         point = dict(zip(asset_labels, best.x))  # noqa: B905
         point["CAGR"] = target_value
         point["Mean return"] = mean_return * settings._MONTHS_PER_YEAR
@@ -881,7 +884,7 @@ class EfficientFrontier(asset_list.AssetList):
 
             # Calculate points of EF given optimal weights
             if weights.success:
-                asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+                asset_labels = self._asset_labels(self._labels_mode)
                 solution = dict(zip(asset_labels, weights.x))  # noqa: B905
                 solution["CAGR"] = target_return
                 solution["Mean return"] = objective_function.mean_return * settings._MONTHS_PER_YEAR
@@ -926,7 +929,7 @@ class EfficientFrontier(asset_list.AssetList):
                 continue  # the single-asset portfolio is not allowed by the bounds
             ts = self._get_portfolio_ror_ts(weights)
             mean_return_monthly = ts.mean()
-            asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+            asset_labels = self._asset_labels(self._labels_mode)
             point = dict(zip(asset_labels, weights))  # noqa: B905
             point["CAGR"] = target_value
             point["Mean return"] = mean_return_monthly * settings._MONTHS_PER_YEAR
@@ -1350,7 +1353,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> plt.show()
         """
         weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
-        asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+        asset_labels = self._asset_labels(self._labels_mode)
         # Every enumerated weight vector is unique, so the ror cache would never
         # hit and only grow O(points). Compute the series directly instead.
         rebalance = Rebalance(period=self.rebalancing_strategy.period)
@@ -1408,7 +1411,7 @@ class EfficientFrontier(asset_list.AssetList):
         weights_series = helpers.Float.get_grid_weights(
             w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds, max_points=max_points
         )
-        asset_labels = self.symbols if self.ticker_names else list(self.names.values())
+        asset_labels = self._asset_labels(self._labels_mode)
         # Every grid weight vector is unique, so the ror cache would never hit
         # and only grow O(points). Compute the series directly instead.
         rebalance = Rebalance(period=self.rebalancing_strategy.period)
