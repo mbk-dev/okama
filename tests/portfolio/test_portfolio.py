@@ -448,3 +448,20 @@ def test_tracking_error_with_portfolio_benchmark(pf_ab_monthly, synthetic_env):
 def test_tracking_error_invalid_method_raises(pf_ab_monthly):
     with pytest.raises(ValueError, match="method"):
         pf_ab_monthly.tracking_error(benchmark="IDX.US", method="mad")
+
+
+def test_table_adds_local_name_when_present(synthetic_env):
+    pf = ok.Portfolio(["IDX.US", "A.US"], weights=[0.5, 0.5], inflation=False)
+    # simulate one asset carrying a native name
+    pf.asset_obj_dict["IDX.US"].local_name = "Индекс"
+    pf.local_names = {"IDX.US": "Индекс", "A.US": "Asset A name"}
+    table = pf.table
+    assert "local name" in table.columns
+    assert list(table["local name"]) == ["Индекс", "Asset A name"]
+
+
+def test_table_no_local_name_column_when_absent(synthetic_env):
+    pf = ok.Portfolio(["IDX.US", "A.US"], weights=[0.5, 0.5], inflation=False)
+    # fakes have local_name=None by default
+    assert "local name" not in pf.table.columns
+    assert list(pf.table.columns) == ["asset name", "ticker", "weights"]

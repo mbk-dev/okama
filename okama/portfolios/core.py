@@ -1475,6 +1475,9 @@ class Portfolio(make_asset_list.ListMaker):
         """
         Return table with security name, ticker, weight for assets in the portfolio.
 
+        When at least one asset has a local name, an additional 'local name' column
+        is inserted between 'asset name' and 'ticker'.
+
         Returns
         -------
         DataFrame
@@ -1487,6 +1490,12 @@ class Portfolio(make_asset_list.ListMaker):
                         asset name   ticker  weights
         0  Microsoft Corporation  MSFT.US      0.5
         1              Apple Inc  AAPL.US      0.5
+
+        >>> pf = ok.Portfolio(["SBER.MOEX", "MSFT.US"])
+        >>> pf.table
+                      asset name             local name     ticker  weights
+        0               Sberbank               Сбербанк  SBER.MOEX      0.5
+        1  Microsoft Corporation  Microsoft Corporation    MSFT.US      0.5
         """
         x = pd.DataFrame(
             data={
@@ -1494,6 +1503,8 @@ class Portfolio(make_asset_list.ListMaker):
                 "ticker": list(self.names.keys()),
             }
         )
+        if any(a.local_name for a in self.asset_obj_dict.values()):
+            x.insert(1, "local name", list(self.local_names.values()))
         x["weights"] = self.weights
         return x
 
