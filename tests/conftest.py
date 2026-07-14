@@ -1,4 +1,5 @@
-import socket  # noqa: I001
+import os  # noqa: I001
+import socket
 import random
 
 import pytest
@@ -13,6 +14,24 @@ from tests.helpers.factories import (
     make_period_index,
     make_ror_series,
 )
+
+# Cap nested parallelism for the whole test session so the suite cannot spawn a
+# runaway process/thread storm that exhausts RAM and freezes the machine.
+#
+# There are three multiplying layers, each of which defaults to "one per CPU
+# thread" (16 on this host), so unbounded they stack multiplicatively:
+#   1. xdist workers   -- bounded to a fixed count via `-n` in tests/pytest.ini.
+#   2. joblib/loky      -- okama's frontier code calls Parallel(n_jobs=-1) with the
+#      default loky (process) backend; -1 resolves to joblib.cpu_count().
+#      LOKY_MAX_CPU_COUNT caps that (verified: it sets joblib.cpu_count()).
+#      Note: joblib.parallel_config(n_jobs=...) does NOT help -- an explicit
+#      n_jobs=-1 at the call site overrides the context default.
+#   3. native BLAS threads (OpenBLAS/MKL) inside each worker -- capped below.
+# setdefault() keeps any value the caller already exported.
+os.environ.setdefault("LOKY_MAX_CPU_COUNT", "4")
+os.environ.setdefault("OMP_NUM_THREADS", "2")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "2")
+os.environ.setdefault("MKL_NUM_THREADS", "2")
 
 
 @pytest.fixture(scope="session", autouse=True)
