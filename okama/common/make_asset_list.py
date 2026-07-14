@@ -264,7 +264,7 @@ class ListMaker(ABC):
             # append data to dictionaries
             currencies[asset_item.symbol] = asset_item.currency
             names[asset_item.symbol] = asset_item.name
-            local_names[asset_item.symbol] = asset_item.local_name or asset_item.name
+            local_names[asset_item.symbol] = getattr(asset_item, "local_name", None) or asset_item.name
             first_dates[asset_item.symbol] = asset_first_date
             last_dates[asset_item.symbol] = asset_last_date
             own_first_dates[asset_item.symbol] = asset_own_first_date

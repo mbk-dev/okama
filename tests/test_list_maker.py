@@ -186,3 +186,42 @@ def test_asset_labels_modes_and_alignment(synthetic_env):
         assert al._asset_labels("local_name")[i] == al.local_names[sym]
     with pytest.raises(ValueError):
         al._asset_labels("bad")
+
+
+def test_asset_like_without_local_name_attribute(mocker):
+    """Regression: asset-like objects (Portfolio, etc.) without local_name should use .name."""
+    idx = pd.period_range("2020-01", periods=12, freq="M")
+    import numpy as np
+
+    rng = np.random.default_rng(42)
+    ror_series = pd.Series(rng.normal(0.01, 0.02, 12), index=idx, name="STUB.US")
+
+    # Asset-like stub with NO local_name attribute at all (mimics Portfolio, etc.)
+    class AssetLikeStub:
+        def __init__(self):
+            self.symbol = "STUB.US"
+            self.name = "Stub Asset Name"
+            self.currency = "USD"
+            self.ror = ror_series
+            self.first_date = ror_series.index[0].to_timestamp(how="start")
+            self.last_date = ror_series.index[-1].to_timestamp(how="start")
+            self.close_monthly = pd.Series(100.0, index=idx)
+            self.dividends = pd.Series(0.0, index=idx)
+            self.pl = ok.settings.PeriodLength(0, 12)
+            # No local_name attribute — this is the bug trigger
+
+    stub_asset = AssetLikeStub()
+    fake_assets = {"STUB.US": stub_asset}
+
+    mocker.patch(
+        "okama.common.make_asset_list.ListMaker._get_asset_obj_dict",
+        return_value=fake_assets,
+    )
+    from tests.helpers.factories import FakeCurrencyAsset
+
+    mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=FakeCurrencyAsset)
+
+    # Before fix: AttributeError: 'AssetLikeStub' object has no attribute 'local_name'
+    # After fix: builds successfully and local_names falls back to .name
+    lm = DummyList(["STUB.US"], ccy="USD", inflation=False)
+    assert lm.local_names == {"STUB.US": "Stub Asset Name"}
