@@ -268,6 +268,18 @@ def test_describe_basic_with_zero_dividends(synthetic_env2, mocker):
         assert float(dy_row[c]) == 0.0
 
 
+def test_describe_local_names_header(synthetic_env):
+    al = ok.AssetList(["IDX.US", "A.US"], inflation=False)
+    al.local_names = {"IDX.US": "Индекс", "A.US": "Актив"}
+    df = al.describe(tickers="local_names")
+    assert "Индекс" in df.columns and "Актив" in df.columns
+    # legacy bool still works
+    df_names = al.describe(tickers=False)
+    assert al.names["IDX.US"] in df_names.columns
+    df_tickers = al.describe(tickers=True)
+    assert "IDX.US" in df_tickers.columns
+
+
 def test_real_mean_return_with_mocked_inflation(mocker):
     # Asset with 1%/month; inflation 0.2%/month
     idx = pd.period_range("2020-01", periods=24, freq="M")

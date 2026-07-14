@@ -791,7 +791,7 @@ class AssetList(make_asset_list.ListMaker):
         """
         return helpers.Frame.get_annual_return_ts_from_monthly(self.assets_ror)
 
-    def describe(self, years: tuple[int, ...] = (1, 5, 10), tickers: bool = True) -> pd.DataFrame:  # noqa: C901
+    def describe(self, years: tuple[int, ...] = (1, 5, 10), tickers: bool | str = True) -> pd.DataFrame:  # noqa: C901
         """
         Generate descriptive statistics for a list of assets.
 
@@ -818,8 +818,10 @@ class AssetList(make_asset_list.ListMaker):
         years : tuple of int, default (1, 5, 10)
             List of periods for CAGR.
 
-        tickers : bool, default True
-            Defines whether to show tickers (True) or asset names in the header.
+        tickers : bool or str, default True
+            Defines which labels to use in the column header. A bool value uses tickers (True) or
+            asset names (False) for legacy compatibility. A string value selects the mode explicitly:
+            'tickers', 'names', or 'local_names'.
 
         Returns
         -------
@@ -931,10 +933,21 @@ class AssetList(make_asset_list.ListMaker):
             description = description.rename(columns={self.inflation: "inflation"})
             description = helpers.Frame.change_columns_order(description, ["inflation"], position="last")
         description = helpers.Frame.change_columns_order(description, ["property", "period"], position="first")
-        if not tickers:
+        # resolve label mode from the tickers parameter (bool legacy or mode string)
+        if isinstance(tickers, bool):
+            mode = "ticker" if tickers else "name"
+        elif tickers == "tickers":
+            mode = "ticker"
+        elif tickers == "names":
+            mode = "name"
+        elif tickers == "local_names":
+            mode = "local_name"
+        else:
+            raise ValueError("tickers must be a bool or one of 'tickers', 'names', 'local_names'.")
+        if mode != "ticker":
+            labels = dict(zip(self.symbols, self._asset_labels(mode)))  # noqa: B905
             for ti in self.symbols:
-                # short_ticker = ti.split(".", 1)[0]
-                description = description.rename(columns={ti: self.names[ti]})
+                description = description.rename(columns={ti: labels[ti]})
         return description
 
     @property
