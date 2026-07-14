@@ -698,6 +698,11 @@ class ListMaker(ABC):
             - 'local_names': native-language names (e.g. 'Сбербанк' / '贵州茅台').
             - list of str: custom annotations for each asset.
 
+            .. note::
+                Rendering native ('local_names') labels written in CJK scripts
+                (Chinese, Japanese, Korean) requires a CJK-capable matplotlib
+                font; with the default fonts such glyphs appear as tofu boxes.
+
         pct_values : bool, default False
             If True, show risk and return values in percent.
             If False, show values as decimals.
