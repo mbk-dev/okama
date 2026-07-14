@@ -113,3 +113,20 @@ def test_invalid_namespace_raises_value_error(mocker):
     with pytest.raises(ValueError):
         # Symbol with namespace not in allowed set -> error before any data query call
         ok.Asset("XYZ.EU")
+
+
+def test_local_name_present(basic_patches):
+    dm = basic_patches["defaults"]
+    dm.symbol_info["local_name"] = "Сбербанк"
+    basic_patches["m_get_symbol_info"].return_value = dm.symbol_info
+    a = ok.Asset("SPY.US")
+    assert a.local_name == "Сбербанк"
+    assert a.info == dm.symbol_info          # raw payload stored
+    assert "local_name" in repr(a)
+
+
+def test_local_name_absent_is_none(basic_patches):
+    # default symbol_info has no "local_name" key
+    a = ok.Asset("SPY.US")
+    assert a.local_name is None
+    assert a.info["name"] == "SPDR S&P 500 ETF Trust"

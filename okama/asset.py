@@ -63,6 +63,7 @@ class Asset:
         dic = {
             "symbol": self.symbol,
             "name": self.name,
+            "local_name": self.local_name,
             "country": self.country,
             "exchange": self.exchange,
             "currency": self.currency,
@@ -82,8 +83,10 @@ class Asset:
 
     def _get_symbol_data(self, symbol) -> None:
         x = data_queries.QueryData.get_symbol_info(symbol)
+        self.info: dict = x
         self.ticker: str = x["code"]
         self.name: str = x["name"]
+        self.local_name: str | None = x.get("local_name")
         self.country: str = x["country"]
         self.exchange: str = x["exchange"]
         self.currency: str = x["currency"]
