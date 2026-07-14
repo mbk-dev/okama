@@ -1203,7 +1203,7 @@ class EfficientFrontier(asset_list.AssetList):
                 logger.info(f"left EF point #{i + 1}/{self.n_points} is done in {end_time - start_time:.2f} sec.")
             return row
 
-        ef_points_records = Parallel(n_jobs=-1)(
+        ef_points_records = Parallel(n_jobs=settings.resolve_n_jobs())(
             delayed(compute_left_part_of_ef)(i, target_cagr)
             for i, target_cagr in enumerate(self._target_cagr_range_left)
         )
@@ -1221,7 +1221,7 @@ class EfficientFrontier(asset_list.AssetList):
                     )
                 return row
 
-            ef_points_records += Parallel(n_jobs=-1)(
+            ef_points_records += Parallel(n_jobs=settings.resolve_n_jobs())(
                 delayed(compute_right_part_of_ef)(i, target_cagr) for i, target_cagr in enumerate(range_right)
             )
         df = pd.DataFrame.from_records(ef_points_records)
