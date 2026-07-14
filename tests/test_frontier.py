@@ -302,6 +302,6 @@ def test_frontier_labels_mode_multi(synthetic_env):
 
 def test_frontier_ctor_ticker_names_default(synthetic_env):
     ef = ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], inflation=False, n_points=3)
-    assert ef._labels_mode == "ticker"        # default ticker_names=True
+    assert ef._labels_mode == "ticker"  # default ticker_names=True
     ef2 = ok.EfficientFrontierSingle(["IDX.US", "A.US", "B.US"], inflation=False, n_points=3, ticker_names=False)
     assert ef2._labels_mode == "name"

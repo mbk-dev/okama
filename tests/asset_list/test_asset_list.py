@@ -416,6 +416,7 @@ def test_tracking_error_rolling_with_std_method(synthetic_env):
 
 def test_plot_assets_local_names_labels(synthetic_env, mocker):
     import matplotlib
+
     matplotlib.use("Agg")
     al = ok.AssetList(["IDX.US", "A.US"], inflation=False)
     # give deterministic local names via the resolver's source
