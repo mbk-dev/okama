@@ -5,6 +5,62 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-07
+
+Adds native-language ("local") asset names as a first-class labelling option
+across assets, lists, plots, tables and namespace search, so charts and reports
+can show, for example, `Сбербанк` or `贵州茅台` instead of only the Latin ticker
+or English name. The release also hardens the `EfficientFrontier` parallel
+optimizer against a nested process-count explosion and fixes the
+`Portfolio.okamaio_link` URL format. Dependencies were refreshed in the lock file.
+
+### Added
+
+- `Asset` now exposes a `local_name` attribute (native-language name, `None` when
+  the data provider has none) and stores the raw provider payload on `Asset.info`.
+- `AssetList` gained a `local_names` mapping (symbol → native name, falling back
+  to the English name when a native one is missing) and an internal
+  `_asset_labels` resolver shared by the labelling call sites.
+- Native names can be selected as a label mode wherever ticker/name labels were
+  already available:
+  - `AssetList.plot_assets` and `AssetList.describe` accept
+    `tickers="local_names"` (in addition to `"tickers"` / `"names"`), keeping the
+    legacy `ticker_names` boolean working.
+  - `EfficientFrontier` and `EfficientFrontierSingle` gained a `labels` mode
+    selector (`labels` / `labels_are_tickers` properties) while still accepting
+    the legacy `ticker_names` constructor argument.
+  - The `Portfolio.table` assets table adds a "local name" column when at least
+    one member has a native name.
+- `okama.search` (namespace search) now also matches against the native
+  `local_name` column, so a query like `Сбербанк` finds the asset.
+
+### Fixed
+
+- `EfficientFrontier` parallel optimization no longer multiplies worker processes
+  in a nested parallel context (issue #94). The new `okama.settings.resolve_n_jobs`
+  helper clamps joblib `n_jobs` to a single worker when already inside a parallel
+  context — a `pytest-xdist` worker (`PYTEST_XDIST_WORKER` set) or an active joblib
+  pool (backend nesting level above zero) — otherwise honouring the `OKAMA_N_JOBS`
+  environment variable (default `-1`, all cores). This prevents the multiplicative
+  `N x N` process explosion (observed as ~480 `loky` workers saturating RAM/swap)
+  when `pytest-xdist` test workers each opened a full `loky` pool.
+- `Portfolio.okamaio_link` now generates a URL matching the okama.io/portfolio
+  query-string format. Previously the link carried parameters the page never read
+  (a duplicate `rebalancing_period` and `rebalancing_abs_deviation` /
+  `rebalancing_rel_deviation`), so the rebalancing deviations were silently
+  dropped on open. Dates now use the site-wide `YYYY-MM` format instead of
+  `YYYY-MM-DD`, weights lose the trailing `.0`, and the rebalancing deviations are
+  emitted as `abs_dev` / `rel_dev` percentages (0-100) instead of fractions.
+
+### Docs
+
+- Fixed reStructuredText "Unexpected indentation" errors in the `describe`
+  docstrings of `MacroABC` / `Inflation` (`okama/macro.py`) and the `cvar_t` /
+  `cvar_lognorm` docstrings in `okama/helpers/tails.py`, so the Sphinx build no
+  longer emits those errors.
+- Documented that rendering native (`local_names`) labels in CJK scripts needs a
+  CJK-capable Matplotlib font, and that namespace search also matches native names.
+
 ## [2.2.4] - 2026-07
 
 Fixes the Most Diversified Portfolios line (`EfficientFrontier.mdp_points`)
