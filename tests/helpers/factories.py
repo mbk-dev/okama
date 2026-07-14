@@ -33,10 +33,18 @@ class ListDefaults:
 class FakeAsset:
     """Minimal Asset-like object compatible with ListMaker expectations in tests."""
 
-    def __init__(self, symbol: str, ror: pd.Series, currency: str = "USD", name: str | None = None):
+    def __init__(
+        self,
+        symbol: str,
+        ror: pd.Series,
+        currency: str = "USD",
+        name: str | None = None,
+        local_name: str | None = None,
+    ):
         self.symbol = symbol
         self.ticker = symbol.split(".")[0]
         self.name = name or f"{self.ticker} name"
+        self.local_name = local_name
         self.currency = currency
         self.ror = ror
         # Synthetic close prices (monthly) and dividends for tests (PeriodIndex 'M').
