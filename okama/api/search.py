@@ -15,7 +15,8 @@ def search(search_string: str, namespace: str | None = None, response_format: st
     table returned by ``ok.symbols_in_namespace(namespace)``; if that table
     carries a ``local_name`` column (native-language name, e.g. Cyrillic for
     MOEX), it is matched as well. Otherwise the query is delegated to the API
-    search endpoint across all namespaces, which matches ticker, name, and ISIN.
+    search endpoint across all namespaces, which matches ticker, name, native
+    local name (e.g. Cyrillic for MOEX, Chinese for SHG/SHE/HK), and ISIN.
 
     Parameters
     ----------
