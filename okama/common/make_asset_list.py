@@ -59,6 +59,7 @@ class ListMaker(ABC):
             self.newest_asset,
             self.eldest_asset,
             self.names,
+            self.local_names,
             self.currencies,
             self.assets_first_dates,
             self.assets_last_dates,
@@ -125,6 +126,21 @@ class ListMaker(ABC):
             Asset object.
         """
         return list(self.asset_obj_dict.values())[item]
+
+    def _asset_labels(self, mode: str = "ticker") -> list[str]:
+        """Return asset labels aligned with self.symbols for the given label mode."""
+        if mode == "ticker":
+            return list(self.symbols)
+        if mode == "name":
+            return list(self.names.values())
+        if mode == "local_name":
+            return list(self.local_names.values())
+        raise ValueError(f"Unknown label mode: {mode!r}. Use 'ticker', 'name' or 'local_name'.")
+
+    @staticmethod
+    def _labels_mode_from_bool(ticker_names: bool) -> str:
+        """Map the legacy ticker_names bool to a label mode ('ticker'/'name')."""
+        return "ticker" if ticker_names else "name"
 
     @staticmethod
     def _get_asset_obj_dict(
@@ -218,6 +234,7 @@ class ListMaker(ABC):
         first_dates: dict[str, pd.Timestamp] = {}
         last_dates: dict[str, pd.Timestamp] = {}
         names: dict[str, str] = {}
+        local_names: dict[str, str] = {}
         currencies: dict[str, str] = {}
         input_first_date = pd.to_datetime(first_date) if first_date else None
         input_last_date = pd.to_datetime(last_date) if last_date else None
@@ -247,6 +264,7 @@ class ListMaker(ABC):
             # append data to dictionaries
             currencies[asset_item.symbol] = asset_item.currency
             names[asset_item.symbol] = asset_item.name
+            local_names[asset_item.symbol] = asset_item.local_name or asset_item.name
             first_dates[asset_item.symbol] = asset_first_date
             last_dates[asset_item.symbol] = asset_last_date
             own_first_dates[asset_item.symbol] = asset_own_first_date
@@ -282,6 +300,7 @@ class ListMaker(ABC):
             "newest_asset": own_first_dates_sorted[-1][0],
             "eldest_asset": own_first_dates_sorted[0][0],
             "names_dict": names,
+            "local_names_dict": local_names,
             "currencies_dict": currencies,
             "own_first_dates_sorted": dict(own_first_dates_sorted),
             "own_last_dates_sorted": dict(own_last_dates_sorted),

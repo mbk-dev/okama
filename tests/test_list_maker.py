@@ -151,3 +151,38 @@ def test_inflation_true_sets_fields_and_aligns_index(_inflation_env_for_listmake
     assert hasattr(lm, "inflation_ts")
     assert isinstance(lm.inflation_ts, pd.Series)
     assert list(lm.inflation_ts.index) == list(lm.assets_ror.index)
+
+
+def test_local_names_fallback_mixed_basket(mocker):
+    # IDX.US has a native name; A.US does not -> falls back to its Latin name
+    from tests.helpers.factories import FakeAsset
+    idx = pd.period_range("2020-01", periods=24, freq="M")
+    import numpy as np
+    rng = np.random.default_rng(1)
+    a1 = pd.Series(rng.normal(0.01, 0.05, 24), index=idx, name="IDX.US")
+    a2 = pd.Series(rng.normal(0.01, 0.04, 24), index=idx, name="A.US")
+    fakes = {
+        "IDX.US": FakeAsset("IDX.US", a1, name="Index Fund", local_name="Индекс"),
+        "A.US": FakeAsset("A.US", a2, name="Asset A", local_name=None),
+    }
+    mocker.patch(
+        "okama.common.make_asset_list.ListMaker._get_asset_obj_dict",
+        side_effect=lambda symbols, first_date=None, last_date=None: {s: fakes[s] for s in symbols},
+    )
+    from tests.helpers.factories import FakeCurrencyAsset
+    mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=FakeCurrencyAsset)
+    al = ok.AssetList(["IDX.US", "A.US"], inflation=False)
+    assert al.local_names == {"IDX.US": "Индекс", "A.US": "Asset A"}
+
+
+def test_asset_labels_modes_and_alignment(synthetic_env):
+    al = ok.AssetList(["IDX.US", "A.US", "B.US"], inflation=False)
+    assert al._asset_labels("ticker") == al.symbols
+    assert al._asset_labels("name") == list(al.names.values())
+    assert al._asset_labels("local_name") == list(al.local_names.values())
+    # positional alignment: label[i] belongs to symbol[i]
+    for i, sym in enumerate(al.symbols):
+        assert al._asset_labels("name")[i] == al.names[sym]
+        assert al._asset_labels("local_name")[i] == al.local_names[sym]
+    with pytest.raises(ValueError):
+        al._asset_labels("bad")
