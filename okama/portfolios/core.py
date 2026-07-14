@@ -1503,7 +1503,7 @@ class Portfolio(make_asset_list.ListMaker):
                 "ticker": list(self.names.keys()),
             }
         )
-        if any(a.local_name for a in self.asset_obj_dict.values()):
+        if any(getattr(a, "local_name", None) for a in self.asset_obj_dict.values()):
             x.insert(1, "local name", list(self.local_names.values()))
         x["weights"] = self.weights
         return x

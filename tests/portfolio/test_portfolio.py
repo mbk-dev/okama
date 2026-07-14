@@ -465,3 +465,13 @@ def test_table_no_local_name_column_when_absent(synthetic_env):
     # fakes have local_name=None by default
     assert "local name" not in pf.table.columns
     assert list(pf.table.columns) == ["asset name", "ticker", "weights"]
+
+
+def test_table_handles_asset_like_member_without_local_name(synthetic_env):
+    """Regression: asset-like members (nested Portfolio/AssetList) have no
+    local_name attribute; table must not raise AttributeError on them."""
+    pf = ok.Portfolio(["IDX.US", "A.US"], weights=[0.5, 0.5], inflation=False)
+    # mimic an asset-like member that never carried a local_name attribute
+    del pf.asset_obj_dict["IDX.US"].local_name
+    table = pf.table
+    assert "local name" not in table.columns
