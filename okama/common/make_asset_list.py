@@ -690,11 +690,12 @@ class ListMaker(ABC):
         kind : {'mean', 'cagr'}, default 'mean'
             Type of return: annualized mean return (expected return) or CAGR (compound annual growth rate).
 
-        tickers : {'tickers', 'names'} or list of str, default 'tickers'
+        tickers : {'tickers', 'names', 'local_names'} or list of str, default 'tickers'
             Annotation type for assets.
 
             - 'tickers': asset symbols are shown in the form 'SPY.US'.
             - 'names': asset names are shown (for example, 'SPDR S&P 500 ETF Trust').
+            - 'local_names': native-language names (e.g. 'Сбербанк' / '贵州茅台').
             - list of str: custom annotations for each asset.
 
         pct_values : bool, default False
@@ -752,9 +753,11 @@ class ListMaker(ABC):
         ax.scatter(risks * m, returns * m, zorder=10, **(kwargs or {}))
         # Set the labels
         if tickers == "tickers":
-            asset_labels = self.symbols
+            asset_labels = self._asset_labels("ticker")
         elif tickers == "names":
-            asset_labels = list(self.names.values())
+            asset_labels = self._asset_labels("name")
+        elif tickers == "local_names":
+            asset_labels = self._asset_labels("local_name")
         else:
             if not isinstance(tickers, list):
                 raise ValueError("tickers parameter should be a list of string labels.")

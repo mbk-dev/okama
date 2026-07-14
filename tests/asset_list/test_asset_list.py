@@ -400,3 +400,14 @@ def test_tracking_error_rolling_with_std_method(synthetic_env):
     assert list(te.columns) == ["A.US", "B.US"]
     assert len(te) > 0
     assert te.notna().all(axis=None)
+
+
+def test_plot_assets_local_names_labels(synthetic_env, mocker):
+    import matplotlib
+    matplotlib.use("Agg")
+    al = ok.AssetList(["IDX.US", "A.US"], inflation=False)
+    # give deterministic local names via the resolver's source
+    al.local_names = {"IDX.US": "Индекс", "A.US": "Актив"}
+    ax = al.plot_assets(tickers="local_names")
+    texts = [t.get_text() for t in ax.texts]
+    assert "Индекс" in texts and "Актив" in texts

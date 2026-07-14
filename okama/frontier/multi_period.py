@@ -1435,10 +1435,11 @@ class EfficientFrontier(asset_list.AssetList):
 
         Parameters
         ----------
-        tickers : {'tickers', 'names'} or list[str], default 'tickers'
+        tickers : {'tickers', 'names', 'local_names'} or list[str], default 'tickers'
             Annotation type for assets.
             'tickers' - assets symbols are shown in form of 'SPY.US'
             'names' - assets names are used like - 'SPDR S&P 500 ETF Trust'
+            'local_names' - native-language names (e.g. 'Сбербанк' / '贵州茅台')
             To show custom annotations for each asset pass the list of names.
 
         figsize : tuple[float, float], default None
