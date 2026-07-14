@@ -105,6 +105,57 @@ def test_search_all_frame_mocked(mocker):
     assert set(res["symbol"].tolist()) == {"LKOH.MOEX", "LKOH.LSE"}
 
 
+def test_search_namespace_matches_local_name(mocker):
+    """Namespace search also matches the native-language local_name column."""
+    df = pd.DataFrame(
+        [
+            {
+                "name": "Aeroflot",
+                "ticker": "AFLT",
+                "isin": "RU0009062285",
+                "symbol": "AFLT.MOEX",
+                "local_name": "Аэрофлот",
+            },
+            {
+                "name": "Another Corp",
+                "ticker": "ANTR",
+                "isin": "RU0000000000",
+                "symbol": "ANTR.MOEX",
+                "local_name": None,  # a null local_name must not break the boolean mask
+            },
+        ]
+    )
+    mocker.patch(
+        "okama.api.namespaces.symbols_in_namespace",
+        return_value=df,
+    )
+
+    res = search_module.search("Аэрофлот", namespace="MOEX", response_format="frame")
+    # matched only via local_name — name/ticker/isin do not contain the Cyrillic string
+    assert list(res["symbol"]) == ["AFLT.MOEX"]
+
+
+def test_search_namespace_without_local_name_column(mocker):
+    """Namespaces whose data has no local_name column still search by name/ticker/isin."""
+    df = pd.DataFrame(
+        [
+            {
+                "name": "PJSC Aeroflot",
+                "ticker": "AFLT",
+                "isin": "RU0009062285",
+                "symbol": "AFLT.MOEX",
+            },
+        ]
+    )
+    mocker.patch(
+        "okama.api.namespaces.symbols_in_namespace",
+        return_value=df,
+    )
+
+    res = search_module.search("aero", namespace="MOEX", response_format="frame")
+    assert list(res["symbol"]) == ["AFLT.MOEX"]
+
+
 def test_search_error_invalid_format(mocker):
     # Prevent real network call by mocking API.search
     mocker.patch(

@@ -9,16 +9,19 @@ from okama.api import api_methods, namespaces
 @lru_cache
 def search(search_string: str, namespace: str | None = None, response_format: str = "frame") -> json:
     """
-    Search symbols by ticker, name, or ISIN.
+    Search symbols by ticker, name, native local name, or ISIN.
 
     When ``namespace`` is provided, the search is performed within the cached
-    table returned by ``ok.symbols_in_namespace(namespace)``. Otherwise the
-    query is delegated to the API search endpoint across all namespaces.
+    table returned by ``ok.symbols_in_namespace(namespace)``; if that table
+    carries a ``local_name`` column (native-language name, e.g. Cyrillic for
+    MOEX), it is matched as well. Otherwise the query is delegated to the API
+    search endpoint across all namespaces, which matches ticker, name, and ISIN.
 
     Parameters
     ----------
     search_string : str
-        Case-insensitive text used to match symbol names, tickers, and ISINs.
+        Case-insensitive text used to match symbol names, tickers, native
+        local names (where available), and ISINs.
 
     namespace : str, optional
         Namespace code such as ``"US"`` or ``"XETR"``. If omitted, all
@@ -54,10 +57,16 @@ def search(search_string: str, namespace: str | None = None, response_format: st
     # search for string in a single namespace
     if namespace:
         df = namespaces.symbols_in_namespace(namespace.upper())
-        condition1 = df["name"].str.contains(search_string, case=False)
-        condition2 = df["ticker"].str.contains(search_string, case=False)
-        condition3 = df["isin"].str.contains(search_string, case=False)
-        frame_response = df[condition1 | condition2 | condition3]
+        conditions = (
+            df["name"].str.contains(search_string, case=False)
+            | df["ticker"].str.contains(search_string, case=False)
+            | df["isin"].str.contains(search_string, case=False)
+        )
+        # Native-language name is present only for some namespaces (e.g. MOEX)
+        # and may be null per row; guard the column and mask NaN as no-match.
+        if "local_name" in df.columns:
+            conditions |= df["local_name"].str.contains(search_string, case=False, na=False)
+        frame_response = df[conditions]
         if response_format.lower() == "frame":
             return frame_response
         elif response_format.lower() == "json":
