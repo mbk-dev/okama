@@ -123,7 +123,7 @@ poetry install
 ```python
 import okama as ok
 
-x = ok.AssetList(['SPY.US', 'BND.US', 'DBXD.XFRA'], ccy='USD')
+x = ok.AssetList(["SPY.US", "BND.US", "DBXD.XFRA"], ccy="USD")
 x
 ```
 ![](https://raw.githubusercontent.com/mbk-dev/okama/images/images/readmi01.jpg)
@@ -144,8 +144,8 @@ x.wealth_indexes.plot()
 
 ```python
 weights = [0.3, 0.2, 0.2, 0.2, 0.1]
-assets = ['T.US', 'XOM.US', 'FRE.XFRA', 'SNW.XFRA', 'LKOH.MOEX']
-pf = ok.Portfolio(assets, weights=weights, ccy='EUR')
+assets = ["T.US", "XOM.US", "FRE.XFRA", "SNW.XFRA", "LKOH.MOEX"]
+pf = ok.Portfolio(assets, weights=weights, ccy="EUR")
 pf.table
 ```
 ![](https://raw.githubusercontent.com/mbk-dev/okama/images/images/readmi04.jpg)
@@ -160,11 +160,11 @@ pf.dividend_yield.plot()
 ### 3. Draw an Efficient Frontier for 2 popular ETF: SPY and GLD
 
 ```python
-ls = ['SPY.US', 'GLD.US']
-curr = 'USD'
-last_date = '2020-10'
+ls = ["SPY.US", "GLD.US"]
+curr = "USD"
+last_date = "2020-10"
 # Rebalancing period is one year (default value)
-frontier = ok.EfficientFrontier(ls, last_date=last_date, ccy=curr, rebalancing_strategy=ok.Rebalance(period='year'))
+frontier = ok.EfficientFrontier(ls, last_date=last_date, ccy=curr, rebalancing_strategy=ok.Rebalance(period="year"))
 frontier.names
 ```
 ![](https://raw.githubusercontent.com/mbk-dev/okama/images/images/readmi06.jpg)
@@ -175,19 +175,19 @@ import matplotlib.pyplot as plt
 
 points = frontier.ef_points
 
-fig = plt.figure(figsize=(12,6))
+fig = plt.figure(figsize=(12, 6))
 fig.subplots_adjust(bottom=0.2, top=1.5)
-frontier.plot_assets(kind='cagr')  # plots the assets points on the chart
+frontier.plot_assets(kind="cagr")  # plots the assets points on the chart
 ax = plt.gca()
-ax.plot(points.Risk, points.CAGR) 
+ax.plot(points.Risk, points.CAGR)
 ```
 ![](https://raw.githubusercontent.com/mbk-dev/okama/images/images/readmi07.jpg)
 
 ### 4. Get a Transition Map for allocations
 
 ```python
-ls = ['SPY.US', 'GLD.US', 'BND.US']
-ok.EfficientFrontier(ls, ccy='USD').plot_transition_map(x_axe='risk')
+ls = ["SPY.US", "GLD.US", "BND.US"]
+ok.EfficientFrontier(ls, ccy="USD").plot_transition_map(x_axe="risk")
 ```
 ![Transition map](https://raw.githubusercontent.com/mbk-dev/okama/images/images/readmi08.jpg)
 
