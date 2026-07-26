@@ -255,7 +255,7 @@ class Frame:
         return ror @ weights
 
     @classmethod
-    def get_portfolio_mean_return(cls, weights: list | np.array, ror: pd.DataFrame) -> float:
+    def get_portfolio_mean_return(cls, weights: list | np.ndarray, ror: pd.DataFrame) -> float:
         """
         Computes arithmetic mean return of a portfolio return (monthly as ROR time series are monthly in okama).
 
@@ -383,7 +383,7 @@ class Frame:
     # Risk metrics
 
     @classmethod
-    def get_portfolio_risk(cls, weights: list | np.array, assets_ror: pd.DataFrame) -> float:
+    def get_portfolio_risk(cls, weights: list | np.ndarray, assets_ror: pd.DataFrame) -> float:
         """
         Compute the standard deviation of return for monthly rebalanced portfolio.
         """
