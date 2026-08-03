@@ -5,6 +5,35 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2026-08
+
+A hotfix release. `import okama` raised `TypeError` on Python 3.11, 3.12 and 3.13 —
+every supported version except 3.14 — which made releases v2.2.3, v2.2.4 and v2.3.0
+unusable for most users. The release also adds a continuous integration test matrix
+so this class of breakage cannot reach PyPI again.
+
+### Fixed
+
+- `Frame.get_portfolio_mean_return()` and `Frame.get_portfolio_risk()` annotated their
+  `weights` parameter as `list | np.array`. `np.array` is a factory function rather than
+  a type, so the PEP 604 `|` operator raised
+  `TypeError: unsupported operand type(s) for |: 'type' and 'builtin_function_or_method'`.
+  Python evaluates annotations eagerly before 3.14, so the error was raised while
+  importing `okama.common.helpers.helpers` and broke `import okama` outright on
+  Python 3.11–3.13. Python 3.14 defers annotation evaluation (PEP 649), which is why the
+  bug stayed invisible during development. Both annotations now use `np.ndarray`.
+  Reported and fixed by [@nervgh](https://github.com/nervgh) in
+  [#95](https://github.com/mbk-dev/okama/pull/95).
+
+### Tooling
+
+- The unit test suite now runs in CI on every supported Python version (3.11, 3.12, 3.13,
+  3.14) on each push and pull request. Previously only ruff and CodeQL ran automatically,
+  and no test was ever executed on the minimum supported Python — which is how the import
+  failure above shipped through three releases.
+- The release workflow now requires a full unit-test run on the minimum supported Python
+  before any version bump.
+
 ## [2.3.0] - 2026-07
 
 Adds native-language ("local") asset names as a first-class labelling option
