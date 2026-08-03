@@ -125,25 +125,28 @@ The main poetry env tracks the newest Python, and a green run there does **not**
 
 Read the minimum from `pyproject.toml` — the `python = ">=X.Y,<4.0.0"` constraint under `[tool.poetry.dependencies]` — do not hardcode it here.
 
-**One-time setup of the minimum-version env** (skip if `poetry env list` already shows `okama-<hash>-py<MIN>`):
+**Prepare the minimum-version env.** Run this block every release, not only the first time: `poetry env use` creates the env if it is missing and merely activates it if it already exists, and the `poetry install` step is what brings the env in line with the lock file that Phase 1 has just refreshed. Without it the gate would run against stale dependencies.
 
 ```bash
 # Capture the current (newest) env FIRST — `poetry env use` makes the new one
 # Activated, so it cannot be recovered afterwards by grepping for "(Activated)".
 MAIN_ENV=$(poetry env info --path)
 
-# POETRY_VIRTUALENVS_IN_PROJECT=false is required: with the in-project setting
-# enabled, `poetry env use` silently returns the existing env instead of
-# creating a second one (verified with poetry 2.4.1 — it printed
-# "Using virtualenv: ...py3.14" and created nothing).
+# POETRY_VIRTUALENVS_IN_PROJECT=false is required on EVERY `poetry env use`
+# here, switching back included: with the in-project setting enabled (it is, in
+# this project's poetry config), `poetry env use` silently ignores the argument
+# and reports the env that is already active. Verified with poetry 2.4.1 — both
+# the create and the restore step failed this way, exit code 0 and no warning.
 POETRY_VIRTUALENVS_IN_PROJECT=false PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring \
   poetry env use <MIN>                     # e.g. 3.11
 POETRY_VIRTUALENVS_IN_PROJECT=false PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring \
   poetry install --only main,test          # docs/jupyter groups are not needed here
 
 # Restore the newest env as the active one before doing anything else
-PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry env use "$MAIN_ENV/bin/python"
+POETRY_VIRTUALENVS_IN_PROJECT=false PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring \
+  poetry env use "$MAIN_ENV/bin/python"
 poetry env list                            # verify: the newest env is "(Activated)"
+poetry run python -V                       # verify: the newest interpreter
 ```
 
 Always verify with `poetry env list` that the newest env is the Activated one before continuing — a release cut from the wrong env would ship the wrong metadata.
@@ -164,11 +167,13 @@ If this run fails while the 2c run passed, the failure is a real minimum-version
 
 ### 2e. Confirm the CI matrix is green
 
-`.github/workflows/tests.yml` runs the unit suite on every supported Python version on push and pull request. Check that the latest run on `dev` is green:
+`.github/workflows/tests.yml` runs the unit suite on every supported Python version on push and pull request. The check that counts is the run for the **release commit itself**, not merely the most recent green run on `dev` — there is no committed `poetry.lock`, so every CI run resolves dependencies fresh from PyPI and yesterday's green says nothing about today's resolution. Do this check after the release commit has been pushed in Phase 8, keyed on its SHA:
 
 ```bash
-gh run list --workflow=tests.yml --branch dev --limit 3
+gh run list --workflow=tests.yml --commit "$(git rev-parse HEAD)" --limit 5
 ```
+
+If the run has not appeared yet, wait for it; do not proceed to the merge on the strength of an earlier run.
 
 CI is the authoritative gate; 2d is the fast local check that keeps a broken minimum version from ever reaching a push. If the workflow's matrix no longer matches the `python = ...` constraint in `pyproject.toml` (for example after bumping the minimum), fix the workflow before releasing.
 
