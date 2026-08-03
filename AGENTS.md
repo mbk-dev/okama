@@ -77,14 +77,10 @@ Name note: CLI subcommands are `query` / `callers` / `callees` / `impact` / `con
   code must run unchanged on that minimum version. For example, if
   `pyproject.toml` declares `python = ">=3.11,<4.0.0"`, then Python 3.11 must be
   fully supported and no 3.12+ only syntax or stdlib features may be used in
-  library code without a `sys.version_info` gate and a fallback.
-- **A green local test run does not prove the minimum version works.** The
-  poetry env tracks the newest Python, where PEP 649 (3.14+) defers annotation
-  evaluation; an invalid type hint such as `list | np.array` therefore passes
-  locally while breaking `import okama` outright on 3.11–3.13. The unit suite is
-  run on every supported version by `.github/workflows/tests.yml` — keep that
-  matrix in sync with the `python = ...` constraint, and treat CI, not the local
-  env, as the authority on minimum-version support.
+  library code without a `sys.version_info` gate and a fallback. A green local
+  run does not prove this: the poetry env tracks the newest Python, where
+  PEP 649 defers annotation evaluation. `.github/workflows/tests.yml` runs the
+  suite on every supported version — keep its matrix in sync.
 - **Notebook examples in `/examples` additionally target Google Colab**, which
   currently ships Python 3.12 by default. Notebooks must run on Colab's 3.12
   unchanged. Do not use 3.13-only syntax or stdlib features in notebooks
