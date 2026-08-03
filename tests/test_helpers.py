@@ -1,4 +1,5 @@
 import threading
+import typing
 from math import comb
 
 import numpy as np
@@ -224,6 +225,28 @@ def test_tracking_error_short_period_raises_for_both_methods():
     for m in ("rms", "std"):
         with pytest.raises(ShortPeriodLengthError):
             helpers.Index.tracking_error(ror, method=m)
+
+
+# --- Frame type-annotation regression tests ---
+
+
+def test_frame_get_portfolio_mean_return_weights_annotation_is_ndarray():
+    """`Frame.get_portfolio_mean_return` `weights` annotation must resolve to
+    `list | np.ndarray` (not `np.array`), verified via `typing.get_type_hints`.
+
+    Regression test for GH #95: on Python 3.11+,
+    `list | np.array` crashes eagerly at import because `np.array` is a
+    `builtin_function_or_method`, not a `type`.
+    """
+    hints = typing.get_type_hints(helpers.Frame.get_portfolio_mean_return)
+    assert hints["weights"] == list | np.ndarray
+
+
+def test_frame_get_portfolio_risk_weights_annotation_is_ndarray():
+    """`Frame.get_portfolio_risk` `weights` annotation must resolve to
+    `list | np.ndarray` (not `np.array`)."""
+    hints = typing.get_type_hints(helpers.Frame.get_portfolio_risk)
+    assert hints["weights"] == list | np.ndarray
 
 
 def test_tracking_error_std_keeps_rows_when_one_column_has_shorter_history():
