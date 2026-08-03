@@ -1,0 +1,47 @@
+name: Tests
+
+on: [push, pull_request]
+
+# The suite is fully offline: tests/conftest.py replaces socket.socket with a
+# deny stub for the whole session, so no secrets or network access are needed.
+env:
+  POETRY_NO_INTERACTION: "1"
+  # Poetry can hang indefinitely on a keyring lookup when no Secret Service is
+  # available (observed on headless Linux); the null backend avoids it.
+  PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    name: Python ${{ matrix.python-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Must cover the whole range declared in pyproject.toml
+        # (python = ">=3.11,<4.0.0") and in the trove classifiers.
+        # The minimum version is not optional: annotations are evaluated
+        # eagerly before Python 3.14 (PEP 649), so an invalid type hint breaks
+        # `import okama` on 3.11-3.13 while passing silently on 3.14.
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install dependencies
+        run: poetry install --only main,test
+
+      - name: Import check
+        run: poetry run python -c "import okama; print(okama.__version__)"
+
+      - name: Run tests
+        # Pass the tests directory explicitly so pytest picks up tests/pytest.ini,
+        # which caps xdist at a fixed worker count.
+        run: poetry run pytest tests
