@@ -68,7 +68,13 @@ If anything in `poetry.lock` changes meaningfully, mention it in the release not
 
 ## Phase 2 — Tests
 
-Both unit tests (`pytest`) **and** notebook tests (`pytest --nbmake examples`) are mandatory before any version bump. Notebook tests are the only thing that catches API drift in the user-facing examples — never skip them, even for a "doc-only" release.
+Three runs are mandatory before any version bump, and none of them may be skipped — not even for a "doc-only" release:
+
+1. unit tests in the main poetry env (2c);
+2. notebook tests `pytest --nbmake examples` (2c) — the only thing that catches API drift in the user-facing examples;
+3. unit tests on the **minimum supported Python** (2d) — the only thing that catches breakage on the oldest version the package claims to support.
+
+Plus a check that the CI matrix is green (2e).
 
 ### 2a. Install current dev source into the env
 
@@ -112,6 +118,59 @@ poetry run pytest --nbmake --nbmake-kernel="${KERNEL_NAME}" -n=auto examples
 ```
 
 If tests fail: stop. Report the failures to the user. Do not attempt fixes — the user will decide. (Per `okama/AGENTS.md`, retry at most twice if the fix is obvious — but during a release, prefer to stop and let the user decide whether to defer.)
+
+### 2d. Run the unit tests on the **minimum supported Python** — mandatory
+
+The main poetry env tracks the newest Python, and a green run there does **not** prove the release works on the declared minimum. Starting with Python 3.14, PEP 649 defers annotation evaluation, so a type hint that is invalid at runtime (e.g. `list | np.array`, where `np.array` is a function rather than a type) passes silently on 3.14 while breaking `import okama` outright on 3.11–3.13. That is exactly how v2.2.3, v2.2.4 and v2.3.0 shipped unimportable on three of the four supported versions (GH #95).
+
+Read the minimum from `pyproject.toml` — the `python = ">=X.Y,<4.0.0"` constraint under `[tool.poetry.dependencies]` — do not hardcode it here.
+
+**One-time setup of the minimum-version env** (skip if `poetry env list` already shows `okama-<hash>-py<MIN>`):
+
+```bash
+# Capture the current (newest) env FIRST — `poetry env use` makes the new one
+# Activated, so it cannot be recovered afterwards by grepping for "(Activated)".
+MAIN_ENV=$(poetry env info --path)
+
+# POETRY_VIRTUALENVS_IN_PROJECT=false is required: with the in-project setting
+# enabled, `poetry env use` silently returns the existing env instead of
+# creating a second one (verified with poetry 2.4.1 — it printed
+# "Using virtualenv: ...py3.14" and created nothing).
+POETRY_VIRTUALENVS_IN_PROJECT=false PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring \
+  poetry env use <MIN>                     # e.g. 3.11
+POETRY_VIRTUALENVS_IN_PROJECT=false PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring \
+  poetry install --only main,test          # docs/jupyter groups are not needed here
+
+# Restore the newest env as the active one before doing anything else
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry env use "$MAIN_ENV/bin/python"
+poetry env list                            # verify: the newest env is "(Activated)"
+```
+
+Always verify with `poetry env list` that the newest env is the Activated one before continuing — a release cut from the wrong env would ship the wrong metadata.
+
+**The run itself** — invoke the minimum-version interpreter **by absolute path**, never via `poetry env use`, so the project's active env is never switched:
+
+```bash
+MIN_ENV=$(poetry env list --full-path | grep -oP '\S+py<MIN>' | head -1)   # e.g. py3.11
+"$MIN_ENV/bin/python" -c "import okama; print(okama.__version__)"   # catches import-time breakage
+"$MIN_ENV/bin/pytest" tests                                        # full unit suite
+```
+
+Pass `tests` explicitly so pytest picks up `tests/pytest.ini`. The suite is offline (`tests/conftest.py` blocks `socket.socket`), so this run needs no network.
+
+Notebook tests are **not** repeated here: `/examples` targets Google Colab, which currently ships a newer Python than the project minimum. Unit tests are the gate.
+
+If this run fails while the 2c run passed, the failure is a real minimum-version incompatibility — stop and report; do not release.
+
+### 2e. Confirm the CI matrix is green
+
+`.github/workflows/tests.yml` runs the unit suite on every supported Python version on push and pull request. Check that the latest run on `dev` is green:
+
+```bash
+gh run list --workflow=tests.yml --branch dev --limit 3
+```
+
+CI is the authoritative gate; 2d is the fast local check that keeps a broken minimum version from ever reaching a push. If the workflow's matrix no longer matches the `python = ...` constraint in `pyproject.toml` (for example after bumping the minimum), fix the workflow before releasing.
 
 ## Phase 3 — Lint & format
 
