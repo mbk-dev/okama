@@ -17,7 +17,7 @@ All other steps run without prompting unless they fail.
 
 ## Working directory
 
-The package lives at `/home/chilango/pyprojects/okama_projects/okama`. Run all commands from that directory. Verify with `pwd` if unsure — running poetry from a wrong directory silently uses the wrong env.
+The package lives at `/home/chilango/projects/rs/okama-projects/okama`. Run all commands from that directory. Verify with `pwd` if unsure — running poetry from a wrong directory silently uses the wrong env.
 
 ## Environment: disable the keyring backend (WSL2 poetry hang)
 
