@@ -5,7 +5,16 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.4.0] - 2026-08
+
+A breaking release with a single theme: `tracking_error()` now computes the tracking
+error as the CFA curriculum defines it. The previous default mixed two measures the
+curriculum deliberately keeps apart — how far a fund lags its benchmark (tracking
+difference) and how unstable that lag is (tracking error) — so the same symbols over
+the same period return a different number after this upgrade. See
+[examples/02 index funds perfomance.ipynb](examples/02%20index%20funds%20perfomance.ipynb)
+for the index-fund comparison workflow these methods serve. The release also fixes a
+stale `Portfolio.assets_weights` mapping.
 
 ### Changed
 
@@ -38,6 +47,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constructor and never refreshed by the `weights` setter, so after
   `pf.weights = [...]` the public attribute kept reporting the weights the
   portfolio was created with. It is now rebuilt whenever `weights` is assigned.
+- `requirements.txt` capped `arch < 8.0.0` and `statsmodels < 0.15.0` while
+  `pyproject.toml` had dropped both upper bounds, so the file forbade the very
+  versions the release is tested against (`arch` 8.0.0). It mirrors the
+  `pyproject.toml` constraints again.
 
 ## [2.3.1] - 2026-08
 
