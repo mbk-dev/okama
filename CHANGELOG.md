@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking.** `tracking_error()` now returns the sample standard deviation of the
+  return differences around their mean (Bessel's correction), annualized by
+  `sqrt(12)` — the tracking error as defined by the CFA curriculum (CFA Level II,
+  2019, V6, eq. 8; CFA Level I, 2025, V9 Portfolio Management, footnote 3). The
+  previous default was the uncentered root-mean-square of the differences, which
+  folded the systematic lag behind the benchmark (the tracking difference) into the
+  result: `TE_rms² = (N-1)/N · TE_std² + mean(d)²`. The same symbols over the same
+  period therefore return a different number than in 2.3.1 and earlier — usually
+  lower, since the lag term drops out, though marginally higher for a fund whose lag
+  is smaller than `TE_std / sqrt(N)`, where the uncentered formula's division by `N`
+  instead of `N-1` dominates. Affects `helpers.Index.tracking_error`,
+  `AssetList.tracking_error` and `Portfolio.tracking_error` (#97).
+
+### Removed
+
+- **Breaking.** The `method` parameter of `helpers.Index.tracking_error`,
+  `AssetList.tracking_error` and `Portfolio.tracking_error`. Tracking error now has a
+  single definition, so `method="rms"` and `method="std"` (both added in 2.2.2) are
+  gone — passing `method=` raises `TypeError`. Code that asked for `method="std"`
+  keeps its values by simply dropping the argument; code that relied on the `"rms"`
+  values has to compute them itself, as the mixture of tracking difference and
+  tracking error that it is.
+
 ### Fixed
 
 - `Portfolio.assets_weights` (the symbol → weight mapping) was built once in the

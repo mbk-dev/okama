@@ -1,7 +1,4 @@
-from typing import Literal  # noqa: I001
-from functools import partial
-
-import numpy as np
+import numpy as np  # noqa: I001
 import pandas as pd
 
 from okama.common.helpers.helpers import check_rolling_window
@@ -1397,40 +1394,29 @@ class AssetList(make_asset_list.ListMaker):
         result.index = result.index.asfreq("Y")
         return result
 
-    def tracking_error(
-        self,
-        rolling_window: int | None = None,
-        method: Literal["rms", "std"] = "rms",
-    ) -> pd.DataFrame:
+    def tracking_error(self, rolling_window: int | None = None) -> pd.DataFrame:
         """
         Calculate tracking error time series for the rate of return of assets.
 
-        Tracking error is an ex-post measure of how closely the assets follow the benchmark.
-        It is computed from the realized monthly return differences between each asset and
-        the benchmark, and is annualized (multiplied by sqrt(12)). Tracking error values
+        Tracking error is an ex-post measure of how closely the assets follow the benchmark:
+        the sample standard deviation of the realized monthly return differences between
+        each asset and the benchmark, taken around their mean and corrected for bias
+        (Bessel's correction), annualized by multiplying by sqrt(12). Tracking error values
         are decimal fractions: 0.05 corresponds to 5% annualized.
 
         Benchmark should be in the first position of the symbols list in AssetList parameters.
 
-        Two formulas are available (`method` parameter):
-
-        - "rms" (default): root-mean-square of the return differences. The differences are
-          not centered around their mean, hence the systematic lag between an asset and
-          the benchmark (tracking difference) is included in the result.
-        - "std": sample standard deviation of the return differences with Bessel's
-          correction — the classic tracking error definition (Hwang & Satchell,
-          "Tracking Error: Ex-Ante versus Ex-Post Measures", 2001, eq. 2) measuring
-          the pure volatility of deviations from the benchmark. The first point of the
-          expanding time series is dropped (a single observation has no standard deviation).
+        Because the differences are centered, a systematic lag behind the benchmark does not
+        inflate the result: how far an asset falls behind is measured by
+        `tracking_difference`, how unstable that gap is — by tracking error (CFA Level II,
+        2019, V6, eq. 8). The first point of the expanding time series is dropped (a single
+        observation has no standard deviation).
 
         Parameters
         ----------
         rolling_window : int or None, default None
             Size of the moving window in months. Must be at least 12 months.
             If None calculate expanding tracking error.
-        method : {"rms", "std"}, default "rms"
-            Tracking error formula: "rms" for the uncentered root-mean-square of return
-            differences, "std" for the centered sample standard deviation.
 
         Returns
         -------
@@ -1447,18 +1433,18 @@ class AssetList(make_asset_list.ListMaker):
 
         To calculate rolling tracking error set `rolling_window` to a number of months (moving window size):
 
-        >>> x.tracking_error(rolling_window=12 * 5, method="std").plot()
+        >>> x.tracking_error(rolling_window=12 * 5).plot()
         >>> plt.show()
         """
         if rolling_window:
             return helpers.Index.rolling_fn(
                 df=self.assets_ror,
                 window=rolling_window,
-                fn=partial(helpers.Index.tracking_error, method=method),
+                fn=helpers.Index.tracking_error,
                 window_below_year=False,  # small windows below 12 months are not allowed
             )
         else:
-            return helpers.Index.tracking_error(self.assets_ror, method=method)
+            return helpers.Index.tracking_error(self.assets_ror)
 
     def index_corr(self, rolling_window: int | None = None) -> pd.DataFrame:
         """

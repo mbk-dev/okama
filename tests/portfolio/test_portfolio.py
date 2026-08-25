@@ -415,12 +415,12 @@ def test_tracking_error_matches_asset_list_workaround(pf_ab_monthly):
     pd.testing.assert_series_equal(te, expected)
 
 
-def test_tracking_error_std_matches_manual_computation(pf_ab_monthly, synthetic_env):
-    """method='std' equals the centered std (ddof=1) of portfolio-vs-benchmark differences."""
-    te = pf_ab_monthly.tracking_error(benchmark="IDX.US", method="std")
+def test_tracking_error_matches_manual_computation(pf_ab_monthly, synthetic_env):
+    """Tracking error equals the centered std (ddof=1) of portfolio-vs-benchmark differences."""
+    te = pf_ab_monthly.tracking_error(benchmark="IDX.US")
     diff = pf_ab_monthly.ror - synthetic_env["series"]["IDX.US"]
     assert te.iloc[-1] == pytest.approx(diff.std(ddof=1) * np.sqrt(12))
-    # The first expanding point is dropped for the std method
+    # The first expanding point is dropped (a single observation has no standard deviation)
     assert len(te) == len(diff) - 1
 
 
@@ -448,13 +448,14 @@ def test_tracking_error_with_portfolio_benchmark(pf_ab_monthly, synthetic_env):
     assert isinstance(te, pd.Series)
     assert te.name == pf_ab_monthly.symbol
     diff = pf_ab_monthly.ror - bench_pf.ror
-    expected_last = np.sqrt((diff**2).sum() / len(diff)) * np.sqrt(12)
+    expected_last = diff.std(ddof=1) * np.sqrt(12)
     assert te.iloc[-1] == pytest.approx(expected_last)
 
 
-def test_tracking_error_invalid_method_raises(pf_ab_monthly):
-    with pytest.raises(ValueError, match="method"):
-        pf_ab_monthly.tracking_error(benchmark="IDX.US", method="mad")
+def test_tracking_error_does_not_accept_a_method_argument(pf_ab_monthly):
+    """The `method` switch is gone: tracking error has a single definition."""
+    with pytest.raises(TypeError):
+        pf_ab_monthly.tracking_error(benchmark="IDX.US", method="rms")
 
 
 def test_table_adds_local_name_when_present(synthetic_env):

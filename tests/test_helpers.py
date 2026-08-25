@@ -189,42 +189,42 @@ def _make_two_asset_ror(months: int = 24) -> pd.DataFrame:
     return pd.concat([bench, fund], axis=1)
 
 
-def test_tracking_error_rms_default_matches_legacy_formula():
-    """Default method and method='rms' produce the historical uncentered RMS values."""
-    ror = _make_two_asset_ror()
-    d = ror["FUND.US"] - ror["BENCH.INDX"]
-    expected_last = np.sqrt((d**2).sum() / len(d)) * np.sqrt(12)
-    result_default = helpers.Index.tracking_error(ror)
-    result_rms = helpers.Index.tracking_error(ror, method="rms")
-    pd.testing.assert_frame_equal(result_default, result_rms)
-    assert result_default["FUND.US"].iloc[-1] == pytest.approx(expected_last)
-    assert len(result_default) == len(ror)
-
-
-def test_tracking_error_std_is_centered_with_bessel_correction():
-    """method='std' is the centered sample std of differences (ddof=1), annualized."""
+def test_tracking_error_is_centered_sample_std_of_differences():
+    """Tracking error is the centered sample std of return differences (ddof=1), annualized."""
     ror = _make_two_asset_ror()
     d = ror["FUND.US"] - ror["BENCH.INDX"]
     expected_last = d.std(ddof=1) * np.sqrt(12)
-    result = helpers.Index.tracking_error(ror, method="std")
+    result = helpers.Index.tracking_error(ror)
     assert result["FUND.US"].iloc[-1] == pytest.approx(expected_last)
     # The first expanding point (std of a single observation) is dropped
     assert len(result) == len(ror) - 1
 
 
-def test_tracking_error_invalid_method_raises_value_error():
+def test_tracking_error_ignores_a_constant_lag_behind_the_benchmark():
+    """A fund lagging by a constant amount every month has tracking difference, but no tracking error.
+
+    This is what separates the measure from the uncentered root-mean-square, which would
+    report the lag itself as `0.001 * sqrt(12)` here.
+    """
     ror = _make_two_asset_ror()
-    with pytest.raises(ValueError, match="method"):
-        helpers.Index.tracking_error(ror, method="mad")
+    ror["FUND.US"] = ror["BENCH.INDX"] - 0.001
+    result = helpers.Index.tracking_error(ror)
+    assert result["FUND.US"].iloc[-1] == pytest.approx(0, abs=1e-12)
 
 
-def test_tracking_error_short_period_raises_for_both_methods():
+def test_tracking_error_does_not_accept_a_method_argument():
+    """The `method` switch is gone: tracking error has a single definition."""
+    ror = _make_two_asset_ror()
+    with pytest.raises(TypeError):
+        helpers.Index.tracking_error(ror, method="rms")
+
+
+def test_tracking_error_short_period_raises():
     from okama.common.error import ShortPeriodLengthError
 
     ror = _make_two_asset_ror(months=11)
-    for m in ("rms", "std"):
-        with pytest.raises(ShortPeriodLengthError):
-            helpers.Index.tracking_error(ror, method=m)
+    with pytest.raises(ShortPeriodLengthError):
+        helpers.Index.tracking_error(ror)
 
 
 # --- Frame type-annotation regression tests ---
@@ -249,14 +249,14 @@ def test_frame_get_portfolio_risk_weights_annotation_is_ndarray():
     assert hints["weights"] == list | np.ndarray
 
 
-def test_tracking_error_std_keeps_rows_when_one_column_has_shorter_history():
+def test_tracking_error_keeps_rows_when_one_column_has_shorter_history():
     """dropna(how='all') must keep rows where at least one asset has a valid std value."""
     ror = _make_two_asset_ror()
     late = ror["FUND.US"].copy()
     late.iloc[:6] = np.nan  # the second fund enters 6 months later
     late.name = "LATE.US"
     ror3 = pd.concat([ror, late], axis=1)
-    result = helpers.Index.tracking_error(ror3, method="std")
+    result = helpers.Index.tracking_error(ror3)
     # Rows where FUND.US already has a valid expanding std are kept...
     assert len(result) == len(ror3) - 1
     # ...even though LATE.US is still NaN there
