@@ -5,6 +5,15 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- `Portfolio.assets_weights` (the symbol → weight mapping) was built once in the
+  constructor and never refreshed by the `weights` setter, so after
+  `pf.weights = [...]` the public attribute kept reporting the weights the
+  portfolio was created with. It is now rebuilt whenever `weights` is assigned.
+
 ## [2.3.1] - 2026-08
 
 A hotfix release. `import okama` raised `TypeError` on Python 3.11, 3.12 and 3.13 —

@@ -66,6 +66,13 @@ def test_weights_default_and_setter(pf_ab_monthly):
         pf_ab_monthly.weights = [0.6, 0.5]
 
 
+def test_weights_setter_updates_assets_weights(pf_ab_monthly):
+    """assets_weights follows a weights reassignment, it is not frozen at construction time."""
+    assert pf_ab_monthly.assets_weights == {"A.US": 0.5, "B.US": 0.5}
+    pf_ab_monthly.weights = [0.3, 0.7]
+    assert pf_ab_monthly.assets_weights == {"A.US": 0.3, "B.US": 0.7}
+
+
 def test_symbol_setter_validation(pf_ab_monthly):
     with pytest.raises(ValueError):
         pf_ab_monthly.symbol = "bad symbol"

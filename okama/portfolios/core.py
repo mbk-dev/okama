@@ -91,7 +91,6 @@ class Portfolio(make_asset_list.ListMaker):
             inflation=inflation,
         )
         self.weights = weights
-        self.assets_weights = dict(zip(self.symbols, self.weights))  # noqa: B905
         self.rebalancing_strategy = rebalancing_strategy
         self.symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
         self._ror = pd.DataFrame(dtype=float)
@@ -168,6 +167,7 @@ class Portfolio(make_asset_list.ListMaker):
                 )
         self._clear_cache()
         self._weights = weights
+        self.assets_weights = dict(zip(self.symbols, weights, strict=True))
 
     @property
     def weights_ts(self) -> pd.DataFrame:
