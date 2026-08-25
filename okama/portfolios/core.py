@@ -91,7 +91,6 @@ class Portfolio(make_asset_list.ListMaker):
             inflation=inflation,
         )
         self.weights = weights
-        self.assets_weights = dict(zip(self.symbols, self.weights))  # noqa: B905
         self.rebalancing_strategy = rebalancing_strategy
         self.symbol = symbol or f"portfolio_{randint(1000, 9999)}.PF"
         self._ror = pd.DataFrame(dtype=float)
@@ -168,6 +167,7 @@ class Portfolio(make_asset_list.ListMaker):
                 )
         self._clear_cache()
         self._weights = weights
+        self.assets_weights = dict(zip(self.symbols, weights, strict=True))
 
     @property
     def weights_ts(self) -> pd.DataFrame:
@@ -1661,26 +1661,21 @@ class Portfolio(make_asset_list.ListMaker):
         self,
         benchmark: str | type,
         rolling_window: int | None = None,
-        method: Literal["rms", "std"] = "rms",
     ) -> pd.Series:
         """
         Calculate ex-post tracking error time series of the portfolio against a benchmark.
 
         Tracking error is an ex-post (backward-looking) measure of how closely the portfolio
-        follows the benchmark. It is computed from the realized monthly return differences
-        between the portfolio and the benchmark, and is annualized (multiplied by sqrt(12)).
+        follows the benchmark: the sample standard deviation of the realized monthly return
+        differences between the portfolio and the benchmark, taken around their mean and
+        corrected for bias (Bessel's correction), annualized by multiplying by sqrt(12).
         Tracking error values are decimal fractions: 0.05 corresponds to 5% annualized.
 
-        Two formulas are available (`method` parameter):
-
-        - "rms" (default): root-mean-square of the return differences. The differences are
-          not centered around their mean, hence the systematic lag between the portfolio
-          and the benchmark (tracking difference) is included in the result.
-        - "std": sample standard deviation of the return differences with Bessel's
-          correction — the classic tracking error definition (Hwang & Satchell,
-          "Tracking Error: Ex-Ante versus Ex-Post Measures", 2001, eq. 2) measuring
-          the pure volatility of deviations from the benchmark. The first point of the
-          expanding time series is dropped (a single observation has no standard deviation).
+        Because the differences are centered, a systematic lag behind the benchmark does not
+        inflate the result: how far the portfolio falls behind is measured by tracking
+        difference, how unstable that gap is — by tracking error (CFA Level II, 2019, V6,
+        eq. 8). The first point of the expanding time series is dropped (a single
+        observation has no standard deviation).
 
         The benchmark rate of return is converted to the portfolio base currency, and the
         time period is limited to the intersection of the portfolio and benchmark
@@ -1694,9 +1689,6 @@ class Portfolio(make_asset_list.ListMaker):
         rolling_window : int or None, default None
             Size of the moving window in months. Must be at least 12 months.
             If None calculate expanding tracking error.
-        method : {"rms", "std"}, default "rms"
-            Tracking error formula: "rms" for the uncentered root-mean-square of return
-            differences, "std" for the centered sample standard deviation.
 
         Returns
         -------
@@ -1714,11 +1706,11 @@ class Portfolio(make_asset_list.ListMaker):
 
         To calculate rolling tracking error set `rolling_window` to a number of months (moving window size):
 
-        >>> pf.tracking_error(benchmark="SP500TR.INDX", rolling_window=24, method="std").plot()
+        >>> pf.tracking_error(benchmark="SP500TR.INDX", rolling_window=24).plot()
         >>> plt.show()
         """
         al = AssetList([benchmark, self], ccy=self.currency, inflation=False)
-        tracking_error = al.tracking_error(rolling_window=rolling_window, method=method)
+        tracking_error = al.tracking_error(rolling_window=rolling_window)
         return tracking_error[self.symbol]
 
     @property
