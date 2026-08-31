@@ -27,9 +27,12 @@ Rules for this repo:
 4) If test execution reveals any failures or errors, attempt to fix them and re-run the tests.
    Do not repeat this cycle more than 2 times.
    If tests are still failing after that, stop and report the remaining issues instead of continuing.
-5) Before finishing any code change (including notebooks), run `poetry run ruff check .`
-   and fix every reported issue. If a warning is truly unavoidable, silence it with a
-   targeted `# noqa: <CODE>` comment on the offending line and include a brief rationale.
+5) Before finishing any code change (including notebooks), run **both** commands the
+   `Ruff` workflow runs — `poetry run ruff check .` and `poetry run ruff format --check .` —
+   and fix every reported issue (`poetry run ruff format .` rewrites the offending files).
+   Running only `check` leaves formatting drift invisible until CI goes red.
+   If a lint warning is truly unavoidable, silence it with a targeted `# noqa: <CODE>`
+   comment on the offending line and include a brief rationale.
    Never disable rules globally or use a bare `# noqa`.
 
 ## Project structure
