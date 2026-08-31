@@ -38,7 +38,7 @@ from okama.portfolios.cashflow_strategies import (
     VanguardDynamicSpending,  # noqa: F401
     CutWithdrawalsIfDrawdown,  # noqa: F401
 )
-from okama.portfolios.finplan import FinPlanStage  # noqa: F401
+from okama.portfolios.finplan import FinPlan, FinPlanStage  # noqa: F401
 from okama.macro import Inflation, Rate, Indicator  # noqa: F401
 from okama.frontier.multi_period import EfficientFrontier  # noqa: F401
 from okama.frontier.single_period import EfficientFrontierSingle  # noqa: F401

@@ -71,3 +71,10 @@ class FakeCurrencyAsset:
         self.currency = self.ticker
         self.first_date = pd.Timestamp(first_date) if first_date else pd.Timestamp("1990-01-01")
         self.last_date = pd.Timestamp(last_date) if last_date else pd.Timestamp("2100-01-01")
+        # Synthetic exchange rate returns (zero for testing purposes)
+        idx = pd.period_range(
+            start=self.first_date.to_period("M"),
+            end=self.last_date.to_period("M"),
+            freq="M",
+        )
+        self.ror = pd.Series(0.0, index=idx, name=symbol)
