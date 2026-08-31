@@ -21,9 +21,18 @@ def test_plot_draws_one_line_per_scenario_and_one_boundary_marker(
     )
 
     ax = plan.plot_forecast_monte_carlo()
+    wealth = plan.monte_carlo_wealth(discounting="fv", include_negative_values=False)
 
     # One line per scenario plus one vertical marker for the single internal
     # boundary (`axvline` appends to `ax.lines` too).
     assert len(ax.lines) == plan.mc_number + 1
     assert [text.get_text() for text in ax.texts] == ["accumulation", "retirement"]
+
+    # The boundary marker must sit at the first month of the second stage.
+    stage_one_months = plan.stages[0].period_months
+    boundary_line = ax.lines[-1]
+    expected_x = wealth.index[stage_one_months + 1].ordinal
+    actual_x = boundary_line.get_xdata()[0]
+    assert actual_x == expected_x
+
     plt.close("all")

@@ -701,7 +701,7 @@ class FinPlan:
             stage_start = month_offset
             month_offset += stage.period_months
             if number < len(self.stages):
-                ax.axvline(wealth.index[month_offset].ordinal, color="grey", linestyle="--", linewidth=1)
+                ax.axvline(wealth.index[month_offset + 1].ordinal, color="grey", linestyle="--", linewidth=1)
             middle = wealth.index[(stage_start + month_offset) // 2].ordinal
             ax.text(
                 middle,
