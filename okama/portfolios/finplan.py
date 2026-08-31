@@ -1,7 +1,9 @@
 from __future__ import annotations  # noqa: I001
 
 from collections.abc import Sequence
+from typing import Literal
 
+import numpy as np
 import pandas as pd
 
 from okama import settings
@@ -9,6 +11,8 @@ from okama.common import validators
 from okama.common.helpers import helpers
 from okama.portfolios import cashflow_strategies as cf
 from okama.portfolios import core
+from okama.portfolios import dcf_calculations
+from okama.portfolios import mc as mc_module
 
 ALLOWED_DISTRIBUTIONS = ("norm", "lognorm", "t")
 
@@ -320,3 +324,115 @@ class FinPlan:
         """
         self._mc_wealth_fv = None
         self._mc_cash_flow_fv = None
+
+    def _run_monte_carlo(self) -> None:
+        """Simulate every stage in order, handing the terminal balance forward.
+
+        One `_simulate_paths_mc` pass per stage yields both the wealth index and
+        the cash flow, so the engine runs once rather than twice.
+        """
+        seeds = np.random.SeedSequence(self.seed).spawn(len(self.stages))
+        t0_period = self.t0.to_period("M")
+        balance = np.full(self.mc_number, float(self.initial_investment))
+        month_offset = 0
+        wealth_parts: list[pd.DataFrame] = []
+        cash_flow_parts: list[pd.DataFrame] = []
+        for stage, seed_sequence in zip(self.stages, seeds, strict=True):
+            index = pd.period_range(t0_period + month_offset, periods=stage.period_months, freq="M")
+            ror = mc_module.generate_returns_ts(
+                ror=stage.portfolio.ror,
+                distribution=stage.distribution,
+                distribution_parameters=stage.distribution_parameters,
+                n_paths=self.mc_number,
+                index=index,
+                rng=np.random.default_rng(seed_sequence),
+            )
+            wealth, cash_flow = dcf_calculations._simulate_paths_mc(
+                ror,
+                stage.cashflow_parameters,
+                self.discount_rate,
+                initial_balance=balance,
+                month_offset=month_offset,
+            )
+            wealth_parts.append(pd.DataFrame(wealth, index=index))
+            cash_flow_parts.append(pd.DataFrame(cash_flow, index=index))
+            # A depleted scenario opens the next stage at zero rather than at a
+            # negative balance, which has no financial meaning.
+            balance = np.maximum(wealth[-1], 0.0)
+            month_offset += stage.period_months
+        wealth_df = pd.concat(wealth_parts)
+        opening = pd.DataFrame(
+            np.full((1, self.mc_number), float(self.initial_investment)),
+            index=wealth_df.index[:1] - 1,
+        )
+        self._mc_wealth_fv = pd.concat([opening, wealth_df])
+        self._mc_cash_flow_fv = pd.concat(cash_flow_parts)
+
+    def monte_carlo_wealth(
+        self, discounting: Literal["fv", "pv"] = "fv", include_negative_values: bool = True
+    ) -> pd.DataFrame:
+        """Wealth index of the whole plan for every Monte Carlo scenario.
+
+        Stages are simulated in order and concatenated, so the balance a
+        scenario reaches at the end of one stage is the balance it starts the
+        next one with (floored at zero).
+
+        Parameters
+        ----------
+        discounting : {'fv', 'pv'}, default 'fv'
+            'fv' returns nominal values; 'pv' discounts them to the plan start
+            with `discount_rate`. The discounting is applied once over the whole
+            horizon, so present values of different stages are comparable.
+        include_negative_values : bool, default True
+            If False, the first non-positive value of a scenario and everything
+            after it become 0.
+
+        Returns
+        -------
+        DataFrame
+            `(period_months + 1, mc_number)`. The first row is the plan's
+            opening balance, dated one month before `t0`.
+        """
+        if self._mc_wealth_fv is None:
+            self._run_monte_carlo()
+        wealth = (
+            self._mc_wealth_fv.copy()
+            if include_negative_values
+            else dcf_calculations.zero_wealth_after_first_void(self._mc_wealth_fv)
+        )
+        return self._discount(wealth, discounting)
+
+    def monte_carlo_cash_flow(
+        self, discounting: Literal["fv", "pv"] = "fv", remove_if_wealth_index_negative: bool = True
+    ) -> pd.DataFrame:
+        """Cash flow of the whole plan for every Monte Carlo scenario.
+
+        Parameters
+        ----------
+        discounting : {'fv', 'pv'}, default 'fv'
+            As in `monte_carlo_wealth`.
+        remove_if_wealth_index_negative : bool, default True
+            If True, cash flow is zeroed for months in which the (floored)
+            wealth index is zero.
+
+        Returns
+        -------
+        DataFrame
+            `(period_months, mc_number)`, starting at `t0`.
+        """
+        if self._mc_cash_flow_fv is None:
+            self._run_monte_carlo()
+        cash_flow = self._mc_cash_flow_fv.copy()
+        if remove_if_wealth_index_negative:
+            wealth = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+            cash_flow[wealth.reindex(cash_flow.index) == 0] = 0
+        return self._discount(cash_flow, discounting)
+
+    def _discount(
+        self, values: pd.Series | pd.DataFrame, discounting: Literal["fv", "pv"]
+    ) -> pd.Series | pd.DataFrame:
+        if discounting.lower() == "fv":
+            return values
+        if discounting.lower() == "pv":
+            return dcf_calculations.discount_monthly_cash_flow(values, self.discount_rate)
+        raise ValueError("'discounting' must be either 'fv' or 'pv'")
