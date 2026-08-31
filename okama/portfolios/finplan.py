@@ -5,6 +5,7 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
+from matplotlib.axes import Axes
 
 from okama import settings
 from okama.common import validators
@@ -663,3 +664,50 @@ class FinPlan:
         _, cash_flow = self._run_backtest(first_date)
         cash_flow.name = "cash_flow"
         return self._discount(cash_flow, discounting)
+
+    def plot_forecast_monte_carlo(self, figsize: tuple[float, float] | None = None) -> Axes:
+        """Plot the plan's scenario cloud with the stage boundaries marked.
+
+        Without the boundary markers a multi-stage chart gives no hint of where
+        the portfolio and the cash flow regime change, which is the whole point
+        of a plan.
+
+        Parameters
+        ----------
+        figsize : tuple of (float, float) or None, default None
+            Figure size in inches; matplotlib defaults are used when None.
+
+        Returns
+        -------
+        Axes
+            Matplotlib axes object.
+
+        Notes
+        -----
+        Unlike `PortfolioDCF.plot_forecast_monte_carlo` this method has no
+        `backtest` flag. A plan's history is a chained backtest of its own, with
+        its own window; plot it with `plan.wealth_index().plot()`.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> plan.plot_forecast_monte_carlo()
+        >>> plt.show()
+        """
+        wealth = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+        ax = wealth.plot(legend=None, figsize=figsize)
+        month_offset = 0
+        for number, stage in enumerate(self.stages, start=1):
+            stage_start = month_offset
+            month_offset += stage.period_months
+            if number < len(self.stages):
+                ax.axvline(wealth.index[month_offset].ordinal, color="grey", linestyle="--", linewidth=1)
+            middle = wealth.index[(stage_start + month_offset) // 2].ordinal
+            ax.text(
+                middle,
+                ax.get_ylim()[1],
+                stage.name or f"stage {number}",
+                ha="center",
+                va="top",
+            )
+        return ax
