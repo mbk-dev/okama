@@ -380,6 +380,8 @@ def _simulate_paths_mc(  # noqa: C901
     ror: pd.DataFrame,
     cashflow_parameters: cf.CashFlow,
     discount_rate: float,
+    *,
+    initial_balance: float | np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """One vectorized Monte Carlo pass over all paths.
 
@@ -388,8 +390,13 @@ def _simulate_paths_mc(  # noqa: C901
     month (regular strategy cash flow at its due month plus extra cash flows
     from `time_series`), matching `get_wealth_indexes_fv_with_cashflow` and
     `get_cash_flow_fv` (task="monte_carlo") respectively.
+
+    ``initial_balance`` overrides the opening balance of every scenario. A
+    scalar applies to all of them; an array must have one value per column. It
+    is how a multi-stage plan hands the terminal balances of one stage to the
+    next. When None the strategy's ``initial_investment`` is used, which is the
+    single-portfolio behaviour.
     """
-    initial_investment = cashflow_parameters.initial_investment
     n_rows, n_cols = ror.shape
     returns = ror.to_numpy(dtype=float)
     frequency = cashflow_parameters.frequency
@@ -419,7 +426,10 @@ def _simulate_paths_mc(  # noqa: C901
 
     wealth = np.empty((n_rows, n_cols))
     cash_flow = np.zeros((n_rows, n_cols))
-    balance = np.full(n_cols, float(initial_investment))
+    if initial_balance is None:
+        balance = np.full(n_cols, float(cashflow_parameters.initial_investment))
+    else:
+        balance = np.broadcast_to(np.asarray(initial_balance, dtype=float), (n_cols,)).astype(float, copy=True)
 
     if frequency in ("month", "none"):
         for n in range(n_rows):
