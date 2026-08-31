@@ -80,6 +80,8 @@ class FinPlanStage:
             )
         if distribution not in ALLOWED_DISTRIBUTIONS:
             raise ValueError(f"distribution must be one of {ALLOWED_DISTRIBUTIONS}, got '{distribution}'.")
+        if distribution_parameters is not None:
+            validators.validate_distribution_parameters(distribution, distribution_parameters)
         self._portfolio = portfolio
         self._period = period
         self._cashflow_parameters = cashflow_parameters
@@ -645,6 +647,7 @@ class FinPlan:
     def cash_flow_ts(
         self,
         discounting: Literal["fv", "pv"] = "fv",
+        remove_if_wealth_index_negative: bool = True,
         first_date: str | pd.Timestamp | None = None,
     ) -> pd.Series:
         """Cash flow of the plan over actual history.
@@ -653,6 +656,9 @@ class FinPlan:
         ----------
         discounting : {'fv', 'pv'}, default 'fv'
             As in `wealth_index`.
+        remove_if_wealth_index_negative : bool, default True
+            If True, cash flow is zeroed for months in which the (floored)
+            wealth index is zero. This matches `monte_carlo_cash_flow` behavior.
         first_date : str or Timestamp or None, default None
             As in `wealth_index`.
 
@@ -661,7 +667,11 @@ class FinPlan:
         Series
             Monthly cash flow over the plan's historical window.
         """
-        _, cash_flow = self._run_backtest(first_date)
+        wealth, cash_flow = self._run_backtest(first_date)
+        if remove_if_wealth_index_negative:
+            # Floor at zero (matching wealth_index default)
+            wealth_floored = dcf_calculations.remove_negative_values(wealth).fillna(0)
+            cash_flow = cash_flow.where(wealth_floored.reindex(cash_flow.index) != 0, 0.0)
         cash_flow.name = "cash_flow"
         return self._discount(cash_flow, discounting)
 

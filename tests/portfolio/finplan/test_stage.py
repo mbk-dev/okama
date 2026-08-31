@@ -36,3 +36,31 @@ def test_stage_rejects_a_non_positive_period(equity_portfolio, period) -> None:
 def test_stage_rejects_an_unknown_distribution(equity_portfolio) -> None:
     with pytest.raises(ValueError, match="distribution"):
         ok.FinPlanStage(equity_portfolio, period=5, distribution="cauchy")
+
+
+def test_stage_rejects_t_distribution_with_df_below_threshold(equity_portfolio) -> None:
+    """
+    Student's t-distribution with df <= 2 has infinite variance.
+    The validator must reject it at construction, not later.
+    """
+    with pytest.raises(ValueError, match="Degrees of freedom"):
+        ok.FinPlanStage(
+            equity_portfolio,
+            period=10,
+            distribution="t",
+            distribution_parameters=(1.5, None, None),
+        )
+
+
+def test_stage_rejects_norm_distribution_with_wrong_tuple_length(equity_portfolio) -> None:
+    """
+    Normal distribution requires exactly 2 parameters (mu, sigma).
+    Passing (0.01,) should raise at construction, not crash later inside the generator.
+    """
+    with pytest.raises(ValueError, match="length 2"):
+        ok.FinPlanStage(
+            equity_portfolio,
+            period=10,
+            distribution="norm",
+            distribution_parameters=(0.01,),
+        )
