@@ -82,7 +82,7 @@ def test_survival_period_is_the_full_horizon_when_nothing_is_withdrawn(equity_po
     survival = plan.monte_carlo_survival_period()
 
     assert len(survival) == 5
-    assert survival.max() == pytest.approx(10.0, abs=0.15)
+    np.testing.assert_allclose(survival.to_numpy(), 10.0, atol=0.15)
 
 
 def test_balance_percentiles_reports_one_row_per_stage_boundary(equity_portfolio, bond_portfolio) -> None:
