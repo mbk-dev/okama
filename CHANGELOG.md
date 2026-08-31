@@ -5,7 +5,19 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0] - 2026-08
+
+A feature release built around one idea: a financial plan is a sequence of
+portfolios, not a single one. `FinPlan` chains stages so that the terminal
+balance of each stage becomes the starting balance of the next — per Monte
+Carlo scenario, not per percentile — which is what lets a retirement stage be
+funded by whatever the accumulation stage actually produced. Cash-flow
+strategies keep their time base across stage boundaries: indexation, extra
+cash-flow compounding, Vanguard dynamic spending and the drawdown-triggered
+withdrawal cut all count months from the start of the plan rather than
+restarting at every stage. See
+[examples/04 investment portfolios with DCF.ipynb](examples/04%20investment%20portfolios%20with%20DCF.ipynb)
+for the single-portfolio cash-flow workflow this release generalizes.
 
 ### Added
 
