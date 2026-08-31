@@ -5,13 +5,13 @@ import okama as ok
 
 def _plan(equity_portfolio, bond_portfolio, **kwargs):
     contrib = ok.IndexationStrategy(equity_portfolio)
-    contrib.initial_investment = 100_000
+    contrib.initial_investment = 12_000
     contrib.frequency = "year"
     contrib.amount = 12_000
     contrib.indexation = 0.0
 
     pension = ok.IndexationStrategy(bond_portfolio)
-    pension.initial_investment = 100_000
+    pension.initial_investment = 30_000
     pension.frequency = "year"
     pension.amount = -30_000
     pension.indexation = 0.0
@@ -87,7 +87,7 @@ def test_monte_carlo_wealth_has_one_row_per_month_plus_the_opening_balance(
 def test_single_stage_plan_equals_the_engine_on_the_same_draw(equity_portfolio) -> None:
     strategy = ok.IndexationStrategy(equity_portfolio)
     strategy.frequency = "year"
-    strategy.initial_investment = 200_000  # value is ignored by the plan on purpose
+    strategy.initial_investment = 5_000  # ignored by the plan on purpose
     strategy.amount = -5_000
     strategy.indexation = 0.0
     stage = ok.FinPlanStage(equity_portfolio, period=8, cashflow_parameters=strategy)
@@ -149,7 +149,7 @@ def test_second_stage_opens_at_the_first_stage_terminal_balance(equity_portfolio
 def test_a_ruined_scenario_stays_at_zero_through_the_next_stage(equity_portfolio, bond_portfolio) -> None:
     drain = ok.IndexationStrategy(equity_portfolio)
     drain.frequency = "year"
-    drain.initial_investment = 100_000
+    drain.initial_investment = 60_000
     drain.amount = -60_000  # exhausts a 100 000 balance within the first stage
     drain.indexation = 0.0
     pension = ok.IndexationStrategy(bond_portfolio)
