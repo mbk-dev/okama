@@ -405,6 +405,11 @@ def _simulate_paths_mc(  # noqa: C901
     the VDS ``number_of_periods`` — is measured from there rather than from the
     first row of ``ror``, so a later stage's amounts stay expressed in the money
     of the plan's start. It must be a whole number of cash flow periods.
+
+    ``task`` controls how ``time_series`` cash flows are compounded:
+    ``"monte_carlo"`` compounds values given in nominal terms, ``"backtest"``
+    compounds values given in present-value terms, mirroring the per-path
+    reference ``get_wealth_indexes_fv_with_cashflow``.
     """
     if task not in ("monte_carlo", "backtest"):
         raise ValueError(f"Unknown task: {task}. It must be 'monte_carlo' or 'backtest'")

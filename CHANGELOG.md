@@ -5,6 +5,29 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `FinPlan` and `FinPlanStage`: a financial plan modelled as a sequence of
+  portfolio stages. The terminal balance of each stage becomes the starting
+  balance of the next, per Monte Carlo scenario, so a retirement is funded by
+  whatever the accumulation stage produced. Plan-level methods:
+  `FinPlan.monte_carlo_wealth`, `FinPlan.monte_carlo_cash_flow`,
+  `FinPlan.monte_carlo_survival_period`, `FinPlan.monte_carlo_irr`,
+  `FinPlan.probability_of_success`, `FinPlan.balance_percentiles`,
+  `FinPlan.plot_forecast_monte_carlo`, and the calendar-history backtest
+  `FinPlan.wealth_index` / `FinPlan.cash_flow_ts`.
+- `okama.portfolios.mc.generate_returns_ts` and
+  `okama.portfolios.mc.resolve_distribution_parameters`: pure functions for
+  drawing Monte Carlo returns, extracted from `MonteCarlo`.
+
+### Changed
+
+- `dcf_calculations._simulate_paths_mc` accepts `initial_balance`,
+  `month_offset` and `task`. Defaults reproduce the previous behaviour, so
+  `Portfolio.dcf` is unaffected.
+
 ## [2.4.0] - 2026-08
 
 A breaking release with a single theme: `tracking_error()` now computes the tracking

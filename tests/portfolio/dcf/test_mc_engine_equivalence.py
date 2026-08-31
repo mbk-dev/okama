@@ -2,9 +2,9 @@
 
 `get_wealth_indexes_fv_with_cashflow_mc` must reproduce
 `get_wealth_indexes_fv_with_cashflow` (task="monte_carlo") applied per column —
-including the period-fraction scaling for partial periods and the known quirks
-of the reference implementation (no return in the first month of a period with
-extra cash flows; VDS last_withdrawal pinned to 0). The VDS cases also pin the first-period initialization (last_withdrawal == 0).
+including the period-fraction scaling for partial periods. The VDS cases pin the
+first-period initialization (last_withdrawal == 0 before any withdrawal has been
+made).
 """
 
 import numpy as np  # noqa: I001

@@ -30,7 +30,7 @@ def test_plot_draws_one_line_per_scenario_and_one_boundary_marker(
 
     # The boundary marker must sit at the first month of the second stage.
     stage_one_months = plan.stages[0].period_months
-    boundary_line = ax.lines[-1]
+    boundary_line = ax.lines[plan.mc_number]
     expected_x = wealth.index[stage_one_months + 1].ordinal
     actual_x = boundary_line.get_xdata()[0]
     assert actual_x == expected_x

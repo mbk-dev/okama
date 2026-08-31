@@ -155,6 +155,16 @@ Cash Flows & DCF
     okama.VanguardDynamicSpending
     okama.CutWithdrawalsIfDrawdown
 
+Financial Plan
+==============
+
+.. autosummary::
+    :toctree: stubs
+    :template: custom-class-template.rst
+
+    okama.FinPlan
+    okama.FinPlanStage
+
 Efficient Frontier
 ==================
 
