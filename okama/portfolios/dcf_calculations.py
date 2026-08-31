@@ -444,9 +444,7 @@ def _simulate_paths_mc(  # noqa: C901
         compound = discounted_values if task == "backtest" else not discounted_values
         if compound:
             monthly_discount_rate = (1 + discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
-            aligned = aligned * (1.0 + monthly_discount_rate) ** np.arange(
-                month_offset, month_offset + n_rows
-            )
+            aligned = aligned * (1.0 + monthly_discount_rate) ** np.arange(month_offset, month_offset + n_rows)
         extra_cf = aligned
 
     # Per-path drawdowns and reduction factors for the CWD strategy

@@ -101,6 +101,4 @@ def test_balance_percentiles_reports_one_row_per_stage_boundary(equity_portfolio
     assert list(table.index) == ["accumulation", "retirement"]
     assert list(table.columns) == ["date", "10%", "50%", "90%"]
     assert table.loc["accumulation", "50%"] == pytest.approx(100_000 * 1.005**60, rel=1e-9)
-    assert table.loc["retirement", "50%"] == pytest.approx(
-        100_000 * 1.005**60 * 1.002**60, rel=1e-9
-    )
+    assert table.loc["retirement", "50%"] == pytest.approx(100_000 * 1.005**60 * 1.002**60, rel=1e-9)

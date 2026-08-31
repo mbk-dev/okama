@@ -7,9 +7,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import okama as ok  # noqa: E402
 
 
-def test_plot_draws_one_line_per_scenario_and_one_boundary_marker(
-    equity_portfolio, bond_portfolio
-) -> None:
+def test_plot_draws_one_line_per_scenario_and_one_boundary_marker(equity_portfolio, bond_portfolio) -> None:
     plan = ok.FinPlan(
         stages=[
             ok.FinPlanStage(equity_portfolio, period=5, name="accumulation"),

@@ -70,9 +70,7 @@ import pandas as pd  # noqa: E402
 from okama.portfolios import dcf_calculations, mc as mc_module  # noqa: E402
 
 
-def test_monte_carlo_wealth_has_one_row_per_month_plus_the_opening_balance(
-    equity_portfolio, bond_portfolio
-) -> None:
+def test_monte_carlo_wealth_has_one_row_per_month_plus_the_opening_balance(equity_portfolio, bond_portfolio) -> None:
     plan = _plan(equity_portfolio, bond_portfolio)
 
     wealth = plan.monte_carlo_wealth()
@@ -107,9 +105,7 @@ def test_single_stage_plan_equals_the_engine_on_the_same_draw(equity_portfolio) 
         ror, strategy, plan.discount_rate, initial_balance=np.full(12, 200_000.0)
     )
 
-    np.testing.assert_allclose(
-        plan.monte_carlo_wealth().iloc[1:].to_numpy(), expected_wealth, rtol=1e-12
-    )
+    np.testing.assert_allclose(plan.monte_carlo_wealth().iloc[1:].to_numpy(), expected_wealth, rtol=1e-12)
 
 
 def test_second_stage_opens_at_the_first_stage_terminal_balance(equity_portfolio, bond_portfolio) -> None:

@@ -528,9 +528,7 @@ class FinPlan:
             names.append(stage.name or f"stage {number}")
         return pd.DataFrame(rows, index=pd.Index(names, name="stage"))
 
-    def _discount(
-        self, values: pd.Series | pd.DataFrame, discounting: Literal["fv", "pv"]
-    ) -> pd.Series | pd.DataFrame:
+    def _discount(self, values: pd.Series | pd.DataFrame, discounting: Literal["fv", "pv"]) -> pd.Series | pd.DataFrame:
         if discounting.lower() == "fv":
             return values
         if discounting.lower() == "pv":

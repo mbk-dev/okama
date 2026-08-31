@@ -4,9 +4,7 @@ import pytest
 import okama as ok
 
 
-def test_history_window_is_the_intersection_of_the_stage_portfolios(
-    equity_portfolio, bond_portfolio
-) -> None:
+def test_history_window_is_the_intersection_of_the_stage_portfolios(equity_portfolio, bond_portfolio) -> None:
     plan = ok.FinPlan(
         stages=[
             ok.FinPlanStage(equity_portfolio, period=5),
@@ -39,9 +37,7 @@ def test_wealth_index_starts_at_the_earliest_common_date(equity_portfolio, bond_
     assert wealth.iloc[0, 0] == 10_000
 
 
-def test_wealth_index_rejects_a_plan_longer_than_the_common_history(
-    equity_portfolio, bond_portfolio
-) -> None:
+def test_wealth_index_rejects_a_plan_longer_than_the_common_history(equity_portfolio, bond_portfolio) -> None:
     plan = ok.FinPlan(
         stages=[
             ok.FinPlanStage(equity_portfolio, period=40),
@@ -110,9 +106,7 @@ def test_cash_flow_ts_covers_the_whole_plan_window(equity_portfolio, bond_portfo
     assert wealth.iloc[-1, 0] == pytest.approx(55234.089, abs=0.01)
 
 
-def test_present_values_are_discounted_from_the_plan_start(
-    equity_portfolio, bond_portfolio
-) -> None:
+def test_present_values_are_discounted_from_the_plan_start(equity_portfolio, bond_portfolio) -> None:
     plan = ok.FinPlan(
         stages=[
             ok.FinPlanStage(equity_portfolio, period=5),
@@ -163,7 +157,7 @@ def test_cash_flow_ts_masks_withdrawals_after_depletion(equity_portfolio) -> Non
     # Opt-out: flows continue after depletion
     cash_flow_all = plan.cash_flow_ts(remove_if_wealth_index_negative=False)
 
-    wealth_zero_mask = (wealth[plan.name] == 0)
+    wealth_zero_mask = wealth[plan.name] == 0
     assert wealth_zero_mask.any(), "Test setup: plan must deplete historically"
     # With masking, all flows after depletion are zero
     assert (cash_flow_masked[wealth_zero_mask] == 0).all()
