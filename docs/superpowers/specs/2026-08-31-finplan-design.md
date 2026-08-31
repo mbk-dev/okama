@@ -266,6 +266,26 @@ Applied once to the concatenated frame. `discount_monthly_cash_flow`
 starts at `t0`, so the exponent is correct by construction. Per-stage
 discounting would be wrong exactly here.
 
+### Indexation resolves per stage, not per plan
+
+`IndexationStrategy.indexation` accepts the string `"inflation"`, and its setter
+(`cashflow_strategies.py:294`) resolves it immediately to
+`self.portfolio.get_cagr().iloc[-1].loc[self.portfolio.inflation]` — the
+inflation CAGR over *that portfolio's own history window*. Two stage portfolios
+built from different assets have different `first_date`/`last_date`, hence
+different windows over the same inflation series, hence different resolved
+rates. A plan whose stages both say `"inflation"` therefore indexes
+contributions and withdrawals at two different rates.
+
+This is deliberate and left as is: the value belongs to the strategy, which
+belongs to the portfolio, and `FinPlan` never rewrites a user-owned object.
+Unlike `discount_rate` — where per-stage rates would make stage present values
+non-additive, so the plan owns a single rate — differing indexation rates stay
+arithmetically consistent; they are merely surprising. `FinPlan`'s docstring
+states the behaviour and points at the remedy: pass an explicit float to every
+stage strategy to index the whole plan at one rate. No validation is added; a
+plan may legitimately want a different rate per stage.
+
 ### Validation at construction
 
 - non-empty `stages`; each `period` an int ≥ 1;
