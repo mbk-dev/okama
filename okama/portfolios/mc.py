@@ -18,6 +18,105 @@ from okama.common.helpers import tails, helpers
 logger = logging.getLogger(__name__)
 
 
+def _resolve_params_for_t(ror: pd.Series, parameters: tuple | None) -> tuple[float, float, float]:
+    """Resolve (df, loc, scale) for Student's t, fitting whatever is not given."""
+    if parameters is None or all(x is None for x in parameters):
+        v, loc, scale = scipy.stats.t.fit(ror)
+    else:
+        if None in parameters:
+            v, loc, scale = scipy.stats.t.fit(ror)
+            v = parameters[0] if parameters[0] is not None else v
+            loc = parameters[1] if parameters[1] is not None else loc
+            scale = parameters[2] if parameters[2] is not None else scale
+        else:
+            v, loc, scale = parameters
+    return float(v), float(loc), float(scale)
+
+
+def _resolve_params_for_lognormal(ror: pd.Series, parameters: tuple | None) -> tuple[float, float, float]:
+    """Resolve (shape, loc, scale) for the lognormal, with loc fixed at -1."""
+    if parameters is None or all(x is None for x in parameters):
+        # Fit lognormal to r with loc fixed at -1 so support is (-1, infinity)
+        shape, _, scale = scipy.stats.lognorm.fit(ror, floc=-1.0)
+    else:
+        if None in parameters:
+            shape, _, scale = scipy.stats.lognorm.fit(ror, floc=-1.0)
+            shape = parameters[0] if parameters[0] is not None else shape
+            scale = parameters[2] if parameters[2] is not None else scale
+        else:
+            shape, loc, scale = parameters
+    return float(shape), -1.0, float(scale)
+
+
+def _resolve_params_for_normal(ror: pd.Series, parameters: tuple | None) -> tuple[float, float]:
+    """Resolve (mu, sigma) for the normal distribution."""
+    if parameters is None or all(x is None for x in parameters):
+        mu, std = ror.mean(), ror.std()
+    else:
+        if None in parameters:
+            mu, std = ror.mean(), ror.std()
+            mu = parameters[0] if parameters[0] is not None else mu
+            std = parameters[1] if parameters[1] is not None else std
+        else:
+            mu, std = parameters
+    return float(mu), float(std)
+
+
+def resolve_distribution_parameters(
+    ror: pd.Series,
+    distribution: str,
+    distribution_parameters: tuple | None,
+) -> tuple[float, ...]:
+    """Resolve a fully specified parameter tuple for `distribution`.
+
+    User-supplied values win; anything left as None is estimated from `ror`.
+    This is the pure counterpart of `MonteCarlo.get_parameters_for_distribution`
+    and reads nothing but the three arguments, which is what lets `FinPlan`
+    resolve parameters per stage without touching a portfolio's `dcf.mc`.
+    """
+    match distribution:
+        case "norm":
+            return _resolve_params_for_normal(ror, distribution_parameters)
+        case "lognorm":
+            return _resolve_params_for_lognormal(ror, distribution_parameters)
+        case "t":
+            return _resolve_params_for_t(ror, distribution_parameters)
+        case _:
+            raise ValueError("Unknown distribution: " + distribution)
+
+
+def generate_returns_ts(
+    ror: pd.Series,
+    distribution: str,
+    distribution_parameters: tuple | None,
+    n_paths: int,
+    index: pd.PeriodIndex,
+    rng: np.random.Generator,
+) -> pd.DataFrame:
+    """Draw a Monte Carlo monthly return matrix of shape (len(index), n_paths).
+
+    Parameters not fixed by `distribution_parameters` are estimated from `ror`.
+    The caller owns the random generator, so a plan can give each stage its own
+    stream while keeping one plan-level seed.
+    """
+    parameters = resolve_distribution_parameters(ror, distribution, distribution_parameters)
+    n_rows = len(index)
+    match distribution:
+        case "norm":
+            random_returns = rng.normal(parameters[0], parameters[1], (n_rows, n_paths))
+        case "lognorm":
+            random_returns = scipy.stats.lognorm(parameters[0], loc=parameters[1], scale=parameters[2]).rvs(
+                size=[n_rows, n_paths], random_state=rng
+            )
+        case "t":
+            random_returns = scipy.stats.t(df=parameters[0], loc=parameters[1], scale=parameters[2]).rvs(
+                size=[n_rows, n_paths], random_state=rng
+            )
+        case _:
+            raise ValueError("Unknown distribution type.")
+    return pd.DataFrame(data=random_returns, index=index)
+
+
 class MonteCarlo:
     """
     Monte Carlo simulation parameters for an investment portfolio.
@@ -311,45 +410,13 @@ class MonteCarlo:
         return float(res.x)
 
     def _get_params_for_t(self) -> tuple[float, float, float]:
-        parameters = self.distribution_parameters
-        if parameters is None or all(x is None for x in parameters):
-            v, loc, scale = scipy.stats.t.fit(self.ror)
-        else:
-            if None in parameters:
-                v, loc, scale = scipy.stats.t.fit(self.ror)
-                v = parameters[0] if parameters[0] is not None else v
-                loc = parameters[1] if parameters[1] is not None else loc
-                scale = parameters[2] if parameters[2] is not None else scale
-            else:
-                v, loc, scale = parameters
-        return float(v), float(loc), float(scale)
+        return _resolve_params_for_t(self.ror, self.distribution_parameters)
 
     def _get_params_for_lognormal(self) -> tuple[float, float, float]:
-        parameters = self.distribution_parameters
-        if parameters is None or all(x is None for x in parameters):
-            # Fit lognormal to r with loc fixed at -1 so support is (-1, infinity)
-            shape, _, scale = scipy.stats.lognorm.fit(self.ror, floc=-1.0)
-        else:
-            if None in parameters:
-                shape, _, scale = scipy.stats.lognorm.fit(self.ror, floc=-1.0)
-                shape = parameters[0] if parameters[0] is not None else shape
-                scale = parameters[2] if parameters[2] is not None else scale
-            else:
-                shape, loc, scale = parameters
-        return float(shape), -1.0, float(scale)
+        return _resolve_params_for_lognormal(self.ror, self.distribution_parameters)
 
     def _get_params_for_normal(self) -> tuple[float, float]:
-        parameters = self.distribution_parameters
-        if parameters is None or all(x is None for x in parameters):
-            mu, std = self.ror.mean(), self.ror.std()
-        else:
-            if None in parameters:
-                mu, std = self.ror.mean(), self.ror.std()
-                mu = parameters[0] if parameters[0] is not None else mu
-                std = parameters[1] if parameters[1] is not None else std
-            else:
-                mu, std = parameters
-        return float(mu), float(std)
+        return _resolve_params_for_normal(self.ror, self.distribution_parameters)
 
     def get_parameters_for_distribution(self) -> tuple[float, ...]:
         """
@@ -375,15 +442,7 @@ class MonteCarlo:
         ValueError
             If the distribution is unknown.
         """
-        match self.distribution:
-            case "norm":
-                return self._get_params_for_normal()
-            case "lognorm":
-                return self._get_params_for_lognormal()
-            case "t":
-                return self._get_params_for_t()
-            case _:
-                raise ValueError("Unknown distribution: " + self.distribution)
+        return resolve_distribution_parameters(self.ror, self.distribution, self.distribution_parameters)
 
     @property
     def monte_carlo_returns_ts(self) -> pd.DataFrame:
@@ -438,23 +497,15 @@ class MonteCarlo:
 
     def _generate_returns_ts(self) -> pd.DataFrame:
         """Draw one Monte Carlo return matrix using ``np.random.default_rng(self.seed)``."""
-        period_months, ts_index = self._forecast_preparation()
-        parameters = self.get_parameters_for_distribution()
-        rng = np.random.default_rng(self.seed)
-        match self.distribution:
-            case "norm":
-                random_returns = rng.normal(parameters[0], parameters[1], (period_months, self.mc_number))
-            case "lognorm":
-                random_returns = scipy.stats.lognorm(parameters[0], loc=parameters[1], scale=parameters[2]).rvs(
-                    size=[period_months, self.mc_number], random_state=rng
-                )
-            case "t":
-                random_returns = scipy.stats.t(df=parameters[0], loc=parameters[1], scale=parameters[2]).rvs(
-                    size=[period_months, self.mc_number], random_state=rng
-                )
-            case _:
-                raise ValueError("Unknown distribution type.")
-        return pd.DataFrame(data=random_returns, index=ts_index)
+        _, ts_index = self._forecast_preparation()
+        return generate_returns_ts(
+            ror=self.ror,
+            distribution=self.distribution,
+            distribution_parameters=self.distribution_parameters,
+            n_paths=self.mc_number,
+            index=ts_index,
+            rng=np.random.default_rng(self.seed),
+        )
 
     def _forecast_preparation(self) -> tuple[int, pd.DatetimeIndex]:
         period_months = self.period * settings._MONTHS_PER_YEAR
