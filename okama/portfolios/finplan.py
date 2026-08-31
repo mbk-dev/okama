@@ -428,6 +428,103 @@ class FinPlan:
             cash_flow[wealth.reindex(cash_flow.index) == 0] = 0
         return self._discount(cash_flow, discounting)
 
+    def monte_carlo_survival_period(self, threshold: float = 0) -> pd.Series:
+        """How long each scenario keeps a positive balance, in years from `t0`.
+
+        Parameters
+        ----------
+        threshold : float, default 0
+            Share of the opening balance below which the plan counts as voided.
+            Useful with `PercentageStrategy`, whose balance approaches zero
+            asymptotically.
+
+        Returns
+        -------
+        Series
+            One survival period per Monte Carlo scenario.
+        """
+        wealth = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+        dates = helpers.Frame.get_survival_date(wealth, self.discount_rate, threshold)
+        return dates.apply(helpers.Date.get_period_length, args=(self.t0,))
+
+    def monte_carlo_irr(self) -> pd.Series:
+        """Money-weighted IRR of the whole plan for every scenario.
+
+        The investor's cash flow runs from `t0` (minus the plan's initial
+        investment) to the end of the horizon, where the terminal balance is
+        added back.
+
+        Returns
+        -------
+        Series
+            One annualized effective IRR per scenario; NaN where the cash flow
+            has no sign change.
+        """
+        wealth = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+        cash_flow = self.monte_carlo_cash_flow(discounting="fv", remove_if_wealth_index_negative=False)
+        # Zero a scenario's cash flow once its (floored) wealth is depleted.
+        cash_flow = cash_flow.where(wealth.reindex(cash_flow.index) != 0, 0.0)
+        terminal = wealth.iloc[-1]
+        n_months, n_paths = cash_flow.shape
+        flows = np.empty((n_months + 1, n_paths), dtype=float)
+        flows[0, :] = -self.initial_investment
+        flows[1:, :] = -cash_flow.to_numpy()
+        flows[-1, :] += terminal.reindex(cash_flow.columns).to_numpy()
+        irr = dcf_calculations.irr_of_cashflow_matrix(flows, periods_per_year=settings._MONTHS_PER_YEAR)
+        return pd.Series(irr, index=cash_flow.columns, name="monte_carlo_irr")
+
+    def probability_of_success(self, threshold: float = 0) -> float:
+        """Share of scenarios that reach the end of the plan above `threshold`.
+
+        For a retirement plan this is the headline number: the chance the money
+        outlives the horizon.
+
+        Returns
+        -------
+        float
+            A value between 0 and 1.
+        """
+        wealth = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
+        return float((wealth.iloc[-1] > threshold).mean())
+
+    def balance_percentiles(
+        self,
+        percentiles: tuple[int, ...] = (10, 50, 90),
+        discounting: Literal["fv", "pv"] = "fv",
+    ) -> pd.DataFrame:
+        """Distribution of the balance at every stage boundary and at the end.
+
+        The row for the accumulation stage answers the question a plan is built
+        around: how much is there on the day the next stage has to live off it.
+
+        Parameters
+        ----------
+        percentiles : tuple of int, default (10, 50, 90)
+            Percentiles to report.
+        discounting : {'fv', 'pv'}, default 'fv'
+            As in `monte_carlo_wealth`.
+
+        Returns
+        -------
+        DataFrame
+            One row per stage, indexed by stage name; a `date` column followed by
+            one column per percentile.
+        """
+        wealth = self.monte_carlo_wealth(discounting=discounting, include_negative_values=False)
+        rows = []
+        names = []
+        month_offset = 0
+        for number, stage in enumerate(self.stages, start=1):
+            month_offset += stage.period_months
+            # Row 0 holds the opening balance, so the stage's last month sits at
+            # the cumulative month offset.
+            balances = wealth.iloc[month_offset]
+            row = {"date": wealth.index[month_offset]}
+            row.update({f"{p}%": float(np.percentile(balances.to_numpy(), p)) for p in percentiles})
+            rows.append(row)
+            names.append(stage.name or f"stage {number}")
+        return pd.DataFrame(rows, index=pd.Index(names, name="stage"))
+
     def _discount(
         self, values: pd.Series | pd.DataFrame, discounting: Literal["fv", "pv"]
     ) -> pd.Series | pd.DataFrame:
