@@ -129,11 +129,20 @@ silently restart at each boundary:
 | `:435`, `:467` CWD base withdrawal | same |
 | `:336` `_vds_withdrawal_vector` `number_of_periods` | `n + period_offset`, otherwise VDS `min_max_annual_withdrawals` re-indexes from zero at each stage |
 
-`period_offset = month_offset // months_in_full_period`. If
-`month_offset % months_in_full_period != 0`, raise `ValueError` rather than
-truncate silently. Whole-year stages always satisfy this (12 is divisible by
-1, 3, 6, 12), but `_resample_slices` can produce a ragged final slice, so the
-assertion is not vacuous.
+`period_offset = month_offset // months_in_full_period`, guarded by a
+`ValueError` when `month_offset % months_in_full_period != 0`.
+
+The division is exact, and the reason is worth recording because it is not
+obvious. `_resample_slices` (`:362`) groups by **calendar** periods, so the
+group boundaries do not start at `t0`. But stage durations are whole years, so
+the start of every stage falls on the same month-of-year as `t0`; the number of
+calendar periods between them is therefore exactly
+`month_offset / months_in_full_period` (240 months → 20 years → 80 quarters).
+Deriving the offset instead from the cumulative slice count of previous stages
+would be wrong: a 20-year stage starting in November spans 21 annual groups
+(a partial first year, 19 full ones, a partial last one), which would push the
+next stage one period too far and give the shared boundary year two different
+indices.
 
 **`task: {"monte_carlo", "backtest"}`** — selects the `time_series`
 compounding convention, mirroring `get_wealth_indexes_fv_with_cashflow`. This is
@@ -154,14 +163,28 @@ Both are deliberate and both are pinned by tests and documented:
   `CutWithdrawalsIfDrawdown`.** The golden test uses `IndexationStrategy`.
 - **VDS `last_withdrawal`.** Zero on the first period of a stage, so
   floor/ceiling do not bind there — same as a freshly started portfolio.
+- **The boundary splits a calendar period.** With a periodic `frequency`
+  (`year`, `half-year`, `quarter`) the calendar period containing the stage
+  boundary is cut in two: stage 1 ends with a partial slice and stage 2 opens
+  with another, each receiving a pro-rated cash flow via the existing
+  `period_fraction` scaling. Nothing is lost — the two fractions sum to one full
+  period — but the payment moves to the boundary month, and for
+  `PercentageStrategy` the two halves are computed off two different opening
+  balances. This is the reason the golden invariant is exact only for `month`
+  and `none` (see Testing).
 
 ### Ruin handling
 
 `FinPlan` passes `np.maximum(terminal_wealth, 0)` to the next stage. Within a
 stage, negative balances are retained as they are today and masked only on
-output by `zero_wealth_after_first_void`. The invariant is unaffected: with
-withdrawals a negative balance never crosses back above zero, so the masked
-output of a two-stage plan and of one long run coincide exactly.
+output by `zero_wealth_after_first_void`.
+
+The equivalence with one long run therefore holds at the **masked** level, not
+the raw one: with withdrawals a negative balance never crosses back above zero,
+so once a scenario is void it stays void in both, and the masked outputs
+coincide. The raw arrays do not — the continuous run keeps compounding the
+negative while the plan floors it and descends again. The Testing section splits
+this into two tests accordingly.
 
 ## Monte Carlo orchestration
 
@@ -327,6 +350,25 @@ _simulate_paths_mc(ror_full[:a], strategy, rate)                 # stage 1
 
 Fully deterministic, and it catches all four positional-time sites at once.
 
+**The invariant has two documented limits, and the test must respect both.**
+
+*Frequency.* It is an exact equality only for `frequency` in `{"month",
+"none"}`, where the cash flow is applied every month and no calendar grouping is
+involved. For `year` / `half-year` / `quarter` the boundary splits a calendar
+period into two pro-rated slices (see "Semantics that stay stage-local"), so the
+raw trajectories legitimately differ around the boundary. The periodic case is
+covered by a weaker assertion instead: the cash flow the plan applies across the
+two boundary slices sums to the single full-period amount the continuous run
+applies, and the trajectories coincide again from the next full period onward.
+
+*Ruin.* `_simulate_paths_mc` returns **unmasked** wealth — the flooring lives in
+`zero_wealth_after_first_void`, in the wrapper. A scenario that ruins inside
+stage 1 therefore diverges at the raw level: the continuous run keeps
+compounding a negative balance, while the plan floors it to zero and descends
+again on a different trajectory. So the raw-array invariant test must use
+parameters under which no path ruins (contributions-only first stage, or a large
+initial balance). The flooring is covered by its own test, below.
+
 On top of it, a `FinPlan`-level test: a **single-stage** plan with a given seed
 must equal `pf.dcf.monte_carlo_wealth()`. This pins the `t0` anchor and the
 correctness of the extracted generator.
@@ -341,7 +383,10 @@ correctness of the extracted generator.
 - **`time_series` extra cash flow** in year 25 of the plan is compounded from
   `t0`.
 - **PV:** the discount exponent is continuous across the stage boundary.
-- **Handoff:** a scenario ruined in stage 1 enters stage 2 with zero.
+- **Handoff:** a scenario ruined in stage 1 enters stage 2 with zero, and
+  `zero_wealth_after_first_void` applied to the plan matches the same masking
+  applied to the continuous run — the equality that the raw invariant test
+  cannot make.
 - **Stage-local semantics**, as an agreed contract rather than an accident: the
   CWD drawdown peak resets at the boundary; VDS `last_withdrawal` is zero on the
   first period of a stage.
