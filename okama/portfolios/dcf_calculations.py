@@ -383,6 +383,7 @@ def _simulate_paths_mc(  # noqa: C901
     *,
     initial_balance: float | np.ndarray | None = None,
     month_offset: int = 0,
+    task: Literal["monte_carlo", "backtest"] = "monte_carlo",
 ) -> tuple[np.ndarray, np.ndarray]:
     """One vectorized Monte Carlo pass over all paths.
 
@@ -405,6 +406,8 @@ def _simulate_paths_mc(  # noqa: C901
     first row of ``ror``, so a later stage's amounts stay expressed in the money
     of the plan's start. It must be a whole number of cash flow periods.
     """
+    if task not in ("monte_carlo", "backtest"):
+        raise ValueError(f"Unknown task: {task}. It must be 'monte_carlo' or 'backtest'")
     n_rows, n_cols = ror.shape
     returns = ror.to_numpy(dtype=float)
     frequency = cashflow_parameters.frequency
@@ -430,7 +433,11 @@ def _simulate_paths_mc(  # noqa: C901
     cash_flow_ts = cashflow_parameters.time_series
     if not (cash_flow_ts.empty or (cash_flow_ts == 0).all()):
         aligned = cash_flow_ts.reindex(ror.index).fillna(0).to_numpy(dtype=float)
-        if not cashflow_parameters.time_series_discounted_values:
+        discounted_values = cashflow_parameters.time_series_discounted_values
+        # A backtest compounds values given in present value terms; a forecast
+        # compounds values given in nominal terms. Mirrors the per-path engine.
+        compound = discounted_values if task == "backtest" else not discounted_values
+        if compound:
             monthly_discount_rate = (1 + discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
             aligned = aligned * (1.0 + monthly_discount_rate) ** np.arange(
                 month_offset, month_offset + n_rows

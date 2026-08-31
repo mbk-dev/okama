@@ -217,3 +217,35 @@ def test_vds_starts_each_stage_without_a_previous_withdrawal(synthetic_env) -> N
 
     # With last_withdrawal == 0 the ceiling is 0 and the percentage rule applies.
     assert cash_flow[11, 0] == pytest.approx(-20_000 * 0.08)
+
+@pytest.mark.parametrize("frequency", ["month", "year", "quarter"])
+def test_backtest_task_matches_the_per_path_reference(synthetic_env, frequency) -> None:
+    pf = ok.Portfolio(["A.US"], ccy="USD", inflation=False, symbol="pf.PF")
+    ind = ok.IndexationStrategy(pf)
+    ind.initial_investment = 10_000
+    ind.frequency = frequency
+    ind.amount = -50 if frequency == "month" else -600
+    ind.indexation = 0.03
+    ind.time_series_dic = {"2020-06": -300, "2021-03": 500}
+    pf.dcf.cashflow_parameters = ind
+
+    reference = dcf_calculations.get_wealth_indexes_fv_with_cashflow(
+        ror=pf.ror.to_frame(),
+        portfolio_symbol=pf.ror.name,
+        inflation_symbol=None,
+        cashflow_parameters=ind,
+        task="backtest",
+    )
+    wealth, _ = dcf_calculations._simulate_paths_mc(
+        pf.ror.to_frame(), ind, pf.dcf.discount_rate, task="backtest"
+    )
+
+    np.testing.assert_allclose(wealth[:, 0], reference.iloc[1:].to_numpy(), rtol=1e-11, atol=1e-8)
+
+
+def test_unknown_task_is_rejected(synthetic_env) -> None:
+    pf = ok.Portfolio(["A.US"], ccy="USD", inflation=False, symbol="pf.PF")
+    strategy = _contributions(pf, "month")
+
+    with pytest.raises(ValueError, match="task"):
+        dcf_calculations._simulate_paths_mc(_zero_ror(6), strategy, 0.05, task="hindcast")
