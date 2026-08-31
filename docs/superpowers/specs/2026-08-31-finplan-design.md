@@ -79,6 +79,7 @@ Plan-level, deliberately not per stage:
 | `discount_rate` | One rate for the whole horizon, defaults to the base portfolio's inflation CAGR (as `PortfolioDCF` does today) |
 | `mc_number` | All stages must share the scenario count |
 | `seed` | One plan seed; per-stage seeds are spawned from it |
+| `name` | Label for the wealth column, the plot and `__repr__`; default `"plan"` |
 
 `FinPlan` never reads `initial_investment` from any stage's cash flow strategy.
 `CashFlow.__init__` always assigns `settings.DEFAULT_INITIAL_INVESTMENT`
@@ -345,10 +346,20 @@ Two metrics exist only because of staging:
   transition and at the plan end. This is the distribution behind the informal
   "terminal balance of stage 1".
 
-**`plot_forecast_monte_carlo(backtest=True, figsize=None)`** follows
-`dcf.py:689` with two additions: vertical lines at stage boundaries and
-`FinPlanStage.name` labels over the segments. Without them a multi-stage chart
-gives no hint of where the regime changes.
+**`plot_forecast_monte_carlo(figsize=None)`** draws the scenario cloud with
+vertical lines at the stage boundaries and `FinPlanStage.name` labels over the
+segments. Without them a multi-stage chart gives no hint of where the regime
+changes.
+
+It deliberately drops the `backtest` parameter that `dcf.py:689` carries.
+`_plot_mc_with_backtest` (`dcf.py:744`) prepends history by temporarily
+replacing the portfolio's cash flow strategy, rescaling its
+`initial_investment` to the backtest's terminal value and restoring it in a
+`finally` block. For a plan that mutate-and-restore dance would have to reach
+into a stage's strategy — exactly the coupling this design avoids — and the
+"history" it would prepend is the base portfolio's alone, not the plan's. The
+plan's own history has a separate and better-defined method, `wealth_index()`,
+which the user can plot directly.
 
 **`__repr__`** — a table of stages (name, portfolio symbol, years, strategy)
 plus horizon, `mc_number` and discount rate, following `PortfolioDCF.__repr__`.
@@ -394,9 +405,20 @@ again on a different trajectory. So the raw-array invariant test must use
 parameters under which no path ruins (contributions-only first stage, or a large
 initial balance). The flooring is covered by its own test, below.
 
-On top of it, a `FinPlan`-level test: a **single-stage** plan with a given seed
-must equal `pf.dcf.monte_carlo_wealth()`. This pins the `t0` anchor and the
-correctness of the extracted generator.
+On top of it, a `FinPlan`-level wiring test for a **single-stage** plan. It
+cannot compare against `pf.dcf.monte_carlo_wealth()` directly: the plan draws
+each stage from `SeedSequence(seed).spawn(...)`, which differs from
+`default_rng(seed)` even for one stage, so a one-stage plan is *similar to* but
+not bit-identical with a portfolio forecast — a property worth documenting
+rather than engineering around. The test instead reproduces the stage's draw
+with the same spawned seed and asserts the plan equals
+`get_wealth_indexes_fv_with_cashflow_mc` on it, which pins the `t0` anchor, the
+prepended initial row, and the plan-level `initial_investment`.
+
+The stage handoff gets a deterministic test of its own: give the second stage
+`distribution="norm"` with `distribution_parameters=(0.0, 0.0)`, so its returns
+are exactly zero, and its opening row must equal the first stage's terminal row
+clipped at zero.
 
 ### Remaining tests
 
