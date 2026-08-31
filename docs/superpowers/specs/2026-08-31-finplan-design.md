@@ -198,7 +198,25 @@ this into two tests accordingly.
 def generate_returns_ts(ror, distribution, distribution_parameters, n_paths, index, rng) -> pd.DataFrame
 ```
 
-`MonteCarlo._generate_returns_ts` becomes a call to it. The order of `rng`
+plus a second pure function for the resolution step it depends on:
+
+```python
+def resolve_distribution_parameters(ror, distribution, distribution_parameters) -> tuple[float, ...]
+```
+
+Splitting them keeps fitting separate from drawing, which makes the
+byte-for-byte reproduction test easier to localize. The split is safe: the whole
+resolution chain (`get_parameters_for_distribution`, `_get_params_for_norm` /
+`_lognormal` / `_t`, and `optimize_df_for_students` with `backtesting_error`)
+reads only `self.ror`, `self.distribution` and `self.distribution_parameters`.
+`self.parent` appears in `mc.py` in just three places — `__repr__`, cache
+clearing, and `_forecast_preparation` — none of them in the resolution path. So
+`FinPlan` obtains resolved parameters per stage without touching
+`stage.portfolio.dcf.mc` at all, which is the coupling this design exists to
+avoid.
+
+`MonteCarlo.get_parameters_for_distribution` and
+`MonteCarlo._generate_returns_ts` become calls to these. The order of `rng`
 consumption must be preserved byte-for-byte, or every existing seeded test
 shifts silently. Therefore the first implementation step is a test proving the
 extracted function reproduces `pf.dcf.mc.monte_carlo_returns_ts` for a fixed
@@ -255,6 +273,13 @@ discounting would be wrong exactly here.
 - `stage.cashflow_parameters.parent is stage.portfolio` — otherwise
   `indexation="inflation"` silently resolves against a foreign portfolio's
   inflation.
+
+Not validated, deliberately: the rule "the forecast period should not exceed
+half the portfolio history" appears only as prose in the
+`monte_carlo_returns_ts` docstring (`mc.py:394`). `MonteCarlo.period`'s setter
+(`mc.py:172`) checks nothing but integrality, so there is no guard for `FinPlan`
+to bypass, and adding one here would make the plan stricter than the rest of the
+library rather than consistent with it.
 
 ### Caching
 
