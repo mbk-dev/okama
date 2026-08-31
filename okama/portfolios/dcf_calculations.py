@@ -382,6 +382,7 @@ def _simulate_paths_mc(  # noqa: C901
     discount_rate: float,
     *,
     initial_balance: float | np.ndarray | None = None,
+    month_offset: int = 0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """One vectorized Monte Carlo pass over all paths.
 
@@ -396,6 +397,13 @@ def _simulate_paths_mc(  # noqa: C901
     is how a multi-stage plan hands the terminal balances of one stage to the
     next. When None the strategy's ``initial_investment`` is used, which is the
     single-portfolio behaviour.
+
+    ``month_offset`` is the number of months elapsed since the start of a
+    multi-stage plan. Everything that indexes with time — the compounding of
+    extra cash flows, the indexation of ``amount``, the CWD base withdrawal and
+    the VDS ``number_of_periods`` — is measured from there rather than from the
+    first row of ``ror``, so a later stage's amounts stay expressed in the money
+    of the plan's start. It must be a whole number of cash flow periods.
     """
     n_rows, n_cols = ror.shape
     returns = ror.to_numpy(dtype=float)
@@ -406,6 +414,17 @@ def _simulate_paths_mc(  # noqa: C901
     if hasattr(cashflow_parameters, "indexation") and frequency != "none":
         indexation_per_period = (1 + cashflow_parameters.indexation) ** (1 / periods_per_year) - 1
 
+    if frequency == "none":
+        period_offset = 0
+    else:
+        months_in_period = settings._MONTHS_PER_YEAR / periods_per_year
+        if month_offset % months_in_period:
+            raise ValueError(
+                f"month_offset={month_offset} is not a whole number of '{frequency}' "
+                f"periods ({months_in_period:g} months each)."
+            )
+        period_offset = int(month_offset // months_in_period)
+
     # Extra cash flows from `time_series`, aligned to the simulation index.
     extra_cf = np.zeros(n_rows)
     cash_flow_ts = cashflow_parameters.time_series
@@ -413,7 +432,9 @@ def _simulate_paths_mc(  # noqa: C901
         aligned = cash_flow_ts.reindex(ror.index).fillna(0).to_numpy(dtype=float)
         if not cashflow_parameters.time_series_discounted_values:
             monthly_discount_rate = (1 + discount_rate) ** (1 / settings._MONTHS_PER_YEAR) - 1
-            aligned = aligned * (1.0 + monthly_discount_rate) ** np.arange(n_rows)
+            aligned = aligned * (1.0 + monthly_discount_rate) ** np.arange(
+                month_offset, month_offset + n_rows
+            )
         extra_cf = aligned
 
     # Per-path drawdowns and reduction factors for the CWD strategy
@@ -436,13 +457,13 @@ def _simulate_paths_mc(  # noqa: C901
             if frequency == "none":
                 cashflow: float | np.ndarray = 0.0
             elif cashflow_parameters.NAME == "fixed_amount":
-                cashflow = amount * (1 + indexation_per_period) ** n
+                cashflow = amount * (1 + indexation_per_period) ** (n + period_offset)
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow = cashflow_parameters.percentage / periods_per_year * balance
             elif cashflow_parameters.NAME == "time_series":
                 cashflow = 0.0
             elif cashflow_parameters.NAME == "CWD":
-                base_withdrawal = amount * (1 + indexation_per_period) ** n
+                base_withdrawal = amount * (1 + indexation_per_period) ** (n + period_offset)
                 cashflow = base_withdrawal * np.where(drawdowns[n] < 0, cwd_factors[n], 1.0)
             else:
                 raise ValueError("Wrong cashflow strategy name value.")
@@ -466,15 +487,18 @@ def _simulate_paths_mc(  # noqa: C901
                 balance = segment[-1]
             # Regular cash flow at the period end.
             if cashflow_parameters.NAME == "fixed_amount":
-                cashflow_value: float | np.ndarray = amount * (1 + indexation_per_period) ** n
+                cashflow_value: float | np.ndarray = amount * (1 + indexation_per_period) ** (n + period_offset)
             elif cashflow_parameters.NAME == "fixed_percentage":
                 cashflow_value = cashflow_parameters.percentage / periods_per_year * start_balance
             elif cashflow_parameters.NAME == "VDS":
                 cashflow_value = _vds_withdrawal_vector(
-                    cashflow_parameters, start_balance, last_regular_cashflow if n > 0 else 0.0, n
+                    cashflow_parameters,
+                    start_balance,
+                    last_regular_cashflow if n > 0 else 0.0,
+                    n + period_offset,
                 )
             elif cashflow_parameters.NAME == "CWD":
-                base_withdrawal = amount * (1 + indexation_per_period) ** n
+                base_withdrawal = amount * (1 + indexation_per_period) ** (n + period_offset)
                 cashflow_value = base_withdrawal * np.where(drawdowns[stop - 1] < 0, cwd_factors[stop - 1], 1.0)
             else:
                 raise ValueError("Wrong cashflow_method value.")
