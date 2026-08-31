@@ -533,3 +533,133 @@ class FinPlan:
         if discounting.lower() == "pv":
             return dcf_calculations.discount_monthly_cash_flow(values, self.discount_rate)
         raise ValueError("'discounting' must be either 'fv' or 'pv'")
+
+    @property
+    def history_window(self) -> tuple[pd.Timestamp, pd.Timestamp]:
+        """Earliest and latest dates covered by every stage portfolio at once."""
+        first = max(stage.portfolio.first_date for stage in self.stages)
+        last = min(stage.portfolio.last_date for stage in self.stages)
+        return first, last
+
+    def _run_backtest(self, first_date: str | pd.Timestamp | None) -> tuple[pd.Series, pd.Series]:
+        """Chain the stages over actual history, returning (wealth, cash flow).
+
+        The stages consume the common history window one after another: the
+        first stage runs on its portfolio's real returns for its first
+        `period_months` months, the second continues from the balance the first
+        reached, and so on.
+        """
+        available_first, available_last = self.history_window
+        start = available_first if first_date is None else pd.to_datetime(first_date)
+        if start < available_first:
+            raise ValueError(
+                f"first_date {start:%Y-%m} precedes the common history of the stage portfolios, "
+                f"which starts at {available_first:%Y-%m}."
+            )
+        required = self.period_months
+        available = helpers.Date.get_difference_in_months(available_last, start).n + 1
+        if available < required:
+            raise ValueError(
+                f"The plan needs {required} months of history, but only {available} months are "
+                f"available for all stage portfolios from {start:%Y-%m} to {available_last:%Y-%m}."
+            )
+        start_period = start.to_period("M")
+        balance = np.array([float(self.initial_investment)])
+        month_offset = 0
+        wealth_parts: list[pd.Series] = []
+        cash_flow_parts: list[pd.Series] = []
+        for stage in self.stages:
+            index = pd.period_range(start_period + month_offset, periods=stage.period_months, freq="M")
+            ror = stage.portfolio.ror.reindex(index).to_frame()
+            if ror.isna().to_numpy().any():
+                raise ValueError(
+                    f"Stage '{stage.name or stage.portfolio.symbol}' has no returns for part of "
+                    f"{index[0]}:{index[-1]}. Its portfolio history is "
+                    f"{stage.portfolio.first_date:%Y-%m}:{stage.portfolio.last_date:%Y-%m}."
+                )
+            wealth, cash_flow = dcf_calculations._simulate_paths_mc(
+                ror,
+                stage.cashflow_parameters,
+                self.discount_rate,
+                initial_balance=balance,
+                month_offset=month_offset,
+                task="backtest",
+            )
+            wealth_parts.append(pd.Series(wealth[:, 0], index=index))
+            cash_flow_parts.append(pd.Series(cash_flow[:, 0], index=index))
+            balance = np.maximum(wealth[-1], 0.0)
+            month_offset += stage.period_months
+        wealth_s = pd.concat(wealth_parts)
+        opening = pd.Series([float(self.initial_investment)], index=wealth_s.index[:1] - 1)
+        return pd.concat([opening, wealth_s]), pd.concat(cash_flow_parts)
+
+    def wealth_index(
+        self,
+        discounting: Literal["fv", "pv"] = "fv",
+        include_negative_values: bool = False,
+        first_date: str | pd.Timestamp | None = None,
+    ) -> pd.DataFrame:
+        """Backtest the plan over actual history.
+
+        The stages divide the common history window sequentially: stage one runs
+        on its portfolio's real returns for its own length, stage two continues
+        from the balance stage one reached, and so on. This is a glide-path
+        backtest, not a forecast — for the forecast use `monte_carlo_wealth`.
+
+        Parameters
+        ----------
+        discounting : {'fv', 'pv'}, default 'fv'
+            'fv' returns nominal values; 'pv' discounts to the window start.
+        include_negative_values : bool, default False
+            If False, the balance is zeroed from the first non-positive value on.
+        first_date : str or Timestamp or None, default None
+            Start of the window. By default the plan starts at the earliest date
+            covered by every stage portfolio, which uses the longest available
+            run.
+
+        Returns
+        -------
+        DataFrame
+            One column named after the plan, plus accumulated inflation when the
+            first stage's portfolio carries inflation data.
+
+        Raises
+        ------
+        ValueError
+            If the common history is shorter than the plan's horizon.
+        """
+        wealth, _ = self._run_backtest(first_date)
+        if not include_negative_values:
+            wealth = dcf_calculations.remove_negative_values(wealth).fillna(0)
+        frame = wealth.to_frame(name=self.name)
+        base = self.base_portfolio
+        if hasattr(base, "inflation"):
+            inflation_ts = base.inflation_ts.reindex(wealth.index[1:])
+            cumulative = helpers.Frame.get_wealth_indexes(
+                ror=inflation_ts, initial_amount=float(self.initial_investment)
+            )
+            frame = pd.concat([frame, cumulative.rename(base.inflation)], axis="columns")
+        return self._discount(frame, discounting)
+
+    def cash_flow_ts(
+        self,
+        discounting: Literal["fv", "pv"] = "fv",
+        first_date: str | pd.Timestamp | None = None,
+    ) -> pd.Series:
+        """Cash flow of the plan over actual history.
+
+        Parameters
+        ----------
+        discounting : {'fv', 'pv'}, default 'fv'
+            As in `wealth_index`.
+        first_date : str or Timestamp or None, default None
+            As in `wealth_index`.
+
+        Returns
+        -------
+        Series
+            Monthly cash flow over the plan's historical window.
+        """
+        _, cash_flow = self._run_backtest(first_date)
+        cash_flow.name = "cash_flow"
+        return self._discount(cash_flow, discounting)
