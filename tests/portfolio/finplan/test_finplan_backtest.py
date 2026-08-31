@@ -97,7 +97,43 @@ def test_cash_flow_ts_covers_the_whole_plan_window(equity_portfolio, bond_portfo
     )
 
     cash_flow = plan.cash_flow_ts()
+    wealth = plan.wealth_index()
 
     assert isinstance(cash_flow, pd.Series)
     assert cash_flow.shape[0] == plan.period_months
     assert cash_flow[cash_flow > 0].sum() == pytest.approx(5 * 1_000)
+    # The plan starts at plan.initial_investment (50_000), not at the stage
+    # strategy's initial_investment (1_000 default for contrib, 2_000 for pension).
+    # This catches a regression where _run_backtest reads the wrong value.
+    # We check the final balance because the opening row is added separately
+    # and would not detect the error.
+    assert wealth.iloc[-1, 0] == pytest.approx(55234.089, abs=0.01)
+
+
+def test_present_values_are_discounted_from_the_plan_start(
+    equity_portfolio, bond_portfolio
+) -> None:
+    plan = ok.FinPlan(
+        stages=[
+            ok.FinPlanStage(equity_portfolio, period=5),
+            ok.FinPlanStage(bond_portfolio, period=5),
+        ],
+        initial_investment=10_000,
+    )
+    monthly_rate = (1 + plan.discount_rate) ** (1 / 12) - 1
+
+    fv = plan.wealth_index(discounting="fv")
+    pv = plan.wealth_index(discounting="pv")
+
+    # The opening balance (row 0) is undiscounted in both FV and PV modes: it
+    # sits one period before the window start, so its discount factor is 1.
+    # The Monte Carlo test does not have an opening row, so it checks only the
+    # last row; here we verify both the opening and the last.
+    assert pv.iloc[0, 0] == fv.iloc[0, 0]
+    # The exponent is continuous across the stage boundary: the last row of the
+    # whole plan is discounted by period_months, not by the last stage's length.
+    np.testing.assert_allclose(
+        pv.iloc[-1, 0],
+        fv.iloc[-1, 0] / (1 + monthly_rate) ** plan.period_months,
+        rtol=1e-12,
+    )
