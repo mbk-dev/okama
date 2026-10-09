@@ -831,6 +831,11 @@ class FinPlan:
         Examples
         --------
         >>> import matplotlib.pyplot as plt
+        >>> pf = ok.Portfolio(["SPY.US", "AGG.US"], weights=[0.8, 0.2], ccy="USD", inflation=False)
+        >>> plan = ok.FinPlan(
+        ...     [ok.FinPlanStage(pf, period=20)],
+        ...     initial_investment=100_000, discount_rate=0.03, mc_number=100, seed=0,
+        ... )
         >>> plan.plot_forecast_monte_carlo()
         >>> plt.show()
         """
