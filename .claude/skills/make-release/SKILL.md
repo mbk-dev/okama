@@ -1,23 +1,30 @@
 ---
 name: make-release
-description: Cut a new release of the okama Python package — runs the full release workflow (poetry update, pytest, nbmake notebook tests, ruff, sphinx docs, version bump, CHANGELOG, git tag on master, GitHub release, PyPI publish, post-release dev sync). Use whenever the user asks to release okama, ship a new okama version, publish okama to PyPI, cut a tag, or says any of "make release", "release okama", "release the library", "сделай релиз", "выпусти версию", "релиз окамы", "опубликуй на pypi" — even if they don't spell out every step. The skill enforces confirm gates before any irreversible action (push, merge, tag push, GitHub release, PyPI publish).
+description: Cut a new release of the okama Python package — runs the full release workflow (poetry update, pytest, nbmake notebook tests, ruff, sphinx docs, version bump, CHANGELOG, git tag on master, GitHub release, PyPI publish, post-release dev sync). Use whenever the user asks to release okama, ship a new okama version, publish okama to PyPI, cut a tag, or says any of "make release", "release okama", "release the library", "сделай релиз", "выпусти версию", "релиз окамы", "опубликуй на pypi" — even if they don't spell out every step. Publication follows the user’s authorization and requires verified release artifacts, CI and hosted documentation.
 ---
 
 # make-release — okama release workflow
 
-This skill ships a new release of the `okama` Python package end-to-end. The workflow is intentionally rigid because release operations are irreversible (PyPI versions cannot be re-uploaded, pushed tags propagate to CI and Read the Docs). Run the phases **in order** and **stop on the first failure** unless the failure is auto-fixable by `ruff --fix` / `ruff format`.
+This skill ships a new release of the `okama` Python package end-to-end. The workflow is intentionally rigid because release operations are irreversible (PyPI versions cannot be re-uploaded, pushed tags propagate to CI and Read the Docs). Run the phases in order. Required failures block publication; diagnose and fix them within the authorized scope and the project’s retry limits.
 
-The user has approved confirm gates at four points — these are non-negotiable, even if the user says "go ahead" earlier. Pause and ask before each:
-1. before `git push` (and `git push --tags`)
-2. before merging `dev` into `master`
-3. before creating the GitHub Release
-4. before `poetry publish` to PyPI
-
-All other steps run without prompting unless they fail.
+Use the authorization already given in the session. A request to commit everything
+and make a new release covers the release commits, normal pushes, dev/master
+integration, release tag, GitHub Release and PyPI publication. Do not repeat
+permission questions for these authorized steps. When publication has not been
+authorized, finish the checks, notes and inspectable artifacts before requesting
+approval for the specific external action. Destructive recovery needs its own scope.
 
 ## Working directory
 
-The package lives at `/home/chilango/projects/rs/okama-projects/okama`. Run all commands from that directory. Verify with `pwd` if unsure — running poetry from a wrong directory silently uses the wrong env.
+The main checkout is `/home/chilango/projects/rs/okama-projects/okama`.
+Use the task’s isolated worktree for preparation, tests and Poetry commands;
+verify its branch, `poetry env info --path`, interpreter and imported `okama.__file__`.
+Do not switch to the shared checkout just to run the release workflow. Preserve
+unrelated files there. A release worktree may publish its checked HEAD to `dev`,
+then integrate the fresh `origin/dev` into `master`. If `dev` is checked out
+elsewhere, fast-forward it in its owning checkout after inspecting its status.
+Read an existing main-checkout `.env` privately by explicit path when needed;
+keep the credentials out of the worktree and command output.
 
 ## Environment: disable the keyring backend (WSL2 poetry hang)
 
@@ -33,11 +40,13 @@ This only skips the OS keyring; the PyPI token is still read from `~/.config/pyp
 
 ## Phase 0 — Preflight
 
-Run these checks first. If any fails, stop and report — do not try to fix automatically.
+Run these checks first. Resolve missing prerequisites within the authorized scope; report a remaining blocker without publishing.
 
 ```bash
-# 1) On dev branch
-test "$(git rev-parse --abbrev-ref HEAD)" = "dev" || echo "FAIL: not on dev"
+# 1) Verify the task branch and baseline before selecting a publication target
+git branch --show-current
+git status -sb
+git log --oneline origin/dev..HEAD
 
 # 2) Working tree clean
 test -z "$(git status --porcelain)" || echo "FAIL: dirty tree"
@@ -46,17 +55,27 @@ test -z "$(git status --porcelain)" || echo "FAIL: dirty tree"
 gh auth status
 
 # 4) PyPI token configured for poetry (poetry config OR auth.toml)
-poetry config pypi-token.pypi 2>/dev/null | grep -q . \
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry config pypi-token.pypi 2>/dev/null | grep -q . \
   || grep -q '^\[pypi-token\]' ~/.config/pypoetry/auth.toml 2>/dev/null \
   || echo "FAIL: no pypi token"
 
 # 5) Read the Docs API token available in .env
-grep -q '^READTHEDOCS_TOKEN=' .env 2>/dev/null || echo "WARN: no RTD token — Phase 10 will be skipped"
+grep -q '^READTHEDOCS_TOKEN=' .env 2>/dev/null || echo "WARN: RTD API authorization unavailable here — verify the existing main .env or public version page"
 ```
 
 `.env` is gitignored. The RTD token lets Phase 10 query and poll Read the Docs builds via the v3 API. If it is missing, the skill falls back to checking only the public docs URL.
 
 **PyPI-token false negative:** `poetry config pypi-token.pypi` can print nothing even when the token is present and `poetry publish` works, because the token lives in `~/.config/pypoetry/auth.toml` under a `[pypi-token]` section rather than in poetry's config store (observed during the v2.2.3 release, 2026-07). The check above therefore also accepts the `auth.toml` `[pypi-token]` section. If it still reports FAIL, confirm by inspecting `~/.config/pypoetry/auth.toml` for a `[pypi-token]` entry (do not print its value) before stopping — a real absence, not a false negative, is what blocks Phase 11.
+
+### Restore PyPI authorization from an explicitly selected backup
+
+If the user requests backup recovery, inspect only the selected backup directory
+and its manifest. Locate `.config/pypoetry/auth.toml` there; do not traverse the
+whole USB drive or cloud mounts. Parse the saved file privately, verify the
+manifest checksum when supplied, and check that `pypi-token.pypi` is nonempty
+without printing its value. Restore to the current Poetry configuration directory
+with mode `0600`, leaving an existing destination and other configuration intact.
+The actual upload in Phase 11 verifies that the restored credential is accepted.
 
 ## Phase 1 — poetry update
 
@@ -88,24 +107,25 @@ Confirm the installed version matches `pyproject.toml` (`Installing the current 
 
 ### 2b. Resolve / register the Jupyter kernel
 
-Derive the kernel name from the env's Python version — do **not** ask the user, and do **not** hardcode a kernel name. The convention is `okama_poetry<MAJOR>.<MINOR>` (e.g. `okama_poetry3.14` for Python 3.14.x):
+Derive `okama_poetry<MAJOR>.<MINOR>` from the actual Poetry interpreter.
+Check that the existing kernel points to that interpreter; register it when
+missing or stale. This block is self-contained:
 
 ```bash
-PYVER=$(poetry run python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-KERNEL_NAME="okama_poetry${PYVER}"
-```
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run python - <<'PYKERNEL'
+import sys
+import subprocess
+from jupyter_client.kernelspec import KernelSpecManager
 
-Check whether that kernel is already registered against the poetry env:
-
-```bash
-poetry run python -c "from jupyter_client.kernelspec import KernelSpecManager; \
-  ks=KernelSpecManager().get_all_specs(); print('FOUND' if '${KERNEL_NAME}' in ks else 'MISSING')"
-```
-
-If `MISSING`, register it from the poetry env so the kernel's `python` points at the okama venv:
-
-```bash
-poetry run python -m ipykernel install --user --name="${KERNEL_NAME}" --display-name="${KERNEL_NAME}"
+name = f"okama_poetry{sys.version_info.major}.{sys.version_info.minor}"
+specs = KernelSpecManager().get_all_specs()
+if specs.get(name, {}).get("spec", {}).get("argv", [None])[0] != sys.executable:
+    subprocess.run([
+        sys.executable, "-m", "ipykernel", "install", "--user",
+        f"--name={name}", f"--display-name={name}",
+    ], check=True)
+print(f"Test kernel: {name}")
+PYKERNEL
 ```
 
 If a stale kernel with a previous Python version exists (e.g. `okama_poetry3.13` after a 3.14 upgrade), leave it alone unless the user asks — old kernels do not break anything, but uninstalling someone else's tooling without consent does.
@@ -113,11 +133,17 @@ If a stale kernel with a previous Python version exists (e.g. `okama_poetry3.13`
 ### 2c. Run the tests
 
 ```bash
-poetry run pytest -n=auto
-poetry run pytest --nbmake --nbmake-kernel="${KERNEL_NAME}" -n=auto examples
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run pytest tests -q
+KERNEL_NAME=$(PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run python -c 'import sys; print(f"okama_poetry{sys.version_info.major}.{sys.version_info.minor}")')
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run pytest --nbmake --nbmake-kernel="${KERNEL_NAME}" -n=1 examples -q
 ```
 
-If tests fail: stop. Report the failures to the user. Do not attempt fixes — the user will decide. (Per `okama/AGENTS.md`, retry at most twice if the fix is obvious — but during a release, prefer to stop and let the user decide whether to defer.)
+Use the worker limit in `tests/pytest.ini`; run notebooks serially unless a measured
+resource budget supports more. Check the actual execution host before heavy runs.
+If the main environment already runs the minimum supported Python and has just
+been installed, its full unit run also covers Phase 2d; record the interpreter.
+For failures, follow AGENTS.md’s bounded fix-and-rerun policy and TDD for logic
+fixes. Do not publish while a required gate fails.
 
 ### 2d. Run the unit tests on the **minimum supported Python** — mandatory
 
@@ -130,7 +156,7 @@ Read the minimum from `pyproject.toml` — the `python = ">=X.Y,<4.0.0"` constra
 ```bash
 # Capture the current (newest) env FIRST — `poetry env use` makes the new one
 # Activated, so it cannot be recovered afterwards by grepping for "(Activated)".
-MAIN_ENV=$(poetry env info --path)
+MAIN_ENV=$(PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry env info --path)
 
 # POETRY_VIRTUALENVS_IN_PROJECT=false is required on EVERY `poetry env use`
 # here, switching back included: with the in-project setting enabled (it is, in
@@ -145,8 +171,8 @@ POETRY_VIRTUALENVS_IN_PROJECT=false PYTHON_KEYRING_BACKEND=keyring.backends.null
 # Restore the newest env as the active one before doing anything else
 POETRY_VIRTUALENVS_IN_PROJECT=false PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring \
   poetry env use "$MAIN_ENV/bin/python"
-poetry env list                            # verify: the newest env is "(Activated)"
-poetry run python -V                       # verify: the newest interpreter
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry env list                            # verify: the newest env is "(Activated)"
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run python -V                       # verify: the newest interpreter
 ```
 
 Always verify with `poetry env list` that the newest env is the Activated one before continuing — a release cut from the wrong env would ship the wrong metadata.
@@ -154,7 +180,7 @@ Always verify with `poetry env list` that the newest env is the Activated one be
 **The run itself** — invoke the minimum-version interpreter **by absolute path**, never via `poetry env use`, so the project's active env is never switched:
 
 ```bash
-MIN_ENV=$(poetry env list --full-path | grep -oP '\S+py<MIN>' | head -1)   # e.g. py3.11
+MIN_ENV=$(PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry env list --full-path | grep -oP '\S+py<MIN>' | head -1)   # e.g. py3.11
 "$MIN_ENV/bin/python" -c "import okama; print(okama.__version__)"   # catches import-time breakage
 "$MIN_ENV/bin/pytest" tests                                        # full unit suite
 ```
@@ -182,25 +208,32 @@ CI is the authoritative gate; 2d is the fast local check that keeps a broken min
 `ruff` issues are auto-fixable; apply fixes silently, then verify.
 
 ```bash
-poetry run ruff check --fix .
-poetry run ruff format .
-poetry run ruff check .          # must exit 0
-poetry run ruff format --check . # must exit 0
-poetry run pre-commit run --all-files
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run ruff check --fix .
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run ruff format .
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run ruff check .          # must exit 0
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run ruff format --check . # must exit 0
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run pre-commit run --all-files
 ```
 
 If `ruff check .` still fails after `--fix`, or `pre-commit` reports issues that aren't auto-fixed: stop. Show the user the remaining diagnostics.
 
 ## Phase 4 — Docs build
 
-Sphinx docs live in `docs/`. Regenerate `.rst` from sources and build HTML.
+Sphinx docs live in `docs/`; `.readthedocs.yml` is the hosted build configuration.
+Check `command -v pandoc` before building: notebook conversion requires the system
+Pandoc executable, which Poetry dependencies alone do not provide. If missing,
+resolve that prerequisite before retrying.
 
 ```bash
-cd docs
-poetry run sphinx-apidoc -o source/ ../okama
-poetry run python -m sphinx -b html . _build/html
-cd ..
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run python -m sphinx -E -b html docs docs/_build/html
 ```
+
+The existing autosummary configuration generates the API pages. Do not add a
+`sphinx-apidoc` source tree to this build: it duplicates the descriptions and is
+absent from the hosted build. If an earlier local attempt generated `docs/source`,
+inspect its contents and move only those generated files to ignored `tmp/` before
+rebuilding with `-E`. Plot examples must construct every object they use; verify
+that the build has no traceback even if Sphinx exits successfully.
 
 Stop on any sphinx error. Warnings about missing references in third-party packages are usually OK; new warnings introduced by this release are not.
 
@@ -208,13 +241,13 @@ This phase only validates that docs build **locally**. Read the Docs is verified
 
 ## Phase 5 — Version bump
 
-Read the current version from `pyproject.toml` (the `version = "X.Y.Z"` line under `[tool.poetry]` or `[project]`). Show it to the user and ask which bump to apply:
+Read the current version from `pyproject.toml` (the `version = "X.Y.Z"` line under `[tool.poetry]` or `[project]`). Use a version already specified by the user. Otherwise select the bump from the reviewed public behavior and explain the choice:
 
 - **patch** — `X.Y.Z → X.Y.(Z+1)` (bug fixes, doc-only, dependency bumps)
 - **minor** — `X.Y.Z → X.(Y+1).0` (new features, no breaking changes)
 - **major** — `X.Y.Z → (X+1).0.0` (breaking changes)
 
-The user picks. Then update `pyproject.toml` (single line edit). Do not edit any other version field — okama uses `pyproject.toml` as the single source of truth. The new version is `<NEW_VERSION>` for the rest of the workflow.
+If competing choices depend on missing requirements, clarify them; routine SemVer selection does not require a permission gate. Then update `pyproject.toml` (single line edit). Do not edit any other version field — okama uses `pyproject.toml` as the single source of truth. The new version is `<NEW_VERSION>` for the rest of the workflow.
 
 Immediately after the bump, re-install the project so the env's package metadata matches:
 
@@ -226,7 +259,7 @@ PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry install
 
 ## Phase 6 — Release notes & CHANGELOG
 
-Generate a draft from git history since the last tag, then have the user edit it.
+Draft the notes from git history since the last tag and the reviewed behavior.
 
 ```bash
 LAST_TAG=$(git describe --tags --abbrev=0)
@@ -242,7 +275,9 @@ Group commits by Conventional Commit prefix into the four sections used in `CHAN
 
 Match the style of the existing `## [2.0.1] - 2026-04` section in `CHANGELOG.md`: brief lead paragraph describing the theme of the release, then the section headers. Reference classes and methods by name (e.g. ``` `PortfolioDCF.wealth_index()` ```) — this is required by `okama/AGENTS.md`. Link notebooks under `/examples` with markdown links.
 
-Show the draft to the user and let them edit before continuing. Insert the final block at the top of `CHANGELOG.md` under the title.
+Present the release theme and migration decisions in the progress update. Insert
+the final block at the top of `CHANGELOG.md` under the title; publication already
+authorized in the session does not require another approval gate for the notes.
 
 Then build the GitHub Release body — usually identical to the new CHANGELOG section, but follow the format of <https://github.com/mbk-dev/okama/releases/tag/v2.0.0> if the user wants something richer. Save it to a temp file (e.g., `/tmp/release_notes_v<NEW_VERSION>.md`) for `gh release create --notes-file` later.
 
@@ -251,7 +286,7 @@ Then build the GitHub Release body — usually identical to the new CHANGELOG se
 If `poetry update` (Phase 1) changed any dependency versions, sync `requirements.txt`. Per `okama/AGENTS.md`, every dependency change must be reflected in both `pyproject.toml` and `requirements.txt`.
 
 ```bash
-poetry export -f requirements.txt --output requirements.txt --without-hashes
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry export -f requirements.txt --output requirements.txt --without-hashes
 ```
 
 If the export plugin is not installed, fall back to manually updating the changed lines.
@@ -262,44 +297,51 @@ This is the git-flow phase. The user approved this exact order: commit on dev �
 
 ```bash
 # Stage & commit on dev
-git add pyproject.toml CHANGELOG.md requirements.txt docs/
+git add pyproject.toml CHANGELOG.md
+# Add other reviewed changed paths explicitly, then inspect the index and audit secrets.
+git diff --cached --name-status
 git commit -m "chore(release): prepare v<NEW_VERSION>"
 ```
 
-**CONFIRM GATE 1** — before `git push`. Show `git log --oneline @{u}..` so the user can see what they are about to push. Only push after explicit approval.
+Inspect the complete outgoing range against fresh `origin/dev`; publish only the
+reviewed release work. Apply the authorization rule at the start of this skill.
 
 ```bash
-git push
+git push origin HEAD:dev
 ```
 
-Wait for CI to go green (Travis CI + flake8/ruff). If the user says "skip waiting", note it in the report but proceed.
+Wait for GitHub Actions Tests and Ruff on that exact commit to pass. Inspect any
+other release checks that run, including CodeQL; do not substitute an older run.
 
-**CONFIRM GATE 2** — before merging into master. Show the diff range:
+Before integrating into master, inspect the diff range:
 
 ```bash
-git log --oneline master..dev
+git log --oneline origin/master..origin/dev
 ```
 
-After approval:
+After the required checks pass and integration is authorized:
 
 ```bash
+git fetch origin
 git switch master
-git pull
-git merge --no-ff dev -m "Merge dev for v<NEW_VERSION>"
+git merge --ff-only origin/master
+git merge --no-ff origin/dev -m "Merge dev for v<NEW_VERSION>"
 git tag "v<NEW_VERSION>"
 git describe --tags  # sanity check: should print v<NEW_VERSION>
 ```
 
-**CONFIRM GATE 1 (again)** — before pushing master and the tag. Pushed tags are very hard to remove cleanly:
+Publish master and the specific new tag; avoid pushing unrelated local tags.
 
 ```bash
-git push
-git push --tags
+git push origin master "refs/tags/v<NEW_VERSION>"
 ```
+
+Verify the pushed merge commit’s required CI checks as well.
 
 ## Phase 9 — GitHub Release
 
-**CONFIRM GATE 3** — before creating the GitHub Release. Show the user the `--notes-file` content one more time.
+Use the reviewed notes file and existing release authorization. Before retrying a
+failed create call, check whether the release already exists.
 
 ```bash
 gh release create "v<NEW_VERSION>" \
@@ -317,7 +359,7 @@ The tag push in Phase 8 triggers a Read the Docs build for both the `latest` ver
 Load the token, then poll the API:
 
 ```bash
-set -a; source .env; set +a   # exports READTHEDOCS_TOKEN
+set -a; source /home/chilango/projects/rs/okama-projects/okama/.env; set +a   # exports READTHEDOCS_TOKEN
 
 API="https://readthedocs.org/api/v3/projects/okama"
 AUTH="Authorization: Token $READTHEDOCS_TOKEN"
@@ -333,13 +375,27 @@ BUILD_ID=$(curl -s -H "$AUTH" "$API/builds/?limit=30" \
        print(next((b['id'] for b in json.load(sys.stdin).get('results',[]) if (b.get('version') or '')==ver), ''))")
 ```
 
-If `BUILD_ID` is empty, wait 30s and retry — RTD is sometimes slow to register the webhook. Give up after ~5 minutes and tell the user to check the dashboard manually.
+If `BUILD_ID` is empty, wait 30s and retry. Once a build is registered, continue
+watching its terminal result; a queued or running build is not a failed build.
+Keep waits short enough to communicate progress. For a long unchanged state,
+compare API timestamps with the build page’s detail endpoint
+`https://app.readthedocs.org/api/v2/build/<BUILD_ID>/` to inspect command results;
+do not infer a failure or cancellation from elapsed time alone.
 
 Once the ID is found, poll until the build reaches a terminal state. Because the
 `$VER` build is often **cancelled** as a duplicate of latest/master, re-trigger it when
 that happens — a cancelled (or failed) version build leaves `en/$VER/` 404ing:
 
 ```bash
+set -a; source /home/chilango/projects/rs/okama-projects/okama/.env; set +a   # exports READTHEDOCS_TOKEN
+
+API="https://readthedocs.org/api/v3/projects/okama"
+AUTH="Authorization: Token $READTHEDOCS_TOKEN"
+export VER="v<NEW_VERSION>"
+
+BUILD_ID=$(curl -s -H "$AUTH" "$API/builds/?limit=30" \
+  | python3 -c "import json,sys,os; ver=os.environ['VER']; \
+       print(next((b['id'] for b in json.load(sys.stdin).get('results',[]) if (b.get('version') or '')==ver), ''))")
 while :; do
   STATE=$(curl -s -H "$AUTH" "$API/builds/$BUILD_ID/" \
     | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['state']['code'], d['success'])")
@@ -360,6 +416,7 @@ If a real build (not a cancellation) fails: stop. Show the user the build URL (`
 The success criterion for the release is that the **version's own** docs page returns `200`, not just `latest`. Confirm both:
 
 ```bash
+VER="v<NEW_VERSION>"
 curl -s -o /dev/null -w "latest:%{http_code}\n" "https://okama.readthedocs.io/en/latest/"
 curl -s -o /dev/null -w "$VER:%{http_code}\n"    "https://okama.readthedocs.io/en/$VER/"
 ```
@@ -368,7 +425,9 @@ curl -s -o /dev/null -w "$VER:%{http_code}\n"    "https://okama.readthedocs.io/e
 
 ## Phase 11 — PyPI publish
 
-**CONFIRM GATE 4** — before `poetry publish`. PyPI does not allow re-uploading the same version, even if you delete it. Once the publish succeeds, `<NEW_VERSION>` is permanent.
+Publish only after the version-specific documentation gate passes and publication
+is authorized. PyPI does not allow re-uploading the same version. Before retrying
+an upload error, inspect the version’s registry files for a partial upload.
 
 Build and publish as **two separate steps** — do **not** use the combined `poetry publish --build`. During the v2.2.1 release (2026-06-06) the combined command hung indefinitely before even producing artifacts (95% CPU for 20+ minutes, nothing in `dist/`), while the separate commands completed in seconds. Two steps also let you inspect the artifacts before the irreversible upload.
 
@@ -382,10 +441,13 @@ If either command takes more than a couple of minutes, kill it and investigate �
 
 `poetry publish` uploads only the artifacts matching the current `pyproject.toml` version; stale files of older versions in `dist/` are ignored (observed in the v2.2.1 release with v2.2.0 files present).
 
-Verify by visiting <https://pypi.org/project/okama/> and confirming the new version is listed, or query the JSON API:
+Inspect wheel metadata (`Version`, `Requires-Python`) and the source archive before
+upload. Afterward query the exact version and compare each published file’s
+`digests.sha256` with its local artifact. Verify both wheel and source archive;
+a version label alone does not prove the checked files were uploaded.
 
 ```bash
-curl -s https://pypi.org/pypi/okama/json | python3 -c "import json,sys; print(json.load(sys.stdin)['info']['version'])"
+curl -fsS "https://pypi.org/pypi/okama/<NEW_VERSION>/json"
 ```
 
 ## Phase 12 — Post-release
@@ -407,13 +469,13 @@ Register a new Jupyter kernel named after the released okama version. This is a 
 First verify the env metadata matches the release — this guards against the bump-without-reinstall desync (Phase 5 must have run `poetry install` after editing `pyproject.toml`):
 
 ```bash
-poetry run python -c "import okama; v=okama.__version__; assert v=='<NEW_VERSION>', f'env metadata says {v}'; print('okama', v)"
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run python -c "import okama; v=okama.__version__; assert v=='<NEW_VERSION>', f'env metadata says {v}'; print('okama', v)"
 ```
 
 If the assert fails, run `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry install` and re-check. Do not register the kernel until it passes. Then:
 
 ```bash
-poetry run python -m ipykernel install --user --name="okama<NEW_VERSION>" --display-name="okama<NEW_VERSION>"
+PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry run python -m ipykernel install --user --name="okama<NEW_VERSION>" --display-name="okama<NEW_VERSION>"
 ```
 
 The name follows the `okama<X.Y.Z>` convention (e.g. `okama2.2.4` for v2.2.4). Run it via `poetry run` so the kernel's `python` points at the okama poetry env. The command form is the same as in Phase 2b (`python -m ipykernel install`) — only the name convention differs. Leave kernels of previous releases alone — same rule as in Phase 2b: old kernels do not break anything, and uninstalling the user's tooling without consent is not OK.
@@ -439,7 +501,6 @@ Do not list every command that ran — the user does not need a transcript.
 - Do not delete the `dev` branch (the user chose fast-forward over recreation).
 - Do not skip pre-commit hooks with `--no-verify` (forbidden by the user's global rules).
 - Do not bump dependencies "while we're at it" — the only dependency change in this workflow comes from `poetry update` in Phase 1.
-- Do not modify `main_notebook.ipynb` (forbidden by `okama/AGENTS.md`).
 - Do not write release notes or CHANGELOG entries in any language other than English (forbidden by `okama/AGENTS.md`).
 
 ## Recovery
