@@ -89,7 +89,7 @@ def test_month_offset_indexes_amount_from_the_plan_start(synthetic_env) -> None:
 
 def test_month_offset_compounds_extra_cash_flow_from_the_plan_start(synthetic_env) -> None:
     pf = ok.Portfolio(["A.US"], ccy="USD", inflation=False, symbol="pf.PF")
-    ts = ok.TimeSeriesStrategy(pf)
+    ts = ok.TimeSeriesStrategy(pf, time_series_discounted_values=False)
     ts.initial_investment = 10_000
     ts.time_series_dic = {"2022-01": -1_000}
     rate = 0.05

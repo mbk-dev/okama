@@ -220,7 +220,7 @@ def test_time_series_flows_compound_across_stage_boundary(equity_portfolio, bond
     contrib.indexation = 0.0
 
     # Stage 2: TimeSeriesStrategy with a single large contribution in the middle
-    ts_strategy = ok.TimeSeriesStrategy(bond_portfolio)
+    ts_strategy = ok.TimeSeriesStrategy(bond_portfolio, time_series_discounted_values=False)
     ts_strategy.initial_investment = 100_000  # Must exceed plan initial_investment
     # Add a one-time contribution of 50,000 in December 2005 (month 191 = 15y 11m from 1990-01)
     ts_strategy.time_series_dic = {"2005-12": 50_000}
