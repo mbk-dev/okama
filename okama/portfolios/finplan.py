@@ -1,6 +1,7 @@
 from __future__ import annotations  # noqa: I001
 
 from collections.abc import Sequence
+import logging
 from typing import Literal
 
 import numpy as np
@@ -16,6 +17,7 @@ from okama.portfolios import dcf_calculations
 from okama.portfolios import mc as mc_module
 
 ALLOWED_DISTRIBUTIONS = ("norm", "lognorm", "t")
+logger = logging.getLogger(__name__)
 
 
 class FinPlanStage:
@@ -167,6 +169,10 @@ class FinPlan:
         at the same seed, only statistically equivalent.
     name : str, default 'plan'
         Label for the wealth column, `__repr__` and plots.
+    t0 : str or Timestamp or None, default None
+        Expected forecast start month. All stage portfolios must end in this
+        month, or in the first stage's last month when None. Dates within the
+        same month are equivalent; `t0` retains the first portfolio's last date.
 
     Notes
     -----
@@ -204,6 +210,7 @@ class FinPlan:
         mc_number: int = 100,
         seed: int | None = None,
         name: str = "plan",
+        t0: str | pd.Timestamp | None = None,
     ):
         stages = tuple(stages)
         if not stages:
@@ -218,6 +225,14 @@ class FinPlan:
                 "Balances of different currencies cannot be chained."
             )
         self._stages = stages
+        expected_month = self.base_portfolio.last_date.to_period("M") if t0 is None else pd.Period(t0, freq="M")
+        for number, stage in enumerate(stages, start=1):
+            actual_month = stage.portfolio.last_date.to_period("M")
+            if actual_month != expected_month:
+                raise ValueError(
+                    f"Stage '{stage.name or f'stage {number}'}' portfolio last_date {actual_month} "
+                    f"differs from plan start {expected_month}."
+                )
         self.name = name
         self._mc_wealth_fv: pd.DataFrame | None = None
         self._mc_cash_flow_fv: pd.DataFrame | None = None
@@ -252,6 +267,34 @@ class FinPlan:
     def t0(self) -> pd.Timestamp:
         """Start of the forecast: the last date of the first stage's portfolio."""
         return self.base_portfolio.last_date
+
+    @property
+    def stage_month_indices(self) -> tuple[pd.PeriodIndex, ...]:
+        """Monthly forecast indices in stage order, including each stage's offset.
+
+        Align `time_series_dic` keys to the owning stage's index. A standalone
+        stage cannot resolve its dates until it is placed in a plan.
+        """
+        offset = 0
+        indices = []
+        for stage in self.stages:
+            indices.append(pd.period_range(self.t0.to_period("M") + offset, periods=stage.period_months, freq="M"))
+            offset += stage.period_months
+        return tuple(indices)
+
+    def _validate_stage_cashflows(self, indices: tuple[pd.PeriodIndex, ...] | None = None) -> None:
+        """Reject keys that reindexing would silently discard from a calculation."""
+        if indices is None:
+            indices = self.stage_month_indices
+        for number, (stage, index) in enumerate(zip(self.stages, indices, strict=True), start=1):
+            strategy = stage.cashflow_parameters
+            for key in strategy.time_series_dic:
+                month = pd.Timestamp(key).to_period("M")
+                if month not in index:
+                    raise ValueError(
+                        f"Stage '{stage.name or f'stage {number}'}' time_series_dic key {key!r} "
+                        f"is outside its month range {index[0]}:{index[-1]}."
+                    )
 
     @property
     def period(self) -> int:
@@ -292,6 +335,13 @@ class FinPlan:
         else:
             validators.validate_real("discount rate", discount_rate)
             self._discount_rate = discount_rate
+        if discount_rate is None:
+            source = (
+                "first stage inflation CAGR"
+                if hasattr(self.base_portfolio, "inflation") and rate is not None
+                else "settings.DEFAULT_DISCOUNT_RATE"
+            )
+            logger.info(f"FinPlan '{self.name}' automatically chose discount_rate={self._discount_rate} from {source}.")
 
     @property
     def mc_number(self) -> int:
@@ -319,37 +369,103 @@ class FinPlan:
         self._seed = seed
 
     def clear_cache(self) -> None:
-        """Discard cached Monte Carlo results.
+        """Discard cached Monte Carlo results and return paths.
 
         Plan-level setters call this on their own. Call it by hand after editing
         a stage's cash flow strategy in place (`pension.amount = -4000`), which
-        the plan cannot intercept.
+        the plan cannot intercept. To retain the draw while editing flows, use
+        `run_monte_carlo` instead.
         """
         self._mc_wealth_fv = None
         self._mc_cash_flow_fv = None
+        self._return_paths: tuple[pd.DataFrame, ...] | None = None
+
+    def draw_return_paths(self) -> tuple[pd.DataFrame, ...]:
+        """Draw and retain monthly scenario returns, one DataFrame per stage.
+
+        Rows follow `stage_month_indices`; columns are scenario numbers from
+        zero through `mc_number - 1`. Repeated calls return defensive copies
+        of the same draw. `clear_cache` and plan-level setters discard it.
+        Draws use the same spawned seed streams as a full Monte Carlo run.
+        Pass these paths to `run_monte_carlo` to compare cash flow variants.
+        """
+        if self._return_paths is None:
+            seeds = np.random.SeedSequence(self.seed).spawn(len(self.stages))
+            self._return_paths = tuple(
+                mc_module.generate_returns_ts(
+                    ror=stage.portfolio.ror,
+                    distribution=stage.distribution,
+                    distribution_parameters=stage.distribution_parameters,
+                    n_paths=self.mc_number,
+                    index=index,
+                    rng=np.random.default_rng(seed_sequence),
+                )
+                for stage, index, seed_sequence in zip(self.stages, self.stage_month_indices, seeds, strict=True)
+            )
+        return tuple(path.copy(deep=True) for path in self._return_paths)
+
+    def _validate_return_paths(self, return_paths: Sequence[pd.DataFrame]) -> tuple[pd.DataFrame, ...]:
+        """Validate and copy a reusable draw before changing result caches."""
+        paths = tuple(return_paths)
+        if len(paths) != len(self.stages):
+            raise ValueError("return_paths must contain one DataFrame per stage.")
+        for number, (stage, index, path) in enumerate(
+            zip(self.stages, self.stage_month_indices, paths, strict=True), start=1
+        ):
+            label = f"return_paths for stage '{stage.name or f'stage {number}'}'"
+            if not isinstance(path, pd.DataFrame):
+                raise TypeError(f"{label} must be a DataFrame.")
+            if path.shape != (stage.period_months, self.mc_number):
+                raise ValueError(f"{label} must have shape ({stage.period_months}, {self.mc_number}).")
+            if not isinstance(path.index, pd.PeriodIndex) or not path.index.equals(index):
+                raise ValueError(f"{label} must have the stage's monthly PeriodIndex {index[0]}:{index[-1]}.")
+            if not path.columns.equals(pd.RangeIndex(self.mc_number)):
+                raise ValueError(f"{label} columns must be scenario numbers 0:{self.mc_number - 1}.")
+            if any(
+                not pd.api.types.is_numeric_dtype(dtype)
+                or pd.api.types.is_bool_dtype(dtype)
+                or pd.api.types.is_complex_dtype(dtype)
+                for dtype in path.dtypes
+            ):
+                raise TypeError(f"{label} must contain real numeric returns.")
+            if not np.isfinite(path.to_numpy(dtype=float)).all():
+                raise ValueError(f"{label} must contain finite returns.")
+        return tuple(path.copy(deep=True) for path in paths)
+
+    def run_monte_carlo(self, *, return_paths: Sequence[pd.DataFrame] | None = None) -> None:
+        """Apply current stage cash flows to a drawn or supplied set of returns.
+
+        Supplied paths must contain one real, finite DataFrame per stage, with
+        `stage_month_indices` and scenario columns 0 through `mc_number - 1`.
+        They are copied defensively and never redrawn. Without supplied paths,
+        the retained draw is used, or a new one is generated when absent.
+
+        Call this after editing stage strategies, including `time_series_dic`
+        in place. It refreshes both result caches, so subsequent wealth, cash
+        flow and metric calls use this pass. Invalid input leaves caches intact.
+        """
+        self._validate_stage_cashflows()
+        paths = self._validate_return_paths(self.draw_return_paths() if return_paths is None else return_paths)
+        for stage in self.stages:
+            stage.cashflow_parameters._make_series_from_dic()
+        self._apply_return_paths(paths)
+        self._return_paths = paths
 
     def _run_monte_carlo(self) -> None:
+        self.run_monte_carlo()
+
+    def _apply_return_paths(self, paths: tuple[pd.DataFrame, ...]) -> None:
         """Simulate every stage in order, handing the terminal balance forward.
 
         One `_simulate_paths_mc` pass per stage yields both the wealth index and
         the cash flow, so the engine runs once rather than twice.
         """
-        seeds = np.random.SeedSequence(self.seed).spawn(len(self.stages))
-        t0_period = self.t0.to_period("M")
         balance = np.full(self.mc_number, float(self.initial_investment))
         month_offset = 0
         wealth_parts: list[pd.DataFrame] = []
         cash_flow_parts: list[pd.DataFrame] = []
-        for stage, seed_sequence in zip(self.stages, seeds, strict=True):
-            index = pd.period_range(t0_period + month_offset, periods=stage.period_months, freq="M")
-            ror = mc_module.generate_returns_ts(
-                ror=stage.portfolio.ror,
-                distribution=stage.distribution,
-                distribution_parameters=stage.distribution_parameters,
-                n_paths=self.mc_number,
-                index=index,
-                rng=np.random.default_rng(seed_sequence),
-            )
+        for stage, ror in zip(self.stages, paths, strict=True):
+            index = ror.index
             wealth, cash_flow = dcf_calculations._simulate_paths_mc(
                 ror,
                 stage.cashflow_parameters,
@@ -388,7 +504,10 @@ class FinPlan:
             horizon, so present values of different stages are comparable.
         include_negative_values : bool, default True
             If False, the first non-positive value of a scenario and everything
-            after it become 0.
+            after it become 0. At a goal month, the share of positive balances
+            is cumulative survival through that month: every earlier goal and
+            this goal were funded with a positive balance remaining. It is not
+            an independent probability of funding only that goal.
 
         Returns
         -------
@@ -396,6 +515,7 @@ class FinPlan:
             `(period_months + 1, mc_number)`. The first row is the plan's
             opening balance, dated one month before `t0`.
         """
+        self._validate_stage_cashflows()
         if self._mc_wealth_fv is None:
             self._run_monte_carlo()
         wealth = (
@@ -416,13 +536,17 @@ class FinPlan:
             As in `monte_carlo_wealth`.
         remove_if_wealth_index_negative : bool, default True
             If True, cash flow is zeroed for months in which the (floored)
-            wealth index is zero.
+            wealth index is zero, including the depleting withdrawal itself.
+            This presentation is not the raw modelled flow. To verify that
+            declared flows reached the plan, explicitly pass False; keep
+            discounting='fv' for nominal amounts.
 
         Returns
         -------
         DataFrame
             `(period_months, mc_number)`, starting at `t0`.
         """
+        self._validate_stage_cashflows()
         if self._mc_cash_flow_fv is None:
             self._run_monte_carlo()
         cash_flow = self._mc_cash_flow_fv.copy()
@@ -565,6 +689,14 @@ class FinPlan:
                 f"available for all stage portfolios from {start:%Y-%m} to {available_last:%Y-%m}."
             )
         start_period = start.to_period("M")
+        offset = 0
+        indices = []
+        for stage in self.stages:
+            indices.append(pd.period_range(start_period + offset, periods=stage.period_months, freq="M"))
+            offset += stage.period_months
+        self._validate_stage_cashflows(tuple(indices))
+        for stage in self.stages:
+            stage.cashflow_parameters._make_series_from_dic()
         balance = np.array([float(self.initial_investment)])
         month_offset = 0
         wealth_parts: list[pd.Series] = []
