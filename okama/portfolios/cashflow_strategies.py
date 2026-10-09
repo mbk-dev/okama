@@ -125,6 +125,9 @@ class CashFlow:
         Cash flow time series in form of dictionary.
 
         Negative number corresponds to withdrawals, positive number corresponds to contributions.
+        In a FinPlan, keys are matched against the owning stage's month index for
+        the selected forecast or historical backtest calendar; they are not merged
+        into the plan's index. Use dates within that stage's calculation window.
 
         Examples
         --------
@@ -255,13 +258,15 @@ class IndexationStrategy(CashFlow):
         return repr(pd.Series(dic))
 
     @property
-    def amount(self):
+    def amount(self) -> float:
         """
         Portfolio regular withdrawal or contribution size.
         Negative value corresponds to withdrawals. Positive value corresponds to contributions.
         Cash flow value is indexed each period by 'indexation'.
 
         The frequency of withdrawals or contributions is determined by the `frequency` parameter.
+        The amount is not capped by the strategy's initial_investment. In a
+        FinPlan, the plan supplies the opening balance for the calculation.
 
         Returns
         -------
@@ -271,11 +276,9 @@ class IndexationStrategy(CashFlow):
         return self._amount
 
     @amount.setter
-    def amount(self, amount):
+    def amount(self, amount: float) -> None:
         self._clear_cf_cache()
         validators.validate_real("amount", amount)
-        if amount < 0 and abs(amount) > self.initial_investment:
-            raise ValueError("It's not possible to withdraw more than the initial investment.")
         self._amount = amount
 
     @property
@@ -408,8 +411,19 @@ class TimeSeriesStrategy(CashFlow):
         Initial investment amount. Default is 0.
     time_series_dic : dict, optional
         Dictionary with dates and cash flow values. Default is empty dict.
-    time_series_discounted_values : bool, optional
-        If True, values in time_series_dic are considered as discounted (PV). Default is False.
+    time_series_discounted_values : bool, default True
+        Controls how dictionary amounts are used in future-value cash flows.
+        For task="monte_carlo" (forecast), True uses amounts verbatim as nominal
+        payments at their dates; False treats them as today's money and compounds
+        them by discount_rate from the forecast start. Forecast ledgers of planned
+        nominal payments normally use True.
+        For task="backtest", False uses historical nominal payments verbatim;
+        True compounds amounts by discount_rate from the historical window start.
+        The historical branch is the mirror image of the forecast branch.
+        Compounding uses elapsed months from the calculation start (the whole
+        plan's start for FinPlan), rather than restarting at each stage.
+        Explicit True and False retain their existing meanings; use False to
+        preserve the previous default when migrating an existing strategy.
 
     Examples
     --------
@@ -435,7 +449,7 @@ class TimeSeriesStrategy(CashFlow):
         parent: core.Portfolio,
         initial_investment: float = 0,
         time_series_dic: dict = {},  # noqa: B006
-        time_series_discounted_values: bool = False,
+        time_series_discounted_values: bool = True,
     ):
         super().__init__(
             parent,

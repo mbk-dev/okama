@@ -1,5 +1,6 @@
 from typing import Any  # noqa: I001
 from abc import ABC, abstractmethod
+import warnings
 from joblib import Parallel, delayed
 
 import numpy as np
@@ -28,6 +29,9 @@ class ListMaker(ABC):
     last_date : str, default None
         Last date of monthly return time series.
         If None, the last date is calculated automatically as the newest available date for the listed assets.
+        With inflation=True, the common history can end earlier than this requested
+        month; a warning is emitted if inflation shortens an explicit last_date.
+        Use inflation=False to retain the available nominal asset window.
     ccy : str, default 'USD'
         Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
     inflation : bool, default True
@@ -78,6 +82,14 @@ class ListMaker(ABC):
             self.inflation_first_date: pd.Timestamp = self._inflation_instance.first_date
             self.inflation_last_date: pd.Timestamp = self._inflation_instance.last_date
             self.first_date = max(self.first_date, self.inflation_first_date)
+            if last_date and self.inflation_last_date.to_period("M") < self.last_date.to_period("M"):
+                warnings.warn(
+                    f"Requested last_date {pd.to_datetime(last_date):%Y-%m} is shortened by "
+                    f"{self.inflation} data ending at {self.inflation_last_date:%Y-%m}. "
+                    "Use inflation=False to retain the available nominal asset window.",
+                    UserWarning,
+                    stacklevel=2,
+                )
             self.last_date = min(self.last_date, self.inflation_last_date)
             self.inflation_ts: pd.Series = self._inflation_instance.values_monthly.loc[self.first_date : self.last_date]
             # Add inflation to the date range dict

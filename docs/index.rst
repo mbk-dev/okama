@@ -158,6 +158,11 @@ Cash Flows & DCF
 Financial Plan
 ==============
 
+.. toctree::
+    :maxdepth: 1
+
+    finplan
+
 .. autosummary::
     :toctree: stubs
     :template: custom-class-template.rst

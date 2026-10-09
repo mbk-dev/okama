@@ -5,6 +5,56 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-10-09
+
+A major release that makes financial-plan inputs explicit and lets cash-flow
+searches reuse one set of simulated returns. `TimeSeriesStrategy` now treats
+forecast dictionary amounts as nominal payments by default; pass
+`time_series_discounted_values=False` to retain the previous compounding.
+`FinPlan` validates stage calendars, and `Asset` gains scalar CAGR and checked
+monthly-price accessors.
+
+### Added
+
+- `Asset.get_cagr(period=None, real=False)` returns the annualized return of a
+  single asset over its full history or a trailing number of years, optionally
+  adjusted for inflation in the asset's currency.
+- `Asset.get_close_monthly(month)` looks up a monthly closing price and names
+  the requested month and available range when the month is unavailable.
+- `FinPlan.stage_month_indices` exposes each forecast stage's calendar.
+  `FinPlan.draw_return_paths()` and `FinPlan.run_monte_carlo(return_paths=...)`
+  let several cash-flow variants reuse the same simulated returns.
+- `FinPlan` accepts an optional `t0` to check the intended forecast start against
+  every stage portfolio's `last_date`.
+
+### Changed
+
+- **Breaking.** `TimeSeriesStrategy.time_series_discounted_values` defaults to
+  `True`: Monte Carlo forecasts use supplied amounts verbatim as nominal cash
+  flows. Pass `False` explicitly to retain the previous default, which compounds
+  amounts from today's money using `discount_rate`. In a historical backtest,
+  `True` compounds the supplied amounts and `False` uses them verbatim; choose
+  the flag explicitly when the same ledger is used in both modes.
+- `IndexationStrategy.amount` accepts withdrawals larger than the strategy's
+  own `initial_investment`. A `FinPlan` uses its plan-level opening balance;
+  the simulation determines whether subsequent withdrawals can be funded.
+
+### Fixed
+
+- `FinPlan.plot_forecast_monte_carlo` has a self-contained documentation example
+  that constructs the portfolio and plan before plotting.
+- `FinPlan` reports inconsistent stage portfolio end dates and rejects
+  `TimeSeriesStrategy.time_series_dic` keys outside their owning stage's range
+  when running the selected forecast or historical backtest.
+- `FinPlan.discount_rate` logs the effective rate when selecting its automatic
+  inflation or default fallback.
+- `AssetList` warns when inflation availability shortens an explicitly
+  requested `last_date`. `AssetList.get_cagr` documents the common measurement
+  window and inflation column; use `inflation=False` for the full nominal window.
+- `FinPlan.monte_carlo_wealth` explains the cumulative meaning of positive
+  balances after ruin masking, and `FinPlan.monte_carlo_cash_flow` documents
+  `remove_if_wealth_index_negative=False` for checking the raw modeled flows.
+
 ## [3.0.0] - 2026-08
 
 A feature release built around one idea: a financial plan is a sequence of

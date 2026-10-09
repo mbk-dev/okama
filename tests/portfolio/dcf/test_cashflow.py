@@ -336,3 +336,10 @@ def test_plot_forecast_monte_carlo_smoke(dcf_indexation_yearly):
     dcf.mc.mc_number = 5
     # Function returns None; this is a smoke test to ensure no exceptions are raised
     dcf.plot_forecast_monte_carlo(backtest=False)
+
+
+@pytest.mark.parametrize("amount", ["2000", None, object()])
+def test_indexation_amount_retains_numeric_validation(pf_ab_monthly, amount) -> None:
+    strategy = ok.IndexationStrategy(pf_ab_monthly)
+    with pytest.raises(TypeError, match="amount should be a Real number"):
+        strategy.amount = amount

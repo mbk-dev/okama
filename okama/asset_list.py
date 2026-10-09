@@ -26,6 +26,9 @@ class AssetList(make_asset_list.ListMaker):
     last_date : str, default None
         Last date of monthly return time series.
         If None, the last date is calculated automatically as the newest available date for the listed assets.
+        With inflation=True, the common history can end earlier than the requested
+        month. A warning is emitted when inflation shortens an explicit last_date;
+        use inflation=False to retain the available nominal asset window.
     ccy : str, default 'USD'
         Base currency for the list of assets. All risk metrics and returns are adjusted to the base currency.
 
@@ -507,6 +510,11 @@ class AssetList(make_asset_list.ListMaker):
 
         Inflation adjusted annualized returns (real CAGR) are shown with `real=True` option.
         Annualized inflation is calculated for the same period if `inflation=True` in the `AssetList`.
+        With `inflation=True`, all calculations use the common asset and inflation
+        history. This can shorten an explicitly requested `last_date`; construction
+        emits a warning when inflation shortens its month. Use `inflation=False`
+        to preserve the available nominal asset window. Select asset columns by
+        symbol: inflation adds a separate column when `real=False`.
 
         Parameters
         ----------
