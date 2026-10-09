@@ -164,3 +164,33 @@ def test_real_drawdowns_require_inflation_data(list_basic_patches):
     al = ok.AssetList(["A.US", "B.US"], ccy="USD", inflation=False)
     with pytest.raises(ValueError, match="Real Return is not defined"):
         _ = al.real_drawdowns
+
+
+@pytest.fixture
+def shortened_inflation_env(synthetic_env, mocker):
+    inflation = pd.Series(0.002, index=synthetic_env["index"][:-2], name="USD.INFL")
+
+    class ShortInflation:
+        def __init__(self, symbol: str, first_date=None, last_date=None):
+            self.first_date = inflation.index[0].to_timestamp()
+            self.last_date = inflation.index[-1].to_timestamp()
+            self.values_monthly = inflation
+
+    mocker.patch("okama.common.make_asset_list.macro.Inflation", side_effect=ShortInflation)
+
+
+def test_explicit_last_date_warns_when_inflation_clips_history(shortened_inflation_env):
+    with pytest.warns(UserWarning, match="2021-12.*USD.INFL.*2021-10.*inflation=False"):
+        al = ok.AssetList(["A.US"], last_date="2021-12", inflation=True)
+    assert al.last_date == pd.Timestamp("2021-10-01")
+    assert al.get_cagr().index[-1] == pd.Period("2021-10", freq="M")
+
+
+def test_disabling_inflation_keeps_requested_last_month(shortened_inflation_env, synthetic_env):
+    al = ok.AssetList(["A.US"], last_date="2021-12", inflation=False)
+    assert al.last_date == pd.Timestamp("2021-12-01")
+    result = al.get_cagr()
+    assert result.index[-1] == pd.Period("2021-12", freq="M")
+    assert list(result.columns) == ["A.US"]
+    expected = (1 + synthetic_env["series"]["A.US"]).prod() ** 0.5 - 1
+    assert result["A.US"].iloc[-1] == pytest.approx(expected)

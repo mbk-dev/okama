@@ -130,3 +130,72 @@ def test_local_name_absent_is_none(basic_patches):
     a = ok.Asset("SPY.US")
     assert a.local_name is None
     assert a.info["name"] == "SPDR S&P 500 ETF Trust"
+
+
+@pytest.fixture
+def cagr_asset_env(basic_patches):
+    index = pd.period_range("2020-01", periods=36, freq="M")
+    returns = pd.Series([0.01] * 24 + [0.02] * 12, index=index, name="SPY.US")
+    basic_patches["m_get_symbol_info"].side_effect = lambda symbol: {
+        **basic_patches["defaults"].symbol_info,
+        "code": symbol.split(".")[0],
+    }
+    basic_patches["m_get_ror"].side_effect = lambda symbol, **kwargs: returns.rename(symbol).loc[
+        kwargs["first_date"] : kwargs["last_date"]
+    ]
+    return returns
+
+
+@pytest.mark.parametrize("period", [None, 1, 2, 3])
+def test_asset_cagr_matches_single_asset_list(cagr_asset_env, period):
+    a = ok.Asset("SPY.US", last_date="2022-12")
+    al = ok.AssetList([a], ccy="USD", last_date="2022-12", inflation=False)
+    result = a.get_cagr(period=period)
+    assert isinstance(result, float)
+    assert result == pytest.approx(al.get_cagr(period=period)["SPY.US"].iloc[-1])
+    if period == 1:
+        assert result == pytest.approx(1.02**12 - 1)
+
+
+@pytest.mark.parametrize("period, error", [(0, ValueError), (-1, ValueError), (4, ValueError), (1.5, TypeError)])
+def test_asset_cagr_rejects_invalid_period(cagr_asset_env, period, error):
+    with pytest.raises(error):
+        ok.Asset("SPY.US").get_cagr(period=period)
+
+
+def test_asset_cagr_short_history_is_nan(basic_patches):
+    assert pd.isna(ok.Asset("SPY.US").get_cagr())
+
+
+@pytest.mark.parametrize("period", [None, 1])
+def test_asset_real_cagr_uses_common_inflation_history(cagr_asset_env, mocker, period):
+    inflation = pd.Series(0.005, index=cagr_asset_env.index[3:-2], name="USD.INFL")
+    mocker.patch("okama.macro.namespaces.get_macro_namespaces", return_value={"INFL"})
+    mocker.patch("okama.macro.data_queries.QueryData.get_macro_ts", return_value=inflation)
+    a = ok.Asset("SPY.US")
+    al = ok.AssetList([a], ccy="USD", inflation=True)
+    assert a.get_cagr(period=period, real=True) == pytest.approx(
+        al.get_cagr(period=period, real=True)["SPY.US"].iloc[-1]
+    )
+    assert a.last_date == pd.Timestamp("2022-12-01")
+
+
+@pytest.mark.parametrize("month", ["2019-12", "2020-04"])
+def test_monthly_close_error_names_requested_month_and_available_range(basic_patches, mocker, month):
+    close = pd.Series([10.0, 20.0, 30.0], index=pd.period_range("2020-01", periods=3, freq="M"))
+    mocker.patch("okama.asset.data_queries.QueryData.get_close", return_value=close)
+    a = ok.Asset("SPY.US")
+    with pytest.raises(KeyError) as error:
+        a.get_close_monthly(month)
+    assert month in str(error.value)
+    assert "2020-01" in str(error.value)
+    assert "2020-03" in str(error.value)
+
+
+@pytest.mark.parametrize("month", ["2020-02", pd.Timestamp("2020-02-15"), pd.Period("2020-02", freq="M")])
+def test_monthly_close_accessor_returns_scalar_and_preserves_series(basic_patches, mocker, month):
+    close = pd.Series([10.0, 20.0, 30.0], index=pd.period_range("2020-01", periods=3, freq="M"))
+    mocker.patch("okama.asset.data_queries.QueryData.get_close", return_value=close)
+    a = ok.Asset("SPY.US")
+    assert a.get_close_monthly(month) == 20.0
+    pd.testing.assert_series_equal(a.close_monthly, close)

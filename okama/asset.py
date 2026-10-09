@@ -3,6 +3,8 @@ import numpy as np
 
 from okama import settings
 from okama.api import data_queries, namespaces
+from okama.common import validators
+from okama.common.helpers import helpers
 
 
 class Asset:
@@ -153,6 +155,95 @@ class Asset:
         >>> plt.show()
         """
         return data_queries.QueryData.get_close(self.symbol, period="M")
+
+    def get_close_monthly(self, month: str | pd.Timestamp | pd.Period) -> float:
+        """
+        Return the monthly close price for a requested month.
+
+        Parameters
+        ----------
+        month : str, Timestamp or Period
+            Requested month, for example "2026-09". Dates are converted to months.
+
+        Returns
+        -------
+        float
+            Monthly close price in the asset currency.
+
+        Raises
+        ------
+        KeyError
+            If the month is unavailable; the message includes the requested month
+            and the available close-price range. The range is independent of the
+            first_date and last_date used to select rate-of-return history.
+        """
+        requested = pd.Period(month, freq="M")
+        close = self.close_monthly
+        try:
+            return float(close.loc[requested])
+        except KeyError as error:
+            bounds = f"{close.index.min()} to {close.index.max()}" if not close.empty else "empty history"
+            raise KeyError(
+                f"Monthly close for {self.symbol} at {requested} is unavailable; available range: {bounds}."
+            ) from error
+
+    def get_cagr(self, period: int | None = None, real: bool = False) -> float:
+        """
+        Return the scalar Compound Annual Growth Rate in the asset currency.
+
+        Parameters
+        ----------
+        period : int, default None
+            Trailing period in whole years ending at the last available month.
+            None measures all selected return history between first_date and
+            last_date, rather than a fixed number of years.
+        real : bool, default False
+            Adjust for inflation in the asset currency. The history is restricted
+            to months shared by the asset and inflation before selecting the
+            trailing period; its last month can precede the asset's last_date.
+            Nominal calculations do not load inflation or shorten asset history.
+
+        Returns
+        -------
+        float
+            CAGR, or NaN when fewer than 12 months are available. For nominal
+            returns this matches the final asset row of AssetList.get_cagr with
+            the same currency and selected history and inflation=False.
+
+        Raises
+        ------
+        TypeError
+            If period is not an integer.
+        ValueError
+            If period is not positive or exceeds the available history, or if
+            there are no months shared with inflation for a real calculation.
+        """
+        returns = self.ror
+        inflation = None
+        if real:
+            from okama.macro import Inflation
+
+            inflation = Inflation(self.inflation, self.first_date, self.last_date).values_monthly
+            common_index = returns.index.intersection(inflation.index)
+            if common_index.empty:
+                raise ValueError("Real CAGR is not defined: asset and inflation have no common months.")
+            returns = returns.loc[common_index]
+            inflation = inflation.loc[common_index]
+        if period is not None:
+            validators.validate_integer("period", period, min_value=0, inclusive=False)
+            years = len(returns) // settings._MONTHS_PER_YEAR
+            if period > years:
+                raise ValueError(f"'period' ({period}) is beyond historical data range ({years} years).")
+            start = helpers.Date.subtract_years(returns.index[-1].to_timestamp(), period)
+            returns = returns.loc[start:]
+            if inflation is not None:
+                inflation = inflation.loc[start:]
+        if len(returns) < settings._MONTHS_PER_YEAR:
+            return float("nan")
+        cagr = helpers.Frame.get_cagr(returns)
+        if inflation is not None:
+            cagr = (1.0 + cagr) / (1.0 + helpers.Frame.get_cagr(inflation)) - 1.0
+        return float(cagr)
 
     @property
     def adj_close(self) -> pd.Series:
