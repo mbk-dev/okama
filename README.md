@@ -45,6 +45,7 @@ _okama_ provides access to **free** end-of-day historical market data and macroe
 - Rebalanced portfolio optimization with constraints (multi-period Efficient Frontier)
 - Advanced rebalancing strategies: Rebalancing-bands (threshold-based), Calendar-based or hybrid
 - Investment portfolios with complex contributions / withdrawals cash flows (DCF)
+- Multi-stage financial plans with `FinPlan` and `FinPlanStage`, carrying balances between stages per Monte Carlo path
 - Money-weighted internal rate of return (IRR/MWRR) for portfolio cash flows — on historical data and across Monte Carlo forecast paths
 - Monte Carlo Simulations for financial assets and investment portfolios, reproducible with a random `seed`
 - Forecasting with popular theoretical distributions: normal, lognormal and Student's (T)
@@ -216,7 +217,8 @@ The official documentation is hosted on readthedocs.org: [https://okama.readthed
 
 ## Financial Widgets
 [okama.io](https://okama.io) offers interactive financial widgets (multi-page web application) 
-built with the _okama_ package and [Dash (plotly)](https://github.com/plotly/dash) framework. Working example is available at 
+powered by the _okama_ package. The current platform combines React and Django,
+with remaining legacy widgets maintained in Dash. Working example is available at
 [okama.io](https://okama.io/).
 
 ![](https://raw.githubusercontent.com/mbk-dev/okama/images/images/main_page.jpg) 
@@ -239,7 +241,6 @@ on your own server. See [mcp.okama.io](https://mcp.okama.io) for installation an
 
 The plan for _okama_ is to add more functions that will be useful to investors and asset managers.
 
-- Add support for a series of investment portfolios (a financial plan comprising multiple investment strategies, each active until a specific date, after which it transitions to another).
 - Add multidimensional Monte Carlo with Ledoit-Wolf shrinkage
 - Add Omega ratio to EfficientFrontier and Portfolio classes.
 - Add Black-Litterman asset allocation 
@@ -265,7 +266,6 @@ Tools for investing and financial planning.
 | Project | What it helps you do |
 |---|---|
 | [okama.io](https://okama.io/) | Explore portfolios with interactive web tools. |
-| [okama](https://github.com/mbk-dev/okama) | Analyze investments and portfolios in Python. |
 | [okama Data API](https://api.okama.io/) | Access historical market and economic data. |
 | [okama-macro](https://github.com/mbk-dev/okama-macro) | Work with inflation and central-bank rate series. |
 | [okama-mcp](https://mcp.okama.io/) | Use okama tools through an AI assistant. |
