@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/mbk-dev/okama/images/images/Okama2.jpg" alt="okama — investment portfolio analysis and optimization library" width="600">
+  <img src="docs/images/okama4.png" alt="okama — investment portfolio analysis and optimization library" width="600">
 </p>
 
 # Okama
