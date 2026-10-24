@@ -1,0 +1,36 @@
+name: Security source audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 3 * * 1'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-source-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Run pinned source audit
+        uses: mbk-dev/cbrapi/.github/actions/security-audit@cb86a73265231d56e01f368c3205a486a884830c
+        with:
+          base-sha: ${{ github.event.pull_request.base.sha || '' }}
