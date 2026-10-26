@@ -90,17 +90,11 @@ def test_validate_period_ok_and_fail(synthetic_env):
 
 
 def test_get_asset_obj_dict_raises_for_short_history():
-    """Test that _get_asset_obj_dict raises ShortPeriodLengthError for assets with insufficient history.
+    """Reject short ready assets without reloading shared class definitions.
 
-    This test directly calls the validation logic by importing the original module
-    to avoid interference from patches in other parallel tests (e.g., synthetic_env).
+    Test fixtures restore patches between tests; reloading would leave AssetList
+    inheriting an older ListMaker class and invalidate later spies/patches.
     """
-    # Import the module directly to get the original unpatched version
-    import importlib  # noqa: I001
-    import okama.common.make_asset_list
-
-    # Force reload to ensure we get a fresh unpatched version
-    importlib.reload(okama.common.make_asset_list)
     from okama.common.make_asset_list import ListMaker as UnpatchedListMaker
 
     PL = ok.settings.PeriodLength

@@ -1310,6 +1310,13 @@ class EfficientFrontier(asset_list.AssetList):
         DataFrame
             Table with Return (CAGR) and Risk values for random portfolios (portfolios with random asset weights).
 
+        Notes
+        -----
+        Repeated portfolios share request-local preparation. Normal float64
+        histories use memory-bounded NumPy batches; low-risk portfolios and
+        exceptional inputs retain scalar financial calculations. Generated
+        weights and the returned table still scale with the portfolio count.
+
         Examples
         --------
         >>> ls_m = ["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"]
@@ -1353,23 +1360,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> plt.show()
         """
         weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
-        asset_labels = self._asset_labels(self._labels_mode)
-        # Every enumerated weight vector is unique, so the ror cache would never
-        # hit and only grow O(points). Compute the series directly instead.
-        rebalance = Rebalance(period=self.rebalancing_strategy.period)
-        rows_list = []
-        for weights in weights_series:
-            portfolio_ror = rebalance.return_ror_ts_ef(weights, self.assets_ror)
-            risk_monthly = portfolio_ror.std()
-            mean_return = portfolio_ror.mean()
-            risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
-            cagr = helpers.Frame.get_cagr(portfolio_ror)
-            row = dict(zip(asset_labels, weights))  # noqa: B905
-            row["Risk"] = risk
-            row["CAGR"] = cagr
-            rows_list.append(row)
-        result = pd.DataFrame.from_records(rows_list)
-        return helpers.Frame.change_columns_order(result, ["Risk", "CAGR"])
+        return self._get_portfolio_points(weights_series)
 
     def get_grid_portfolios(self, step: float = 0.10, max_points: int = 100_000) -> pd.DataFrame:
         """
@@ -1393,6 +1384,13 @@ class EfficientFrontier(asset_list.AssetList):
         DataFrame
             Table with Risk (annualized std) and CAGR for every grid portfolio.
 
+        Notes
+        -----
+        Repeated portfolios share request-local preparation. Normal float64
+        histories use memory-bounded NumPy batches; low-risk portfolios and
+        exceptional inputs retain scalar financial calculations. Generated
+        weights and the returned table still scale with the portfolio count.
+
         Examples
         --------
         >>> ls_m = ["SPY.US", "GLD.US"]
@@ -1411,22 +1409,66 @@ class EfficientFrontier(asset_list.AssetList):
         weights_series = helpers.Float.get_grid_weights(
             w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds, max_points=max_points
         )
-        asset_labels = self._asset_labels(self._labels_mode)
-        # Every grid weight vector is unique, so the ror cache would never hit
-        # and only grow O(points). Compute the series directly instead.
+        return self._get_portfolio_points(weights_series)
+
+    _BATCH_SIZE = 1024
+    _BATCH_ELEMENTS = 262_144
+    _SCALAR_RISK_THRESHOLD = 1e-3
+
+    def _get_portfolio_points(self, weights_series: pd.Series) -> pd.DataFrame:
+        """Evaluate repeated weights with request-local preparation and bounded return matrices."""
+        if weights_series.empty:
+            return helpers.Frame.change_columns_order(pd.DataFrame(), ["Risk", "CAGR"])
         rebalance = Rebalance(period=self.rebalancing_strategy.period)
-        rows_list = []
-        for weights in weights_series:
-            portfolio_ror = rebalance.return_ror_ts_ef(weights, self.assets_ror)
-            risk_monthly = portfolio_ror.std()
-            mean_return = portfolio_ror.mean()
-            risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
-            cagr = helpers.Frame.get_cagr(portfolio_ror)
-            row = dict(zip(asset_labels, weights))  # noqa: B905
-            row["Risk"] = risk
-            row["CAGR"] = cagr
-            rows_list.append(row)
-        result = pd.DataFrame.from_records(rows_list)
+        months = len(self.assets_ror)
+        prepared = rebalance._prepare_ef_data(self.assets_ror) if months <= self._BATCH_ELEMENTS else None
+        chunk_size = max(1, min(self._BATCH_SIZE, self._BATCH_ELEMENTS // max(1, months)))
+        labels = self._asset_labels(self._labels_mode)
+
+        def scalar_metrics(weights: np.ndarray) -> tuple[float, float | None]:
+            ror = rebalance.return_ror_ts_ef(weights, self.assets_ror)
+            risk = helpers.Float.annualize_risk(ror.std(), ror.mean())
+            return risk, helpers.Frame.get_cagr(ror)
+
+        chunks = []
+        for start in range(0, len(weights_series), chunk_size):
+            weights = np.stack(weights_series.iloc[start : start + chunk_size])
+            returns = prepared.return_ror(weights) if prepared is not None else None
+            if returns is None:
+                rows = []
+                for row_weights in weights:
+                    risk, cagr = scalar_metrics(row_weights)
+                    point = dict(zip(labels, row_weights))  # noqa: B905
+                    point["Risk"], point["CAGR"] = risk, cagr
+                    rows.append(point)
+                chunks.append(pd.DataFrame.from_records(rows))
+                continue
+            monthly_risk = returns.std(axis=0, ddof=1)
+            monthly_mean = returns.mean(axis=0)
+            with np.errstate(over="ignore", invalid="ignore"):
+                risk = helpers.Float.annualize_risk(monthly_risk, monthly_mean)
+                cagr = (
+                    (1 + returns).prod(axis=0) ** (12 / months) - 1
+                    if months >= 12
+                    else np.full(len(weights), None, dtype=object)
+                )
+            # Annualization subtracts two close powers. Estimate its rounding
+            # sensitivity as well as guarding low volatility at ordinary means.
+            with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+                rounding_bound = 32 * np.finfo(np.float64).eps * np.abs(1 + monthly_mean) ** 24 / np.abs(risk)
+            exceptional = (
+                (monthly_risk < self._SCALAR_RISK_THRESHOLD)
+                | ~np.isfinite(risk)
+                | (rounding_bound > 1e-12 * (1 + np.abs(risk)))
+            )
+            if months >= 12:
+                exceptional |= ~np.isfinite(cagr)
+            for i in np.flatnonzero(exceptional):
+                risk[i], cagr[i] = scalar_metrics(weights[i])
+            columns = dict(zip(labels, weights.T))  # noqa: B905
+            columns["Risk"], columns["CAGR"] = risk, cagr
+            chunks.append(pd.DataFrame(columns))
+        result = pd.concat(chunks, ignore_index=True)
         return helpers.Frame.change_columns_order(result, ["Risk", "CAGR"])
 
     def plot_pair_ef(self, tickers="tickers", figsize: tuple | None = None) -> Axes:

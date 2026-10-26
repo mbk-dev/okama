@@ -1,0 +1,108 @@
+{
+  "revision": "b33ca12bdd81b4107c2de484fff581eda1023ce1",
+  "diff_sha256": "249f881c664972091b41b2d6a1f6f822a21041e3f850b64f17cd29e2dfa11e3c",
+  "python": "3.11.17",
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+  "processor": "",
+  "numpy": "2.4.6",
+  "pandas": "3.1.0",
+  "okama": "4.0.0",
+  "blas_config": "Build Dependencies:\n  blas:\n    detection method: pkgconfig\n    found: true\n    include directory: /opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/include\n    lib directory: /opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/lib\n    name: scipy-openblas\n    openblas configuration: OpenBLAS 0.3.31.188.0  USE64BITINT DYNAMIC_ARCH NO_AFFINITY\n      Haswell MAX_THREADS=64\n    pc file directory: /project/.openblas\n    version: 0.3.31.188.0\n  lapack:\n    detection method: pkgconfig\n    found: true\n    include directory: /opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/include\n    lib directory: /opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/lib\n    name: scipy-openblas\n    openblas configuration: OpenBLAS 0.3.31.188.0  USE64BITINT DYNAMIC_ARCH NO_AFFINITY\n      Haswell MAX_THREADS=64\n    pc file directory: /project/.openblas\n    version: 0.3.31.188.0\nCompilers:\n  c:\n    commands: cc\n    linker: ld.bfd\n    name: gcc\n    version: 14.2.1\n  c++:\n    commands: c++\n    linker: ld.bfd\n    name: gcc\n    version: 14.2.1\n  cython:\n    commands: cython\n    linker: cython\n    name: cython\n    version: 3.2.4\nMachine Information:\n  build:\n    cpu: x86_64\n    endian: little\n    family: x86_64\n    system: linux\n  host:\n    cpu: x86_64\n    endian: little\n    family: x86_64\n    system: linux\nPython Information:\n  path: /tmp/build-env-gjolnpt6/bin/python\n  version: '3.11'\nSIMD Extensions:\n  baseline:\n  - X86_V2\n  found:\n  - X86_V3\n  - X86_V4\n  - AVX512_ICL\n  not found:\n  - AVX512_SPR\n\n",
+  "thread_env": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": null
+  },
+  "months": 252,
+  "assets": 3,
+  "warmups": 1,
+  "repeats": 5,
+  "memory": "tracemalloc peak allocated during an extra warm call, including returned DataFrame; excludes resident inputs/imports",
+  "cases": {},
+  "paired": {
+    "baseline_revision": "b33ca12bdd81b4107c2de484fff581eda1023ce1",
+    "method": "get_monte_carlo(kind=mean)",
+    "cases": {
+      "1": {
+        "baseline": [
+          0.0020431290031410754,
+          0.0017691210014163516,
+          0.002596704005554784,
+          0.0015151010011322796,
+          0.001354208005068358
+        ],
+        "candidate": [
+          0.0024970960002974607,
+          0.001791914997738786,
+          0.004044617999170441,
+          0.0012158270037616603,
+          0.001102531998185441
+        ]
+      },
+      "8": {
+        "baseline": [
+          0.004034930003399495,
+          0.006621194996114355,
+          0.004534994994173758,
+          0.009363293997012079,
+          0.006602990004466847
+        ],
+        "candidate": [
+          0.0011842159947264008,
+          0.003079444999457337,
+          0.002079988000332378,
+          0.0013097740011289716,
+          0.001186020002933219
+        ]
+      },
+      "128": {
+        "baseline": [
+          0.06173268899874529,
+          0.06190323200280545,
+          0.06530365399521543,
+          0.07402133800496813,
+          0.05771989099594066
+        ],
+        "candidate": [
+          0.0017225530027644709,
+          0.001545708997582551,
+          0.0013495290040737018,
+          0.002142976998584345,
+          0.0023320740001508966
+        ]
+      },
+      "2048": {
+        "baseline": [
+          1.0628950120008085,
+          0.9915696660027606,
+          0.9733077659984701,
+          0.9089021580002736,
+          0.9204253009957029
+        ],
+        "candidate": [
+          0.00860534200182883,
+          0.01163569599884795,
+          0.009411995000846218,
+          0.011561474995687604,
+          0.010791631000756752
+        ]
+      },
+      "8192": {
+        "baseline": [
+          3.0967196479978156,
+          3.1914168049988803,
+          3.3336881310024182,
+          3.053810428995348,
+          3.2006858810054837
+        ],
+        "candidate": [
+          0.020832084002904594,
+          0.02069555599882733,
+          0.02705799199611647,
+          0.020362337003462017,
+          0.01820917999430094
+        ]
+      }
+    }
+  }
+}

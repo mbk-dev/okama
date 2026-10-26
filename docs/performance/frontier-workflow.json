@@ -1,0 +1,646 @@
+{
+  "baseline": "Previous completed local stage: original remaining optimizer methods; earlier improvements shared",
+  "reference_revision": "b33ca12bdd81b4107c2de484fff581eda1023ce1",
+  "python": "3.11.17",
+  "numpy": "2.4.6",
+  "pandas": "3.1.0",
+  "protocol": "One warm pair then five alternating pairs; new objects per complete workflow; financial equivalence rtol=atol=1e-12",
+  "loading_boundary": "CSV payloads already resident; actual QueryData parser plus FakeAsset construction. No HTTP, metadata lookup or real-market-data claim",
+  "source_sha256": {
+    "okama/frontier/single_period.py": "a2263473e68b7d1ddac34036af67268e39ed7b59314fcba2fa646dac3b2b85e9",
+    "tests/helpers/optimizer_reference.py": "416c586a9efb3852b0555feb475c59d10fb04c4484101631dff1674259373da4"
+  },
+  "script_sha256": "a67b18a1d01c3e701018f1b9aef709f5ba941bf1882226599a25b196f101e5e1",
+  "cases": {
+    "minimize_risk_3_assets": {
+      "baseline_seconds": [
+        0.0025631089956732467,
+        0.0029567429883172736,
+        0.002552508987719193,
+        0.002217628003563732,
+        0.0028946859965799376
+      ],
+      "candidate_seconds": [
+        0.0013713090011151507,
+        0.0013176070060580969,
+        0.0012619119952432811,
+        0.0011514849902596325,
+        0.0011866209970321506
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.0025631089956732467,
+      "candidate_median_seconds": 0.0012619119952432811,
+      "ratio": 2.031131335096875
+    },
+    "tangency_cagr_3_assets": {
+      "baseline_seconds": [
+        0.006296619001659565,
+        0.0075041790114482865,
+        0.007037367991870269,
+        0.006213211992871948,
+        0.006491446998552419
+      ],
+      "candidate_seconds": [
+        0.003485410998109728,
+        0.0038879409985383973,
+        0.003356878994964063,
+        0.003313656008685939,
+        0.0035787369997706264
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.006491446998552419,
+      "candidate_median_seconds": 0.003485410998109728,
+      "ratio": 1.8624624189436998
+    },
+    "tangency_mean_3_assets": {
+      "baseline_seconds": [
+        0.008030983008211479,
+        0.008304390008561313,
+        0.010646631999406964,
+        0.00892364900209941,
+        0.00851707099354826
+      ],
+      "candidate_seconds": [
+        0.0029061870009172708,
+        0.0027995860000373796,
+        0.0039606390055269,
+        0.0036869420000584796,
+        0.0030350909946719185
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.00851707099354826,
+      "candidate_median_seconds": 0.0030350909946719185,
+      "ratio": 2.8061995533247335
+    },
+    "optimize_return_3_assets": {
+      "baseline_seconds": [
+        0.010274200001731515,
+        0.010274109008605592,
+        0.011020136997103691,
+        0.011484964998089708,
+        0.010385079003754072
+      ],
+      "candidate_seconds": [
+        0.0024094789987429976,
+        0.0024256500037154183,
+        0.0028504720103228465,
+        0.0030705069948453456,
+        0.004105953004909679
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.010385079003754072,
+      "candidate_median_seconds": 0.0028504720103228465,
+      "ratio": 3.6432839775816115
+    },
+    "workflow_600x3_20_points": {
+      "baseline_seconds": [
+        0.2026504140085308,
+        0.20910935899883043,
+        0.20717366501048673,
+        0.2099147099943366,
+        0.20895556900359225
+      ],
+      "candidate_seconds": [
+        0.0994006429973524,
+        0.09531268500722945,
+        0.10516241200093646,
+        0.09086008700251114,
+        0.09710441800416447
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.20895556900359225,
+      "candidate_median_seconds": 0.09710441800416447,
+      "ratio": 2.151864696770345,
+      "stage_seconds": {
+        "baseline": [
+          {
+            "csv_load_and_ready_assets": 0.005596867995336652,
+            "frontier_setup": 0.000979510004981421,
+            "frontier_and_tangency": 0.18673043498711195,
+            "portfolio_setup": 0.004331318006734364,
+            "portfolio_metrics": 0.004987656997400336
+          },
+          {
+            "csv_load_and_ready_assets": 0.007932598004117608,
+            "frontier_setup": 0.0013450900005409494,
+            "frontier_and_tangency": 0.1898531109909527,
+            "portfolio_setup": 0.0045429180026985705,
+            "portfolio_metrics": 0.005375840002670884
+          },
+          {
+            "csv_load_and_ready_assets": 0.005041139011154883,
+            "frontier_setup": 0.0008183250029105693,
+            "frontier_and_tangency": 0.1923268120008288,
+            "portfolio_setup": 0.00434236899309326,
+            "portfolio_metrics": 0.004581319997669198
+          },
+          {
+            "csv_load_and_ready_assets": 0.004707407992100343,
+            "frontier_setup": 0.0007671790081076324,
+            "frontier_and_tangency": 0.19489590299781412,
+            "portfolio_setup": 0.004876879000221379,
+            "portfolio_metrics": 0.004572823992930353
+          },
+          {
+            "csv_load_and_ready_assets": 0.005415395004092716,
+            "frontier_setup": 0.0008388139976887032,
+            "frontier_and_tangency": 0.19125273400277365,
+            "portfolio_setup": 0.006234422005945817,
+            "portfolio_metrics": 0.005124004994286224
+          }
+        ],
+        "candidate": [
+          {
+            "csv_load_and_ready_assets": 0.005783710003015585,
+            "frontier_setup": 0.0009271099988836795,
+            "frontier_and_tangency": 0.08241262700175866,
+            "portfolio_setup": 0.00473488999705296,
+            "portfolio_metrics": 0.005449460004456341
+          },
+          {
+            "csv_load_and_ready_assets": 0.0065638829983072355,
+            "frontier_setup": 0.0012231599976075813,
+            "frontier_and_tangency": 0.07692468499590177,
+            "portfolio_setup": 0.0046972590062068775,
+            "portfolio_metrics": 0.0058338350063422695
+          },
+          {
+            "csv_load_and_ready_assets": 0.005423330003395677,
+            "frontier_setup": 0.000842100998852402,
+            "frontier_and_tangency": 0.08709268399979919,
+            "portfolio_setup": 0.005395597996539436,
+            "portfolio_metrics": 0.00631721799436491
+          },
+          {
+            "csv_load_and_ready_assets": 0.006051567004760727,
+            "frontier_setup": 0.0009450850047869608,
+            "frontier_and_tangency": 0.07446769600210246,
+            "portfolio_setup": 0.005115238003781997,
+            "portfolio_metrics": 0.004217452995362692
+          },
+          {
+            "csv_load_and_ready_assets": 0.005374878994189203,
+            "frontier_setup": 0.0010097870108438656,
+            "frontier_and_tangency": 0.08064003000617959,
+            "portfolio_setup": 0.004581892004352994,
+            "portfolio_metrics": 0.005424782997579314
+          }
+        ]
+      },
+      "stage_median_seconds": {
+        "baseline": {
+          "csv_load_and_ready_assets": 0.005415395004092716,
+          "frontier_setup": 0.0008388139976887032,
+          "frontier_and_tangency": 0.19125273400277365,
+          "portfolio_setup": 0.0045429180026985705,
+          "portfolio_metrics": 0.004987656997400336
+        },
+        "candidate": {
+          "csv_load_and_ready_assets": 0.005783710003015585,
+          "frontier_setup": 0.0009450850047869608,
+          "frontier_and_tangency": 0.08064003000617959,
+          "portfolio_setup": 0.00473488999705296,
+          "portfolio_metrics": 0.005449460004456341
+        }
+      }
+    },
+    "minimize_risk_32_assets": {
+      "baseline_seconds": [
+        0.3709558400005335,
+        0.4304819940007292,
+        0.3338321550108958,
+        0.3781143259984674,
+        0.32958077699004207
+      ],
+      "candidate_seconds": [
+        0.03439622599398717,
+        0.02954962399962824,
+        0.025407874010852538,
+        0.02464525400137063,
+        0.026176634986768477
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.3709558400005335,
+      "candidate_median_seconds": 0.026176634986768477,
+      "ratio": 14.171257695576259
+    },
+    "tangency_cagr_32_assets": {
+      "baseline_seconds": [
+        1.4075250469904859,
+        1.3061332950019278,
+        1.5215353160019731,
+        1.492455939995125,
+        1.5453003689908655
+      ],
+      "candidate_seconds": [
+        0.20693439300521277,
+        0.17674054300005082,
+        0.1781445230008103,
+        0.17370048300654162,
+        0.17638996099412907
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 1.492455939995125,
+      "candidate_median_seconds": 0.17674054300005082,
+      "ratio": 8.44433266222734
+    },
+    "tangency_mean_32_assets": {
+      "baseline_seconds": [
+        1.325887804996455,
+        1.3383438129967544,
+        1.3664153760037152,
+        1.3310279799916316,
+        1.4482382999995025
+      ],
+      "candidate_seconds": [
+        0.08478887399542145,
+        0.0804062690003775,
+        0.09232816001167521,
+        0.08234261500183493,
+        0.09973418299341574
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 1.3383438129967544,
+      "candidate_median_seconds": 0.08478887399542145,
+      "ratio": 15.78442724771913
+    },
+    "optimize_return_32_assets": {
+      "baseline_seconds": [
+        1.3362323159963125,
+        1.3801073790091323,
+        1.3420938829949591,
+        1.4277686099958373,
+        1.289165206006146
+      ],
+      "candidate_seconds": [
+        0.03598361200420186,
+        0.04019125700870063,
+        0.039611772997886874,
+        0.04069638099463191,
+        0.037796506003360264
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 1.3420938829949591,
+      "candidate_median_seconds": 0.039611772997886874,
+      "ratio": 33.881186864989715
+    },
+    "workflow_600x32_20_points": {
+      "baseline_seconds": [
+        12.017413601002772,
+        12.173549849001574,
+        12.313648787006969,
+        12.907764336006949,
+        11.97836816799827
+      ],
+      "candidate_seconds": [
+        0.8728088940115413,
+        0.9561579989967868,
+        1.0295352770044701,
+        1.1518608549959026,
+        0.9394481390045257
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 12.173549849001574,
+      "candidate_median_seconds": 0.9561579989967868,
+      "ratio": 12.731734568736776,
+      "stage_seconds": {
+        "baseline": [
+          {
+            "csv_load_and_ready_assets": 0.059651179995853454,
+            "frontier_setup": 0.002355528005864471,
+            "frontier_and_tangency": 11.939864657004364,
+            "portfolio_setup": 0.008870478995959274,
+            "portfolio_metrics": 0.006578330998308957
+          },
+          {
+            "csv_load_and_ready_assets": 0.09914156400191132,
+            "frontier_setup": 0.0026127930032089353,
+            "frontier_and_tangency": 12.058272679001675,
+            "portfolio_setup": 0.006903335000970401,
+            "portfolio_metrics": 0.006491116000688635
+          },
+          {
+            "csv_load_and_ready_assets": 0.0633293460123241,
+            "frontier_setup": 0.0025322209985461086,
+            "frontier_and_tangency": 12.230678546999115,
+            "portfolio_setup": 0.009845630003837869,
+            "portfolio_metrics": 0.007122578012058511
+          },
+          {
+            "csv_load_and_ready_assets": 0.0645067480072612,
+            "frontier_setup": 0.0024715370091143996,
+            "frontier_and_tangency": 12.8262454559881,
+            "portfolio_setup": 0.00802879998809658,
+            "portfolio_metrics": 0.006390085007296875
+          },
+          {
+            "csv_load_and_ready_assets": 0.06835106799553614,
+            "frontier_setup": 0.002679229000932537,
+            "frontier_and_tangency": 11.890889684989816,
+            "portfolio_setup": 0.009166286996332929,
+            "portfolio_metrics": 0.007115686006727628
+          }
+        ],
+        "candidate": [
+          {
+            "csv_load_and_ready_assets": 0.06594277899421286,
+            "frontier_setup": 0.002598285995190963,
+            "frontier_and_tangency": 0.7894010070012882,
+            "portfolio_setup": 0.007884006990934722,
+            "portfolio_metrics": 0.006878957996377721
+          },
+          {
+            "csv_load_and_ready_assets": 0.07753340499766637,
+            "frontier_setup": 0.002874147001421079,
+            "frontier_and_tangency": 0.8565829769941047,
+            "portfolio_setup": 0.009960908006178215,
+            "portfolio_metrics": 0.009050619002664462
+          },
+          {
+            "csv_load_and_ready_assets": 0.06532903100014664,
+            "frontier_setup": 0.003235419004340656,
+            "frontier_and_tangency": 0.9472076800011564,
+            "portfolio_setup": 0.007938288996228948,
+            "portfolio_metrics": 0.005725520997657441
+          },
+          {
+            "csv_load_and_ready_assets": 0.09898773400345817,
+            "frontier_setup": 0.0034008910006377846,
+            "frontier_and_tangency": 0.9601640929904534,
+            "portfolio_setup": 0.08435910200932994,
+            "portfolio_metrics": 0.0048511100030737
+          },
+          {
+            "csv_load_and_ready_assets": 0.08602467700256966,
+            "frontier_setup": 0.0026694199914345518,
+            "frontier_and_tangency": 0.8378593230008846,
+            "portfolio_setup": 0.0069694089906988665,
+            "portfolio_metrics": 0.00582037000276614
+          }
+        ]
+      },
+      "stage_median_seconds": {
+        "baseline": {
+          "csv_load_and_ready_assets": 0.0645067480072612,
+          "frontier_setup": 0.0025322209985461086,
+          "frontier_and_tangency": 12.058272679001675,
+          "portfolio_setup": 0.008870478995959274,
+          "portfolio_metrics": 0.006578330998308957
+        },
+        "candidate": {
+          "csv_load_and_ready_assets": 0.07753340499766637,
+          "frontier_setup": 0.002874147001421079,
+          "frontier_and_tangency": 0.8565829769941047,
+          "portfolio_setup": 0.007938288996228948,
+          "portfolio_metrics": 0.00582037000276614
+        }
+      }
+    }
+  },
+  "profiles": {
+    "workflow_600x3_20_points": [
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/scipy/optimize/_numdiff.py",
+        "line": 278,
+        "function": "approx_derivative",
+        "calls": 291,
+        "own_seconds": 0.008192000000000001,
+        "cumulative_seconds": 0.102843216
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.isinstance>",
+        "calls": 63636,
+        "own_seconds": 0.007475928000000001,
+        "cumulative_seconds": 0.013198654
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/scipy/optimize/_numdiff.py",
+        "line": 14,
+        "function": "_adjust_scheme_to_bounds",
+        "calls": 291,
+        "own_seconds": 0.005413481,
+        "cumulative_seconds": 0.007670261
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+        "calls": 2925,
+        "own_seconds": 0.00531942,
+        "cumulative_seconds": 0.00531942
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/arraylike.py",
+        "line": 278,
+        "function": "array_ufunc",
+        "calls": 846,
+        "own_seconds": 0.005069406,
+        "cumulative_seconds": 0.07306633600000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.len>",
+        "calls": 30347,
+        "own_seconds": 0.004814747,
+        "cumulative_seconds": 0.007429744
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/series.py",
+        "line": 360,
+        "function": "__init__",
+        "calls": 775,
+        "own_seconds": 0.0045486450000000005,
+        "cumulative_seconds": 0.035841641
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/construction.py",
+        "line": 580,
+        "function": "sanitize_array",
+        "calls": 841,
+        "own_seconds": 0.003701343,
+        "cumulative_seconds": 0.010343514
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method scipy.optimize._slsqplib.slsqp>",
+        "calls": 190,
+        "own_seconds": 0.0030734300000000003,
+        "cumulative_seconds": 0.0030734300000000003
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/scipy/optimize/_numdiff.py",
+        "line": 871,
+        "function": "__call__",
+        "calls": 1058,
+        "own_seconds": 0.002950916,
+        "cumulative_seconds": 0.072468295
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/frame.py",
+        "line": 4018,
+        "function": "transpose",
+        "calls": 320,
+        "own_seconds": 0.002865406,
+        "cumulative_seconds": 0.042595104
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/series.py",
+        "line": 3401,
+        "function": "dot",
+        "calls": 844,
+        "own_seconds": 0.002780168,
+        "cumulative_seconds": 0.010305897000000001
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/dtypes/generic.py",
+        "line": 45,
+        "function": "_instancecheck",
+        "calls": 10081,
+        "own_seconds": 0.0025641080000000003,
+        "cumulative_seconds": 0.005459945000000001
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/dtypes/common.py",
+        "line": 1831,
+        "function": "pandas_dtype",
+        "calls": 884,
+        "own_seconds": 0.002255722,
+        "cumulative_seconds": 0.006112445
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/internals/construction.py",
+        "line": 196,
+        "function": "ndarray_to_mgr",
+        "calls": 343,
+        "own_seconds": 0.0022317310000000003,
+        "cumulative_seconds": 0.008038213
+      }
+    ],
+    "workflow_600x32_20_points": [
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.isinstance>",
+        "calls": 933664,
+        "own_seconds": 0.09957996200000001,
+        "cumulative_seconds": 0.1772628
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/arraylike.py",
+        "line": 278,
+        "function": "array_ufunc",
+        "calls": 14628,
+        "own_seconds": 0.06649155100000001,
+        "cumulative_seconds": 1.0352000220000002
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.len>",
+        "calls": 428472,
+        "own_seconds": 0.06509883000000001,
+        "cumulative_seconds": 0.10117576900000001
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/series.py",
+        "line": 360,
+        "function": "__init__",
+        "calls": 12913,
+        "own_seconds": 0.063978332,
+        "cumulative_seconds": 0.505116514
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/internals/managers.py",
+        "line": 1924,
+        "function": "_interleave",
+        "calls": 1080,
+        "own_seconds": 0.056211620000000004,
+        "cumulative_seconds": 0.078771113
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/scipy/optimize/_numdiff.py",
+        "line": 871,
+        "function": "__call__",
+        "calls": 23220,
+        "own_seconds": 0.056173133,
+        "cumulative_seconds": 1.5872546600000002
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/construction.py",
+        "line": 580,
+        "function": "sanitize_array",
+        "calls": 13211,
+        "own_seconds": 0.045514615,
+        "cumulative_seconds": 0.12384504700000001
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/series.py",
+        "line": 3401,
+        "function": "dot",
+        "calls": 14626,
+        "own_seconds": 0.041962446,
+        "cumulative_seconds": 0.1555429
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+        "calls": 25764,
+        "own_seconds": 0.041392907,
+        "cumulative_seconds": 0.041392907
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/frame.py",
+        "line": 4018,
+        "function": "transpose",
+        "calls": 5289,
+        "own_seconds": 0.037045007000000005,
+        "cumulative_seconds": 0.592350059
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method scipy.optimize._slsqplib.slsqp>",
+        "calls": 578,
+        "own_seconds": 0.036651148,
+        "cumulative_seconds": 0.036651148
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/dtypes/generic.py",
+        "line": 45,
+        "function": "_instancecheck",
+        "calls": 152906,
+        "own_seconds": 0.036125145000000004,
+        "cumulative_seconds": 0.077051546
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/scipy/optimize/_numdiff.py",
+        "line": 278,
+        "function": "approx_derivative",
+        "calls": 712,
+        "own_seconds": 0.033544913,
+        "cumulative_seconds": 1.779049123
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/frame.py",
+        "line": 1482,
+        "function": "dot",
+        "calls": 6343,
+        "own_seconds": 0.032759648,
+        "cumulative_seconds": 0.34630120200000003
+      },
+      {
+        "file": "/home/chilango/projects/rs/wt/okama/\u0443\u0441\u043a\u043e\u0440\u0435\u043d\u0438\u0435-\u0440\u0430\u0441\u0447\u0435\u0442\u043e\u0432/.venv/lib/python3.11/site-packages/pandas/core/dtypes/generic.py",
+        "line": 40,
+        "function": "_check",
+        "calls": 152906,
+        "own_seconds": 0.031020342000000003,
+        "cumulative_seconds": 0.040886338
+      }
+    ]
+  }
+}
