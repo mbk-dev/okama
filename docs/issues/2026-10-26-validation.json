@@ -43,7 +43,7 @@
   "warnings_followup": "https://github.com/mbk-dev/okama/issues/138",
   "dependency_alerts_reviewed": 78,
   "dependency_affected_installed_versions": 0,
-  "publication": "pending",
+  "publication": "Authorized; final delivery and remote alert status are recorded in the pull request and linked GitHub issues.",
   "integration": {
     "base": "370204bf7db4901626281b3ce624edbb11f84450",
     "python": "3.14",
@@ -71,5 +71,31 @@
       "No repeated full suite",
       "Numerical endpoint optimization has no global optimality guarantee"
     ]
+  },
+  "final_integration": {
+    "base": "6af312dccd01ceb0ba942e6dbb0b424a7d68bc23",
+    "matrix": [
+      {
+        "tests": 1160,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3,
+        "passed": 1157,
+        "python": "311",
+        "seconds": 30.861
+      },
+      {
+        "tests": 1160,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3,
+        "passed": 1157,
+        "python": "314",
+        "seconds": 29.394
+      }
+    ],
+    "ruff_check": "passed",
+    "ruff_format_check": "passed",
+    "note": "Merged source checked locally after later frontier preparation improvements; CI additionally checks all supported Python versions."
   }
 }

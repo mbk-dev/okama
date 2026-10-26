@@ -49,6 +49,28 @@ class _PreparedRebalance:
     period_ends: np.ndarray | None
     first_returns: np.ndarray
 
+    def return_ror_single(self, weights: np.ndarray, first_return: float) -> np.ndarray | None:
+        """Preserve scalar EF arithmetic, including off-constraint SLSQP trials."""
+        if weights.ndim != 1 or len(weights) != self.growth.shape[1] or not np.isfinite(weights).all():
+            return None
+        with np.errstate(over="ignore", divide="ignore", invalid="ignore", under="ignore"):
+            # Elementwise multiplication/sum preserves the pandas reduction order.
+            # A BLAS dot product can change the finite-difference solver trajectory.
+            if self.period_ends is None:
+                wealth = (self.growth * (weights * 1000)).sum(axis=1)
+            else:
+                local = (self.growth * weights).sum(axis=1)
+                multipliers = np.r_[1.0, local[self.period_ends[:-1]]].cumprod()
+                wealth = 1000 * multipliers[self.period_ids] * local
+            if not np.isfinite(wealth).all() or np.any(wealth <= 0):
+                return None
+            returns = np.empty_like(wealth)
+            returns[0] = first_return
+            returns[1:] = wealth[1:] / wealth[:-1] - 1
+        if not np.isfinite(returns).all() or np.any(returns <= -1 + 1e-12):
+            return None
+        return returns
+
     def return_ror(self, weights: np.ndarray) -> np.ndarray | None:
         """Evaluate a bounded weight chunk, or request scalar handling of exceptional inputs."""
         if (

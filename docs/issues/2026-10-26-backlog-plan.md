@@ -58,8 +58,9 @@ reached 86%, Go quota returned HTTP 403, actual OpenCode free attempts returned
 HTTP 403 directly and through the proxy, and an isolated OpenRouter/OpenCode CLI
 attempt received an upstream Nvidia HTTP 404. The preceding local context-gate
 timeout was retained separately and was not counted as a provider failure.
-No paid API fallback was used. No implementation has been committed or published
-yet.
+No paid API fallback was used. The owner subsequently authorized scoped commits,
+publication and integration into `dev` through a pull request. Final delivery
+and remote alert state are recorded in that pull request and the linked issues.
 
 The independent reviewer reported no actionable findings in the five scoped
 changes and completed 22 additional offline three- and four-asset frontier
@@ -78,6 +79,15 @@ The parent reviews every diff and reruns relevant regressions, the complete suit
 `uv run ruff check .`, and `uv run ruff format --check .`. Check Python 3.11 compatibility.
 No lockfile is committed. Dependency changes update both manifests.
 
-Publication requires explicit authorization under the effective repository rules;
-prepare a concrete verified result before requesting it. Keep issues open until
-accepted implementation is delivered. Preserve any concrete upstream/input blockers.
+Keep issues open until accepted implementation is delivered. Preserve concrete
+upstream/input blockers and verify remote dependency alerts after publication.
+
+## Authorized publication acceptance
+
+The owner authorized committing and merging via a PR into `dev`. Subsequent
+changes in `dev` through `6af312dccd01ceb0ba942e6dbb0b424a7d68bc23` were merged
+without conflicts. Rebalancing and frontier changes remain scoped to their
+original fixes; upstream optimizer preparation and pairwise caches are retained.
+Both local Python 3.11 and 3.14 suites passed 1,157 tests each with three
+manual benchmark skips and no failures/errors. Both Ruff checks passed.
+The existing CI matrix supplies the final Python 3.11–3.14 PR checks.

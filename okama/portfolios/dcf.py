@@ -78,6 +78,7 @@ class PortfolioDCF:
         self._monte_carlo_wealth_fv = pd.DataFrame(dtype=float)
         self._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
         self._cash_flow_fv = pd.Series(dtype=float, name="cash_flow_fv")
+        self._mc_results_state: tuple | None = None
         self.mc = mc.MonteCarlo(self)
         self._cashflow_parameters: cf.CashFlow | None = cf.IndexationStrategy(parent=parent)
 
@@ -106,7 +107,9 @@ class PortfolioDCF:
     @discount_rate.setter
     def discount_rate(self, discount_rate: float | None):
         self._wealth_index_fv = pd.DataFrame()
+        self._cash_flow_fv = pd.DataFrame()
         self._monte_carlo_wealth_fv = pd.DataFrame()
+        self._monte_carlo_cash_flow_fv = pd.DataFrame()
         if discount_rate is None and hasattr(self.parent, "inflation"):
             self._discount_rate = helpers.Frame.get_cagr(self.parent.inflation_ts)
             if self._discount_rate is None:
@@ -414,11 +417,15 @@ class PortfolioDCF:
         """
         ls = [self.parent.ror, self.parent.assets_ror]
         ror_df = pd.concat(ls, axis=1, join="inner")
-        wealth_df = ror_df.apply(
-            dcf_calculations.get_wealth_indexes_fv_with_cashflow,
-            axis=0,
-            args=(None, None, self.cashflow_parameters, "backtest"),  # symbol  # inflation_symbol
+        wealth_df = dcf_calculations.get_historical_wealth_with_assets(
+            ror_df, self.cashflow_parameters, self.discount_rate
         )
+        if wealth_df is None:
+            wealth_df = ror_df.apply(
+                dcf_calculations.get_wealth_indexes_fv_with_cashflow,
+                axis=0,
+                args=(None, None, self.cashflow_parameters, "backtest"),
+            )
         if hasattr(self.parent, "inflation"):
             inflation_wi = helpers.Frame.get_wealth_indexes(
                 ror=self.parent.inflation_ts, initial_amount=self.cashflow_parameters.initial_investment
@@ -557,6 +564,67 @@ class PortfolioDCF:
         else:
             return None
 
+    @staticmethod
+    def _freeze_cashflow_state(value: object) -> object:
+        if isinstance(value, pd.Series):
+            return (
+                "series",
+                str(value.dtype),
+                value.name,
+                tuple(value.index),
+                tuple(PortfolioDCF._freeze_cashflow_state(x) for x in value.tolist()),
+            )
+        if isinstance(value, dict):
+            return tuple((k, PortfolioDCF._freeze_cashflow_state(v)) for k, v in value.items())
+        if isinstance(value, (list, tuple)):
+            return tuple(PortfolioDCF._freeze_cashflow_state(x) for x in value)
+        if isinstance(value, (float, np.floating)) and np.isnan(value):
+            return ("nan",)
+        if value is None or isinstance(value, (str, int, float, bool, np.number, pd.Period, pd.Timestamp)):
+            return value
+        raise TypeError("Unsupported cash-flow state")
+
+    def _ensure_monte_carlo_outputs(self) -> None:
+        """Share results only while both the mutable draw and strategy are unchanged."""
+        parameters = self.cashflow_parameters
+        supported = (
+            cf.IndexationStrategy,
+            cf.PercentageStrategy,
+            cf.TimeSeriesStrategy,
+            cf.VanguardDynamicSpending,
+            cf.CutWithdrawalsIfDrawdown,
+        )
+        version = self.mc._returns_state()
+        state = None
+        if version is not None and type(parameters) in supported:
+            try:
+                signature = self._freeze_cashflow_state(
+                    {k: v for k, v in vars(parameters).items() if k not in ("parent", "portfolio")}
+                )
+                state = (
+                    version,
+                    type(parameters),
+                    signature,
+                    self.discount_rate,
+                    self.parent.first_date,
+                    self.parent.last_date,
+                )
+            except (TypeError, RecursionError):
+                pass
+        if state is None:
+            # Unobserved inputs cannot safely reuse previously derived outputs.
+            self._monte_carlo_wealth_fv = pd.DataFrame(dtype=float)
+            self._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
+            self._mc_results_state = None
+            return
+        if state != self._mc_results_state or self._monte_carlo_wealth_fv.empty or self._monte_carlo_cash_flow_fv.empty:
+            self._monte_carlo_wealth_fv, self._monte_carlo_cash_flow_fv = (
+                dcf_calculations.get_monte_carlo_cashflow_outputs(
+                    self.mc.monte_carlo_returns_ts, parameters, self.discount_rate
+                )
+            )
+            self._mc_results_state = state
+
     def monte_carlo_wealth(
         self, discounting: Literal["fv", "pv"] = "fv", include_negative_values: bool = True
     ) -> pd.DataFrame:
@@ -606,6 +674,7 @@ class PortfolioDCF:
         """
         if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
+        self._ensure_monte_carlo_outputs()
         if self._monte_carlo_wealth_fv.empty:
             return_ts = self.mc.monte_carlo_returns_ts
             self._monte_carlo_wealth_fv = dcf_calculations.get_wealth_indexes_fv_with_cashflow_mc(
@@ -669,6 +738,7 @@ class PortfolioDCF:
         """
         if self.cashflow_parameters is None:
             raise AttributeError("'cashflow_parameters' is not defined.")
+        self._ensure_monte_carlo_outputs()
         if self._monte_carlo_cash_flow_fv.empty:
             return_ts = self.mc.monte_carlo_returns_ts
             self._monte_carlo_cash_flow_fv = dcf_calculations.get_cash_flow_fv_mc(
@@ -738,7 +808,6 @@ class PortfolioDCF:
         else:
             s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
             ax = s2.plot(legend=None, figsize=figsize)
-        self.cashflow_parameters._clear_cf_cache()
         return ax
 
     def _plot_mc_with_backtest(self, figsize: tuple | None = None) -> Axes:
@@ -814,7 +883,15 @@ class PortfolioDCF:
         """
         s2 = self.monte_carlo_wealth(discounting="fv", include_negative_values=False)
         dates: pd.Series = helpers.Frame.get_survival_date(s2, self.discount_rate, threshold)
-        return dates.apply(helpers.Date.get_period_length, args=(self.parent.last_date,))
+        first_date = self.parent.last_date
+        if (
+            not dates.empty
+            and not dates.isna().any()
+            and first_date.tz is None
+            and first_date == first_date.normalize()
+        ):
+            return ((dates - first_date) / np.timedelta64(365, "D")).round(1)
+        return dates.apply(helpers.Date.get_period_length, args=(first_date,))
 
     def monte_carlo_irr(self) -> pd.Series:
         """
