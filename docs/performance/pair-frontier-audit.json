@@ -1,0 +1,85 @@
+{
+  "head": "370204bf7db4901626281b3ce624edbb11f84450",
+  "baseline": "b33ca12bdd81b4107c2de484fff581eda1023ce1",
+  "months": 120,
+  "assets": 4,
+  "pairs": 6,
+  "n_points": 12,
+  "repeats": 3,
+  "parallelism": "LOKY_MAX_CPU_COUNT=1; BLAS/OpenMP=1",
+  "shared": "current ListMaker, asset loading and financial helpers; original frontier/Rebalance modules only",
+  "plot_pair_body_unchanged": {
+    "single": true,
+    "multi": true
+  },
+  "cases": {
+    "single": {
+      "samples": {
+        "baseline": [
+          0.39911270899756346,
+          0.38088005800091196,
+          0.33532954700058326
+        ],
+        "current": [
+          0.23521917199832387,
+          0.20942850700521376,
+          0.19876817599288188
+        ]
+      },
+      "max_absolute_difference": 0,
+      "medians": {
+        "baseline": 0.38088005800091196,
+        "current": 0.20942850700521376
+      },
+      "speedup": 1.8186638650459839,
+      "new_pair_objects_first_call": 6,
+      "new_pair_objects_second_call": 6
+    },
+    "multi_year": {
+      "samples": {
+        "baseline": [
+          4.355828158004442,
+          3.250144254998304,
+          3.2815756119962316
+        ],
+        "current": [
+          4.128701868001372,
+          3.8192802560079144,
+          3.1899850460031303
+        ]
+      },
+      "max_absolute_difference": 0,
+      "medians": {
+        "baseline": 3.2815756119962316,
+        "current": 3.8192802560079144
+      },
+      "speedup": 0.8592130956700946,
+      "new_pair_objects_first_call": 6,
+      "new_pair_objects_second_call": 6
+    }
+  },
+  "environment": {
+    "python": "3.14.8",
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "scipy": "1.18.1"
+  },
+  "unchanged_executable_bodies": {
+    "okama/frontier/multi_period.py:plot_pair_ef": true,
+    "okama/frontier/multi_period.py:_get_portfolio_ror_ts": true,
+    "okama/frontier/multi_period.py:minimize_risk": true,
+    "okama/frontier/multi_period.py:_get_cagr": true,
+    "okama/common/helpers/rebalancing.py:return_ror_ts_ef": true,
+    "okama/common/helpers/rebalancing.py:wealth_ts_ef": true
+  },
+  "profile_summary": {
+    "multi_year": {
+      "profiled_plot_seconds": 7.0626,
+      "minimize_risk_seconds": 6.6276,
+      "pair_constructor_approx_seconds": 0.01,
+      "resampler_constructions": 1300,
+      "groupby_constructions": 3900
+    },
+    "note": "Separate instrumented call; not a timed baseline/candidate pair."
+  }
+}
