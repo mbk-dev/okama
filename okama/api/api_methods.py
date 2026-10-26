@@ -1,9 +1,8 @@
 import pandas as pd
 import requests
-from urllib3.util.retry import Retry
-from requests.adapters import HTTPAdapter
 
 from okama import settings
+from okama.api.request_scope import data_request_scope
 
 
 class API:
@@ -38,41 +37,46 @@ class API:
         last_date: str | pd.Timestamp | None = None,
         period: str = "d",
     ) -> str:
-        session = requests.session()
-        retry_strategy = Retry(total=3, backoff_factor=0.1, status_forcelist=[429, 500, 502, 503, 504])
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-        request_url = cls.api_url + endpoint + symbol
-        if isinstance(first_date, pd.Timestamp):
-            first_date = first_date.strftime("%Y-%m-%d")
-        if isinstance(last_date, pd.Timestamp):
-            last_date = last_date.strftime("%Y-%m-%d")
-        params = {"first_date": first_date, "last_date": last_date, "period": period}
-        session.mount("https://", adapter)
-        session.mount("http://", adapter)
-        try:
-            r = session.get(request_url, params=params, verify=True, timeout=cls.default_timeout)
-            r.raise_for_status()
-        except requests.exceptions.ConnectionError as errc:
-            raise requests.exceptions.ConnectionError(
-                f"Failed to connect to {cls.api_url}. The server may be temporarily unavailable."
-            ) from errc
-        except requests.exceptions.HTTPError as errh:
-            if r.status_code == 404:
-                raise requests.exceptions.HTTPError(f"{symbol} is not found in the database.", 404) from errh
-            if r.status_code == 400:
+        with data_request_scope() as scope:
+            if isinstance(first_date, pd.Timestamp):
+                first_date = first_date.strftime("%Y-%m-%d")
+            if isinstance(last_date, pd.Timestamp):
+                last_date = last_date.strftime("%Y-%m-%d")
+            key = (cls, cls.api_url, endpoint, symbol, first_date, last_date, period)
+            if endpoint == cls.endpoint_symbol:
+                cached = scope.metadata(key)
+                if cached is not None:
+                    return cached
+            session = scope.session()
+            request_url = cls.api_url + endpoint + symbol
+            params = {"first_date": first_date, "last_date": last_date, "period": period}
+            try:
+                r = session.get(request_url, params=params, verify=True, timeout=cls.default_timeout)
+                r.raise_for_status()
+            except requests.exceptions.ConnectionError as errc:
+                raise requests.exceptions.ConnectionError(
+                    f"Failed to connect to {cls.api_url}. The server may be temporarily unavailable."
+                ) from errc
+            except requests.exceptions.HTTPError as errh:
+                if r.status_code == 404:
+                    raise requests.exceptions.HTTPError(f"{symbol} is not found in the database.", 404) from errh
+                if r.status_code == 400:
+                    raise requests.exceptions.HTTPError(
+                        f"Bad request for {symbol}: {r.text}",
+                        r.status_code,
+                        request_url,
+                    ) from errh
                 raise requests.exceptions.HTTPError(
-                    f"Bad request for {symbol}: {r.text}",
+                    f"HTTP error fetching data for {symbol}:",
                     r.status_code,
+                    r.reason,
+                    r.text,
                     request_url,
                 ) from errh
-            raise requests.exceptions.HTTPError(
-                f"HTTP error fetching data for {symbol}:",
-                r.status_code,
-                r.reason,
-                r.text,
-                request_url,
-            ) from errh
-        return r.text
+            text = r.text
+            if endpoint == cls.endpoint_symbol:
+                scope.remember_metadata(key, text)
+            return text
 
     @classmethod
     def get_ror(

@@ -3,6 +3,7 @@ import numpy as np
 
 from okama import settings
 from okama.api import data_queries, namespaces
+from okama.api.request_scope import data_request_scope
 from okama.common import validators
 from okama.common.helpers import helpers
 
@@ -25,6 +26,7 @@ class Asset:
         If None, the last available date will be used.
     """
 
+    @data_request_scope()
     def __init__(
         self,
         symbol: str = settings.default_ticker,

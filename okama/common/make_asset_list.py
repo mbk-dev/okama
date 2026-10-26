@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
 from okama import macro, asset, settings
+from okama.api.request_scope import data_request_scope, _bind_request_scope, _get_request_scope
 from okama.common import validators
 from okama.common.helpers import helpers
 from okama.common.error import ShortPeriodLengthError
@@ -41,6 +42,7 @@ class ListMaker(ABC):
         With `inflation=False`, some properties like real return are not available.
     """
 
+    @data_request_scope()
     def __init__(
         self,
         assets: list[str | type] | None = None,
@@ -221,7 +223,13 @@ class ListMaker(ABC):
             # Ready objects only need validation; keep threading for symbol I/O.
             asset_obj_list = [get_item(item) for item in ls]
         else:
-            asset_obj_list = Parallel(n_jobs=-1, backend="threading")(delayed(get_item)(s) for s in ls)
+            scope = _get_request_scope()
+
+            def scoped_get_item(symbol: str | type) -> Any:
+                with _bind_request_scope(scope):
+                    return get_item(symbol)
+
+            asset_obj_list = Parallel(n_jobs=-1, backend="threading")(delayed(scoped_get_item)(s) for s in ls)
         return {obj.symbol: obj for obj in asset_obj_list}
 
     def _make_list(self, first_date: str | None, last_date: str | None) -> dict:

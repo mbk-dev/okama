@@ -23,6 +23,7 @@ Main features:
 from importlib.metadata import version  # noqa: I001
 from typing import Any
 
+from okama.api.request_scope import data_request_scope  # noqa: F401
 from okama.asset import Asset  # noqa: F401
 from okama.asset_list import AssetList  # noqa: F401
 from okama.portfolios.core import (
