@@ -5,11 +5,11 @@ Project: okama. The caller contains configuration and documentation; scanner
 implementation is the reviewed public composite action pinned below. Application
 code, dependencies and business processes are unchanged by this integration.
 
-Action: `mbk-dev/cbrapi/.github/actions/security-audit@cb86a73265231d56e01f368c3205a486a884830c`.
+Action: `mbk-dev/cbrapi/.github/actions/security-audit@08be62bd91bcc85c04605889701a4bcd34e25a07`.
 
 PR/relevant main or master pushes, weekly and manual runs use GitHub-hosted Ubuntu,
 read-only contents and checkout without persisted credentials. The action runs its
-22 contract tests in its trusted source tree with isolated Python imports, then
+contract tests in its trusted source tree with isolated Python imports, then
 scans this repository. It never installs or runs the caller application. Bootstrap
 and scanner child processes run in private tool state with an environment
 allowlist. Inherited Python environment/user-site settings cannot load caller code.
