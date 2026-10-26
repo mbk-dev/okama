@@ -1,0 +1,235 @@
+{
+  "python": "3.11.17",
+  "numpy": "2.4.6",
+  "pandas": "3.1.0",
+  "revision": "b33ca12bdd81b4107c2de484fff581eda1023ce1",
+  "script_sha256": "38e41300286abe79e6752a1b258fc33947c128866fe89a907e6ab438e499e427",
+  "scope": "Exploratory offline prototypes; no production modifications",
+  "cases": {
+    "listmaker_ready_objects_3": {
+      "baseline_seconds": [
+        0.08011721200455213,
+        0.011587665001570713,
+        0.011493848003738094,
+        0.01153886199608678,
+        0.01159154199558543
+      ],
+      "prototype_seconds": [
+        0.00010180199751630425,
+        2.8162998205516487e-05,
+        0.0001114309998229146,
+        3.092800034210086e-05,
+        0.00010988699796143919
+      ],
+      "baseline_median_seconds": 0.011587665001570713,
+      "prototype_median_seconds": 0.00010180199751630425,
+      "ratio": 113.82551702597851
+    },
+    "listmaker_full_init_3": {
+      "baseline_seconds": [
+        0.01294033999874955,
+        0.013020850994507782,
+        0.014403932997083757,
+        0.012698193000687752,
+        0.012796387003618293
+      ],
+      "prototype_seconds": [
+        0.0009535810022498481,
+        0.0006208129998412915,
+        0.000799920002464205,
+        0.0006058950020815246,
+        0.0007333559988182969
+      ],
+      "baseline_median_seconds": 0.01294033999874955,
+      "prototype_median_seconds": 0.0007333559988182969,
+      "ratio": 17.64537280611482
+    },
+    "listmaker_ready_objects_32": {
+      "baseline_seconds": [
+        0.0116582880000351,
+        0.011524515997734852,
+        0.011581343002035283,
+        0.011641757002507802,
+        0.011425990000134334
+      ],
+      "prototype_seconds": [
+        0.00017094299983000383,
+        7.811799878254533e-05,
+        0.00017376799951307476,
+        8.052199700614437e-05,
+        0.00015862999862292781
+      ],
+      "baseline_median_seconds": 0.011581343002035283,
+      "prototype_median_seconds": 0.00015862999862292781,
+      "ratio": 73.00852992859673
+    },
+    "listmaker_full_init_32": {
+      "baseline_seconds": [
+        0.014011562998348381,
+        0.013518241001293063,
+        0.01344183599576354,
+        0.013427910002064891,
+        0.014132400996459182
+      ],
+      "prototype_seconds": [
+        0.003332544001750648,
+        0.0014696959988214076,
+        0.0011922709963982925,
+        0.0010865320000448264,
+        0.001589601997693535
+      ],
+      "baseline_median_seconds": 0.013518241001293063,
+      "prototype_median_seconds": 0.0014696959988214076,
+      "ratio": 9.197984489400351
+    },
+    "listmaker_ready_objects_128": {
+      "baseline_seconds": [
+        0.011575220996746793,
+        0.01304464600252686,
+        0.011611971000093035,
+        0.011536368001543451,
+        0.011737207001715433
+      ],
+      "prototype_seconds": [
+        0.0004176579968770966,
+        0.00024321000091731548,
+        0.00040259100205730647,
+        0.0002308959956280887,
+        0.0004315449987188913
+      ],
+      "baseline_median_seconds": 0.011611971000093035,
+      "prototype_median_seconds": 0.00040259100205730647,
+      "ratio": 28.843096196273507
+    },
+    "listmaker_full_init_128": {
+      "baseline_seconds": [
+        0.01606968999840319,
+        0.01567466399865225,
+        0.016123111003253143,
+        0.015979538999090437,
+        0.015988425999239553
+      ],
+      "prototype_seconds": [
+        0.003912569001840893,
+        0.003979405999416485,
+        0.003917277994332835,
+        0.0036665750012616627,
+        0.0036531599980662577
+      ],
+      "baseline_median_seconds": 0.015988425999239553,
+      "prototype_median_seconds": 0.003912569001840893,
+      "ratio": 4.086426588698341
+    },
+    "listmaker_dividend_yield_252x3": {
+      "baseline_seconds": [
+        0.2781266689999029,
+        0.2727621759986505,
+        0.2532498549990123
+      ],
+      "prototype_seconds": [
+        0.0011724940050044097,
+        0.0013399500021478161,
+        0.0010486809987924062
+      ],
+      "baseline_median_seconds": 0.2727621759986505,
+      "prototype_median_seconds": 0.0011724940050044097,
+      "ratio": 232.63417538550624,
+      "warm_cached_seconds_per_call": 1.2566700024763122e-06
+    },
+    "listmaker_dividend_yield_600x16": {
+      "baseline_seconds": [
+        3.260759236996819,
+        3.1690895869978704,
+        3.2855303100004676
+      ],
+      "prototype_seconds": [
+        0.002729374995396938,
+        0.002502376002667006,
+        0.0028643699988606386
+      ],
+      "baseline_median_seconds": 3.260759236996819,
+      "prototype_median_seconds": 0.002729374995396938,
+      "ratio": 1194.6908147455204,
+      "warm_cached_seconds_per_call": 1.140749955084175e-06
+    },
+    "query_csv_parser_252": {
+      "baseline_seconds": [
+        0.001031647996569518,
+        0.0010179419987252913,
+        0.0009192959987558424,
+        0.0008843300020089373,
+        0.001012232001812663
+      ],
+      "prototype_seconds": [
+        0.0008428919973084703,
+        0.0007538139980169944,
+        0.0007480219937860966,
+        0.0006960649989196099,
+        0.0007234060030896217
+      ],
+      "baseline_median_seconds": 0.001012232001812663,
+      "prototype_median_seconds": 0.0007480219937860966,
+      "ratio": 1.3532115502236415
+    },
+    "query_csv_parser_6000": {
+      "baseline_seconds": [
+        0.008451841997157317,
+        0.007685835000302177,
+        0.007515202996728476,
+        0.007234914002765436,
+        0.007993416998942848
+      ],
+      "prototype_seconds": [
+        0.004376265998871531,
+        0.004414476999954786,
+        0.004044329005409963,
+        0.0035828059990308248,
+        0.0038287919960566796
+      ],
+      "baseline_median_seconds": 0.007685835000302177,
+      "prototype_median_seconds": 0.004044329005409963,
+      "ratio": 1.9003980610927282
+    },
+    "rolling_cagr_600x16_window60": {
+      "baseline_seconds": [
+        0.24027911799930735,
+        0.23499430700030643,
+        0.24864526899909833
+      ],
+      "prototype_seconds": [
+        0.0007695530002820306,
+        0.0007053320005070418,
+        0.0008608560019638389
+      ],
+      "baseline_median_seconds": 0.24027911799930735,
+      "prototype_median_seconds": 0.0007695530002820306,
+      "ratio": 312.2320592749926
+    },
+    "listmaker_fx_constructor_counts": {
+      "assets": 16,
+      "calls": [
+        "USD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX",
+        "EURUSD.FX"
+      ]
+    }
+  },
+  "profiles": {
+    "listmaker_dividend_yield_252x3": "         1008650 function calls (999501 primitive calls) in 0.720 seconds\n\n   Ordered by: cumulative time\n   List reduced from 548 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.720    0.720 benchmark_performance_opportunities.py:233(cold_yield)\n        1    0.038    0.038    0.720    0.720 make_asset_list.py:531(_assets_dividend_yield)\n      756    0.002    0.000    0.406    0.001 indexing.py:3455(__setitem__)\n      756    0.004    0.000    0.368    0.000 indexing.py:3305(__setitem__)\n      756    0.004    0.000    0.361    0.000 series.py:1320(_set_value)\n      756    0.005    0.000    0.350    0.000 indexing.py:977(__setitem__)\n      756    0.003    0.000    0.317    0.000 indexing.py:2581(_setitem_with_indexer)\n      756    0.016    0.000    0.310    0.000 indexing.py:2987(_setitem_with_indexer_missing)\n      756    0.003    0.000    0.118    0.000 series.py:1088(__getitem__)\n      756    0.002    0.000    0.112    0.000 generic.py:4336(_getitem_slice)\n     1515    0.002    0.000    0.091    0.000 base.py:7085(slice_indexer)\n     1515    0.005    0.000    0.089    0.000 base.py:7335(slice_locs)\n      756    0.005    0.000    0.087    0.000 base.py:3831(get_indexer)\n     2274    0.005    0.000    0.082    0.000 base.py:7247(get_slice_bound)\n     1515    0.003    0.000    0.078    0.000 indexing.py:1327(__getitem__)\n      756    0.003    0.000    0.071    0.000 base.py:4234(_convert_slice_indexer)\n      756    0.002    0.000    0.067    0.000 datetimes.py:2280(slice_indexer)\n     1515    0.003    0.000    0.065    0.000 series.py:1078(_slice)\n\n\n",
+    "listmaker_dividend_yield_600x16": "         12778442 function calls (12662853 primitive calls) in 6.549 seconds\n\n   Ordered by: cumulative time\n   List reduced from 548 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    6.549    6.549 benchmark_performance_opportunities.py:233(cold_yield)\n        1    0.308    0.308    6.549    6.549 make_asset_list.py:531(_assets_dividend_yield)\n     9600    0.018    0.000    3.723    0.000 indexing.py:3455(__setitem__)\n     9600    0.032    0.000    3.383    0.000 indexing.py:3305(__setitem__)\n     9600    0.034    0.000    3.324    0.000 series.py:1320(_set_value)\n     9600    0.050    0.000    3.212    0.000 indexing.py:977(__setitem__)\n     9600    0.022    0.000    2.870    0.000 indexing.py:2581(_setitem_with_indexer)\n     9600    0.139    0.000    2.814    0.000 indexing.py:2987(_setitem_with_indexer_missing)\n     9600    0.029    0.000    1.111    0.000 series.py:1088(__getitem__)\n     9600    0.014    0.000    1.061    0.000 generic.py:4336(_getitem_slice)\n    19216    0.017    0.000    0.843    0.000 base.py:7085(slice_indexer)\n    19216    0.042    0.000    0.826    0.000 base.py:7335(slice_locs)\n     9600    0.046    0.000    0.804    0.000 base.py:3831(get_indexer)\n    28832    0.046    0.000    0.757    0.000 base.py:7247(get_slice_bound)\n    19216    0.030    0.000    0.704    0.000 indexing.py:1327(__getitem__)\n     9600    0.022    0.000    0.686    0.000 base.py:4234(_convert_slice_indexer)\n     9600    0.015    0.000    0.655    0.000 datetimes.py:2280(slice_indexer)\n    19216    0.033    0.000    0.610    0.000 series.py:1078(_slice)\n\n\n"
+  }
+}
