@@ -2,6 +2,8 @@
 
 Audited dev revision `789efbb5d661610670598b58250f003fedbd171f`. This is research with scoped benchmark-process prototypes: **no production library implementation is changed by this audit**. Numbers below are opportunities, not released speedups.
 
+Implementation and actual complete-method results are now documented in [DCF/MC acceleration](dcf-mc-acceleration.md). Reproduce this historical prototype audit from `bcd8774`.
+
 ## Priority 1: avoid copying newly owned simulation arrays into DataFrames
 
 Targets: `generate_returns_ts()` in [mc.py](../../okama/portfolios/mc.py), and `get_wealth_indexes_fv_with_cashflow_mc()`, `get_cash_flow_fv_mc()` and `zero_wealth_after_first_void()` in [dcf_calculations.py](../../okama/portfolios/dcf_calculations.py).
