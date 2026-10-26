@@ -12,7 +12,7 @@ The logarithmic path requires positive finite growth factors (NaN observations r
 
 ## Paired measurements
 
-The [benchmark script](../../analytics/benchmark_statistics_performance.py) runs actual public methods on seeded offline return histories and ready assets, excluding object construction and network calls. Original GMV code and original rolling public methods are loaded from revision `b33ca12bdd81b4107c2de484fff581eda1023ce1`. Other previously implemented improvements are shared by both sides. One warm pair precedes five alternating timed pairs. Portfolio timing uses the warmed return series cache for both sides.
+The [benchmark script](https://github.com/mbk-dev/okama/blob/v4.0.1/analytics/benchmark_statistics_performance.py) runs actual public methods on seeded offline return histories and ready assets, excluding object construction and network calls. Original GMV code and original rolling public methods are loaded from revision `b33ca12bdd81b4107c2de484fff581eda1023ce1`. Other previously implemented improvements are shared by both sides. One warm pair precedes five alternating timed pairs. Portfolio timing uses the warmed return series cache for both sides.
 
 Python 3.11.17, NumPy 2.4.6, pandas 3.1.0; AMD Ryzen 7 8845H, shared Linux host. Command-local BLAS/OpenMP limits are one thread. Scheduling and background activity can affect timing; results apply to these workloads, not the whole library. No RSS or allocation-peak experiment is claimed for this stage; rolling intermediates scale with input rows × columns.
 
@@ -28,7 +28,7 @@ Python 3.11.17, NumPy 2.4.6, pandas 3.1.0; AMD Ryzen 7 8845H, shared Linux host.
 | AssetList rolling CAGR, 6,000 × 16, window 120 | 2,818.963 ms | 3.548 ms | 794.5× |
 | Portfolio rolling CAGR, 600 months, 16 underlying assets, window 60 | 16.471 ms | 1.174 ms | 14.0× |
 
-All 12 cases passed complete numerical/metadata comparisons at rtol=atol=1e-12. GMV weights and tuples matched exactly on the measured inputs; maximum absolute difference over the rolling cases was 6.106e-16. Full timing distributions, source digests and script digest are retained in [statistics-performance.json](statistics-performance.json).
+All 12 cases passed complete numerical/metadata comparisons at rtol=atol=1e-12. GMV weights and tuples matched exactly on the measured inputs; maximum absolute difference over the rolling cases was 6.106e-16. Full timing distributions, source digests and script digest are retained in [statistics-performance.json](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/statistics-performance.json).
 
 The first benchmark attempt detected that the currency fixture truncated the 6,000-month history. Its results were discarded. The final fixture supplies explicit full input dates and asserts the exact return matrix shape; all cases were rerun. The long history is a synthetic scaling exercise, not an assertion that such market history exists.
 

@@ -83,7 +83,7 @@ poetry run ruff check .
 poetry run ruff format --check .
 ```
 
-See [the benchmark script](../../analytics/benchmark_rebalance.py) and [raw distributions/source digests](rebalance-conditional.json). The benchmark requires the named historical source in Git; unit tests use the independent checked-in scalar reference and need no history access.
+See [the benchmark script](https://github.com/mbk-dev/okama/blob/v4.0.1/analytics/benchmark_rebalance.py) and [raw distributions/source digests](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/rebalance-conditional.json). The benchmark requires the named historical source in Git; unit tests use the independent checked-in scalar reference and need no history access.
 
 Earlier local frontier/ListMaker implementations remain intact. No commit, push, merge, dependency update, tracker mutation or deployment has been made.
 
