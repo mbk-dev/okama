@@ -12,17 +12,19 @@ def search(search_string: str, namespace: str | None = None, response_format: st
     Search symbols by ticker, name, native local name, or ISIN.
 
     When ``namespace`` is provided, the search is performed within the cached
-    table returned by ``ok.symbols_in_namespace(namespace)``; if that table
-    carries a ``local_name`` column (native-language name, e.g. Cyrillic for
-    MOEX), it is matched as well. Otherwise the query is delegated to the API
-    search endpoint across all namespaces, which matches ticker, name, native
+    table returned by ``ok.symbols_in_namespace(namespace)`` and matches
+    ticker, name, ISIN, and ``local_name`` (when present) as **literal**
+    case-insensitive substrings. Punctuation such as ``[``, ``(``, and ``.``
+    is not treated as a regular expression. Without a namespace, the query is delegated to the API search
+    endpoint across all namespaces, which matches ticker, name, native
     local name (e.g. Cyrillic for MOEX, Chinese for SHG/SHE/HK), and ISIN.
 
     Parameters
     ----------
     search_string : str
         Case-insensitive text used to match symbol names, tickers, native
-        local names (where available), and ISINs.
+        local names (where available), and ISINs. Namespace-scoped search
+        treats this string literally (not as a regular expression).
 
     namespace : str, optional
         Namespace code such as ``"US"`` or ``"XETR"``. If omitted, all
@@ -59,14 +61,14 @@ def search(search_string: str, namespace: str | None = None, response_format: st
     if namespace:
         df = namespaces.symbols_in_namespace(namespace.upper())
         conditions = (
-            df["name"].str.contains(search_string, case=False)
-            | df["ticker"].str.contains(search_string, case=False)
-            | df["isin"].str.contains(search_string, case=False)
+            df["name"].str.contains(search_string, case=False, regex=False)
+            | df["ticker"].str.contains(search_string, case=False, regex=False)
+            | df["isin"].str.contains(search_string, case=False, regex=False)
         )
         # Native-language name is present only for some namespaces (e.g. MOEX)
         # and may be null per row; guard the column and mask NaN as no-match.
         if "local_name" in df.columns:
-            conditions |= df["local_name"].str.contains(search_string, case=False, na=False)
+            conditions |= df["local_name"].str.contains(search_string, case=False, na=False, regex=False)
         frame_response = df[conditions]
         if response_format.lower() == "frame":
             return frame_response
