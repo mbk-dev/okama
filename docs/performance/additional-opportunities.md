@@ -23,7 +23,7 @@ Order reflects confidence, reach, implementation risk and effort, rather than so
 
 ### First dividend-yield calculation
 
-Source: [`ListMaker._assets_dividend_yield()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/common/make_asset_list.py#L532), reached by `AssetList.dividend_yield` and dividend summary methods.
+Source: [`ListMaker._assets_dividend_yield()`](../../okama/common/make_asset_list.py#L532), reached by `AssetList.dividend_yield` and dividend summary methods.
 
 The implementation loops over every asset and every price month, repeatedly slices dividends and all preceding prices, and extends a pandas Series one cell at a time. The 600-month × 16-asset profile confirms this overhead; the research prototype uses `rolling(12, min_periods=1).sum()` and vector division by aligned monthly closes.
 
@@ -33,7 +33,7 @@ Before implementation: preserve calendar-window boundaries, missing price months
 
 ### Ready asset objects and thread-pool overhead
 
-Source: [`ListMaker._get_asset_obj_dict()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/common/make_asset_list.py#L158).
+Source: [`ListMaker._get_asset_obj_dict()`](../../okama/common/make_asset_list.py#L158).
 
 Every list of two or more assets currently enters `joblib.Parallel(backend="threading")`, including ready Asset-like objects requiring only validation. The experiment replaces the scheduling wrapper with sequential execution of the **same delayed validation function** and returns the same objects in the same order. It also measures the complete actual `AssetList` constructor. For 32 assets, the complete constructor improves from about 13.5 ms to 1.5 ms; this is stronger evidence than timing only the tiny validation kernel.
 
@@ -41,7 +41,7 @@ Keep concurrency for symbol strings that need I/O. Mixed ready objects and strin
 
 ### Repeated currency data and HTTP setup — counted, not timed
 
-Source: [`ListMaker._make_ror()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/common/make_asset_list.py#L322), [`_adjust_price_to_currency_monthly()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/common/make_asset_list.py#L377), [`Asset.__init__()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/asset.py#L28), [`API.connect()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/api/api_methods.py#L33).
+Source: [`ListMaker._make_ror()`](../../okama/common/make_asset_list.py#L322), [`_adjust_price_to_currency_monthly()`](../../okama/common/make_asset_list.py#L377), [`Asset.__init__()`](../../okama/asset.py#L28), [`API.connect()`](../../okama/api/api_methods.py#L33).
 
 For 16 already constructed EUR assets in USD with identical histories, instrumentation observed **16 separate `EURUSD.FX` Asset constructions**, plus the base `USD.FX` construction. A construction-local cache keyed by currency pair and effective date window could reduce the identical FX constructions from 16 to 1. The current `Asset` constructor requests symbol metadata and returns; the inspected query/API methods do not cache these historical calls. `API.connect()` also creates a fresh requests Session and adapters per call, preventing persistent connection-pool reuse across calls.
 
@@ -51,7 +51,7 @@ No real HTTP requests or latency benchmark were performed. The observation demon
 
 ### Threshold rebalancing
 
-Source: [`_rebalance_by_condition()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/common/helpers/rebalancing.py#L216), [`_check_if_rebalancing_required()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/common/helpers/rebalancing.py#L251).
+Source: [`_rebalance_by_condition()`](../../okama/common/helpers/rebalancing.py#L216), [`_check_if_rebalancing_required()`](../../okama/common/helpers/rebalancing.py#L251).
 
 Each month creates pandas Series, allocates aligned arithmetic results and extends an initially empty output Series. Threshold checking also constructs target weights and computes both absolute and relative differences even when one threshold is disabled. The profile confirms these operations dominate; the conditional prototype keeps the required chronological loop but performs the arithmetic on NumPy arrays and preallocates wealth output.
 
@@ -59,7 +59,7 @@ The prototype compares **wealth values only**, for `period="none"` and absolute 
 
 ### Repeated weights: prepare once, then batch
 
-Source: [`wealth_ts_ef()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/common/helpers/rebalancing.py#L327), [`return_ror_ts_ef()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/common/helpers/rebalancing.py#L381), and `EfficientFrontier.get_monte_carlo()` / `get_grid_portfolios()` in [multi_period.py](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/frontier/multi_period.py).
+Source: [`wealth_ts_ef()`](../../okama/common/helpers/rebalancing.py#L327), [`return_ror_ts_ef()`](../../okama/common/helpers/rebalancing.py#L381), and `EfficientFrontier.get_monte_carlo()` / `get_grid_portfolios()` in [multi_period.py](../../okama/frontier/multi_period.py).
 
 The current EF function is already vectorized **within one portfolio**. The remaining repetition is regrouping the same return matrix, recalculating within-period growth, and building pandas intermediates for every new weight vector. Multi-period Monte Carlo/grid paths call it in a Python loop; scalar SLSQP evaluation can also reuse invariant prepared arrays without batching the optimizer itself.
 
@@ -69,7 +69,7 @@ Unlike single-period covariance batching, this prototype materializes periods ×
 
 ### Ordinary calendar calculation and reuse of results
 
-Source: [`wealth_ts()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/common/helpers/rebalancing.py#L116), [`Portfolio.ror`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/portfolios/core.py#L389), [`Portfolio.rebalancing_events`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/portfolios/core.py#L209).
+Source: [`wealth_ts()`](../../okama/common/helpers/rebalancing.py#L116), [`Portfolio.ror`](../../okama/portfolios/core.py#L389), [`Portfolio.rebalancing_events`](../../okama/portfolios/core.py#L209).
 
 Unconditional calendar `wealth_ts()` still loops over resampled periods even though `wealth_ts_ef()` provides an existing vectorized wealth path. Comparison uses that **existing library method**, adding the initial 1000 point; it verifies portfolio wealth values only. Event series and optional per-asset paths still need a complete compatible implementation.
 
@@ -79,7 +79,7 @@ Unconditional calendar `wealth_ts()` still loops over resampled periods even tho
 
 ### Invariant covariance inside scalar optimization
 
-Source: [`EfficientFrontierSingle.gmv_monthly_weights`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/frontier/single_period.py#L177), [`minimize_risk()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/frontier/single_period.py#L597), [`get_tangency_portfolio()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/frontier/single_period.py#L321).
+Source: [`EfficientFrontierSingle.gmv_monthly_weights`](../../okama/frontier/single_period.py#L177), [`minimize_risk()`](../../okama/frontier/single_period.py#L597), [`get_tangency_portfolio()`](../../okama/frontier/single_period.py#L321).
 
 Issue 127 accelerates sampled weight sets, but these scalar optimizer paths still call helpers that recompute covariance/means during repeated objective/constraint evaluations. The GMV experiment runs the **actual unchanged SLSQP call**, preparing covariance once and temporarily replacing only its scalar risk helper in the benchmark process. The same starting point, bounds, solver and constraints remain in use, and returned weights agree at the research tolerance. The 32-asset run called covariance **264 times** in the baseline, versus once in the prototype.
 
@@ -87,13 +87,13 @@ Prepare immutable statistics once per solve rather than globally caching potenti
 
 ### Rolling CAGR
 
-Source: [`Frame.get_rolling_fn()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/common/helpers/helpers.py#L287), [`AssetList.get_rolling_cagr()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/asset_list.py#L583), `Portfolio.get_rolling_cagr()`.
+Source: [`Frame.get_rolling_fn()`](../../okama/common/helpers/helpers.py#L287), [`AssetList.get_rolling_cagr()`](../../okama/asset_list.py#L583), `Portfolio.get_rolling_cagr()`.
 
 The generic helper uses `rolling.apply()` and calls a Python CAGR function for each window/column. For strictly positive growth factors, a specialized CAGR path can use a rolling sum of `log1p` values and `expm1`; the prototype compares that numerical kernel to the actual existing helper. Do not replace the generic function for arbitrary callbacks. Preserve NaN/min-periods rules, output window boundaries, annualization, total losses at -100%, negative growth factors and overflow behavior; these exceptional cases require fallback or explicit equivalent handling. Only returns safely above -1 were measured.
 
 ### CSV parser
 
-Source: [`QueryData.csv_to_series()`](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/api/data_queries.py#L21).
+Source: [`QueryData.csv_to_series()`](../../okama/api/data_queries.py#L21).
 
 The explicit Python CSV engine is slower than pandas' C engine on the measured well-formed single-column monthly series. The parser experiment includes date parsing, PeriodIndex conversion and column squeezing, and checks complete Series equality. This is CPU-only parsing; the improvement is modest for 252 rows and does not measure HTTP latency. Verify empty/header-only payloads, malformed CSV, date formats and supported pandas versions before switching defaults.
 
@@ -151,9 +151,9 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 LOKY_MAX_CPU_COUNT=4 poetry run python 
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 LOKY_MAX_CPU_COUNT=4 poetry run python -m analytics.benchmark_performance_opportunities --optimizers-only --output tmp/optimizer-opportunities.json
 ```
 
-The optional `--listmaker-only` runs corrected ListMaker and adjacent cases without repeating Rebalance. The script is [analytics/benchmark_performance_opportunities.py](https://github.com/mbk-dev/okama/blob/v4.0.1/analytics/benchmark_performance_opportunities.py); it makes no persistent library changes. Scoped patches are confined to the benchmark process and restored after each measurement.
+The optional `--listmaker-only` runs corrected ListMaker and adjacent cases without repeating Rebalance. The script is [analytics/benchmark_performance_opportunities.py](../../analytics/benchmark_performance_opportunities.py); it makes no persistent library changes. Scoped patches are confined to the benchmark process and restored after each measurement.
 
-Evidence: [Rebalance timings and profiles](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/opportunities/rebalance.json), [ListMaker and adjacent timings/profiles](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/opportunities/listmaker.json), [GMV solver timings/counts](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/opportunities/optimizers.json). Each source JSON retains its measurement script digest; the final script additionally includes the fixture correction and optimizer-only runner. Final script SHA-256: `38e41300286abe79e6752a1b258fc33947c128866fe89a907e6ab438e499e427`.
+Evidence: [Rebalance timings and profiles](opportunities/rebalance.json), [ListMaker and adjacent timings/profiles](opportunities/listmaker.json), [GMV solver timings/counts](opportunities/optimizers.json). Each source JSON retains its measurement script digest; the final script additionally includes the fixture correction and optimizer-only runner. Final script SHA-256: `38e41300286abe79e6752a1b258fc33947c128866fe89a907e6ab438e499e427`.
 
 ## Verification and delivery
 

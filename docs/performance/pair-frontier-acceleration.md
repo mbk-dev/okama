@@ -1,6 +1,6 @@
 # Multi-period pairwise frontier acceleration
 
-Implementation: `24d3147`; baseline: `48a0e7c8eb139a8b8b3b0eeb6e6a1dbbcbc8e3aa`. Measured on 26 October 2026. This implements the approved [pairwise proposal](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/superpowers/specs/2026-10-26-pair-frontier-acceleration-design.md) and supersedes the no-gain conclusion for the earlier multi-period path in the [historical audit](pair-frontier-audit.md).
+Implementation: `24d3147`; baseline: `48a0e7c8eb139a8b8b3b0eeb6e6a1dbbcbc8e3aa`. Measured on 26 October 2026. This implements the approved [pairwise proposal](../superpowers/specs/2026-10-26-pair-frontier-acceleration-design.md) and supersedes the no-gain conclusion for the earlier multi-period path in the [historical audit](pair-frontier-audit.md).
 
 ## Changes
 
@@ -27,7 +27,7 @@ For 80 requested points, six pairs improve from 20.39 to 5.45 seconds on one CPU
 
 One untimed full-output comparison precedes three timed calls per side. Baseline samples were preserved from the initial run; after the review repair, every candidate case was measured again against those hash-verified baseline outputs. Each side runs in an independent process. BLAS/OpenMP are restricted to one thread, and joblib uses the table's explicit worker count. The baseline restores the original frontier module; current loading/common helpers are shared, and original `Rebalance.wealth_ts_ef` / `return_ror_ts_ef` remain unchanged. This isolates this implementation stage rather than comparing entire old environments.
 
-Full frontier tables, all weights, iteration counts, initial-guess diagnostics and plotted coordinates matched at `rtol=atol=1e-12`. Observed maximum difference was zero; serialized full-table hashes also matched in all six cases. The [raw timing samples, descriptive sample p95 values, source hashes and environment](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/pair-frontier-acceleration.json) are retained. Three samples do not establish a production p95 or a capacity limit. Shared-host scheduling and different Python/NumPy/pandas versions can change gains. Environment: Ryzen 7 8845H, Linux, Python 3.14.8, NumPy 2.5.4, pandas 3.1.0.
+Full frontier tables, all weights, iteration counts, initial-guess diagnostics and plotted coordinates matched at `rtol=atol=1e-12`. Observed maximum difference was zero; serialized full-table hashes also matched in all six cases. The [raw timing samples, descriptive sample p95 values, source hashes and environment](pair-frontier-acceleration.json) are retained. Three samples do not establish a production p95 or a capacity limit. Shared-host scheduling and different Python/NumPy/pandas versions can change gains. Environment: Ryzen 7 8845H, Linux, Python 3.14.8, NumPy 2.5.4, pandas 3.1.0.
 
 ## Memory and downstream limits
 

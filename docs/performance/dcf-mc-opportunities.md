@@ -6,7 +6,7 @@ Implementation and actual complete-method results are now documented in [DCF/MC 
 
 ## Priority 1: avoid copying newly owned simulation arrays into DataFrames
 
-Targets: `generate_returns_ts()` in [mc.py](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/portfolios/mc.py), and `get_wealth_indexes_fv_with_cashflow_mc()`, `get_cash_flow_fv_mc()` and `zero_wealth_after_first_void()` in [dcf_calculations.py](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/portfolios/dcf_calculations.py).
+Targets: `generate_returns_ts()` in [mc.py](../../okama/portfolios/mc.py), and `get_wealth_indexes_fv_with_cashflow_mc()`, `get_cash_flow_fv_mc()` and `zero_wealth_after_first_void()` in [dcf_calculations.py](../../okama/portfolios/dcf_calculations.py).
 
 These functions allocate fresh NumPy results, then construct a DataFrame with its default copy policy. On the installed pandas 3.1.0, an ndarray input is copied by default; the ownership probe confirms that the default constructor does not share its input, while explicit `copy=False` does. A wide MC-pair profile spent about 0.55 of 0.62 seconds in DataFrame construction / `numpy.array`, rather than the simulation engine. This is an observed version/shape-specific bottleneck, not a general claim about every pandas version.
 
@@ -69,13 +69,13 @@ The IRR helper already batches Newton iterations, uses a good initial guess and 
 
 ## Protocol, validation and limits
 
-The [reproduction script](https://github.com/mbk-dev/okama/blob/v4.0.1/analytics/benchmark_dcf_mc_opportunities.py) runs 44 paired cases with one warm pair and five alternating timed pairs, plus separate allocation measurements/profiles and work counters. Ready synthetic assets and mocked currency loading keep all inputs offline. Portfolio histories contain exactly 600 months; MC horizons contain 360 months. Return/bootstrapping seeds are 127 and 11. Normal returns are prepared outside timers where stated; cold-return cases explicitly include their generation. Chart tests use the Agg backend and close figures. Simulation caches are reset or deliberately warmed per workload; all scenarios use fresh private fixtures and restore scoped patches.
+The [reproduction script](../../analytics/benchmark_dcf_mc_opportunities.py) runs 44 paired cases with one warm pair and five alternating timed pairs, plus separate allocation measurements/profiles and work counters. Ready synthetic assets and mocked currency loading keep all inputs offline. Portfolio histories contain exactly 600 months; MC horizons contain 360 months. Return/bootstrapping seeds are 127 and 11. Normal returns are prepared outside timers where stated; cold-return cases explicitly include their generation. Chart tests use the Agg backend and close figures. Simulation caches are reset or deliberately warmed per workload; all scenarios use fresh private fixtures and restore scoped patches.
 
 Environment: Python 3.14.8, NumPy 2.5.4, pandas 3.1.0 on AMD Ryzen 7 8845H. BLAS/OpenMP are limited to one thread for the command, with joblib capped at four. A shared host has background/scheduling noise. Candidate timings include prototype patch overhead; small cases can show little benefit. No HTTP/GPU/JIT/dependency change is involved.
 
 All accepted pairs compare full values/types/index/column/name metadata with rtol=atol=1e-12. The largest observed absolute difference is 2.887e-15, in the special IRR case. Original formulas, draw streams and solver evaluation budgets are retained on the measured inputs. These guarded prototypes are not full edge-case proofs and do not authorize replacing scalar fallbacks without TDD.
 
-[dcf-mc-opportunities.json](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/dcf-mc-opportunities.json) retains all 44 timing distributions, source/script hashes, profiles and measured work counts. Profile paths are normalized for portability; original raw files and failed exploratory attempts are archived privately. The research script never writes production source; its AST/patch transformations exist only inside the benchmark process.
+[dcf-mc-opportunities.json](dcf-mc-opportunities.json) retains all 44 timing distributions, source/script hashes, profiles and measured work counts. Profile paths are normalized for portability; original raw files and failed exploratory attempts are archived privately. The research script never writes production source; its AST/patch transformations exist only inside the benchmark process.
 
 ```bash
 MPLBACKEND=Agg OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 LOKY_MAX_CPU_COUNT=4 uv run --no-sync python -m analytics.benchmark_dcf_mc_opportunities --output tmp/dcf-mc-audit.json --counts

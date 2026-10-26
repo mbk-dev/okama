@@ -3,7 +3,7 @@
 Issue: [#129, Triage 78 manifest Dependabot alerts and library dependency ranges](https://github.com/mbk-dev/okama/issues/129).
 
 GitHub returned 78 open records: 6 critical, 42 high, 25 medium, and 5 low.
-The [per-alert ledger](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/security/dependabot-2026-10-26.csv) accounts for every record,
+The [per-alert ledger](dependabot-2026-10-26.csv) accounts for every record,
 including the primary advisory, affected range, first patched version, observed
 dependency snapshot, project scope, relevant code path, and disposition. These
 are alert records, not 78 distinct exploitable defects in okama.

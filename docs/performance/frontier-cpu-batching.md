@@ -86,7 +86,7 @@ poetry run ruff check .
 poetry run ruff format --check .
 ```
 
-The first command profiles both frontier classes and writes timing/allocation JSON plus output arrays. The second directly reproduces the old/new comparison from the Git baseline without switching the working tree. For the full historical baseline table, run the first command with baseline library files and the same benchmark script. The accompanying evidence retains [baseline distributions/profiles](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/frontier-cpu-batching/baseline.json), [candidate distributions/profiles](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/frontier-cpu-batching/candidate.json) and [alternating comparison](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/frontier-cpu-batching/paired.json). The benchmark is at [analytics/benchmark_frontier_batching.py](https://github.com/mbk-dev/okama/blob/v4.0.1/analytics/benchmark_frontier_batching.py).
+The first command profiles both frontier classes and writes timing/allocation JSON plus output arrays. The second directly reproduces the old/new comparison from the Git baseline without switching the working tree. For the full historical baseline table, run the first command with baseline library files and the same benchmark script. The accompanying evidence retains [baseline distributions/profiles](frontier-cpu-batching/baseline.json), [candidate distributions/profiles](frontier-cpu-batching/candidate.json) and [alternating comparison](frontier-cpu-batching/paired.json). The benchmark is at [analytics/benchmark_frontier_batching.py](../../analytics/benchmark_frontier_batching.py).
 
 ## Delivery notes
 

@@ -13,7 +13,7 @@ Four assets, six pairs, 120 monthly observations and 12 requested frontier point
 | `EfficientFrontierSingle.plot_pair_ef()` | 380.880 ms | 209.429 ms | 1.82x; benefits from accelerated inner single-period optimizers |
 | `EfficientFrontier.plot_pair_ef()`, yearly rebalance | 3,281.576 ms | 3,819.280 ms | No demonstrated speedup; overlapping samples do not establish a systematic regression |
 
-Original yearly samples were 3.25–4.36 seconds; current samples were 3.19–4.13 seconds. Complete plotted coordinates matched at `rtol=atol=1e-12`, with zero observed difference. [Raw paired samples, object counts and unchanged-body checks](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/pair-frontier-audit.json).
+Original yearly samples were 3.25–4.36 seconds; current samples were 3.19–4.13 seconds. Complete plotted coordinates matched at `rtol=atol=1e-12`, with zero observed difference. [Raw paired samples, object counts and unchanged-body checks](pair-frontier-audit.json).
 
 ## Why the multi-period path remains slow
 

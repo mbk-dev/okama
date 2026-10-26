@@ -47,7 +47,7 @@ poetry run ruff check .
 poetry run ruff format --check .
 ```
 
-See [the benchmark script](https://github.com/mbk-dev/okama/blob/v4.0.1/analytics/benchmark_listmaker.py) and [raw timing distributions](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/listmaker-optimizations.json). The script compares frozen baseline and candidate in one process without checking out an older worktree or modifying library methods.
+See [the benchmark script](../../analytics/benchmark_listmaker.py) and [raw timing distributions](listmaker-optimizations.json). The script compares frozen baseline and candidate in one process without checking out an older worktree or modifying library methods.
 
 ## Final verification
 
