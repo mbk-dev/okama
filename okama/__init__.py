@@ -50,6 +50,7 @@ import okama.api.namespaces
 from okama.api.namespaces import symbols_in_namespace  # noqa: F401
 from okama.common.helpers.helpers import Float, Frame, Date  # noqa: F401
 from okama.common.helpers.rebalancing import Rebalance  # noqa: F401
+from okama.common.error import MissingDistributionsWarning  # noqa: F401
 import okama.settings
 
 
