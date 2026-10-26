@@ -89,6 +89,60 @@ def test_global_max_return_portfolio_basic(ef_reb_ab):
     assert res["CAGR"] >= gmv_cagr - 1e-8
 
 
+@pytest.mark.parametrize("full_frontier", [True, False])
+@pytest.mark.parametrize("bounds", [((0.2, 0.8), (0.2, 0.8)), ((0.1, 0.6), (0.4, 0.9))])
+def test_frontier_targets_respect_restrictive_bounds(
+    synthetic_env: object, bounds: tuple[tuple[float, float], ...], full_frontier: bool
+) -> None:
+    """Both frontier branches must use attainable CAGRs when asset corners are excluded."""
+    frontier = ok.EfficientFrontier(
+        ["A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=3,
+        bounds=bounds,
+        full_frontier=full_frontier,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+    )
+    low = max(bounds[0][0], 1 - bounds[1][1])
+    high = min(bounds[0][1], 1 - bounds[1][0])
+    sampled_cagrs = [frontier._get_cagr(np.array([w, 1 - w])) for w in np.linspace(low, high, 101)]
+    targets = frontier._target_cagr_range_left
+    right = frontier._target_cagr_range_right
+    if right is not None:
+        targets = np.concatenate([targets, right])
+    assert targets.min() >= min(sampled_cagrs) - 1e-6
+    assert targets.max() <= max(sampled_cagrs) + 1e-6
+    points = frontier.ef_points
+    for _, point in points.iterrows():
+        weights = point["Weights"]
+        assert np.sum(weights) == pytest.approx(1.0, abs=1e-8)
+        assert np.all(weights >= np.array(bounds)[:, 0] - 1e-8)
+        assert np.all(weights <= np.array(bounds)[:, 1] + 1e-8)
+        assert frontier._get_cagr(weights) == pytest.approx(point["CAGR"], abs=1e-5)
+
+
+@pytest.mark.parametrize("full_frontier", [True, False])
+def test_three_asset_frontier_respects_asymmetric_bounds(synthetic_env: object, full_frontier: bool) -> None:
+    """Feasible endpoint construction also preserves nontrivial three-asset constraints."""
+    bounds = ((0.1, 0.4), (0.2, 0.5), (0.15, 0.6))
+    frontier = ok.EfficientFrontier(
+        ["IDX.US", "A.US", "B.US"],
+        ccy="USD",
+        inflation=False,
+        n_points=3,
+        bounds=bounds,
+        full_frontier=full_frontier,
+        rebalancing_strategy=ok.Rebalance(period="year"),
+    )
+    for _, point in frontier.ef_points.iterrows():
+        weights = point["Weights"]
+        assert np.sum(weights) == pytest.approx(1.0, abs=1e-8)
+        assert np.all(weights >= np.array(bounds)[:, 0] - 1e-8)
+        assert np.all(weights <= np.array(bounds)[:, 1] + 1e-8)
+        assert frontier._get_cagr(weights) == pytest.approx(point["CAGR"], abs=1e-5)
+
+
 def test_minimize_risk_reaches_target_cagr(ef_reb_ab):
     # Pick a target in the middle of the left range
     r = ef_reb_ab._target_cagr_range_left

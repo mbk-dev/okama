@@ -1,6 +1,7 @@
 import json  # noqa: I001
 import pandas as pd
 import pytest
+from pytest_mock import MockerFixture
 
 from okama.api import search as search_module
 
@@ -164,3 +165,71 @@ def test_search_error_invalid_format(mocker):
     )
     with pytest.raises(ValueError):
         search_module.search("anything", response_format="txt")
+
+
+def _namespace_df_with_punctuation_and_nulls() -> pd.DataFrame:
+    """Namespace table with literal punctuation and nullable ISIN/local_name."""
+    return pd.DataFrame(
+        [
+            {
+                "name": "Foo [Class A]",
+                "ticker": "FOO",
+                "isin": pd.NA,
+                "symbol": "FOO.CC",
+                "local_name": pd.NA,
+            },
+            {
+                "name": "Bar (Retail)",
+                "ticker": "BAR",
+                "isin": "CC0000000001",
+                "symbol": "BAR.CC",
+                "local_name": pd.NA,
+            },
+            {
+                "name": "Baz Inc.",
+                "ticker": "BAZ",
+                "isin": "CC0000000002",
+                "symbol": "BAZ.CC",
+                "local_name": "Baz",
+            },
+            {
+                "name": "Qux",
+                "ticker": "QUX",
+                "isin": pd.NA,
+                "symbol": "QUX.CC",
+                "local_name": pd.NA,
+            },
+        ]
+    ).astype("string")
+
+
+@pytest.mark.parametrize(
+    ("search_string", "expected_symbol"),
+    [
+        ("[", "FOO.CC"),
+        ("(", "BAR.CC"),
+        (".", "BAZ.CC"),
+    ],
+)
+def test_search_namespace_matches_literal_punctuation(
+    mocker: MockerFixture, search_string: str, expected_symbol: str
+) -> None:
+    """Namespace free-text search treats brackets, parentheses and dots as literals."""
+    mocker.patch(
+        "okama.api.namespaces.symbols_in_namespace",
+        return_value=_namespace_df_with_punctuation_and_nulls(),
+    )
+
+    res = search_module.search(search_string, namespace="CC", response_format="frame")
+    assert list(res["symbol"]) == [expected_symbol]
+
+
+def test_search_namespace_nullable_isin_still_matches_ticker(mocker: MockerFixture) -> None:
+    """A null ISIN must not break the boolean mask for an ordinary ticker search."""
+    mocker.patch(
+        "okama.api.namespaces.symbols_in_namespace",
+        return_value=_namespace_df_with_punctuation_and_nulls(),
+    )
+
+    res = search_module.search("foo", namespace="CC", response_format="frame")
+    assert list(res["symbol"]) == ["FOO.CC"]
