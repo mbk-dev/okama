@@ -284,6 +284,24 @@ class Frame:
         return (ror + 1.0).prod() - 1.0
 
     @staticmethod
+    def get_rolling_cagr(ror: pd.DataFrame | pd.Series, window: int) -> pd.DataFrame | pd.Series:
+        """Calculate rolling CAGR, retaining product semantics for exceptional inputs."""
+        check_rolling_window(window=window, ror=ror)
+        dtypes = ror.dtypes if isinstance(ror, pd.DataFrame) else [ror.dtype]
+        if all(isinstance(dtype, np.dtype) and dtype == np.dtype("float64") for dtype in dtypes):
+            with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+                growth = 1.0 + ror
+                values = growth.to_numpy()
+                finite = values[np.isfinite(values)]
+                if finite.size and not np.isinf(values).any() and np.all(finite > 0):
+                    # Bound every intermediate product, including prefixes that
+                    # would overflow before later factors offset their growth.
+                    if np.max(np.abs(np.log(finite))) * window < 600:
+                        logs = np.log(growth)
+                        return np.expm1(logs.rolling(window).sum() * (settings._MONTHS_PER_YEAR / window)).dropna()
+        return Frame.get_rolling_fn(ror, window=window, fn=Frame.get_cagr)
+
+    @staticmethod
     def get_rolling_fn(
         ror: pd.DataFrame | pd.Series,
         window: int,
