@@ -1,8 +1,23 @@
+import warnings
+
 import pandas as pd
 import pandas.testing as pdt
 import pytest
 
 import okama as ok
+
+
+def _synthetic_returns(months: int = 24) -> pd.DataFrame:
+    return pd.DataFrame(
+        {"A": [0.01] * months, "B": [0.005] * months},
+        index=pd.period_range("2020-01", periods=months, freq="M"),
+    )
+
+
+def _assert_event_series_types(events: pd.Series) -> None:
+    assert isinstance(events.index, pd.PeriodIndex)
+    assert events.index.freqstr == "M"
+    assert pd.api.types.is_string_dtype(events.dtype)
 
 
 def test_validate_period_failing():
@@ -34,6 +49,61 @@ def test_repr(init_rebalance_no_rebalancing):
         }
     )
     assert repr(init_rebalance_no_rebalancing) == repr(value)
+
+
+@pytest.mark.parametrize("weights", [[0.6, 0.4], pd.Series([0.6, 0.4], index=["A", "B"])])
+def test_calendar_rebalance_events_use_string_values_and_period_index_without_pandas4warning(
+    weights: list[float] | pd.Series,
+) -> None:
+    returns = _synthetic_returns(24)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = ok.Rebalance(period="year").wealth_ts(weights, returns)
+    assert caught == []
+    _assert_event_series_types(result.events)
+    expected = pd.Series(["calendar"], index=pd.PeriodIndex(["2020-12"], freq="M"), dtype="str")
+    pdt.assert_series_equal(result.events, expected)
+
+
+@pytest.mark.parametrize("weights", [[0.6, 0.4], pd.Series([0.6, 0.4], index=["A", "B"])])
+def test_conditional_rebalance_events_use_string_values_and_period_index_without_pandas4warning(
+    weights: list[float] | pd.Series,
+) -> None:
+    returns = _synthetic_returns(24)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = ok.Rebalance(period="none", abs_deviation=0.01).wealth_ts(weights, returns)
+    assert caught == []
+    _assert_event_series_types(result.events)
+    expected = pd.Series(
+        ["abs", "abs"],
+        index=pd.PeriodIndex(["2020-09", "2021-06"], freq="M"),
+        dtype="str",
+    )
+    pdt.assert_series_equal(result.events, expected)
+
+
+@pytest.mark.parametrize(
+    "strategy, months",
+    [
+        (ok.Rebalance(period="none"), 24),
+        (ok.Rebalance(period="year"), 1),
+        (ok.Rebalance(period="none", abs_deviation=0.5), 6),
+    ],
+)
+def test_empty_rebalance_events_use_string_dtype_and_period_index_without_pandas4warning(
+    strategy: ok.Rebalance, months: int
+) -> None:
+    returns = pd.DataFrame(
+        {"A": [0.01] * months, "B": [0.01] * months},
+        index=pd.period_range("2020-01", periods=months, freq="M"),
+    )
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = strategy.wealth_ts([0.5, 0.5], returns)
+    assert caught == []
+    assert result.events.empty
+    _assert_event_series_types(result.events)
 
 
 def test_rebalance_by_condition_events_with_mock(mocker):
