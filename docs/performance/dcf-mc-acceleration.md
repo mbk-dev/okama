@@ -63,4 +63,4 @@ MPLBACKEND=Agg OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 LOKY_MAX_CPU_COUNT=4 \
   --repeats 5 --output /tmp/dcf-mc-acceleration.json
 ```
 
-[Raw paired samples, allocation measurements and source digests](dcf-mc-acceleration.json). The earlier opportunity-audit script uses prototype patches and should be reproduced at `bcd8774`, before these changes.
+[Raw paired samples, allocation measurements and source digests](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/dcf-mc-acceleration.json). The earlier opportunity-audit script uses prototype patches and should be reproduced at `bcd8774`, before these changes.
