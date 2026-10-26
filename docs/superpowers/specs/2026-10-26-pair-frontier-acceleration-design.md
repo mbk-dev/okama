@@ -1,6 +1,6 @@
 # Proposed acceleration of multi-period pairwise efficient frontiers
 
-Status: **proposal, not implemented**. Requested after the 26 October 2026 audit. The delivered library implementation is `370204bf7db4901626281b3ce624edbb11f84450`; this document does not claim a further speedup.
+Status: **implemented after user approval**, in `24d3147`. This document preserves the design; see [measured results and compatibility boundaries](../../performance/pair-frontier-acceleration.md) for the final implementation.
 
 ## Problem and evidence
 
@@ -20,7 +20,7 @@ Consumers that construct pair objects and read `ef_points` directly need the sam
 2. **Cache completed pair tables — useful second.** This removes repeated calculation when only plotting labels or figure size changes. It does not speed the first pair calculation, and downstream services may already cache the response.
 3. **Replace the two-asset optimizer or parallelize pairs — defer.** One free weight can enable a specialized scalar solver, but non-monotonic CAGR/risk, both frontier branches and constrained endpoints require separate mathematical validation. Additional outer parallelism can multiply existing point-level joblib/BLAS concurrency and memory. Neither is a prerequisite for approach 1.
 
-This is the recommended order, not an assertion that an implementation choice or a numerical gain has already been approved or measured.
+The user approved the first two approaches; specialized solvers and additional outer parallelism remain deferred.
 
 ## Recommended implementation
 
@@ -61,4 +61,4 @@ Use the repository's RED -> GREEN workflow and independent frozen-reference comp
 4. Prove repeat-plot reuse and invalidation separately; prevent mutation of returned data from corrupting stored results. Distinguish an existing service response cache from new library reuse.
 5. Measure complete cold pair construction and warm replot, not just an array kernel: 4/8/12 assets (6/28/66 pairs), 120/600 months, 12/80 requested points, normal point parallelism plus a controlled single-CPU comparison. Record median/p95, failures, peak RSS, cache state and source/dependency versions. Compare full numerical tables at `rtol=atol=1e-12`; investigate discrepancies rather than widening tolerances automatically.
 
-No additional speedup factor is promised until these measurements pass. Existing MC/grid gains are not evidence that pairwise frontier computation is already faster.
+The implementation report contains the completed measurements. Existing MC/grid gains remain separate evidence and must not be multiplied by the pairwise results.

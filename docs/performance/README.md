@@ -3,6 +3,7 @@
 These reports describe implementation stages for issue 127 and the follow-up performance audit. Each report states its own measurement protocol, tested source digests and limitations; timings from different stages are separate experiments. Individual reports record the local delivery status at their measurement date. Integration targets the `dev` branch. Historical measurements used Poetry/Python 3.11; the current `dev` environment uses uv, so reproduction commands should use `uv run` after syncing the required groups. Different dependency versions can change timings.
 
 - [Consolidated delivered results and capacity planning](acceleration-summary.md): measured before/after figures, delivery provenance and consumer-limit caveats.
+- [Multi-period pairwise implementation](pair-frontier-acceleration.md): shared optimizer preparation and fresh-input repeat-plot reuse, measured after the audit.
 - [Pairwise frontier audit](pair-frontier-audit.md): single-period gains, remaining multi-period bottleneck and a proposed next step.
 - [Single-period frontier batching](frontier-cpu-batching.md): sampled Monte Carlo and grid portfolios.
 - [ListMaker preparation and dividend yield](listmaker-optimizations.md): ready asset objects and ordinary monthly dividend calculations.

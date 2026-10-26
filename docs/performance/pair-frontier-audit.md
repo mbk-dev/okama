@@ -1,6 +1,6 @@
 # Pairwise efficient-frontier audit
 
-Read-only audit of dev `370204bf7db4901626281b3ce624edbb11f84450`, 26 October 2026. The proposed next step is [shared optimizer preparation](../superpowers/specs/2026-10-26-pair-frontier-acceleration-design.md); it has not been implemented.
+Read-only audit of dev `370204bf7db4901626281b3ce624edbb11f84450`, 26 October 2026. This records the state before the subsequent [shared-preparation and repeat-plot implementation](pair-frontier-acceleration.md).
 
 Both `EfficientFrontierSingle.plot_pair_ef()` and `EfficientFrontier.plot_pair_ef()` retain the same executable pair-loop bodies as `b33ca12bdd81b4107c2de484fff581eda1023ce1`. Every call constructs fresh two-asset frontier objects. Instrumentation counted six new objects on a first plot and six more on a second plot of the same four-asset parent. Existing numerical caches inside those child objects are discarded with them.
 
