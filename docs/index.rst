@@ -229,6 +229,7 @@ versioned repository so they remain available alongside the hosted reports.
     issues/*
     performance/*
     security/*
+    security-ci
 
 Indices and tables
 ******************
