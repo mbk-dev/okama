@@ -13,6 +13,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to uv; keep Python 3.11–3.14 support and pip installation of the library.
 - Make the [Jupyter examples](examples/README.md) preserve the local editable
   installation while retaining package installation in Google Colab.
+- Require patched minimum versions of Pillow, certifi and urllib3 at runtime,
+  and of affected notebook, documentation and development tools in their groups
+  ([dependency advisory ledger](docs/security/dependency-alerts-2026-10-26.md)).
+
+### Fixed
+
+- `search()` treats namespace-scoped queries as literal case-insensitive text,
+  including brackets, parentheses and dots (#131).
+- `Rebalance.wealth_ts()` uses explicit string event values and monthly period
+  indexes, including empty events and conditional rebalancing (#133).
+- `EfficientFrontier.ef_points` selects feasible CAGR endpoints under restrictive
+  weight bounds for both full-frontier modes, including asymmetric bounds (#132).
+
+### Added
+
+- `Asset` emits `MissingDistributionsWarning` when TPAY.MOEX, FLOW.MOEX or
+  AKIE.MOEX has an empty API distribution history. This is a temporary data-quality
+  warning; underlying payout and total-return remediation remains open (#125).
 
 ## [4.0.0] - 2026-10-09
 

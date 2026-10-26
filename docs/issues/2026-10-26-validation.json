@@ -1,0 +1,75 @@
+{
+  "base": "bcd877421262d107b7b35a9a771498802dc39c0b",
+  "tested_production_patch_sha256": "efaed16ff67b8b6a1ddd320464fa11e4d05fcf6c14e510304ec56be3892dfe35",
+  "matrix": [
+    {
+      "python": "311",
+      "tests": 925,
+      "passed": 922,
+      "skipped": 3,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 20.554
+    },
+    {
+      "python": "312",
+      "tests": 925,
+      "passed": 922,
+      "skipped": 3,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 21.691
+    },
+    {
+      "python": "313",
+      "tests": 925,
+      "passed": 922,
+      "skipped": 3,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 21.004
+    },
+    {
+      "python": "314",
+      "tests": 925,
+      "passed": 922,
+      "skipped": 3,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 21.329
+    }
+  ],
+  "manual_benchmark_skips": 3,
+  "warnings_followup": "https://github.com/mbk-dev/okama/issues/138",
+  "dependency_alerts_reviewed": 78,
+  "dependency_affected_installed_versions": 0,
+  "publication": "pending",
+  "integration": {
+    "base": "370204bf7db4901626281b3ce624edbb11f84450",
+    "python": "3.14",
+    "tests": 1086,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 3,
+    "passed": 1083,
+    "warnings": 33,
+    "note": "Complete tracked snapshot of newer dev plus the same production patch; changelog-only merge pending publication."
+  },
+  "focused_tests_passed": 136,
+  "patch_hash_scope": [
+    "okama/",
+    "pyproject.toml",
+    "requirements.txt"
+  ],
+  "independent_review": {
+    "executor": "native Codex reviewer reserve",
+    "result": "no actionable findings",
+    "offline_frontier_probes": 22,
+    "maximum_checked_cagr_error": 5.5e-07,
+    "limits": [
+      "No independent advisory verification",
+      "No repeated full suite",
+      "Numerical endpoint optimization has no global optimality guarantee"
+    ]
+  }
+}
