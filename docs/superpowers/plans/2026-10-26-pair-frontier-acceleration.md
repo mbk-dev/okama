@@ -54,8 +54,8 @@
 
 **Files:** `analytics/benchmark_pair_frontier.py`, `docs/performance/pair-frontier-acceleration.md`, accompanying JSON, summary/index/spec status.
 
-- [ ] Compare baseline `48a0e7c` with current complete cold pair calculations and warm repeated plots on offline ready assets; record source hashes, median/p95, output parity, peak RSS, environment and parallelism. Include 4/8/12 assets, 120/600 months and 12/80 points, using a bounded representative matrix rather than silently exhausting every Cartesian product.
+- [x] Compare baseline `48a0e7c` with current complete cold pair calculations and warm repeated plots on offline ready assets; record source hashes, median/p95, output parity, peak RSS, environment and parallelism. Include 4/8/12 assets, 120/600 months and 12/80 points, using a bounded representative matrix rather than silently exhausting every Cartesian product.
 - [x] Run full `uv run --no-sync pytest -q` and both Ruff commands; expected: no test failures and both Ruff checks pass. Report pre-existing warnings accurately.
 - [x] Obtain an independent read-only final review after current routing admission, verify findings and record resolution.
-- [ ] Update durable results and the existing web capacity task with measured benefits and limits; do not change website limits in this library task.
+- [x] Update durable results and the existing web capacity task with measured benefits and limits; do not change website limits in this library task.
 - [ ] Commit/push reviewed changes, merge into dev after exact-head CI, synchronize owned task/default checkouts, archive scratch and verify no active Git lock.
