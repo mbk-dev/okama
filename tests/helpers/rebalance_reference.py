@@ -1,4 +1,7 @@
-"""Frozen scalar conditional algorithm from okama b33ca12, independent of Git at test time."""
+"""Scalar algorithm from b33ca12, with event dtypes aligned to the issue #133 contract.
+
+Financial calculations remain frozen and independent of Git at test time.
+"""
 
 from types import SimpleNamespace
 
@@ -42,7 +45,7 @@ class ScalarConditionalRebalance:
         portfolio_wealth_index = pd.Series(dtype="float64")
         assets_wealth_indexes_local = pd.DataFrame(columns=ror.columns, dtype="float64")
         assets_wealth_indexes = pd.DataFrame(columns=ror.columns, dtype="float64")
-        events_ts = pd.Series(dtype="float64")
+        events_ts = pd.Series(dtype="str", index=pd.PeriodIndex([], freq="M"))
         awi_rows = [] if calculate_assets_wealth_indexes else None
         for n, row in enumerate(ror.itertuples()):
             date = row[0]
@@ -146,7 +149,7 @@ class ScalarCalendarRebalance(ScalarConditionalRebalance):
         first_wealth_index_date = first_date - 1
         portfolio_wealth_index = pd.Series(dtype="float64")
         assets_wealth_indexes = pd.DataFrame(columns=ror.columns, dtype="float64")
-        events_ts = pd.Series(dtype="float64")
+        events_ts = pd.Series(dtype="str", index=pd.PeriodIndex([], freq="M"))
         target_weights_np = np.asarray(target_weights)
         if self.period == "none" and self.abs_deviation is None and self.rel_deviation is None:  # No rebalancing
             initial_allocation = target_weights_np * initial_inv
