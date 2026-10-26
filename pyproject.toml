@@ -35,6 +35,9 @@ dependencies = [
     "arch>=7.2.0",
     "statsmodels>=0.14.5",
     "idna>=3.15",
+    "pillow>=13.0.0",
+    "certifi>=2026.10.19",
+    "urllib3>=2.8.0",
 ]
 
 [project.urls]
@@ -46,7 +49,7 @@ Documentation = "https://okama.readthedocs.io/en/master"
 test = [
     "pytest",
     "pytest-mock",
-    "black[jupyter]",
+    "black[jupyter]>=26.10.1",
     "pytest-xdist",
     "scipy-stubs",
 ]
@@ -61,18 +64,25 @@ docs = [
     "Jinja2",
     "docutils<0.22",
     "ipython>=7.20.0",
+    "nbconvert>=7.17.2",
+    "tornado>=6.5.9",
 ]
 jupyter = [
     "jupyter",
-    "notebook",
+    "notebook>=7.6.3",
     "ipykernel",
     "ipython",
     "nbmake",
     "zmq",
+    "jupyterlab>=4.6.4",
+    "nbconvert>=7.17.2",
+    "tornado>=6.5.9",
 ]
 dev = [
     "ruff",
     "pre-commit",
+    "filelock>=4.2.1",
+    "virtualenv>=21.14.9",
 ]
 
 [tool.uv]

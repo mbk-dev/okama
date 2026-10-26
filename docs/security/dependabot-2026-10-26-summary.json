@@ -1,0 +1,26 @@
+{
+  "retrieved_date": "2026-10-26",
+  "repository": "mbk-dev/okama",
+  "alert_count": 78,
+  "unique_advisories": 76,
+  "severity": {
+    "high": 42,
+    "medium": 25,
+    "critical": 6,
+    "low": 5
+  },
+  "packages": {
+    "urllib3": 3,
+    "tornado": 3,
+    "virtualenv": 19,
+    "jupyterlab": 4,
+    "notebook": 2,
+    "certifi": 1,
+    "pillow": 41,
+    "black": 1,
+    "nbconvert": 1,
+    "filelock": 3
+  },
+  "delivery": "pending explicit publication authorization",
+  "remote_alerts": "78 open at initial read; local fixes do not dismiss them"
+}
