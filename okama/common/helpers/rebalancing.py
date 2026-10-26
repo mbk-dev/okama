@@ -7,6 +7,17 @@ from okama import settings
 from okama.common.validators import validate_real
 
 
+def _empty_events(freq: str = "M") -> pd.Series:
+    """String event labels on a PeriodIndex, so later assignment does not emit Pandas4Warning."""
+    return pd.Series(dtype="str", index=pd.PeriodIndex([], freq=freq))
+
+
+def _events_from(values: list[str], dates: list[pd.Period], freq: str = "M") -> pd.Series:
+    if not dates:
+        return _empty_events(freq)
+    return pd.Series(values, index=pd.PeriodIndex(dates, freq=freq), dtype="str")
+
+
 @dataclass(frozen=True)
 class Result:
     """
@@ -205,7 +216,7 @@ class Rebalance:
         first_wealth_index_date = first_date - 1
         portfolio_wealth_index = pd.Series(dtype="float64")
         assets_wealth_indexes = pd.DataFrame(columns=ror.columns, dtype="float64")
-        events_ts = pd.Series(dtype="float64")
+        events_ts = _empty_events()
         target_weights_np = np.asarray(target_weights)
         if self.period == "none" and self.abs_deviation is None and self.rel_deviation is None:  # No rebalancing
             initial_allocation = target_weights_np * initial_inv
@@ -305,11 +316,7 @@ class Rebalance:
                 if conditional:
                     end_weights = local[-1] / total
                     required, condition_abs = self._check_if_rebalancing_required(local[-1], total, weights)
-        events = (
-            pd.Series(event_values, index=pd.PeriodIndex(event_dates, freq="M"))
-            if event_dates
-            else pd.Series(dtype="float64")
-        )
+        events = _events_from(event_values, event_dates)
         assets = (
             pd.DataFrame(asset_values, index=ror.index, columns=ror.columns)
             if asset_values is not None
@@ -327,7 +334,7 @@ class Rebalance:
         target_weights_np = np.asarray(target_weights)
         portfolio_wealth_index = pd.Series(dtype="float64")
         assets_wealth_indexes = pd.DataFrame(columns=ror.columns, dtype="float64")
-        events_ts = pd.Series(dtype="float64")
+        events_ts = _empty_events()
         rebalancing_by_condition_needed = self.abs_deviation or self.rel_deviation
         rebalancing_condition = False
         # accumulate chunks and concatenate once after the loop
@@ -420,11 +427,7 @@ class Rebalance:
             if asset_values is not None
             else pd.DataFrame(columns=ror.columns, dtype="float64")
         )
-        events = (
-            pd.Series(event_values, index=pd.PeriodIndex(event_dates, freq=ror.index.freq))
-            if event_dates
-            else pd.Series(dtype="float64")
-        )
+        events = _events_from(event_values, event_dates, freq=ror.index.freqstr or "M")
         return portfolio_wealth, assets_wealth, events
 
     def _rebalance_by_condition_pandas(
@@ -435,10 +438,10 @@ class Rebalance:
         calculate_assets_wealth_indexes: bool = False,
     ) -> tuple[pd.Series, pd.DataFrame, pd.Series]:
         target_weights_np = np.asarray(target_weights)
-        portfolio_wealth_index = pd.Series(dtype="float64")
+        portfolio_wealth_index = pd.Series(dtype="float64", index=pd.PeriodIndex([], freq=ror.index.freq))
         assets_wealth_indexes_local = pd.DataFrame(columns=ror.columns, dtype="float64")
         assets_wealth_indexes = pd.DataFrame(columns=ror.columns, dtype="float64")
-        events_ts = pd.Series(dtype="float64")
+        events_ts = _empty_events(freq=ror.index.freqstr or "M")
         awi_rows = [] if calculate_assets_wealth_indexes else None
         for n, row in enumerate(ror.itertuples()):
             date = row[0]
