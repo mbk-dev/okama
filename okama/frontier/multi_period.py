@@ -1043,7 +1043,9 @@ class EfficientFrontier(asset_list.AssetList):
         """
         Full range of CAGR values (from min to max).
         """
-        if self.full_frontier:
+        if self.full_frontier and self._has_restrictive_bounds:
+            min_cagr = self._bounded_extreme_portfolio(maximize_risk=False)["CAGR"]
+        elif self.full_frontier:
             cagr_series = helpers.Frame.get_cagr(self.assets_ror)
             right_asset = self._max_ratio_asset_right_to_max_cagr
             if right_asset is not None:
@@ -1073,21 +1075,79 @@ class EfficientFrontier(asset_list.AssetList):
         Range of CAGR values from the Global CAGR max to the max asset cagr
         to the right of the max CAGR point (if exists).
         """
-        if self._max_ratio_asset_right_to_max_cagr:
+        maximum = self.global_max_return_portfolio
+        if self._has_restrictive_bounds:
+            endpoint = self._bounded_extreme_portfolio(maximize_risk=True)
+            if endpoint["Risk"] <= maximum["Risk"] + 1e-10:
+                return None
+            ticker_cagr = endpoint["CAGR"]
+        elif self._max_ratio_asset_right_to_max_cagr:
             ticker_cagr = self._max_ratio_asset_right_to_max_cagr["max_asset_cagr"]
-            max_cagr = self.global_max_return_portfolio["CAGR"]
+        else:
+            return None
+        max_cagr = maximum["CAGR"]
+        if max_cagr - ticker_cagr > 1e-12:
             # Skip only a truly degenerate (zero) span: a narrow-but-real CAGR span still
             # has to be drawn, as the risk gap to the asset corner can be large (issue #87).
-            if max_cagr - ticker_cagr > 1e-12:
-                k = abs((self._target_cagr_range_left[0] - self._target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
-                # we don't want too many points in the right range. Therefore if k < 1 n_points value is used
-                number_of_points = round(self.n_points / k) + 1 if k > 1 else self.n_points
-                # At least two points, so that the range keeps its terminal value (the right
-                # asset's own CAGR) after the first point is dropped below.
-                number_of_points = max(number_of_points, 2)
-                target_range = np.linspace(max_cagr, ticker_cagr, number_of_points)
-                return target_range[1:]  # skip the first point (max cagr) as it presents in the left part of the EF
+            k = abs((self._target_cagr_range_left[0] - self._target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
+            # we don't want too many points in the right range. Therefore if k < 1 n_points value is used
+            number_of_points = round(self.n_points / k) + 1 if k > 1 else self.n_points
+            # At least two points, so that the range keeps its terminal value (the right
+            # asset's own CAGR) after the first point is dropped below.
+            number_of_points = max(number_of_points, 2)
+            target_range = np.linspace(max_cagr, ticker_cagr, number_of_points)
+            return target_range[1:]  # skip the first point (max cagr) as it presents in the left part of the EF
         return None
+
+    @property
+    def _has_restrictive_bounds(self) -> bool:
+        """Whether the supplied box excludes any long-only asset corner."""
+        return any(low > 0 or high < 1 for low, high in self.bounds)
+
+    def _bounded_extreme_portfolio(self, *, maximize_risk: bool) -> dict:
+        """Find a feasible endpoint using multiple starts within the weight bounds.
+
+        Raw asset corners cannot define endpoints when the bounds exclude them.
+        Minimize CAGR for the full left branch, or maximize annualized risk for
+        the right branch, using the same return calculation as the frontier.
+        """
+        lows, highs = np.asarray(self.bounds, dtype=float).T
+        if lows.sum() > 1 + 1e-12 or highs.sum() < 1 - 1e-12:
+            raise ValueError("Weight bounds must allow weights that sum to one.")
+        n = len(lows)
+
+        def objective(weights: np.ndarray) -> float:
+            if maximize_risk:
+                returns = self._get_portfolio_ror_ts(weights)
+                return -helpers.Float.annualize_risk(returns.std(), returns.mean())
+            return self._get_cagr(weights)
+
+        best = None
+        for first in range(n):
+            initial = lows.copy()
+            remaining = 1 - initial.sum()
+            for position in np.roll(np.arange(n), -first):
+                addition = min(remaining, highs[position] - initial[position])
+                initial[position] += addition
+                remaining -= addition
+            candidate = minimize(
+                objective,
+                initial,
+                method="SLSQP",
+                bounds=self.bounds,
+                constraints=({"type": "eq", "fun": lambda weights: weights.sum() - 1},),
+                options={"maxiter": 100, "ftol": 1e-10},
+            )
+            if candidate.success and (best is None or candidate.fun < best.fun):
+                best = candidate
+        if best is None:
+            raise RuntimeError("No feasible frontier endpoint found for the supplied weight bounds.")
+        returns = self._get_portfolio_ror_ts(best.x)
+        return {
+            "Weights": best.x,
+            "CAGR": self._get_cagr(best.x),
+            "Risk": helpers.Float.annualize_risk(returns.std(), returns.mean()),
+        }
 
     @property
     def target_risk_range(self) -> np.ndarray:
