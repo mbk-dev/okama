@@ -1,0 +1,1824 @@
+{
+  "python": "3.14.8",
+  "baseline_revision": "31db96c4411e24b30656d1f76f94e95849251e01",
+  "protocol": "Offline transport counts or live warm triple plus 3 rotating triples; complete fresh public workflow",
+  "offline": false,
+  "observations": [
+    {
+      "mode": "baseline",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03006079800252337
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.0442947879928397
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.06139715500466991
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 4,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.048261599004035816
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 5,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.05161776699242182
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.06547622800280806
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 6,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.13078417799260933
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 7,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.1558075729990378
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 8,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.20564543899672572
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 9,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.0698907139885705
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 10,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.1299833259981824
+        }
+      ],
+      "seconds": 0.7308389149984578,
+      "sessions": 11,
+      "logical_requests": 11,
+      "repeat": 0,
+      "warmup": true,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "automatic",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.033746588000212796
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03211083899077494
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04565524699864909
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.0844509710004786
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 2,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.08474183001089841
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.09002205099386629
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 3,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.16797193500678986
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.2561709629953839
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.26066518999869004
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 4,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.046380886997212656
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 4,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.08054021499992814
+        }
+      ],
+      "seconds": 0.684051370000816,
+      "sessions": 5,
+      "logical_requests": 11,
+      "repeat": 0,
+      "warmup": true,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "outer_scope",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.027166030995431356
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.018642636001459323
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03349405100743752
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 2,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03838226200605277
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.038917242010938935
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.040488190003088675
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.09227522699802648
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.09303225600160658
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 3,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.09577077699941583
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.09979817300336435
+        }
+      ],
+      "seconds": 0.4152650130126858,
+      "sessions": 4,
+      "logical_requests": 10,
+      "repeat": 0,
+      "warmup": true,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "automatic",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.028146423006546684
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.019592127995565534
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03503691499645356
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04514620600093622
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04930687299929559
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 2,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.052698968996992335
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 3,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.1017983610072406
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.11499593300686684
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.16513271299481858
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 4,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03378353800508194
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 4,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.0942189770139521
+        }
+      ],
+      "seconds": 0.5190893690014491,
+      "sessions": 5,
+      "logical_requests": 11,
+      "repeat": 1,
+      "warmup": false,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "outer_scope",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.027380686995456927
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.02537707299052272
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03026922199933324
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 2,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.039734897000016645
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.050825932004954666
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.05137742299120873
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.10304504400119185
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 3,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.22944357999949716
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.2459291929990286
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.10821007899357937
+        }
+      ],
+      "seconds": 0.5727669359912397,
+      "sessions": 4,
+      "logical_requests": 10,
+      "repeat": 1,
+      "warmup": false,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "baseline",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.030891297006746754
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04216318299586419
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.054917379005928524
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04932919600105379
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 4,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04951120899931993
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 5,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.05001963900576811
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 6,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.11553504101175349
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 7,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.1169175720133353
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 8,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.138994533001096
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 9,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04153424499963876
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 10,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.14934271499805618
+        }
+      ],
+      "seconds": 0.6114554859959753,
+      "sessions": 11,
+      "logical_requests": 11,
+      "repeat": 1,
+      "warmup": false,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "outer_scope",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03072051399794873
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.018940447000204585
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.028124762000516057
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03266932399128564
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03382526698987931
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 2,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.034428836006554775
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.07691545999841765
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.08114938599464949
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 3,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.08506249600031879
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.08380438899621367
+        }
+      ],
+      "seconds": 0.37558443800662644,
+      "sessions": 4,
+      "logical_requests": 10,
+      "repeat": 2,
+      "warmup": false,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "baseline",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.030316180011141114
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04160974800470285
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04998812999110669
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 4,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.0450535809941357
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04628094799409155
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 5,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04604849999304861
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 6,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.11359687100048177
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 7,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.1257480479980586
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 8,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.12718003100599162
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 9,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04264318899367936
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 10,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.11057090600661468
+        }
+      ],
+      "seconds": 0.538386089989217,
+      "sessions": 11,
+      "logical_requests": 11,
+      "repeat": 2,
+      "warmup": false,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "automatic",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03127611300442368
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.025016981991939247
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03393214898824226
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.041167332004988566
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 2,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.05283220000274014
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.05497513699810952
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.09691471699625254
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 3,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.11181678899447434
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.10236091299157124
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 4,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.040570885001216084
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 4,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.11726028900011443
+        }
+      ],
+      "seconds": 0.49647856000228785,
+      "sessions": 5,
+      "logical_requests": 11,
+      "repeat": 2,
+      "warmup": false,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "baseline",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04941132999374531
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04476016700209584
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.05508127799839713
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.040502095987903886
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 4,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04299138700298499
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 5,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04460161700262688
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 7,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.1210702329990454
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 6,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.17764362900925335
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 8,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.1958845159970224
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 9,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03932702599558979
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 10,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.09897767299844418
+        }
+      ],
+      "seconds": 0.6280986759957159,
+      "sessions": 11,
+      "logical_requests": 11,
+      "repeat": 3,
+      "warmup": false,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "automatic",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.035173092008335516
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.019266884002718143
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.11102081600984093
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 2,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04237048399227206
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04516812700603623
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.047162283008219674
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 3,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.09875739700510167
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 1,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.1094171379954787
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.11651499100844376
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 4,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.04808500601211563
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 4,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.18494500800443348
+        }
+      ],
+      "seconds": 0.6442031290062005,
+      "sessions": 5,
+      "logical_requests": 11,
+      "repeat": 3,
+      "warmup": false,
+      "max_absolute_difference": 0.0
+    },
+    {
+      "mode": "outer_scope",
+      "success": true,
+      "calls": [
+        {
+          "path": "/api/assets_namespaces/",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.03548723499989137
+        },
+        {
+          "path": "/api/symbol/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.026796713995281607
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.040167322993511334
+        },
+        {
+          "path": "/api/symbol/BND.US",
+          "thread": 140395680970432,
+          "session": 3,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.050706905996776186
+        },
+        {
+          "path": "/api/symbol/GLD.US",
+          "thread": 140395672577728,
+          "session": 2,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.05917948600836098
+        },
+        {
+          "path": "/api/symbol/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": null,
+            "last_date": null,
+            "period": "d"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.05996277500526048
+        },
+        {
+          "path": "/api/ts/ror/SPY.US",
+          "thread": 140395689363136,
+          "session": 1,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.2619167540105991
+        },
+        {
+          "path": "/api/ts/ror/GLD.US",
+          "thread": 140395672577728,
+          "session": 2,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.358640029997332
+        },
+        {
+          "path": "/api/ts/ror/BND.US",
+          "thread": 140395680970432,
+          "session": 3,
+          "params": {
+            "first_date": "2005-01",
+            "last_date": "2025-12",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.38646954399882816
+        },
+        {
+          "path": "/api/ts/ror/USD.FX",
+          "thread": 140396202350464,
+          "session": 0,
+          "params": {
+            "first_date": "1913-01-01",
+            "last_date": "2100-01-01",
+            "period": "M"
+          },
+          "success": true,
+          "status": 200,
+          "seconds": 0.12611273600487038
+        }
+      ],
+      "seconds": 0.7749415500002215,
+      "sessions": 4,
+      "logical_requests": 10,
+      "repeat": 3,
+      "warmup": false,
+      "max_absolute_difference": 0.0
+    }
+  ],
+  "source_sha256": {
+    "okama/api/request_scope.py": "b14ea9748cdfab0b0d84a1fe668b8425a5d7c46766c179b6fb34728dd487c294",
+    "okama/api/api_methods.py": "f58303b2794102f785fd1b82301b9e4467bb4a57b9bdd0eebfc3081c7ddc1408",
+    "okama/asset.py": "17a74283e60cfc9cac9d2247eb260b06c038e6654b9cc108717f021e30a29e23",
+    "okama/common/make_asset_list.py": "c4ed07c625729048a0e377360701cf5d1af3af7bcc99dd34ecefe35f90303d3e"
+  },
+  "script_sha256": "4db0de172f7841681ab5173144d847273a947f1f41da2e934960c03c207e8b0b",
+  "all_successful": true
+}
