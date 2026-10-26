@@ -5,7 +5,32 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.0.1] - 2026-10-26
+
+This patch release focuses on CPU calculation speed, reusable numerical preparation and bounded caches. The accelerated paths preserve financial formulas, return shapes and supported fallbacks; equivalence checks use explicit numerical tolerances.
+
+### Performance highlights
+
+Representative complete-call medians from the linked optimization reports:
+
+| Public calculation | Measured workload | Before → after | Gain |
+|---|---|---:|---:|
+| `EfficientFrontier.get_monte_carlo()` | 252 months, 3 assets, 8,192 portfolios, yearly rebalancing | 19.795 s → 65.835 ms | 300.7× |
+| `EfficientFrontier.get_grid_portfolios()` | Same history, 5,151 portfolios | 12.578 s → 30.520 ms | 412.1× |
+| `EfficientFrontierSingle.get_monte_carlo()` | 252 months, 3 assets, 8,192 portfolios, mean return | 3.347 s → 18.535 ms | 180.6× |
+| `AssetList.get_rolling_cagr()` | 600 months, 16 assets, 60-month window | 253.667 ms → 1.129 ms | 224.6× |
+| `PortfolioDCF.wealth_index()` | 600-month history, monthly indexation | 101.557 ms → 4.290 ms | 23.7× |
+| `PortfolioDCF.monte_carlo_wealth()` + `monte_carlo_cash_flow()` | 360 months, 8,192 simulations, complete cold pair | 692.072 ms → 99.792 ms | 6.9× |
+| `PortfolioDCF.monte_carlo_irr()` | Same simulations, no intermediate payments, cold call | 698.126 ms → 85.190 ms | 8.2× |
+| `EfficientFrontier.plot_pair_ef()` | 4 assets / 6 pairs, 120 months, 12 points | 3.689 s → 0.874 s first / 11.2 ms repeat | 4.2× first / 328× repeat |
+
+The reports measure separate optimization stages on a Ryzen 7 8845H CPU; their baselines and dependency versions differ by experiment. Ratios are workload-specific and must not be multiplied. Pairwise repeat figures require unchanged inputs and a populated pair-table cache. Offline calculations exclude network acquisition and browser rendering.
+
+- [Frontier CPU batching](docs/performance/frontier-cpu-batching.md) and [calendar batching](docs/performance/calendar-batching.md).
+- [Statistics and rolling calculations](docs/performance/statistics-performance.md).
+- [PortfolioDCF / MonteCarlo results, fallbacks and memory costs](docs/performance/dcf-mc-acceleration.md).
+- [Pairwise frontier preparation and cache measurements](docs/performance/pair-frontier-acceleration.md).
+- [Full measurement summary](docs/performance/acceleration-summary.md), including dividend preparation, conditional rebalancing, API reuse and smaller workloads.
 
 ### Changed
 
