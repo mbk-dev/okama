@@ -9,10 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Accelerate `PortfolioDCF.wealth_index()`, `cash_flow_ts()`,
+  `wealth_index_fv_with_assets`, Monte Carlo wealth/cash-flow/survival calculations,
+  and conventional `monte_carlo_irr()` using guarded array operations and shared results.
+- Reuse distribution fitting and derived CAGR in `MonteCarlo.backtesting_error()`,
+  `percentile_distribution_cagr()` and `percentile_inverse_cagr()`; batch bootstrap
+  tail statistics in `MonteCarlo.plot_qq()`. Detect mutations of cached return inputs.
+- Preserve Monte Carlo caches after `PortfolioDCF.plot_forecast_monte_carlo(backtest=False)`.
 - Migrate development environments, CI, packaging and release commands from Poetry
   to uv; keep Python 3.11–3.14 support and pip installation of the library.
 - Make the [Jupyter examples](examples/README.md) preserve the local editable
   installation while retaining package installation in Google Colab.
+
+### Fixed
+
+- Invalidate cash-flow caches when `PortfolioDCF.discount_rate` changes so extra
+  payments are recalculated at the new rate.
 
 ## [4.0.0] - 2026-10-09
 

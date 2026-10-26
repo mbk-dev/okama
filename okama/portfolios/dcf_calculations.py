@@ -11,7 +11,137 @@ import okama.portfolios.cashflow_strategies as cf
 from okama import settings
 
 
-def get_wealth_indexes_fv_with_cashflow(  # noqa: C901
+def _can_use_historical_arrays(
+    ror: pd.Series | pd.DataFrame, parameters: cf.CashFlow, task: str, discount_rate: float
+) -> bool:
+    """Keep nonstandard input/strategy behavior on the original scalar path."""
+    supported = (
+        cf.IndexationStrategy,
+        cf.PercentageStrategy,
+        cf.TimeSeriesStrategy,
+        cf.VanguardDynamicSpending,
+        cf.CutWithdrawalsIfDrawdown,
+    )
+    if (
+        type(parameters) not in supported
+        or task not in ("backtest", "monte_carlo")
+        or type(ror) not in (pd.Series, pd.DataFrame)
+        or len(ror) < 2
+        or not isinstance(ror.index, pd.PeriodIndex)
+        or ror.index.freqstr != "M"
+        or not ror.index.is_unique
+        or not ror.index.is_monotonic_increasing
+        or not np.all(np.diff(ror.index.asi8) == 1)
+    ):
+        return False
+    if isinstance(ror, pd.DataFrame) and (not ror.columns.is_unique or not ror.dtypes.eq(np.dtype("float64")).all()):
+        return False
+    if isinstance(ror, pd.Series) and ror.dtype != np.dtype("float64"):
+        return False
+    values = ror.to_numpy()
+    if values.dtype != np.dtype("float64") or not np.isfinite(values).all():
+        return False
+    # Preserve scalar exceptions and underflow/overflow behavior for extreme rates.
+    for rate in (discount_rate, getattr(parameters, "indexation", 0.0)):
+        if not np.isfinite(rate) or rate <= -1 or abs(np.log1p(rate)) * (len(ror) + 1) / 12 > 600:
+            return False
+    extra = parameters.time_series
+    return np.isfinite(parameters.initial_investment) and (
+        extra.empty
+        or (extra.index.is_unique and extra.dtype == np.dtype("float64") and np.isfinite(extra.to_numpy()).all())
+    )
+
+
+def _historical_array_outputs(
+    ror: pd.DataFrame,
+    parameters: cf.CashFlow,
+    discount_rate: float,
+    task: str,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    wealth, cash = _simulate_paths_mc(ror, parameters, discount_rate, task=task)
+    index = ror.index
+    if parameters.frequency in ("month", "none"):
+        index = index.rename(None)
+    wealth_index = index.insert(0, index[0] - 1)
+    extra = parameters.time_series.reindex(ror.index).fillna(0)
+    if (extra != 0).any():
+        wealth_index = wealth_index.rename(None)
+    data = np.vstack([np.full((1, len(ror.columns)), parameters.initial_investment), wealth])
+    return (
+        pd.DataFrame(data, index=wealth_index, columns=ror.columns, copy=False),
+        pd.DataFrame(cash, index=index, columns=ror.columns, copy=False),
+    )
+
+
+def get_wealth_indexes_fv_with_cashflow(
+    ror: pd.Series | pd.DataFrame,
+    portfolio_symbol: str | None,
+    inflation_symbol: str | None,
+    cashflow_parameters: cf.CashFlow,
+    task: Literal["backtest", "monte_carlo"],
+) -> pd.Series | pd.DataFrame:
+    """Calculate historical wealth using guarded array arithmetic or the scalar fallback."""
+    valid_column = isinstance(ror, pd.Series) or portfolio_symbol in ror.columns
+    if valid_column and _can_use_historical_arrays(
+        ror, cashflow_parameters, task, cashflow_parameters.parent.dcf.discount_rate
+    ):
+        owner = cashflow_parameters.parent.dcf
+        if owner.cashflow_parameters is not cashflow_parameters:
+            owner.cashflow_parameters = cashflow_parameters
+        data = ror.to_frame() if isinstance(ror, pd.Series) else ror[[portfolio_symbol]]
+        wealth, _ = _historical_array_outputs(data, cashflow_parameters, owner.discount_rate, task)
+        result = wealth.iloc[:, 0]
+        extra = cashflow_parameters.time_series.reindex(data.index).fillna(0)
+        if cashflow_parameters.frequency in ("month", "none") or (extra != 0).any():
+            result = result.rename(portfolio_symbol)
+        if inflation_symbol:
+            inflation = helpers.Frame.get_wealth_indexes(
+                ror=ror.loc[:, inflation_symbol], initial_amount=cashflow_parameters.initial_investment
+            )
+            return pd.concat([result, inflation], axis="columns")
+        return result
+    return _get_wealth_indexes_fv_with_cashflow_scalar(
+        ror, portfolio_symbol, inflation_symbol, cashflow_parameters, task
+    )
+
+
+def get_cash_flow_fv(
+    ror: pd.Series | pd.DataFrame,
+    portfolio_symbol: str | None,
+    cashflow_parameters: cf.CashFlow,
+    task: Literal["backtest", "monte_carlo"],
+) -> pd.Series:
+    """Calculate historical cash flow without invalidating an unchanged strategy."""
+    valid_column = isinstance(ror, pd.Series) or portfolio_symbol in ror.columns
+    cwd_frame = isinstance(ror, pd.DataFrame) and type(cashflow_parameters) is cf.CutWithdrawalsIfDrawdown
+    if (
+        valid_column
+        and not cwd_frame
+        and _can_use_historical_arrays(ror, cashflow_parameters, task, cashflow_parameters.parent.dcf.discount_rate)
+    ):
+        owner = cashflow_parameters.parent.dcf
+        if owner.cashflow_parameters is not cashflow_parameters:
+            owner.cashflow_parameters = cashflow_parameters
+        data = ror.to_frame() if isinstance(ror, pd.Series) else ror[[portfolio_symbol]]
+        _, cash = _historical_array_outputs(data, cashflow_parameters, owner.discount_rate, task)
+        name = "cash_flow_fv" if cashflow_parameters.frequency in ("month", "none") else "cashflow_ts"
+        return cash.iloc[:, 0].rename(name)
+    return _get_cash_flow_fv_scalar(ror, portfolio_symbol, cashflow_parameters, task)
+
+
+def get_historical_wealth_with_assets(
+    ror: pd.DataFrame,
+    parameters: cf.CashFlow,
+    discount_rate: float,
+) -> pd.DataFrame | None:
+    """Batch ordinary all-asset histories, leaving exceptional cases to the caller."""
+    if not _can_use_historical_arrays(ror, parameters, "backtest", discount_rate):
+        return None
+    wealth, _ = _historical_array_outputs(ror, parameters, discount_rate, "backtest")
+    return wealth
+
+
+def _get_wealth_indexes_fv_with_cashflow_scalar(  # noqa: C901
     ror: pd.Series | pd.DataFrame,
     portfolio_symbol: str | None,
     inflation_symbol: str | None,
@@ -24,7 +154,8 @@ def get_wealth_indexes_fv_with_cashflow(  # noqa: C901
     Values of the wealth index correspond to the beginning of the month.
     """
     dcf_object = cashflow_parameters.parent.dcf
-    dcf_object.cashflow_parameters = cashflow_parameters
+    if dcf_object.cashflow_parameters is not cashflow_parameters:
+        dcf_object.cashflow_parameters = cashflow_parameters
     period_initial_amount = cashflow_parameters.initial_investment
     period_initial_amount_cached = period_initial_amount
     last_regular_cash_flow = 0
@@ -161,7 +292,7 @@ def get_wealth_indexes_fv_with_cashflow(  # noqa: C901
     return wealth_index
 
 
-def get_cash_flow_fv(  # noqa: C901
+def _get_cash_flow_fv_scalar(  # noqa: C901
     ror: pd.Series | pd.DataFrame,
     portfolio_symbol: str | None,
     cashflow_parameters: cf.CashFlow,
@@ -171,7 +302,8 @@ def get_cash_flow_fv(  # noqa: C901
     Calculate cash flow future values (FV) for a series of returns according to withdrawal/contributions strategies.
     """
     dcf_object = cashflow_parameters.parent.dcf
-    dcf_object.cashflow_parameters = cashflow_parameters
+    if dcf_object.cashflow_parameters is not cashflow_parameters:
+        dcf_object.cashflow_parameters = cashflow_parameters
     period_initial_amount = cashflow_parameters.initial_investment
     last_regular_cash_flow = 0
     cs_fv = pd.Series(dtype=float, name="cash_flow_fv")
@@ -521,6 +653,20 @@ def _simulate_paths_mc(  # noqa: C901
     return wealth, cash_flow
 
 
+def get_monte_carlo_cashflow_outputs(
+    ror: pd.DataFrame,
+    cashflow_parameters: cf.CashFlow,
+    discount_rate: float,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Wrap both owned engine outputs without running the recurrence twice."""
+    wealth, cash = _simulate_paths_mc(ror, cashflow_parameters, discount_rate)
+    data = np.vstack([np.full((1, ror.shape[1]), cashflow_parameters.initial_investment), wealth])
+    return (
+        pd.DataFrame(data, index=ror.index.insert(0, ror.index[0] - 1), columns=ror.columns, copy=False),
+        pd.DataFrame(cash, index=ror.index, columns=ror.columns, copy=False),
+    )
+
+
 def get_wealth_indexes_fv_with_cashflow_mc(
     ror: pd.DataFrame,
     cashflow_parameters: cf.CashFlow,
@@ -542,7 +688,7 @@ def get_wealth_indexes_fv_with_cashflow_mc(
     initial_investment = cashflow_parameters.initial_investment
     out_index = ror.index.insert(0, ror.index[0] - 1)
     data = np.vstack([np.full((1, n_cols), float(initial_investment)), wealth])
-    return pd.DataFrame(data, index=out_index, columns=ror.columns)
+    return pd.DataFrame(data, index=out_index, columns=ror.columns, copy=False)
 
 
 def get_cash_flow_fv_mc(
@@ -559,7 +705,7 @@ def get_cash_flow_fv_mc(
     reference is pinned by tests.
     """
     _, cash_flow = _simulate_paths_mc(ror, cashflow_parameters, discount_rate)
-    return pd.DataFrame(cash_flow, index=ror.index, columns=ror.columns)
+    return pd.DataFrame(cash_flow, index=ror.index, columns=ror.columns, copy=False)
 
 
 def remove_negative_values(input_s: pd.Series) -> pd.Series:
@@ -588,7 +734,7 @@ def zero_wealth_after_first_void(wealth: pd.DataFrame) -> pd.DataFrame:
     first_void = voided.argmax(axis=0)
     rows = np.arange(values.shape[0])[:, None]
     masked = np.where(has_void & (rows >= first_void), 0.0, values)
-    return pd.DataFrame(masked, index=wealth.index, columns=wealth.columns)
+    return pd.DataFrame(masked, index=wealth.index, columns=wealth.columns, copy=False)
 
 
 def discount_monthly_cash_flow(
@@ -645,6 +791,28 @@ def _irr_brentq_column(cashflow_column: np.ndarray) -> float:
         return float("nan")
 
 
+def _conventional_irr(cashflows: np.ndarray, periods_per_year: int) -> np.ndarray | None:
+    """Use the unique two-flow root only in an ordinary finite numerical range."""
+    if (
+        cashflows.shape[0] < 2
+        or cashflows.shape[1] == 0
+        or not np.isfinite(cashflows).all()
+        or not np.all(cashflows[0] < 0)
+        or not np.all(cashflows[-1] > 0)
+        or np.any(cashflows[1:-1])
+    ):
+        return None
+    endpoints = np.abs(cashflows[[0, -1]])
+    if np.any(endpoints < 1e-100) or np.any(endpoints > 1e100):
+        return None
+    ratio = cashflows[-1] / -cashflows[0]
+    base = ratio ** (1 / (len(cashflows) - 1))
+    if np.any(base <= 0.25) or np.any(base >= 4):
+        return None
+    rate = base - 1
+    return (1 + rate) ** periods_per_year - 1
+
+
 def irr_of_cashflow_matrix(
     cashflows: np.ndarray,
     periods_per_year: int = 12,
@@ -686,6 +854,16 @@ def irr_of_cashflow_matrix(
     if cf.ndim == 1:
         cf = cf[:, None]
     n_periods, n_series = cf.shape
+    if (
+        guess is None
+        and max_iter > 0
+        and xtol > 0
+        and isinstance(periods_per_year, (int, np.integer))
+        and periods_per_year == 12
+    ):
+        conventional = _conventional_irr(cf, periods_per_year)
+        if conventional is not None:
+            return conventional
     t = np.arange(n_periods, dtype=float)[:, None]  # (n_periods, 1)
 
     if guess is None:

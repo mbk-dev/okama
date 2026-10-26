@@ -1,0 +1,14 @@
+# Implement audited PortfolioDCF and MonteCarlo acceleration
+
+User approved implementing all findings from `docs/performance/dcf-mc-opportunities.md`, with retained commit/merge-dev authorization. Existing isolated task tree is clean at bcd8774. Use uv Python>=3.11 and current dependencies only.
+
+1. Use explicit copy=False only for newly allocated owned simulation arrays. Preserve returned-cache mutation isolation and seeded draw values.
+2. Route supported complete finite float64 monthly historical data through the existing array engine, with the original scalar helpers retained for unsupported dtypes, indices, missing data or strategy subclasses. Preserve metadata, inflation, partial periods, time-series flows and public setter invalidation. Avoid reassigning an identical strategy from helpers; batch wealth_index_fv_with_assets.
+3. Share MC wealth/cashflow engine output with safe invalidation. A single per-MonteCarlo deep snapshot of the latest float64 return matrix detects public in-place edits, axis/shape changes and provides a revision for both paired DCF results and CAGR. Unsupported arrays retain uncached/scalar handling. Settings/strategy invalidation still clears the appropriate outputs. One snapshot and paired caches add steady memory; measure this rather than implying constant or reduced memory everywhere.
+4. Reuse one local fit in backtesting_error; vectorize percentile queries and bootstrap CVaR without changing seed11/tail semantics. Cache derived CAGR by validated draw revision, returning copies to prevent mutation poisoning. Avoid identity-only or global fit caches.
+5. Vectorize survival date lengths with the existing365-day/one-decimal convention and fallback for unusual dates. Preserve brentq withdrawal search, budgets, residual caching and restored strategies. Keep caches after plotting without strategy changes, while backtest=True restores/invalidate temporary strategies.
+6. Add a guarded conventional initial-outflow/terminal-inflow IRR shortcut only for default guess, finite safe values and no intermediate flows. Preserve original Newton/brentq behavior for general, extreme and explicit-guess cases.
+
+All production changes follow RED/verify/GREEN/refactor. Frozen original references are checked in for tests and require no Git history. Test supported strategies/frequencies, partial years, extra flows/inflation, labels, missing/dtype/subclass fallbacks, ruin, mutable caches, seeds and solver/plot behavior. Actual complete-method A/B benchmarks use original baseline modules, not prototype patches. Both Ruff commands, full pytest, independent review and exact-SHA dev CI/merge are required. Original audit timings remain historical; document reproduction at its audited commit.
+
+No GPU/JIT, persistent global caches, changed RNG streams, solver objectives, tolerances, discount conventions or dependency changes. Array temporal recurrences remain chronological.
