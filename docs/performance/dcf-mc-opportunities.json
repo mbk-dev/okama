@@ -1,0 +1,1662 @@
+{
+  "revision": "789efbb5d661610670598b58250f003fedbd171f",
+  "python": "3.14.8",
+  "numpy": "2.5.4",
+  "pandas": "3.1.0",
+  "protocol": "Narrow offline audit prototypes only; 1 warm pair then5 alternating pairs, strict1e-12 numerical/metadata checks",
+  "source_sha256": {
+    "okama/portfolios/dcf.py": "731573252d4ca97a1d466c3a77b23c167ac48eacd6dffb2f7744dd63688d5630",
+    "okama/portfolios/dcf_calculations.py": "92465ba26f376bdd580848830b16328301e3d670a0c80669c895be9202154fee",
+    "okama/portfolios/mc.py": "eb95bcf778a35246087e4897b4102bd84d6a216be907a32c49aee7b185c09923",
+    "okama/common/helpers/helpers.py": "b824bf2aceee27ed3f232b3fd3a1192e8c2c15f0ecb0e8c1847d267e072e9f60"
+  },
+  "script_sha256": "5dd91f4fb722cacf46428ad4a71e30df868b45b62a255a2422b37a7dbfdd750d",
+  "cases": {
+    "fresh_array_mc_pair_360x128": {
+      "baseline_seconds": [
+        0.003871409993735142,
+        0.002605187997687608,
+        0.002953846997115761,
+        0.0027502029988681898,
+        0.002830472993082367
+      ],
+      "prototype_seconds": [
+        0.0027828949969261885,
+        0.002684287988813594,
+        0.0029730340029345825,
+        0.0026781360065797344,
+        0.002573459001723677
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.002830472993082367,
+      "prototype_median_seconds": 0.002684287988813594,
+      "ratio": 1.0544595083977497
+    },
+    "fresh_array_draw_norm_360x128": {
+      "baseline_seconds": [
+        0.00103839099756442,
+        0.0006496059941127896,
+        0.0006117849989095703,
+        0.0005885309947188944,
+        0.0006015160033712164
+      ],
+      "prototype_seconds": [
+        0.0007883090001996607,
+        0.0006353890057653189,
+        0.0005775409954367206,
+        0.0005714290018659085,
+        0.0005268449895083904
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.0006117849989095703,
+      "prototype_median_seconds": 0.0005775409954367206,
+      "ratio": 1.0592927666493275
+    },
+    "fresh_array_survival_warm_360x128": {
+      "baseline_seconds": [
+        0.0010852790001081303,
+        0.0009579690085956827,
+        0.0009670460131019354,
+        0.0009555139986332506,
+        0.0009507549984846264
+      ],
+      "prototype_seconds": [
+        0.0010052980069303885,
+        0.0010259770060656592,
+        0.0009293049952248111,
+        0.000911039998754859,
+        0.001015617002849467
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.0009579690085956827,
+      "prototype_median_seconds": 0.0010052980069303885,
+      "ratio": 0.9529204295557874
+    },
+    "fresh_array_mc_pair_360x2048": {
+      "baseline_seconds": [
+        0.03874189799535088,
+        0.040366795990848914,
+        0.04255048900085967,
+        0.03873910300899297,
+        0.03880497699719854
+      ],
+      "prototype_seconds": [
+        0.020127823008806445,
+        0.0199006240000017,
+        0.01872019498841837,
+        0.019760809998842888,
+        0.018998740997631103
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.03880497699719854,
+      "prototype_median_seconds": 0.019760809998842888,
+      "ratio": 1.963734128280713
+    },
+    "fresh_array_mc_pair_cold_360x2048": {
+      "baseline_seconds": [
+        0.04683498801023234,
+        0.05645380899659358,
+        0.057580275999498554,
+        0.05473621698911302,
+        0.055924268992384896
+      ],
+      "prototype_seconds": [
+        0.023446328996215016,
+        0.026908184998319484,
+        0.02506952300609555,
+        0.025323292997200042,
+        0.02493096199759748
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.055924268992384896,
+      "prototype_median_seconds": 0.02506952300609555,
+      "ratio": 2.2307671741016826
+    },
+    "fresh_array_draw_norm_360x2048": {
+      "baseline_seconds": [
+        0.012715367993223481,
+        0.012682806001976132,
+        0.011938551004277542,
+        0.012196789000881836,
+        0.011862507002661005
+      ],
+      "prototype_seconds": [
+        0.007060902004013769,
+        0.007041434990242124,
+        0.006767697996110655,
+        0.006928500995854847,
+        0.006882033994770609
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.012196789000881836,
+      "prototype_median_seconds": 0.006928500995854847,
+      "ratio": 1.7603791943132976
+    },
+    "fresh_array_survival_warm_360x2048": {
+      "baseline_seconds": [
+        0.022573971000383608,
+        0.021938851990853436,
+        0.02193529599753674,
+        0.02263988599588629,
+        0.021978137010592036
+      ],
+      "prototype_seconds": [
+        0.015356543997768313,
+        0.014741513004992157,
+        0.015022082996438257,
+        0.015595355987898074,
+        0.015393253008369356
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.021978137010592036,
+      "prototype_median_seconds": 0.015356543997768313,
+      "ratio": 1.4311903129887822
+    },
+    "fresh_array_mc_pair_360x8192": {
+      "baseline_seconds": [
+        0.6204822389991023,
+        0.6446276280039456,
+        0.622003220996703,
+        0.6134101060015382,
+        0.6248847520037089
+      ],
+      "prototype_seconds": [
+        0.07733465400815476,
+        0.07749276199319866,
+        0.07696403400041163,
+        0.07660857299924828,
+        0.07699081499595195
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.622003220996703,
+      "prototype_median_seconds": 0.07699081499595195,
+      "ratio": 8.078927610123454,
+      "baseline_peak_bytes": 144864107,
+      "prototype_peak_bytes": 127316979
+    },
+    "fresh_array_mc_pair_cold_360x8192": {
+      "baseline_seconds": [
+        0.7855946039926494,
+        0.7905157550121658,
+        0.7712688559986418,
+        0.7716829270066228,
+        0.7707316520099994
+      ],
+      "prototype_seconds": [
+        0.0968061980092898,
+        0.09945793400402181,
+        0.09489750400825869,
+        0.09381718400982209,
+        0.09801796499232296
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.7716829270066228,
+      "prototype_median_seconds": 0.0968061980092898,
+      "ratio": 7.971420661852353
+    },
+    "fresh_array_draw_norm_360x8192": {
+      "baseline_seconds": [
+        0.17129725200356916,
+        0.16708192399528343,
+        0.1675895020016469,
+        0.1666157339932397,
+        0.1697428379993653
+      ],
+      "prototype_seconds": [
+        0.025353037999593653,
+        0.025534971995512024,
+        0.02541278199350927,
+        0.02535590399929788,
+        0.025344202003907412
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.1675895020016469,
+      "prototype_median_seconds": 0.02535590399929788,
+      "ratio": 6.609486374703405
+    },
+    "fresh_array_survival_warm_360x8192": {
+      "baseline_seconds": [
+        0.21423550399777014,
+        0.2164713149977615,
+        0.21617286100808997,
+        0.22194359700370114,
+        0.23707664900575764
+      ],
+      "prototype_seconds": [
+        0.06345547898672521,
+        0.06322867100243457,
+        0.06326674199954141,
+        0.06334167400200386,
+        0.06958279800892342
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.2164713149977615,
+      "prototype_median_seconds": 0.06334167400200386,
+      "ratio": 3.417518062293606
+    },
+    "fresh_arrays_and_dates_solver_360x2048": {
+      "baseline_seconds": [
+        0.12316762001137249,
+        0.12484561900782865,
+        0.12059989100089297,
+        0.1196486359986011,
+        0.19873186100448947
+      ],
+      "prototype_seconds": [
+        0.04982054499851074,
+        0.049010987000656314,
+        0.05126319899864029,
+        0.04988002798927482,
+        0.04967745501198806
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.12316762001137249,
+      "prototype_median_seconds": 0.04982054499851074,
+      "ratio": 2.4722254647164994
+    },
+    "historical_with_assets_600x3": {
+      "baseline_seconds": [
+        0.28483963999315165,
+        0.2767025460052537,
+        0.28677883101045154,
+        0.2741297280008439,
+        0.27597720599442255
+      ],
+      "prototype_seconds": [
+        0.0015672490117140114,
+        0.0014640239969594404,
+        0.0016020639886846766,
+        0.0014258620067266747,
+        0.0017036069912137464
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.2767025460052537,
+      "prototype_median_seconds": 0.0015672490117140114,
+      "ratio": 176.55301993308632
+    },
+    "historical_with_assets_600x16": {
+      "baseline_seconds": [
+        1.1965827420062851,
+        1.1954415180080105,
+        1.2246421099989675,
+        1.1664694560022326,
+        1.1851130569993984
+      ],
+      "prototype_seconds": [
+        0.0016601749957771972,
+        0.0015190080011961982,
+        0.0016047399985836819,
+        0.0015074659895617515,
+        0.0020731039985548705
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 1.1954415180080105,
+      "prototype_median_seconds": 0.0016047399985836819,
+      "ratio": 744.9440526584295
+    },
+    "historical_index_month_600": {
+      "baseline_seconds": [
+        0.07583788799820468,
+        0.07665447999897879,
+        0.06900863400369417,
+        0.07273615201120265,
+        0.0709540069947252
+      ],
+      "prototype_seconds": [
+        0.001747158996295184,
+        0.0015561179898213595,
+        0.0014919359964551404,
+        0.0014700350002385676,
+        0.0015000619896454737
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.07273615201120265,
+      "prototype_median_seconds": 0.0015000619896454737,
+      "ratio": 48.48876413993611
+    },
+    "historical_index_year_600": {
+      "baseline_seconds": [
+        0.009727336000651121,
+        0.00998253800207749,
+        0.00921550000202842,
+        0.010288995996234007,
+        0.010580898000625893
+      ],
+      "prototype_seconds": [
+        0.0013893630093662068,
+        0.0012094539997633547,
+        0.0013890429981984198,
+        0.001254788992810063,
+        0.001805549007258378
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.00998253800207749,
+      "prototype_median_seconds": 0.0013890429981984198,
+      "ratio": 7.1866299423594375
+    },
+    "historical_percentage_month_600": {
+      "baseline_seconds": [
+        0.0708440089947544,
+        0.0700218970014248,
+        0.07070766198739875,
+        0.07105624899850227,
+        0.06696680800814647
+      ],
+      "prototype_seconds": [
+        0.001982763991691172,
+        0.0017753320134943351,
+        0.002732398992520757,
+        0.0026122420094907284,
+        0.0018434410012559965
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.07070766198739875,
+      "prototype_median_seconds": 0.001982763991691172,
+      "ratio": 35.6611590102005
+    },
+    "historical_percentage_quarter_600": {
+      "baseline_seconds": [
+        0.03324949700618163,
+        0.03262628099764697,
+        0.032589751994237304,
+        0.032885520995478146,
+        0.03298339599859901
+      ],
+      "prototype_seconds": [
+        0.003780016995733604,
+        0.0036470560007728636,
+        0.003986055991845205,
+        0.0037231590104056522,
+        0.003734780999366194
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.032885520995478146,
+      "prototype_median_seconds": 0.003734780999366194,
+      "ratio": 8.80520732033791
+    },
+    "historical_vds_year_600": {
+      "baseline_seconds": [
+        0.009790115000214428,
+        0.009842633997322991,
+        0.009795695004868321,
+        0.01006511399464216,
+        0.009922844998072833
+      ],
+      "prototype_seconds": [
+        0.0018344639975111932,
+        0.0015514989936491475,
+        0.0016816450079204515,
+        0.001525591011159122,
+        0.0017257979925489053
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.009842633997322991,
+      "prototype_median_seconds": 0.0016816450079204515,
+      "ratio": 5.8529796425314204
+    },
+    "historical_cwd_month_600": {
+      "baseline_seconds": [
+        0.0757333200017456,
+        0.0761863160005305,
+        0.07661286099755671,
+        0.07420166900556069,
+        0.07751922198804095
+      ],
+      "prototype_seconds": [
+        0.002958686003694311,
+        0.002826076000928879,
+        0.0029878119967179373,
+        0.002925963999587111,
+        0.0029165869927965105
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.0761863160005305,
+      "prototype_median_seconds": 0.002925963999587111,
+      "ratio": 26.0380223445269
+    },
+    "historical_cache_chain_month_600": {
+      "baseline_seconds": [
+        0.3562509090115782,
+        0.3802766020089621,
+        0.38201610700343736,
+        0.3530755340034375,
+        0.3453566910029622
+      ],
+      "prototype_seconds": [
+        0.1374120239925105,
+        0.13948920700931922,
+        0.14558273099828511,
+        0.13909120499738492,
+        0.14932017801038455
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.3562509090115782,
+      "prototype_median_seconds": 0.13948920700931922,
+      "ratio": 2.553967555265958
+    },
+    "historical_cache_chain_year_600": {
+      "baseline_seconds": [
+        0.05242977099260315,
+        0.05009809999319259,
+        0.05011661400203593,
+        0.04998692900699098,
+        0.05072335900331382
+      ],
+      "prototype_seconds": [
+        0.020398413005750626,
+        0.020707796997157857,
+        0.020700242996099405,
+        0.021272763988235965,
+        0.020706976007204503
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.05011661400203593,
+      "prototype_median_seconds": 0.020706976007204503,
+      "ratio": 2.4202768180442686
+    },
+    "joint_mc_month_360x128": {
+      "baseline_seconds": [
+        0.0027296440093778074,
+        0.0023423029924742877,
+        0.002353994990698993,
+        0.0025819949951255694,
+        0.002469532992108725
+      ],
+      "prototype_seconds": [
+        0.001992221994441934,
+        0.0016199390083784238,
+        0.0016720269923098385,
+        0.0015970550011843443,
+        0.001723384004435502
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.002469532992108725,
+      "prototype_median_seconds": 0.0016720269923098385,
+      "ratio": 1.4769695725409095
+    },
+    "joint_mc_year_360x128": {
+      "baseline_seconds": [
+        0.003811716989730485,
+        0.0041566379950381815,
+        0.004172907996689901,
+        0.003519004996633157,
+        0.0033953910024138168
+      ],
+      "prototype_seconds": [
+        0.00263552600517869,
+        0.0023793220025254413,
+        0.002047625996056013,
+        0.002292438002768904,
+        0.0037967590033076704
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.003811716989730485,
+      "prototype_median_seconds": 0.0023793220025254413,
+      "ratio": 1.6020181319235824
+    },
+    "survival_warm_360x128": {
+      "baseline_seconds": [
+        0.0009268899884773418,
+        0.0009308369917562231,
+        0.0008847010030876845,
+        0.0008485720027238131,
+        0.0008510369953000918
+      ],
+      "prototype_seconds": [
+        0.0005030400061514229,
+        0.0004771410021930933,
+        0.0005147920019226149,
+        0.00046979699982330203,
+        0.00048807100392878056
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.0008847010030876845,
+      "prototype_median_seconds": 0.00048807100392878056,
+      "ratio": 1.8126481515316166
+    },
+    "survival_cold_360x128": {
+      "baseline_seconds": [
+        0.0032137380039785057,
+        0.0022156829945743084,
+        0.0022388679935829714,
+        0.0031144300010055304,
+        0.002914793003583327
+      ],
+      "prototype_seconds": [
+        0.0021167060040170327,
+        0.001934141997480765,
+        0.0018471679941285402,
+        0.0020631850056815892,
+        0.002526109994505532
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.002914793003583327,
+      "prototype_median_seconds": 0.0020631850056815892,
+      "ratio": 1.4127637587305955
+    },
+    "joint_mc_month_360x2048": {
+      "baseline_seconds": [
+        0.040184201003285125,
+        0.03458009001042228,
+        0.03756546699150931,
+        0.035751180999795906,
+        0.034512262005591765
+      ],
+      "prototype_seconds": [
+        0.033771613001590595,
+        0.03347671699884813,
+        0.033837137001683004,
+        0.03351259499322623,
+        0.029488888001651503
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.035751180999795906,
+      "prototype_median_seconds": 0.03351259499322623,
+      "ratio": 1.0667983487110488,
+      "baseline_peak_bytes": 36225868,
+      "prototype_peak_bytes": 36225835
+    },
+    "joint_mc_year_360x2048": {
+      "baseline_seconds": [
+        0.03964884000015445,
+        0.038159068004461005,
+        0.03845455600821879,
+        0.03735202299139928,
+        0.037504131003515795
+      ],
+      "prototype_seconds": [
+        0.03228852299798746,
+        0.03171304600255098,
+        0.03205899000749923,
+        0.03300373398815282,
+        0.03216152300592512
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.038159068004461005,
+      "prototype_median_seconds": 0.03216152300592512,
+      "ratio": 1.1864819958131634
+    },
+    "survival_warm_360x2048": {
+      "baseline_seconds": [
+        0.018821085992385633,
+        0.01913773400883656,
+        0.018955068997456692,
+        0.019846601993776858,
+        0.01930221400107257
+      ],
+      "prototype_seconds": [
+        0.01269821499590762,
+        0.01205813599517569,
+        0.012399280996760353,
+        0.012370365991955623,
+        0.012538833994767629
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.01913773400883656,
+      "prototype_median_seconds": 0.012399280996760353,
+      "ratio": 1.5434551417809474
+    },
+    "survival_cold_360x2048": {
+      "baseline_seconds": [
+        0.030391481996048242,
+        0.030339542994624935,
+        0.02962304100219626,
+        0.031737333003547974,
+        0.031172976989182644
+      ],
+      "prototype_seconds": [
+        0.02373915200587362,
+        0.02341024999623187,
+        0.023593997000716627,
+        0.02458414700231515,
+        0.023260176996700466
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.030391481996048242,
+      "prototype_median_seconds": 0.023593997000716627,
+      "ratio": 1.2881023081898821
+    },
+    "joint_mc_month_360x8192": {
+      "baseline_seconds": [
+        0.660236668001744,
+        0.6337400609918404,
+        0.6316047190048266,
+        0.6361277289979625,
+        0.6370061269990401
+      ],
+      "prototype_seconds": [
+        0.5959333490027348,
+        0.5906425199937075,
+        0.6064237359969411,
+        0.5964126640028553,
+        0.5940120229934109
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.6361277289979625,
+      "prototype_median_seconds": 0.5959333490027348,
+      "ratio": 1.0674477776121962
+    },
+    "joint_mc_year_360x8192": {
+      "baseline_seconds": [
+        0.6799117960035801,
+        0.7130894889996853,
+        0.6943601259990828,
+        0.6730637769942405,
+        0.6850268639973365
+      ],
+      "prototype_seconds": [
+        0.6350303470098879,
+        0.619269440008793,
+        0.6372043720039073,
+        0.6157207889918936,
+        0.6392617870005779
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.6850268639973365,
+      "prototype_median_seconds": 0.6350303470098879,
+      "ratio": 1.0787309098263773
+    },
+    "survival_warm_360x8192": {
+      "baseline_seconds": [
+        0.1598202329914784,
+        0.15990994199819397,
+        0.16095667899935506,
+        0.16038952801318374,
+        0.1595105180022074
+      ],
+      "prototype_seconds": [
+        0.13638392300345004,
+        0.13311250699916855,
+        0.13159517200256232,
+        0.13364375999663025,
+        0.13431363498966675
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.15990994199819397,
+      "prototype_median_seconds": 0.13364375999663025,
+      "ratio": 1.196538783421134
+    },
+    "survival_cold_360x8192": {
+      "baseline_seconds": [
+        0.3905277570011094,
+        0.3789964159950614,
+        0.38105397899926174,
+        0.38355270799365826,
+        0.4119510049931705
+      ],
+      "prototype_seconds": [
+        0.3548411980009405,
+        0.353203916005441,
+        0.3542030530079501,
+        0.3547954810055671,
+        0.35276193199388217
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.38355270799365826,
+      "prototype_median_seconds": 0.3542030530079501,
+      "ratio": 1.0828611011013771
+    },
+    "sparse_irr_kernel_361x2048": {
+      "baseline_seconds": [
+        0.008115603006444871,
+        0.008083471999270841,
+        0.00835138799448032,
+        0.007929973013233393,
+        0.008445615007076412
+      ],
+      "prototype_seconds": [
+        0.0004780629969900474,
+        0.00027386700094211847,
+        0.00047717099369037896,
+        0.0002760210045380518,
+        0.0004912579897791147
+      ],
+      "max_absolute_difference": 2.886579864025407e-15,
+      "baseline_median_seconds": 0.008115603006444871,
+      "prototype_median_seconds": 0.00047717099369037896,
+      "ratio": 17.007745889329616,
+      "baseline_peak_bytes": 17848720,
+      "prototype_peak_bytes": 739521
+    },
+    "no_cashflow_irr_public_360x2048": {
+      "baseline_seconds": [
+        0.03461942498688586,
+        0.03427502399426885,
+        0.034862863991293125,
+        0.03390777100867126,
+        0.03453178900235798
+      ],
+      "prototype_seconds": [
+        0.027551478997338563,
+        0.02728406499954872,
+        0.027479743002913892,
+        0.026942970987875015,
+        0.02733230500598438
+      ],
+      "max_absolute_difference": 2.886579864025407e-15,
+      "baseline_median_seconds": 0.03453178900235798,
+      "prototype_median_seconds": 0.02733230500598438,
+      "ratio": 1.2634056657423252
+    },
+    "sparse_irr_kernel_361x8192": {
+      "baseline_seconds": [
+        0.04390554700512439,
+        0.04398311300610658,
+        0.043619086005492136,
+        0.04322755700559355,
+        0.04317321500275284
+      ],
+      "prototype_seconds": [
+        0.0013998630020068958,
+        0.0009986759978346527,
+        0.001508909001131542,
+        0.0010235630034003407,
+        0.0012284599943086505
+      ],
+      "max_absolute_difference": 2.886579864025407e-15,
+      "baseline_median_seconds": 0.043619086005492136,
+      "prototype_median_seconds": 0.0012284599943086505,
+      "ratio": 35.507127792175254
+    },
+    "no_cashflow_irr_public_360x8192": {
+      "baseline_seconds": [
+        0.552549686995917,
+        0.5387217190000229,
+        0.5334409079951001,
+        0.5675180690013804,
+        0.5421622259891592
+      ],
+      "prototype_seconds": [
+        0.4997302200063132,
+        0.4960318060038844,
+        0.5014057139924262,
+        0.5018038150010398,
+        0.48959396200370975
+      ],
+      "max_absolute_difference": 2.886579864025407e-15,
+      "baseline_median_seconds": 0.5421622259891592,
+      "prototype_median_seconds": 0.4997302200063132,
+      "ratio": 1.084909825910288
+    },
+    "withdrawal_solver_360x2048": {
+      "baseline_seconds": [
+        0.12307892199896742,
+        0.12194107499090023,
+        0.12196819600649178,
+        0.12058086700562853,
+        0.12099632999161258
+      ],
+      "prototype_seconds": [
+        0.0969372950057732,
+        0.09561920700070914,
+        0.0942339519970119,
+        0.09364303600159474,
+        0.09452278599201236
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.12194107499090023,
+      "prototype_median_seconds": 0.09452278599201236,
+      "ratio": 1.290070682017401
+    },
+    "bootstrap_cvar_2000x600": {
+      "baseline_seconds": [
+        0.06491157801065128,
+        0.06262381898704916,
+        0.06466180700226687,
+        0.06440028299402911,
+        0.06917460699332878
+      ],
+      "prototype_seconds": [
+        0.013389059997280128,
+        0.013033889001235366,
+        0.013330509988008998,
+        0.01317874199594371,
+        0.01588820799952373
+      ],
+      "max_absolute_difference": 2.7755575615628914e-17,
+      "baseline_median_seconds": 0.06466180700226687,
+      "prototype_median_seconds": 0.013330509988008998,
+      "ratio": 4.850662657350032
+    },
+    "plot_qq_full_600_history": {
+      "baseline_seconds": [
+        0.1077770919946488,
+        0.10196570900734514,
+        0.09713069100689609,
+        0.10388404100376647,
+        0.10255917000176851
+      ],
+      "prototype_seconds": [
+        0.06811983599618543,
+        0.05978291400242597,
+        0.05775391300267074,
+        0.05760071398981381,
+        0.062724237999646
+      ],
+      "max_absolute_difference": 1.3877787807814457e-17,
+      "baseline_median_seconds": 0.10255917000176851,
+      "prototype_median_seconds": 0.05978291400242597,
+      "ratio": 1.71552644619509
+    },
+    "cagr_queries_360x2048": {
+      "baseline_seconds": [
+        0.008594465994974598,
+        0.008612811987404712,
+        0.00880874200083781,
+        0.009006604988826439,
+        0.00797712198982481
+      ],
+      "prototype_seconds": [
+        0.00230977100727614,
+        0.0021611200063489377,
+        0.0023944309941725805,
+        0.002362409999477677,
+        0.002235922002000734
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.008612811987404712,
+      "prototype_median_seconds": 0.00230977100727614,
+      "ratio": 3.728859683610629
+    },
+    "cagr_queries_360x8192": {
+      "baseline_seconds": [
+        0.03709121099382173,
+        0.037023602999397554,
+        0.03704643700621091,
+        0.037257044998114,
+        0.037666347008780576
+      ],
+      "prototype_seconds": [
+        0.009648767998442054,
+        0.009688202000688761,
+        0.009472524994635023,
+        0.00959967500239145,
+        0.009745650007971562
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.03709121099382173,
+      "prototype_median_seconds": 0.009648767998442054,
+      "ratio": 3.844139583396626
+    },
+    "student_backtesting_600_history": {
+      "baseline_seconds": [
+        0.0651475839986233,
+        0.06177159000071697,
+        0.06186192999302875,
+        0.07557466000434943,
+        0.0640957480063662
+      ],
+      "prototype_seconds": [
+        0.03152923900051974,
+        0.03119678200164344,
+        0.03403882800193969,
+        0.03224632301134989,
+        0.03261472900339868
+      ],
+      "max_absolute_difference": 0.0,
+      "baseline_median_seconds": 0.0640957480063662,
+      "prototype_median_seconds": 0.03224632301134989,
+      "ratio": 1.9876916814300383
+    }
+  },
+  "profiles": {
+    "fresh_array_mc_pair_360x8192": [
+      {
+        "file": "analytics/benchmark_dcf_mc_opportunities.py",
+        "line": 361,
+        "function": "copy_pair",
+        "calls": 1,
+        "own_seconds": 6.883000000000001e-06,
+        "cumulative_seconds": 0.61976295
+      },
+      {
+        "file": "analytics/benchmark_dcf_mc_opportunities.py",
+        "line": 154,
+        "function": "mc_pair",
+        "calls": 1,
+        "own_seconds": 1.6782e-05,
+        "cumulative_seconds": 0.619755346
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/frame.py",
+        "line": 466,
+        "function": "__init__",
+        "calls": 7,
+        "own_seconds": 0.000100517,
+        "cumulative_seconds": 0.5461280510000001
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/internals/construction.py",
+        "line": 196,
+        "function": "ndarray_to_mgr",
+        "calls": 4,
+        "own_seconds": 0.00015763700000000002,
+        "cumulative_seconds": 0.545560302
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.array>",
+        "calls": 6,
+        "own_seconds": 0.54512476,
+        "cumulative_seconds": 0.54512476
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 560,
+        "function": "monte_carlo_wealth",
+        "calls": 2,
+        "own_seconds": 5.0428000000000006e-05,
+        "cumulative_seconds": 0.47188243100000005
+      },
+      {
+        "file": "okama/portfolios/dcf_calculations.py",
+        "line": 579,
+        "function": "zero_wealth_after_first_void",
+        "calls": 2,
+        "own_seconds": 0.028839140000000003,
+        "cumulative_seconds": 0.29847896100000004
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 625,
+        "function": "monte_carlo_cash_flow",
+        "calls": 1,
+        "own_seconds": 3.1448e-05,
+        "cumulative_seconds": 0.29741084500000003
+      },
+      {
+        "file": "okama/portfolios/dcf_calculations.py",
+        "line": 524,
+        "function": "get_wealth_indexes_fv_with_cashflow_mc",
+        "calls": 1,
+        "own_seconds": 0.00010872400000000001,
+        "cumulative_seconds": 0.173317046
+      },
+      {
+        "file": "okama/portfolios/dcf_calculations.py",
+        "line": 548,
+        "function": "get_cash_flow_fv_mc",
+        "calls": 1,
+        "own_seconds": 2.1942e-05,
+        "cumulative_seconds": 0.141229572
+      },
+      {
+        "file": "okama/portfolios/dcf_calculations.py",
+        "line": 379,
+        "function": "_simulate_paths_mc",
+        "calls": 2,
+        "own_seconds": 0.029534511000000003,
+        "cumulative_seconds": 0.029856360000000002
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/numpy/_core/shape_base.py",
+        "line": 218,
+        "function": "vstack",
+        "calls": 1,
+        "own_seconds": 0.007223960000000001,
+        "cumulative_seconds": 0.007233197
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/internals/managers.py",
+        "line": 410,
+        "function": "apply",
+        "calls": 9,
+        "own_seconds": 6.8871e-05,
+        "cumulative_seconds": 0.0031923760000000002
+      },
+      {
+        "file": "analytics/benchmark_dcf_mc_opportunities.py",
+        "line": 133,
+        "function": "clear_mc",
+        "calls": 1,
+        "own_seconds": 0.001599961,
+        "cumulative_seconds": 0.001941205
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/frame.py",
+        "line": 4540,
+        "function": "__setitem__",
+        "calls": 1,
+        "own_seconds": 1.2172000000000001e-05,
+        "cumulative_seconds": 0.0018894670000000001
+      }
+    ],
+    "fresh_arrays_and_dates_solver_360x2048": [
+      {
+        "file": "analytics/benchmark_dcf_mc_opportunities.py",
+        "line": 379,
+        "function": "copy_solver",
+        "calls": 1,
+        "own_seconds": 7.666e-06,
+        "cumulative_seconds": 0.13076416300000002
+      },
+      {
+        "file": "analytics/benchmark_dcf_mc_opportunities.py",
+        "line": 275,
+        "function": "solver",
+        "calls": 1,
+        "own_seconds": 1.4136000000000002e-05,
+        "cumulative_seconds": 0.13075598700000002
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 870,
+        "function": "find_the_largest_withdrawals_size",
+        "calls": 1,
+        "own_seconds": 3.777e-05,
+        "cumulative_seconds": 0.13061630400000002
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 1018,
+        "function": "_evaluate",
+        "calls": 6,
+        "own_seconds": 7.2834e-05,
+        "cumulative_seconds": 0.129423023
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 1131,
+        "function": "_calculate_goal_metrics",
+        "calls": 4,
+        "own_seconds": 0.000149108,
+        "cumulative_seconds": 0.12564644
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 770,
+        "function": "monte_carlo_survival_period",
+        "calls": 4,
+        "own_seconds": 6.4082e-05,
+        "cumulative_seconds": 0.114316681
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 560,
+        "function": "monte_carlo_wealth",
+        "calls": 8,
+        "own_seconds": 0.00011541000000000001,
+        "cumulative_seconds": 0.06839764200000001
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/optimize/_zeros_py.py",
+        "line": 724,
+        "function": "brentq",
+        "calls": 1,
+        "own_seconds": 4.56e-06,
+        "cumulative_seconds": 0.064825085
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method scipy.optimize._zeros._brentq>",
+        "calls": 1,
+        "own_seconds": 7.512e-06,
+        "cumulative_seconds": 0.064818793
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/optimize/_zeros_py.py",
+        "line": 106,
+        "function": "f_raise",
+        "calls": 4,
+        "own_seconds": 1.2925e-05,
+        "cumulative_seconds": 0.064811281
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/frame.py",
+        "line": 466,
+        "function": "__init__",
+        "calls": 41,
+        "own_seconds": 0.000240057,
+        "cumulative_seconds": 0.041337909000000006
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/internals/construction.py",
+        "line": 196,
+        "function": "ndarray_to_mgr",
+        "calls": 12,
+        "own_seconds": 0.00027656800000000004,
+        "cumulative_seconds": 0.038798664000000004
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.array>",
+        "calls": 44,
+        "own_seconds": 0.038039217,
+        "cumulative_seconds": 0.038080756
+      },
+      {
+        "file": "okama/portfolios/dcf_calculations.py",
+        "line": 524,
+        "function": "get_wealth_indexes_fv_with_cashflow_mc",
+        "calls": 4,
+        "own_seconds": 0.000312307,
+        "cumulative_seconds": 0.032862758
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/series.py",
+        "line": 5451,
+        "function": "apply",
+        "calls": 4,
+        "own_seconds": 1.8913e-05,
+        "cumulative_seconds": 0.031260611
+      }
+    ],
+    "historical_cache_chain_month_600": [
+      {
+        "file": "analytics/benchmark_dcf_mc_opportunities.py",
+        "line": 211,
+        "function": "historical_chain",
+        "calls": 1,
+        "own_seconds": 2.3194000000000002e-05,
+        "cumulative_seconds": 0.9626137
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/series.py",
+        "line": 1215,
+        "function": "__setitem__",
+        "calls": 3002,
+        "own_seconds": 0.013365623,
+        "cumulative_seconds": 0.891169863
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/indexing.py",
+        "line": 977,
+        "function": "__setitem__",
+        "calls": 3008,
+        "own_seconds": 0.013388788,
+        "cumulative_seconds": 0.821949118
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 274,
+        "function": "cash_flow_ts",
+        "calls": 2,
+        "own_seconds": 8.0219e-05,
+        "cumulative_seconds": 0.740047918
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/indexing.py",
+        "line": 2581,
+        "function": "_setitem_with_indexer",
+        "calls": 3008,
+        "own_seconds": 0.005447787,
+        "cumulative_seconds": 0.725494132
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/indexing.py",
+        "line": 2987,
+        "function": "_setitem_with_indexer_missing",
+        "calls": 3003,
+        "own_seconds": 0.036629103,
+        "cumulative_seconds": 0.710017299
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 206,
+        "function": "wealth_index",
+        "calls": 4,
+        "own_seconds": 0.000152683,
+        "cumulative_seconds": 0.592142822
+      },
+      {
+        "file": "okama/portfolios/dcf_calculations.py",
+        "line": 14,
+        "function": "get_wealth_indexes_fv_with_cashflow",
+        "calls": 3,
+        "own_seconds": 0.007579268,
+        "cumulative_seconds": 0.586891126
+      },
+      {
+        "file": "okama/portfolios/dcf_calculations.py",
+        "line": 164,
+        "function": "get_cash_flow_fv",
+        "calls": 2,
+        "own_seconds": 0.004536201,
+        "cumulative_seconds": 0.368606879
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/indexes/base.py",
+        "line": 3831,
+        "function": "get_indexer",
+        "calls": 3008,
+        "own_seconds": 0.01249305,
+        "cumulative_seconds": 0.232670702
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/indexes/datetimelike.py",
+        "line": 666,
+        "function": "_maybe_cast_listlike_indexer",
+        "calls": 3000,
+        "own_seconds": 0.0034595660000000003,
+        "cumulative_seconds": 0.14433104000000002
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/dtypes/concat.py",
+        "line": 56,
+        "function": "concat_compat",
+        "calls": 2998,
+        "own_seconds": 0.012265004000000001,
+        "cumulative_seconds": 0.136959374
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.isinstance>",
+        "calls": 686874,
+        "own_seconds": 0.07322645,
+        "cumulative_seconds": 0.10676508500000001
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/series.py",
+        "line": 360,
+        "function": "__init__",
+        "calls": 3016,
+        "own_seconds": 0.017689752,
+        "cumulative_seconds": 0.103226045
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/indexes/period.py",
+        "line": 1024,
+        "function": "get_loc",
+        "calls": 11993,
+        "own_seconds": 0.018489901,
+        "cumulative_seconds": 0.101368225
+      }
+    ],
+    "historical_cache_chain_year_600": [
+      {
+        "file": "analytics/benchmark_dcf_mc_opportunities.py",
+        "line": 211,
+        "function": "historical_chain",
+        "calls": 1,
+        "own_seconds": 2.126e-05,
+        "cumulative_seconds": 0.140028655
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 274,
+        "function": "cash_flow_ts",
+        "calls": 2,
+        "own_seconds": 0.00023363300000000002,
+        "cumulative_seconds": 0.11147126600000001
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 206,
+        "function": "wealth_index",
+        "calls": 4,
+        "own_seconds": 0.000410194,
+        "cumulative_seconds": 0.083277444
+      },
+      {
+        "file": "okama/portfolios/dcf_calculations.py",
+        "line": 14,
+        "function": "get_wealth_indexes_fv_with_cashflow",
+        "calls": 3,
+        "own_seconds": 0.0022301440000000003,
+        "cumulative_seconds": 0.07849038600000001
+      },
+      {
+        "file": "okama/portfolios/dcf_calculations.py",
+        "line": 164,
+        "function": "get_cash_flow_fv",
+        "calls": 2,
+        "own_seconds": 0.001496846,
+        "cumulative_seconds": 0.055014592
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/ops/common.py",
+        "line": 122,
+        "function": "new_method",
+        "calls": 771,
+        "own_seconds": 0.000588765,
+        "cumulative_seconds": 0.043576056
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/indexing.py",
+        "line": 1327,
+        "function": "__getitem__",
+        "calls": 1127,
+        "own_seconds": 0.0017157740000000002,
+        "cumulative_seconds": 0.041926942
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/series.py",
+        "line": 7466,
+        "function": "_construct_result",
+        "calls": 771,
+        "own_seconds": 0.0015716520000000002,
+        "cumulative_seconds": 0.027224781
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/series.py",
+        "line": 7386,
+        "function": "_arith_method",
+        "calls": 510,
+        "own_seconds": 0.000342589,
+        "cumulative_seconds": 0.027026441000000002
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/base.py",
+        "line": 1701,
+        "function": "_arith_method",
+        "calls": 510,
+        "own_seconds": 0.00206806,
+        "cumulative_seconds": 0.026510822000000003
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/series.py",
+        "line": 360,
+        "function": "__init__",
+        "calls": 778,
+        "own_seconds": 0.0031881590000000003,
+        "cumulative_seconds": 0.022188258000000002
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/indexing.py",
+        "line": 1189,
+        "function": "_getitem_lowerdim",
+        "calls": 513,
+        "own_seconds": 0.00191751,
+        "cumulative_seconds": 0.019238263000000002
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/indexing.py",
+        "line": 2399,
+        "function": "_getitem_axis",
+        "calls": 869,
+        "own_seconds": 0.001316953,
+        "cumulative_seconds": 0.018790329
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/indexing.py",
+        "line": 977,
+        "function": "__setitem__",
+        "calls": 365,
+        "own_seconds": 0.0014190110000000002,
+        "cumulative_seconds": 0.017319809000000002
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.isinstance>",
+        "calls": 87343,
+        "own_seconds": 0.009658739000000001,
+        "cumulative_seconds": 0.016703475000000002
+      }
+    ],
+    "withdrawal_solver_360x2048": [
+      {
+        "file": "analytics/benchmark_dcf_mc_opportunities.py",
+        "line": 275,
+        "function": "solver",
+        "calls": 1,
+        "own_seconds": 1.4387000000000001e-05,
+        "cumulative_seconds": 0.13646286200000002
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 870,
+        "function": "find_the_largest_withdrawals_size",
+        "calls": 1,
+        "own_seconds": 3.9321000000000005e-05,
+        "cumulative_seconds": 0.136316966
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 1018,
+        "function": "_evaluate",
+        "calls": 6,
+        "own_seconds": 8.1928e-05,
+        "cumulative_seconds": 0.135099568
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 1131,
+        "function": "_calculate_goal_metrics",
+        "calls": 4,
+        "own_seconds": 0.000157741,
+        "cumulative_seconds": 0.13084269
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 770,
+        "function": "monte_carlo_survival_period",
+        "calls": 4,
+        "own_seconds": 6.0528e-05,
+        "cumulative_seconds": 0.11902918700000001
+      },
+      {
+        "file": "okama/portfolios/dcf.py",
+        "line": 560,
+        "function": "monte_carlo_wealth",
+        "calls": 8,
+        "own_seconds": 0.000136519,
+        "cumulative_seconds": 0.07136835700000001
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/optimize/_zeros_py.py",
+        "line": 724,
+        "function": "brentq",
+        "calls": 1,
+        "own_seconds": 5.73e-06,
+        "cumulative_seconds": 0.06644137600000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method scipy.optimize._zeros._brentq>",
+        "calls": 1,
+        "own_seconds": 9.038e-06,
+        "cumulative_seconds": 0.066433542
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/optimize/_zeros_py.py",
+        "line": 106,
+        "function": "f_raise",
+        "calls": 4,
+        "own_seconds": 1.593e-05,
+        "cumulative_seconds": 0.06642450400000001
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/frame.py",
+        "line": 466,
+        "function": "__init__",
+        "calls": 41,
+        "own_seconds": 0.00025776,
+        "cumulative_seconds": 0.042486016
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/internals/construction.py",
+        "line": 196,
+        "function": "ndarray_to_mgr",
+        "calls": 12,
+        "own_seconds": 0.000303641,
+        "cumulative_seconds": 0.039805994000000004
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.array>",
+        "calls": 44,
+        "own_seconds": 0.038999825,
+        "cumulative_seconds": 0.039040212000000005
+      },
+      {
+        "file": "okama/portfolios/dcf_calculations.py",
+        "line": 524,
+        "function": "get_wealth_indexes_fv_with_cashflow_mc",
+        "calls": 4,
+        "own_seconds": 0.00032243,
+        "cumulative_seconds": 0.033350618000000005
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/series.py",
+        "line": 5451,
+        "function": "apply",
+        "calls": 4,
+        "own_seconds": 2.0488e-05,
+        "cumulative_seconds": 0.032556148
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/pandas/core/apply.py",
+        "line": 1731,
+        "function": "apply",
+        "calls": 4,
+        "own_seconds": 1.5110000000000001e-05,
+        "cumulative_seconds": 0.032518208
+      }
+    ],
+    "student_backtesting_600_history": [
+      {
+        "file": "analytics/benchmark_dcf_mc_opportunities.py",
+        "line": 267,
+        "function": "student_backtest",
+        "calls": 1,
+        "own_seconds": 2.955e-06,
+        "cumulative_seconds": 0.10168895700000001
+      },
+      {
+        "file": "okama/portfolios/mc.py",
+        "line": 322,
+        "function": "backtesting_error",
+        "calls": 1,
+        "own_seconds": 2.3793e-05,
+        "cumulative_seconds": 0.10168600200000001
+      },
+      {
+        "file": "okama/portfolios/mc.py",
+        "line": 421,
+        "function": "get_parameters_for_distribution",
+        "calls": 2,
+        "own_seconds": 6.224e-06,
+        "cumulative_seconds": 0.099501297
+      },
+      {
+        "file": "okama/portfolios/mc.py",
+        "line": 65,
+        "function": "resolve_distribution_parameters",
+        "calls": 2,
+        "own_seconds": 5.28e-06,
+        "cumulative_seconds": 0.099494473
+      },
+      {
+        "file": "okama/portfolios/mc.py",
+        "line": 21,
+        "function": "_resolve_params_for_t",
+        "calls": 2,
+        "own_seconds": 1.4677e-05,
+        "cumulative_seconds": 0.099489193
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/stats/_distn_infrastructure.py",
+        "line": 2552,
+        "function": "fit",
+        "calls": 2,
+        "own_seconds": 6.2589e-05,
+        "cumulative_seconds": 0.09947451600000001
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/optimize/_optimize.py",
+        "line": 577,
+        "function": "fmin",
+        "calls": 2,
+        "own_seconds": 2.5899e-05,
+        "cumulative_seconds": 0.098150335
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/optimize/_optimize.py",
+        "line": 701,
+        "function": "_minimize_neldermead",
+        "calls": 2,
+        "own_seconds": 0.006560072,
+        "cumulative_seconds": 0.098124136
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/optimize/_optimize.py",
+        "line": 556,
+        "function": "function_wrapper",
+        "calls": 882,
+        "own_seconds": 0.0013992800000000001,
+        "cumulative_seconds": 0.086187726
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/stats/_distn_infrastructure.py",
+        "line": 2440,
+        "function": "_penalized_nnlf",
+        "calls": 884,
+        "own_seconds": 0.003008755,
+        "cumulative_seconds": 0.084054268
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/stats/_distn_infrastructure.py",
+        "line": 2404,
+        "function": "_nnlf_and_penalty",
+        "calls": 858,
+        "own_seconds": 0.003053435,
+        "cumulative_seconds": 0.07716413600000001
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/stats/_continuous_distns.py",
+        "line": 8065,
+        "function": "_logpdf",
+        "calls": 859,
+        "own_seconds": 0.00063758,
+        "cumulative_seconds": 0.063189094
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/_external/array_api_extra/_lib/_funcs.py",
+        "line": 67,
+        "function": "apply_where",
+        "calls": 860,
+        "own_seconds": 0.0037086590000000004,
+        "cumulative_seconds": 0.062597891
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/_external/array_api_extra/_lib/_funcs.py",
+        "line": 165,
+        "function": "_apply_where",
+        "calls": 860,
+        "own_seconds": 0.005675362000000001,
+        "cumulative_seconds": 0.047038112
+      },
+      {
+        "file": "<environment>/lib/python3.14/site-packages/scipy/stats/_continuous_distns.py",
+        "line": 8067,
+        "function": "t_logpdf",
+        "calls": 859,
+        "own_seconds": 0.021568375,
+        "cumulative_seconds": 0.021568375
+      }
+    ]
+  },
+  "work_counts": {
+    "mc_engine_baseline": 2,
+    "mc_engine_joint": 1,
+    "historical_baseline": {
+      "wealth_calls": 3,
+      "cashflow_calls": 2
+    },
+    "historical_guard": {
+      "wealth_calls": 1,
+      "cashflow_calls": 1
+    },
+    "student_fit_baseline": 2,
+    "student_fit_reused": 1,
+    "cagr_baseline": 4,
+    "cagr_reused": 1,
+    "solver": {
+      "baseline_evaluations": 4,
+      "prototype_evaluations": 4,
+      "success": true
+    },
+    "layout_cagr_difference_norm": 0.0,
+    "layout_cagr_difference_t": 0.0,
+    "layout_cagr_difference_lognorm": 0.0,
+    "pandas_default_constructor_shares_numpy": false,
+    "explicit_no_copy_shares_numpy": true
+  }
+}
