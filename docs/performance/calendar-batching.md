@@ -31,7 +31,7 @@ Memory figures use separate warm `tracemalloc` calls and include newly allocated
 
 All 29 paired workloads passed the equivalence checks. Maximum absolute difference: calendar wealth 2.91e-11 (absolute currency units), frontier metrics/weights 1.915e-14. The test uses both relative and absolute tolerance 1e-12; calendar wealth is much larger in magnitude than returns, so these absolute errors do not imply a failed comparison. Event values and dates are compared exactly.
 
-Monthly calendar full-path allocation peak fell from 3.074 MiB to 0.366 MiB. Yearly MC 2,048-portfolio allocation peak increased from 1.404 MiB to 10.440 MiB; candidate 8,192-portfolio peak was 11.530 MiB. This is the batching memory tradeoff, not a memory reduction for frontier sampling. The table and full distributions in [calendar-batching.json](calendar-batching.json) describe actual public methods.
+Monthly calendar full-path allocation peak fell from 3.074 MiB to 0.366 MiB. Yearly MC 2,048-portfolio allocation peak increased from 1.404 MiB to 10.440 MiB; candidate 8,192-portfolio peak was 11.530 MiB. This is the batching memory tradeoff, not a memory reduction for frontier sampling. The table and full distributions in [calendar-batching.json](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/calendar-batching.json) describe actual public methods.
 
 ## Verification
 

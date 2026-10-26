@@ -215,6 +215,22 @@ Data Access & Search
     okama.symbols_in_namespace
     okama.namespaces
 
+Performance reports
+*******************
+
+The :doc:`performance/README` summarizes measured calculation improvements,
+workloads and cache limits. Benchmark data and source links point to the
+versioned repository so they remain available alongside the hosted reports.
+
+.. toctree::
+    :hidden:
+    :glob:
+
+    issues/*
+    performance/*
+    security/*
+    security-ci
+
 Indices and tables
 ******************
 

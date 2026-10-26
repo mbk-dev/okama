@@ -41,7 +41,7 @@ jobs:
 
       - name: Import check
         run: |
-          uv run --no-sync python -c "import sys, okama; assert '.'.join(map(str, sys.version_info[:2])) == '${{ matrix.python-version }}'; print(sys.version); print(okama.__version__, okama.__file__)"
+          uv run --no-sync python -c "import os, sys, okama; assert '.'.join(map(str, sys.version_info[:2])) == os.environ['UV_PYTHON']; print(sys.version); print(okama.__version__, okama.__file__)"
 
       - name: Run tests
         # Pass the tests directory explicitly so pytest picks up tests/pytest.ini,

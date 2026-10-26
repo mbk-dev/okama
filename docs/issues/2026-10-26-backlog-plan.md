@@ -44,7 +44,7 @@ Each full suite on Python 3.11, 3.12, 3.13 and 3.14 passed 922 tests with zero
 failures/errors and three opt-in manual benchmark skips. Remaining warnings in
 other modules are tracked in [#138](https://github.com/mbk-dev/okama/issues/138);
 the DCF portion overlaps the active performance coordinator and is not duplicated.
-See [machine-readable validation](2026-10-26-validation.json).
+See [machine-readable validation](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/issues/2026-10-26-validation.json).
 
 Both Ruff checks and wheel/sdist builds passed. The production/manifest patch
 hash still matches the four-version test matrix. An isolated complete tracked
