@@ -44,7 +44,7 @@ Each full suite on Python 3.11, 3.12, 3.13 and 3.14 passed 922 tests with zero
 failures/errors and three opt-in manual benchmark skips. Remaining warnings in
 other modules are tracked in [#138](https://github.com/mbk-dev/okama/issues/138);
 the DCF portion overlaps the active performance coordinator and is not duplicated.
-See [machine-readable validation](2026-10-26-validation.json).
+See [machine-readable validation](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/issues/2026-10-26-validation.json).
 
 Both Ruff checks and wheel/sdist builds passed. The production/manifest patch
 hash still matches the four-version test matrix. An isolated complete tracked
@@ -91,3 +91,13 @@ original fixes; upstream optimizer preparation and pairwise caches are retained.
 Both local Python 3.11 and 3.14 suites passed 1,157 tests each with three
 manual benchmark skips and no failures/errors. Both Ruff checks passed.
 The existing CI matrix supplies the final Python 3.11–3.14 PR checks.
+
+## Split delivery
+
+The owner requires native Codex review inputs at most 500,000 serialized bytes,
+OpenRouter for larger inputs up to 1,000,000 bytes, and separate PRs above that
+ceiling. The original aggregate candidate is superseded by three complete parts:
+search/frontier, rebalancing, and missing-distribution mitigation/dependencies.
+The final delivery record lives in the linked GitHub issues and PRs. Historical
+pre-split validation above remains evidence for the combined implementation;
+each split candidate also receives the required CI and independent acceptance.

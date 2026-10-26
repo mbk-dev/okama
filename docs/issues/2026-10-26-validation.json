@@ -43,7 +43,7 @@
   "warnings_followup": "https://github.com/mbk-dev/okama/issues/138",
   "dependency_alerts_reviewed": 78,
   "dependency_affected_installed_versions": 0,
-  "publication": "Authorized; final delivery and remote alert status are recorded in the pull request and linked GitHub issues.",
+  "publication": "Split delivery: required CI and acceptance results are recorded in the replacing GitHub PRs.",
   "integration": {
     "base": "370204bf7db4901626281b3ce624edbb11f84450",
     "python": "3.14",
@@ -97,5 +97,10 @@
     "ruff_check": "passed",
     "ruff_format_check": "passed",
     "note": "Merged source checked locally after later frontier preparation improvements; CI additionally checks all supported Python versions."
+  },
+  "split_routing": {
+    "native_max_bytes": 500000,
+    "review_max_bytes": 1000000,
+    "oversize": "separate complete PRs; no evidence truncation"
   }
 }

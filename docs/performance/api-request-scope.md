@@ -22,7 +22,7 @@ Time series, live prices and search are never cached. USD.FX return requests wit
 
 ## Measurements
 
-[benchmark_api_request_scope.py](../../analytics/benchmark_api_request_scope.py) compares the original API.connect from dev31db96c, automatic constructor scopes and an explicit outer scope. Earlier computational improvements are shared. Every workflow creates a new 20-point frontier for SPY/BND/GLD, geometric tangency and an annually rebalanced Portfolio, then evaluates returns, CAGR, risk history, rolling CAGR and events. Complete financial outputs/metadata compare at rtol=atol=1e-12. The original connect is patched only inside the benchmark process, with transport cleanup after timing.
+[benchmark_api_request_scope.py](https://github.com/mbk-dev/okama/blob/v4.0.1/analytics/benchmark_api_request_scope.py) compares the original API.connect from dev31db96c, automatic constructor scopes and an explicit outer scope. Earlier computational improvements are shared. Every workflow creates a new 20-point frontier for SPY/BND/GLD, geometric tangency and an annually rebalanced Portfolio, then evaluates returns, CAGR, risk history, rolling CAGR and events. Complete financial outputs/metadata compare at rtol=atol=1e-12. The original connect is patched only inside the benchmark process, with transport cleanup after timing.
 
 Deterministic offline transport counts were:
 
@@ -44,7 +44,7 @@ The final live experiment used one warm triple followed by three rotating triple
 
 Automatic scopes were about 1.18× faster in this experiment. The outer context used fewer requests but was not faster than automatic scopes in the final sample: its observations ranged from 376 to 775 ms. Network latency, remote caching and scheduling dominate this small sample; neither a general speedup nor an advantage on every call is established. A pre-hardening experiment had different timings and remains in private evidence; final published observations match the accepted source hashes.
 
-Full receipts retain warmup, order, individual timings, request arguments, failures (none in accepted runs), counts and source/script hashes: [offline](api-offline-request-scope.json), [live](api-live-request-scope.json). Request durations can overlap in parallel loading and must not be summed as network wall time. Logical calls are API-level requests, not a count of internal retry attempts.
+Full receipts retain warmup, order, individual timings, request arguments, failures (none in accepted runs), counts and source/script hashes: [offline](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/api-offline-request-scope.json), [live](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/api-live-request-scope.json). Request durations can overlap in parallel loading and must not be summed as network wall time. Logical calls are API-level requests, not a count of internal retry attempts.
 
 ```bash
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 uv run --no-sync python -m analytics.benchmark_api_request_scope --offline --output tmp/api-offline.json

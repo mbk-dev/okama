@@ -1,6 +1,6 @@
 [project]
 name = "okama"
-version = "4.0.0"
+version = "4.0.1"
 description = "Investment portfolio analyzing & optimization tools"
 authors = [{name = "Sergey Kikevich", email = "chilango74@gmail.com"}]
 license = "MIT"

@@ -1,11 +1,15 @@
 name: Ruff Lint
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [dev, master]
+  pull_request:
 
 jobs:
   ruff-lint:
     runs-on: ubuntu-latest
     name: Lint
+    timeout-minutes: 30
     steps:
       - name: Check out source repository
         uses: actions/checkout@v7
@@ -21,3 +25,44 @@ jobs:
         uses: astral-sh/ruff-action@v3
         with:
           args: "format --check ."
+      - name: Install uv for documentation validation
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.23"
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+          python-version: "3.13"
+      - name: Install documentation dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y pandoc
+          uv sync --python 3.13 --no-default-groups --group docs
+      - name: Build and validate documentation
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+          LOKY_MAX_CPU_COUNT: "1"
+        run: |
+          uv run --no-sync python -m sphinx -E -b html docs docs/_build/html 2>&1 | tee /tmp/okama-sphinx.log
+          # Keep existing API-index warnings visible, and reject new report diagnostics.
+          if grep -E 'Traceback \(most recent call last\)|reference target not found|toc.not_included' /tmp/okama-sphinx.log; then
+            exit 1
+          fi
+          uv run --no-sync python - <<'PY'
+          from pathlib import Path
+          import re
+          from urllib.parse import unquote, urlsplit
+
+          root = Path.cwd()
+          html = root / "docs/_build/html"
+          assert "performance/README.html" in (html / "index.html").read_text()
+          for folder in ("issues", "performance", "security"):
+              for document in (root / "docs" / folder).glob("*.md"):
+                  assert (html / folder / f"{document.stem}.html").is_file(), document
+                  for target in re.findall(r"\]\(([^\s)]+)\)", document.read_text()):
+                      url = urlsplit(target)
+                      if url.netloc == "github.com" and url.path.startswith("/mbk-dev/okama/blob/"):
+                          path = root / unquote(url.path.split("/", 5)[5])
+                          assert path.is_file(), target
+          PY
