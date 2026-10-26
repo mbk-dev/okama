@@ -28,6 +28,18 @@ Make your changes to the code, and write sensible commit messages.
 
 In general [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/) is recommended for the commits.
 
+### Development environment
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run
+`uv sync` from your clone. Python 3.14 is the contributor default; the library
+supports Python 3.11–3.14. The test, docs, Jupyter and dev groups are installed
+by default. Each worktree uses its own `.venv`; `uv.lock` stays local and is
+not committed for this library.
+
+Use `uv add <package>` for runtime dependencies and mirror their direct ranges
+in `requirements.txt`; use `uv add --group <group> <package>` for development
+dependencies. Run tests with `uv run pytest tests -q`.
+
 ### Code style
 
 To keep everything consistent, the project uses [Ruff](https://github.com/astral-sh/ruff)
@@ -37,11 +49,11 @@ for linting and formatting. The configuration lives in `pyproject.toml` under
 Before committing, run:
 
 ```bash
-poetry run ruff check .
-poetry run ruff format .
+uv run ruff check .
+uv run ruff format --check .
 ```
 
-Fix every reported issue. If a warning is truly unavoidable, silence it with a
+Use `uv run ruff format .` to apply formatting. Fix every reported issue. If a warning is truly unavoidable, silence it with a
 targeted `# noqa: <CODE>` comment on the offending line together with a short
 rationale. Never disable rules globally or use a bare `# noqa`.
 
@@ -54,8 +66,8 @@ and currently runs `ruff --fix` and `ruff-format` on the staged files.
 **First-time setup** (once per clone):
 
 ```bash
-poetry add --group dev pre-commit        # install into the project env
-poetry run pre-commit install            # register the git hook
+uv sync --group dev                     # install declared development tools
+uv run pre-commit install            # register the git hook
 ```
 
 After this, `pre-commit` will run automatically on every `git commit` and
@@ -66,13 +78,13 @@ re-stage the modified files (`git add -u`) and commit again.
 
 ```bash
 # run all hooks against every file in the repo (not just staged ones)
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 
 # run a specific hook
-poetry run pre-commit run ruff --all-files
+uv run pre-commit run ruff --all-files
 
 # update hook versions pinned in .pre-commit-config.yaml
-poetry run pre-commit autoupdate
+uv run pre-commit autoupdate
 
 # bypass hooks for a single commit (discouraged — use only when justified)
 git commit --no-verify

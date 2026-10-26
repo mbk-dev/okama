@@ -1,0 +1,154 @@
+[
+  {
+    "skill": "okama/make-release",
+    "line": 8,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "9ddf8b7d4aa7db4c942cd9564bb8c094fc679ded347f45547bec222caa2e00ec",
+    "directive_sha256": "19721cc69d6b7a123345e2e5c15258f9a017d9f0e12f19fca7fd6e0870316ef0",
+    "reason": "Ordered release gates require tests before publishing; no exception to TDD, search scope, or Colab compatibility is introduced."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 8,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "2cfbaaa5b55e5f8bb4763d2ec968ad624c36fba74f2fb5be9fec5286bbe98a00",
+    "directive_sha256": "19721cc69d6b7a123345e2e5c15258f9a017d9f0e12f19fca7fd6e0870316ef0",
+    "reason": "Ordered release gates require tests before publishing; no exception to TDD, search scope, or Colab compatibility is introduced."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 8,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "2665d495e0f96f2433f05682caa957b0a8a7bb79133b47b6836ceeec80c588e2",
+    "directive_sha256": "19721cc69d6b7a123345e2e5c15258f9a017d9f0e12f19fca7fd6e0870316ef0",
+    "reason": "Ordered release gates require tests before publishing; no exception to TDD, search scope, or Colab compatibility is introduced."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 8,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "ad6a82d619c398648277a8e9196cddb86c8cdb40ba56afa4e72bec7678101ea1",
+    "directive_sha256": "19721cc69d6b7a123345e2e5c15258f9a017d9f0e12f19fca7fd6e0870316ef0",
+    "reason": "Ordered release gates require tests before publishing; no exception to TDD, search scope, or Colab compatibility is introduced."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 8,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "3672b5fe5b09bcdf57b0bfbd8730cc0e42bda9cd1c10ffa057b806d1a7715c2f",
+    "directive_sha256": "19721cc69d6b7a123345e2e5c15258f9a017d9f0e12f19fca7fd6e0870316ef0",
+    "reason": "Ordered release gates require tests before publishing; no exception to TDD, search scope, or Colab compatibility is introduced."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 135,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "63cafd70cc9afbf41e5fa55945835768fcdb05c84cf3653df2894f4a0180bc73",
+    "directive_sha256": "60a1ef64cb0bbbe09481235f8d091eda00755c3f9fb5bfd45ec4cb34fc598c5d",
+    "reason": "Reading the declared interpreter minimum is consistent with the version floor and does not alter runtime dependencies."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 135,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "23bac7d922353df573704085d18cb0f43dea6a1fd8f42c7e1458aa49819acbbf",
+    "directive_sha256": "60a1ef64cb0bbbe09481235f8d091eda00755c3f9fb5bfd45ec4cb34fc598c5d",
+    "reason": "Reading the declared interpreter minimum is consistent with the version floor and does not alter runtime dependencies."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 216,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "63cafd70cc9afbf41e5fa55945835768fcdb05c84cf3653df2894f4a0180bc73",
+    "directive_sha256": "01423e519ca68c09e037f17459403efa93c9487da790db538ac1c474658ab257",
+    "reason": "Changing only package version metadata does not change dependency constraints, executable production code, or search exclusions."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 216,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "9ddf8b7d4aa7db4c942cd9564bb8c094fc679ded347f45547bec222caa2e00ec",
+    "directive_sha256": "01423e519ca68c09e037f17459403efa93c9487da790db538ac1c474658ab257",
+    "reason": "Changing only package version metadata does not change dependency constraints, executable production code, or search exclusions."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 216,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "2665d495e0f96f2433f05682caa957b0a8a7bb79133b47b6836ceeec80c588e2",
+    "directive_sha256": "01423e519ca68c09e037f17459403efa93c9487da790db538ac1c474658ab257",
+    "reason": "Changing only package version metadata does not change dependency constraints, executable production code, or search exclusions."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 216,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "23bac7d922353df573704085d18cb0f43dea6a1fd8f42c7e1458aa49819acbbf",
+    "directive_sha256": "01423e519ca68c09e037f17459403efa93c9487da790db538ac1c474658ab257",
+    "reason": "Changing only package version metadata does not change dependency constraints, executable production code, or search exclusions."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 297,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "3672b5fe5b09bcdf57b0bfbd8730cc0e42bda9cd1c10ffa057b806d1a7715c2f",
+    "directive_sha256": "27512a27ccb16964a3c3fd21f470a2915f58045fd34b59d182e0555a6f7c50b5",
+    "reason": "Scoping a Git tag push is independent of the required class and method names in release prose."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 378,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "9ddf8b7d4aa7db4c942cd9564bb8c094fc679ded347f45547bec222caa2e00ec",
+    "directive_sha256": "3186bf768f66c851fb11f5503f2b48c3acb5813171ee9e5fd99a0efb971093ff",
+    "reason": "A failing hosted documentation gate requires fixing documentation before publication, not skipping TDD for production fixes."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 397,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "3672b5fe5b09bcdf57b0bfbd8730cc0e42bda9cd1c10ffa057b806d1a7715c2f",
+    "directive_sha256": "26955fb0750fb58a83246f0409b15f52bbc1e7095cbe30dc0605c389b463ca52",
+    "reason": "Rejecting unrelated upload artifacts is independent of release-note class and method naming."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 470,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "2665d495e0f96f2433f05682caa957b0a8a7bb79133b47b6836ceeec80c588e2",
+    "directive_sha256": "65c2dd3e176a067ba46a75db6223562493e27d246b055c4f45093b40b14ea561",
+    "reason": "Prohibiting amendment of published commits does not add search exclusions."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 472,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "2665d495e0f96f2433f05682caa957b0a8a7bb79133b47b6836ceeec80c588e2",
+    "directive_sha256": "3258570a5a1bf5c036418787f7ff2a98c68e356ef98843f6f4fd4eb1e4ff13f0",
+    "reason": "Preserving pre-commit hooks does not add search exclusions."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 473,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "9ddf8b7d4aa7db4c942cd9564bb8c094fc679ded347f45547bec222caa2e00ec",
+    "directive_sha256": "ccd2fa4a0532b7e5305b3c29950a99a24dd2d5068dfacf84f8aa64c4e7365cf1",
+    "reason": "Prohibiting unrelated dependency bumps does not waive TDD for production logic."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 474,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "356ac59a722b599b76b5272ff811c9badb181f0e42fdf3c49db3d1ef0e2cc851",
+    "directive_sha256": "0b294c9a3039871c51b073f5cb0c16818e762b37e03fdc14c3a2f99145f13155",
+    "reason": "Requiring English release prose agrees with the language rule and does not waive class and method names."
+  },
+  {
+    "skill": "okama/make-release",
+    "line": 474,
+    "skill_sha256": "1a3e59ed720d32c56ac47b07e0327f48c9bd7ec6b482ad50b863a9f9c913f4d1",
+    "rule_sha256": "3672b5fe5b09bcdf57b0bfbd8730cc0e42bda9cd1c10ffa057b806d1a7715c2f",
+    "directive_sha256": "0b294c9a3039871c51b073f5cb0c16818e762b37e03fdc14c3a2f99145f13155",
+    "reason": "Requiring English release prose agrees with the language rule and does not waive class and method names."
+  }
+]

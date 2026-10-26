@@ -33,3 +33,32 @@ Forecast portfolio performance with normal, lognormal, Student's t, and historic
 
 11. [rebalancing portfolio](https://github.com/mbk-dev/okama/blob/master/examples/11%20rebalancing%20portfolio.ipynb)
 Compare calendar-based, threshold-based, and hybrid portfolio rebalancing strategies.
+
+## Running the notebooks
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), clone the
+repository, then run these commands from its root:
+
+```bash
+uv sync
+uv run jupyter lab
+```
+
+Select the worktree's `.venv` Python interpreter in your editor. The default
+contributor interpreter is Python 3.14; the notebooks also support Python 3.12
+for Google Colab. Local installation cells leave the editable worktree package
+in place. In Colab, those cells install the public package with `%pip` in the
+current kernel; uv is not required there.
+
+For automated execution, create a temporary kernel for this worktree instead of
+using a kernel registered by another clone:
+
+```bash
+kernel_root=$(mktemp -d)
+uv run python -m ipykernel install --prefix "$kernel_root" --name python3 --display-name "Python 3"
+JUPYTER_PATH="$kernel_root/share/jupyter" uv run --no-sync pytest --nbmake --nbmake-kernel=python3 examples -q
+```
+
+The notebooks query the data API, so integration execution needs network access.
+The temporary kernel directory can be removed after the tests finish. Existing
+user kernels do not need to be replaced.

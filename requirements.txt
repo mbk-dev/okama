@@ -2,7 +2,7 @@ arch>=7.2.0
 idna>=3.15
 joblib
 matplotlib>=3.5.1
-pandas
+pandas>=2.0.0
 pandas-stubs
 pyarrow>=13.0.0
 requests

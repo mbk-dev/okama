@@ -108,11 +108,18 @@ uv pip install okama  # or pip-style install into the active environment
 
 ### Install the latest development version from GitHub
 
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first.
+The contributor environment defaults to Python 3.14; the library supports Python 3.11–3.14.
+
 ```bash
 git clone -b dev https://github.com/mbk-dev/okama.git
 cd okama
-poetry install
+uv sync
+uv run python -c "import okama; print(okama.__version__)"
 ```
+
+`uv sync` includes the test, docs, Jupyter and dev groups. For local notebooks,
+see [the examples setup](examples/README.md#running-the-notebooks).
 
 ## Getting started
 

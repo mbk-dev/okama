@@ -95,12 +95,16 @@ Okama can be installed from `PyPI <https://pypi.org/project/okama/>`_:
 
     pip install okama
 
-The latest development version can be installed directly from GitHub:
+For development, install `uv <https://docs.astral.sh/uv/getting-started/installation/>`_
+and clone the repository. The contributor environment defaults to Python 3.14;
+the library supports Python 3.11–3.14.
 
 .. code:: text
 
-    git clone https://github.com/mbk-dev/okama@dev
-    poetry install
+    git clone -b dev https://github.com/mbk-dev/okama.git
+    cd okama
+    uv sync
+    uv run python -c "import okama; print(okama.__version__)"
 
 .. warning::
 

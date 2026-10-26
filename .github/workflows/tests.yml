@@ -4,21 +4,17 @@ on: [push, pull_request]
 
 # The suite is fully offline: tests/conftest.py replaces socket.socket with a
 # deny stub for the whole session, so no secrets or network access are needed.
-env:
-  POETRY_NO_INTERACTION: "1"
-  # Poetry can hang indefinitely on a keyring lookup when no Secret Service is
-  # available (observed on headless Linux); the null backend avoids it.
-  PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
-
 jobs:
   tests:
     runs-on: ubuntu-latest
     name: Python ${{ matrix.python-version }}
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
     strategy:
       fail-fast: false
       matrix:
         # Must cover the whole range declared in pyproject.toml
-        # (python = ">=3.11,<4.0.0") and in the trove classifiers.
+        # (requires-python = ">=3.11,<4.0.0") and in the trove classifiers.
         # The minimum version is not optional: annotations are evaluated
         # eagerly before Python 3.14 (PEP 649), so an invalid type hint breaks
         # `import okama` on 3.11-3.13 while passing silently on 3.14.
@@ -32,16 +28,22 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
-        run: pipx install poetry
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.23"
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: poetry install --only main,test
+        run: uv sync --python "${{ matrix.python-version }}" --no-default-groups --group test
 
       - name: Import check
-        run: poetry run python -c "import okama; print(okama.__version__)"
+        run: |
+          uv run --no-sync python -c "import sys, okama; assert '.'.join(map(str, sys.version_info[:2])) == '${{ matrix.python-version }}'; print(sys.version); print(okama.__version__, okama.__file__)"
 
       - name: Run tests
         # Pass the tests directory explicitly so pytest picks up tests/pytest.ini,
         # which caps xdist at a fixed worker count.
-        run: poetry run pytest tests
+        run: uv run --no-sync pytest tests -q

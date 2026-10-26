@@ -7,6 +7,8 @@ dist/
 __pycache__
 *.pyc
 poetry.lock
+uv.lock
+.venv/
 /.idea_backup
 /.idea/
 /.ipynb_checkpoints

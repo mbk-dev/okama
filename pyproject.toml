@@ -1,13 +1,12 @@
-[tool.poetry]
+[project]
 name = "okama"
 version = "4.0.0"
 description = "Investment portfolio analyzing & optimization tools"
-authors = ["Sergey Kikevich <chilango74@gmail.com>"]
+authors = [{name = "Sergey Kikevich", email = "chilango74@gmail.com"}]
 license = "MIT"
-homepage = "https://okama.io"
-repository = "https://github.com/mbk-dev/okama"
-documentation = "https://okama.readthedocs.io/en/master"
+license-files = ["LICENSE.txt"]
 readme = "README.md"
+requires-python = ">=3.11,<4.0.0"
 keywords = ["finance", "investments", "efficient frontier", "python", "optimization"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -23,65 +22,69 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "pandas>=2.0.0",
+    "pyarrow>=13.0.0",
+    "scipy",
+    "matplotlib>=3.5.1",
+    "requests",
+    "joblib",
+    "pandas-stubs",
+    "arch>=7.2.0",
+    "statsmodels>=0.14.5",
+    "idna>=3.15",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.11,<4.0.0"
-pandas = ">=2.0.0"
-pyarrow = ">=13.0.0"
-scipy = "*"
-matplotlib = ">=3.5.1"
-requests = "*"
-joblib = "*"
-pandas-stubs = "*"
-arch = ">=7.2.0"
-statsmodels = ">=0.14.5"
-idna = ">=3.15"
+[project.urls]
+Homepage = "https://okama.io"
+Repository = "https://github.com/mbk-dev/okama"
+Documentation = "https://okama.readthedocs.io/en/master"
 
-[tool.poetry.group.test]
-optional = false
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest-mock",
+    "black[jupyter]",
+    "pytest-xdist",
+    "scipy-stubs",
+]
+docs = [
+    "sphinx<9",
+    "sphinx-rtd-theme",
+    "numpydoc",
+    "nbsphinx",
+    "nbsphinx-link>=1.3.0",
+    "pandoc>=1.1.0",
+    "recommonmark",
+    "Jinja2",
+    "docutils<0.22",
+    "ipython>=7.20.0",
+]
+jupyter = [
+    "jupyter",
+    "notebook",
+    "ipykernel",
+    "ipython",
+    "nbmake",
+    "zmq",
+]
+dev = [
+    "ruff",
+    "pre-commit",
+]
 
-[tool.poetry.group.test.dependencies]
-pytest = "*"
-pytest-mock = "*"
-black = {extras = ["jupyter"], version = "*"}
-pytest-xdist = "*"
-scipy-stubs = "*"  # for typehints
-
-[tool.poetry.group.docs]
-optional = false
-
-[tool.poetry.group.docs.dependencies]
-sphinx = "<9"  # Sphinx 9.x autodoc rewrite breaks on pandas DataFrame class attributes
-sphinx-rtd-theme = "*"
-numpydoc = "*"
-nbsphinx = "*"
-nbsphinx-link = "*"
-pandoc = "*"
-recommonmark = "*"
-Jinja2 = "*"
-
-[tool.poetry.group.jupyter]
-optional = false
-
-[tool.poetry.group.jupyter.dependencies]
-jupyter = "*"
-notebook = "*"
-ipykernel = "*"
-ipython = "*"
-nbmake = "*"  # test jupyter notebooks
-zmq = "*"  # required to run pytest
-
-
-[tool.poetry.group.dev.dependencies]
-ruff = "*"
-pre-commit = "*"
+[tool.uv]
+default-groups = ["test", "docs", "jupyter", "dev"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "okama"
+module-root = ""
 
 [tool.ruff]
 line-length = 120

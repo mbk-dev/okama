@@ -1,0 +1,24 @@
+{
+  "current_tracked": [
+    ".claude/skills/make-release/SKILL.md",
+    ".gitignore"
+  ],
+  "historical_tracked": [
+    "CHANGELOG.md",
+    "docs/superpowers/plans/2026-06-03-monte-carlo-irr.md",
+    "docs/superpowers/plans/2026-06-03-portfolio-dcf-irr.md",
+    "docs/superpowers/plans/2026-06-04-find-largest-withdrawals-stage1-brent.md",
+    "docs/superpowers/plans/2026-06-04-find-largest-withdrawals-stage2-vectorize.md",
+    "docs/superpowers/plans/2026-06-04-mc-cashflow-engine-irr-and-fixes.md",
+    "docs/superpowers/plans/2026-06-07-portfolio-tracking-error.md",
+    "docs/superpowers/plans/2026-07-14-local-name-label.md",
+    "docs/superpowers/plans/2026-08-31-finplan.md",
+    "docs/superpowers/plans/2026-10-09-open-issues.md"
+  ],
+  "additional_new_allowed": [
+    "scripts/with_pypi_token.py: legacy credential-store fallback only",
+    "tests/test_pypi_credentials.py: synthetic legacy-store tests",
+    "analytics/poetry_uv_migration_20261026/: migration evidence and baseline manifest",
+    "docs/superpowers/: migration design/plan"
+  ]
+}

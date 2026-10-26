@@ -5,6 +5,15 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Migrate development environments, CI, packaging and release commands from Poetry
+  to uv; keep Python 3.11–3.14 support and pip installation of the library.
+- Make the [Jupyter examples](examples/README.md) preserve the local editable
+  installation while retaining package installation in Google Colab.
+
 ## [4.0.0] - 2026-10-09
 
 A major release that makes financial-plan inputs explicit and lets cash-flow

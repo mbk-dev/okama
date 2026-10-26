@@ -1,10 +1,13 @@
 # okama — Development rules for AI agents
 
 ## environment
-- project uses poetry for the environment & dependencies management
+- project uses uv for environment and dependency management; run `uv sync` in each worktree
 - new dependency must be added in pyproject.toml and additionally to requirements.txt
-- Use interpreter in poetry env (poetry run python ...).
-- Always use "poetry add" instead of "pip install"
+- Use the worktree interpreter via `uv run python ...`; local Python is pinned in `.python-version`.
+- Use `uv add` for runtime dependencies and `uv add --group <name>` for development dependencies.
+
+- `uv.lock` stays local and is not committed for this library. Default groups: test, docs, jupyter, dev.
+- In jobs that sync a subset of groups, run commands with `uv run --no-sync` to preserve that selection.
 
 ## Test-Driven Development (TDD)
 Any change to production code (new feature, bugfix, refactor, behavior change) must follow TDD: **write a failing test first, then the minimal code that makes it pass**. This overrides the default "write code, then tests" workflow.
@@ -12,7 +15,7 @@ Any change to production code (new feature, bugfix, refactor, behavior change) m
 The required workflow is the `superpowers:test-driven-development` skill. Cycle: **RED → verify RED → GREEN → verify GREEN → REFACTOR**.
 
 Rules for this repo:
-- Tests run via: `pytest -q` (or `poetry run pytest -q` if not inside the poetry shell).
+- Tests run via: `pytest -q` (or `uv run pytest -q` if not inside the activated project environment).
 - Before writing code, see the test fail for a real reason (`AssertionError` / missing function), not a typo/import error.
 - For bugfix: first a test reproducing the bug, then the fix. Without a reproducing test the bug is not considered fixed.
 - One test = one behavior. Test name describes the behavior meaningfully, no `test1` / `test_works`.
@@ -28,8 +31,8 @@ Rules for this repo:
    Do not repeat this cycle more than 2 times.
    If tests are still failing after that, stop and report the remaining issues instead of continuing.
 5) Before finishing any code change (including notebooks), run **both** commands the
-   `Ruff` workflow runs — `poetry run ruff check .` and `poetry run ruff format --check .` —
-   and fix every reported issue (`poetry run ruff format .` rewrites the offending files).
+   `Ruff` workflow runs — `uv run ruff check .` and `uv run ruff format --check .` —
+   and fix every reported issue (`uv run ruff format .` rewrites the offending files).
    Running only `check` leaves formatting drift invisible until CI goes red.
    If a lint warning is truly unavoidable, silence it with a targeted `# noqa: <CODE>`
    comment on the offending line and include a brief rationale.
@@ -76,12 +79,12 @@ Name note: CLI subcommands are `query` / `callers` / `callees` / `impact` / `con
 - Use type hints for all function parameters and return types.
 - Use f-string formatting for all logging and print messages.
 - **Minimum supported Python version is taken from `pyproject.toml`** (the
-  `python = "..."` constraint under `[tool.poetry.dependencies]`). All library
+  `requires-python = "..."` constraint under `[project]`). All library
   code must run unchanged on that minimum version. For example, if
-  `pyproject.toml` declares `python = ">=3.11,<4.0.0"`, then Python 3.11 must be
+  `pyproject.toml` declares `requires-python = ">=3.11,<4.0.0"`, then Python 3.11 must be
   fully supported and no 3.12+ only syntax or stdlib features may be used in
   library code without a `sys.version_info` gate and a fallback. A green local
-  run does not prove this: the poetry env tracks the newest Python, where
+  run does not prove this: the local uv environment tracks the newest Python, where
   PEP 649 defers annotation evaluation. `.github/workflows/tests.yml` runs the
   suite on every supported version — keep its matrix in sync.
 - **Notebook examples in `/examples` additionally target Google Colab**, which
