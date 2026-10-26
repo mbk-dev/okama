@@ -2,7 +2,7 @@
 
 Not part of the regular suite. Run with:
 
-    OKAMA_BENCH=1 poetry run pytest tests/portfolio/dcf/test_mc_engine_benchmark.py -s
+    OKAMA_BENCH=1 uv run pytest tests/portfolio/dcf/test_mc_engine_benchmark.py -s
 """
 
 import os  # noqa: I001

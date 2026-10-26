@@ -1,4 +1,5 @@
 import itertools  # noqa: I001
+import math
 
 import pandas as pd
 import numpy as np
@@ -199,12 +200,16 @@ class EfficientFrontierSingle(asset_list.AssetList):
         """
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
+        covariance = self.assets_ror.cov()
+
+        def objective_function(w: np.ndarray) -> float:
+            return math.sqrt(w.T @ covariance @ w)
+
         # construct the constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         weights = minimize(
-            helpers.Frame.get_portfolio_risk,
+            objective_function,
             init_guess,
-            args=(self.assets_ror,),
             method="SLSQP",
             options={"disp": False},
             constraints=(weights_sum_to_1,),
@@ -238,11 +243,13 @@ class EfficientFrontierSingle(asset_list.AssetList):
         """
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
+        covariance = self.assets_ror.cov()
+        mean_returns = self.assets_ror.mean()
 
         # Set the objective function
         def objective_function(w: np.ndarray) -> float:
-            risk = helpers.Frame.get_portfolio_risk(w, self.assets_ror)
-            mean_return = helpers.Frame.get_portfolio_mean_return(w, self.assets_ror)
+            risk = math.sqrt(w.T @ covariance @ w)
+            mean_return = w.T @ mean_returns
             return helpers.Float.annualize_risk(risk=risk, mean_return=mean_return)
 
         # construct the constraints
@@ -284,9 +291,10 @@ class EfficientFrontierSingle(asset_list.AssetList):
         >>> ef.gmv_monthly
         (0.01024946425526032, 0.0036740056018316597)
         """
+        weights = self.gmv_monthly_weights
         return (
-            helpers.Frame.get_portfolio_risk(self.gmv_monthly_weights, self.assets_ror),
-            helpers.Frame.get_portfolio_mean_return(self.gmv_monthly_weights, self.assets_ror),
+            helpers.Frame.get_portfolio_risk(weights, self.assets_ror),
+            helpers.Frame.get_portfolio_mean_return(weights, self.assets_ror),
         )
 
     @property
@@ -313,10 +321,8 @@ class EfficientFrontierSingle(asset_list.AssetList):
         >>> ef.gmv_annualized
         (0.03697734994430258, 0.0449899573148429)
         """
-        return (
-            helpers.Float.annualize_risk(self.gmv_monthly[0], self.gmv_monthly[1]),
-            helpers.Float.annualize_return(self.gmv_monthly[1]),
-        )
+        risk, mean_return = self.gmv_monthly
+        return helpers.Float.annualize_risk(risk, mean_return), helpers.Float.annualize_return(mean_return)
 
     def get_tangency_portfolio(self, rf_return: float = 0, rate_of_return: str = "cagr") -> dict:
         """
@@ -365,18 +371,18 @@ class EfficientFrontierSingle(asset_list.AssetList):
         n = self.assets_ror.shape[1]
         init_guess = np.repeat(1 / n, n)
 
-        def of_arithmetic_mean(w):
+        def of_arithmetic_mean(w: np.ndarray) -> float:
             # Sharpe ratio
-            mean_return_monthly = helpers.Frame.get_portfolio_mean_return(w, assets_ror)
-            risk_monthly = helpers.Frame.get_portfolio_risk(w, assets_ror)
+            mean_return_monthly = w.T @ mean_returns
+            risk_monthly = math.sqrt(w.T @ covariance @ w)
             of_arithmetic_mean.rate_of_return = helpers.Float.annualize_return(mean_return_monthly)
             of_arithmetic_mean.risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
             return -(of_arithmetic_mean.rate_of_return - rf_return) / of_arithmetic_mean.risk
 
-        def of_geometric_mean(w):
+        def of_geometric_mean(w: np.ndarray) -> float:
             portfolio_ror = helpers.Frame.get_portfolio_return_ts(w, assets_ror)
             # Rate of return
-            mean_return_monthly = helpers.Frame.get_portfolio_mean_return(w, assets_ror)
+            mean_return_monthly = w.T @ mean_returns
             of_geometric_mean.rate_of_return = helpers.Frame.get_cagr(portfolio_ror)
             # Risk
             risk_monthly = portfolio_ror.std()
@@ -388,6 +394,8 @@ class EfficientFrontierSingle(asset_list.AssetList):
         else:
             raise ValueError("rate_of_return must be 'cagr or 'mean_return'")
 
+        mean_returns = assets_ror.mean()
+        covariance = assets_ror.cov() if rate_of_return == "mean_return" else None
         objective_function = of_geometric_mean if rate_of_return == "cagr" else of_arithmetic_mean
         # construct the constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
@@ -554,19 +562,20 @@ class EfficientFrontierSingle(asset_list.AssetList):
         # Set the objective function
         if option == "max":
 
-            def objective_function(w):
-                month_return_value = helpers.Frame.get_portfolio_mean_return(w, ror)
+            def objective_function(w: np.ndarray) -> float:
+                month_return_value = w.T @ mean_returns
                 return -month_return_value
 
         elif option == "min":
 
-            def objective_function(w):
-                month_return_value = helpers.Frame.get_portfolio_mean_return(w, ror)
+            def objective_function(w: np.ndarray) -> float:
+                month_return_value = w.T @ mean_returns
                 return month_return_value
 
         else:
             raise ValueError('option should be "max" or "min"')
         # construct the constraints
+        mean_returns = ror.mean()
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         weights = minimize(
             objective_function,
@@ -649,14 +658,17 @@ class EfficientFrontierSingle(asset_list.AssetList):
         n = ror.shape[1]  # number of assets
         init_guess = np.repeat(1 / n, n)  # initial weights
 
-        def objective_function(w):
-            return helpers.Frame.get_portfolio_risk(w, ror)
+        covariance = ror.cov()
+        mean_returns = ror.mean()
+
+        def objective_function(w: np.ndarray) -> float:
+            return math.sqrt(w.T @ covariance @ w)
 
         # construct the constraints
         weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
         return_is_target = {
             "type": "eq",
-            "fun": lambda weights: target_return - helpers.Frame.get_portfolio_mean_return(weights, ror),
+            "fun": lambda weights: target_return - (weights.T @ mean_returns),
         }
         weights = minimize(
             objective_function,
@@ -936,6 +948,12 @@ class EfficientFrontierSingle(asset_list.AssetList):
         kind : {'mean','cagr'}, default 'mean'
             Use CAGR for return if kind='cagr', or annualized arithmetic mean if kind='mean'.
 
+        Notes
+        -----
+        Covariance and mean returns are prepared once per call. Portfolio metrics
+        use float64 NumPy batches of at most 4096 weight vectors; the returned
+        table and generated weights still scale with the number of portfolios.
+
         Examples
         --------
         >>> assets = ["SPY.US", "AGG.US", "GLD.US"]
@@ -980,29 +998,7 @@ class EfficientFrontierSingle(asset_list.AssetList):
         """
         weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
 
-        # Portfolio risk and return for each set of weights
-        points_list = []  # Collect all points to create DataFrame once at the end
-        second_column = "Return" if kind == "mean" else "CAGR"
-        asset_labels = self.get_assets_tickers()
-        for weights in weights_series:
-            risk_monthly = helpers.Frame.get_portfolio_risk(weights, self.assets_ror)
-            mean_return_monthly = helpers.Frame.get_portfolio_mean_return(weights, self.assets_ror)
-            risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
-            mean_return = helpers.Float.annualize_return(mean_return_monthly)
-
-            point = dict(zip(asset_labels, weights))  # noqa: B905
-            point["Risk"] = risk
-            if kind.lower() == "cagr":
-                cagr = helpers.Float.approx_return_risk_adjusted(mean_return, risk)
-                point["CAGR"] = cagr
-            elif kind.lower() == "mean":
-                point["Return"] = mean_return
-            else:
-                raise ValueError('kind should be "mean" or "cagr"')
-            points_list.append(point)
-        random_portfolios = pd.DataFrame.from_records(points_list)
-        random_portfolios = helpers.Frame.change_columns_order(random_portfolios, ["Risk", second_column])
-        return random_portfolios
+        return self._get_portfolio_points(weights_series, kind)
 
     def get_grid_portfolios(self, step: float = 0.10, kind: str = "mean", max_points: int = 100_000) -> pd.DataFrame:
         """
@@ -1028,6 +1024,12 @@ class EfficientFrontierSingle(asset_list.AssetList):
         DataFrame
             Table with Risk, Return (or CAGR) and asset weights for every grid portfolio.
 
+        Notes
+        -----
+        Covariance and mean returns are prepared once per call. Portfolio metrics
+        use float64 NumPy batches of at most 4096 weight vectors; the returned
+        table and generated weights still scale with the number of portfolios.
+
         Examples
         --------
         >>> assets = ["SPY.US", "AGG.US", "GLD.US"]
@@ -1039,27 +1041,45 @@ class EfficientFrontierSingle(asset_list.AssetList):
         weights_series = helpers.Float.get_grid_weights(
             w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds, max_points=max_points
         )
+        return self._get_portfolio_points(weights_series, kind)
+
+    # Limit temporary weight/covariance products independently of portfolio count.
+    _BATCH_SIZE = 4096
+
+    def _get_portfolio_points(self, weights_series: pd.Series, kind: str) -> pd.DataFrame:
+        """Evaluate single-period weights in float64 chunks, preparing statistics once."""
         second_column = "Return" if kind == "mean" else "CAGR"
+        if weights_series.empty:
+            # Retain the existing empty-request validation in change_columns_order.
+            return helpers.Frame.change_columns_order(pd.DataFrame(), ["Risk", second_column])
+
+        covariance = self.assets_ror.cov().to_numpy(dtype=np.float64)
+        means = self.assets_ror.mean().to_numpy(dtype=np.float64)
         asset_labels = self.get_assets_tickers()
-        points_list = []
-        for weights in weights_series:
-            risk_monthly = helpers.Frame.get_portfolio_risk(weights, self.assets_ror)
-            mean_return_monthly = helpers.Frame.get_portfolio_mean_return(weights, self.assets_ror)
-            risk = helpers.Float.annualize_risk(risk_monthly, mean_return_monthly)
-            mean_return = helpers.Float.annualize_return(mean_return_monthly)
-            point = dict(zip(asset_labels, weights))  # noqa: B905
-            point["Risk"] = risk
+        chunks = []
+        for start in range(0, len(weights_series), self._BATCH_SIZE):
+            weights = np.stack(weights_series.iloc[start : start + self._BATCH_SIZE]).astype(np.float64, copy=False)
+            variance = np.sum((weights @ covariance) * weights, axis=1)
+            if np.any(variance < 0):
+                # Pairwise covariance with missing observations can be indefinite.
+                # Match math.sqrt in the scalar helper instead of emitting NaNs.
+                raise ValueError("math domain error")
+            monthly_risk = np.sqrt(variance)
+            monthly_mean = weights @ means
+            risk = helpers.Float.annualize_risk(monthly_risk, monthly_mean)
+            mean_return = helpers.Float.annualize_return(monthly_mean)
+            # A dict retains the scalar path's last-weight-wins duplicate labels.
+            columns = dict(zip(asset_labels, weights.T))  # noqa: B905
+            columns["Risk"] = risk
             if kind.lower() == "cagr":
-                cagr = helpers.Float.approx_return_risk_adjusted(mean_return, risk)
-                point["CAGR"] = cagr
+                columns["CAGR"] = helpers.Float.approx_return_risk_adjusted(mean_return, risk)
             elif kind.lower() == "mean":
-                point["Return"] = mean_return
+                columns["Return"] = mean_return
             else:
                 raise ValueError('kind should be "mean" or "cagr"')
-            points_list.append(point)
-        grid_portfolios = pd.DataFrame.from_records(points_list)
-        grid_portfolios = helpers.Frame.change_columns_order(grid_portfolios, ["Risk", second_column])
-        return grid_portfolios
+            chunks.append(pd.DataFrame(columns))
+        result = pd.concat(chunks, ignore_index=True)
+        return helpers.Frame.change_columns_order(result, ["Risk", second_column])
 
     def plot_transition_map(self, x_axe: str = "risk", figsize: tuple | None = None) -> Axes:
         """

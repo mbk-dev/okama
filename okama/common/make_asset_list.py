@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
 from okama import macro, asset, settings
+from okama.api.request_scope import data_request_scope, _bind_request_scope, _get_request_scope
 from okama.common import validators
 from okama.common.helpers import helpers
 from okama.common.error import ShortPeriodLengthError
@@ -41,6 +42,7 @@ class ListMaker(ABC):
         With `inflation=False`, some properties like real return are not available.
     """
 
+    @data_request_scope()
     def __init__(
         self,
         assets: list[str | type] | None = None,
@@ -217,7 +219,17 @@ class ListMaker(ABC):
         if len(ls) == 1:
             obj = get_item(ls[0])
             return {obj.symbol: obj}
-        asset_obj_list = Parallel(n_jobs=-1, backend="threading")(delayed(get_item)(s) for s in ls)
+        if all(hasattr(item, "symbol") and hasattr(item, "ror") for item in ls):
+            # Ready objects only need validation; keep threading for symbol I/O.
+            asset_obj_list = [get_item(item) for item in ls]
+        else:
+            scope = _get_request_scope()
+
+            def scoped_get_item(symbol: str | type) -> Any:
+                with _bind_request_scope(scope):
+                    return get_item(symbol)
+
+            asset_obj_list = Parallel(n_jobs=-1, backend="threading")(delayed(scoped_get_item)(s) for s in ls)
         return {obj.symbol: obj for obj in asset_obj_list}
 
     def _make_list(self, first_date: str | None, last_date: str | None) -> dict:
@@ -560,19 +572,48 @@ class ListMaker(ABC):
                     div_yield = div_monthly
                     frame[tick] = div_yield
                     continue
-                # Get dividend yield time series
-                div_yield = pd.Series(dtype=float)
-                div_monthly.index = div_monthly.index.to_timestamp(how="start")
-                for date in price_monthly_ts.index.to_timestamp(how="End"):
-                    date0 = date - pd.DateOffset(months=12)  # last 12 months
-                    ltm_div = div_monthly[date0:date].sum()
-                    last_price = price_monthly_ts.loc[:date].iloc[-1]
-                    value = ltm_div / last_price
-                    div_yield.at[date] = value
-                div_yield.index = div_yield.index.to_period("M")
-                frame[tick] = div_yield
+                frame[tick] = self._get_ltm_dividend_yield(div_monthly, price_monthly_ts)
             self._dividend_yield = pd.DataFrame(frame)
         return self._dividend_yield
+
+    @staticmethod
+    def _get_ltm_dividend_yield(dividends: pd.Series, prices: pd.Series) -> pd.Series:
+        """Calculate monthly calendar windows, retaining scalar handling of unusual inputs."""
+        if (
+            not dividends.empty
+            and not prices.empty
+            and all(
+                isinstance(series.index, pd.PeriodIndex)
+                and series.index.freqstr == "M"
+                and series.index.is_monotonic_increasing
+                and series.index.is_unique
+                and isinstance(series.dtype, np.dtype)
+                and series.dtype.kind in "biuf"
+                for series in (dividends, prices)
+            )
+            and dividends.dtype == np.dtype("float64")
+            and not np.isinf(dividends.to_numpy()).any()
+        ):
+            # Include missing calendar months before rolling; price gaps must not
+            # expand a twelve-month window to twelve price observations.
+            index = pd.period_range(
+                min(dividends.index[0], prices.index[0]),
+                max(dividends.index[-1], prices.index[-1]),
+                freq="M",
+            )
+            monthly = dividends.reindex(index).fillna(0.0)
+            trailing = monthly.rolling(12, min_periods=1).sum()
+            return (trailing.reindex(prices.index) / prices).rename(None).rename_axis(None)
+
+        # Keep the original date-slice semantics for nonstandard or duplicate indexes.
+        monthly = dividends.copy()
+        monthly.index = monthly.index.to_timestamp(how="start")
+        result = pd.Series(dtype=float)
+        for date in prices.index.to_timestamp(how="end"):
+            lower = date - pd.DateOffset(months=12)
+            result.at[date] = monthly[lower:date].sum() / prices.loc[:date].iloc[-1]
+        result.index = result.index.to_period("M")
+        return result
 
     @property
     def _list_of_asset_like_objects(self) -> list[str | type]:

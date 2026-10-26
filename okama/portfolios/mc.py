@@ -18,6 +18,17 @@ from okama.common.helpers import tails, helpers
 logger = logging.getLogger(__name__)
 
 
+def _bootstrap_tail_statistics(samples: np.ndarray, alpha: float) -> tuple[np.ndarray, np.ndarray]:
+    """Compute bootstrap quantiles and inclusive lower-tail means in one batch."""
+    quantiles = np.quantile(samples, alpha, axis=1)
+    selected = samples <= quantiles[:, None]
+    counts = selected.sum(axis=1)
+    sums = np.sum(samples, axis=1, where=selected)
+    means = np.full(quantiles.shape, np.nan)
+    np.divide(sums, counts, out=means, where=counts > 0)
+    return quantiles, means
+
+
 def _resolve_params_for_t(ror: pd.Series, parameters: tuple | None) -> tuple[float, float, float]:
     """Resolve (df, loc, scale) for Student's t, fitting whatever is not given."""
     if parameters is None or all(x is None for x in parameters):
@@ -114,7 +125,7 @@ def generate_returns_ts(
             )
         case _:
             raise ValueError("Unknown distribution type.")
-    return pd.DataFrame(data=random_returns, index=index)
+    return pd.DataFrame(data=random_returns, index=index, copy=False)
 
 
 class MonteCarlo:
@@ -184,6 +195,13 @@ class MonteCarlo:
         self._mc_number = mc_number
         self._seed = seed
         self._returns_ts_cache: pd.DataFrame | None = None
+        self._returns_snapshot: np.ndarray | None = None
+        self._returns_snapshot_index: pd.Index | None = None
+        self._returns_snapshot_columns: pd.Index | None = None
+        self._returns_snapshot_nan = False
+        self._returns_revision = 0
+        self._cagr_cache: pd.Series | None = None
+        self._cagr_revision: int | None = None
         self.ror = self.parent.parent.ror
 
     def __repr__(self):
@@ -318,6 +336,37 @@ class MonteCarlo:
         self.parent._monte_carlo_wealth_fv = pd.DataFrame(dtype=float)
         self.parent._monte_carlo_cash_flow_fv = pd.DataFrame(dtype=float)
         self._returns_ts_cache = None
+        self._returns_snapshot = None
+        self._cagr_cache = None
+        self._cagr_revision = None
+
+    def _returns_state(self) -> int | None:
+        """Observe the latest mutable draw once for all derived result caches."""
+        returns = self.monte_carlo_returns_ts
+        if type(returns) is not pd.DataFrame:
+            return None
+        values = returns.to_numpy(copy=False)
+        if values.dtype != np.dtype("float64") or not returns.dtypes.eq(np.dtype("float64")).all():
+            self._returns_snapshot = None
+            return None
+        same_axes = (
+            self._returns_snapshot_index is not None
+            and self._returns_snapshot_columns is not None
+            and returns.index.identical(self._returns_snapshot_index)
+            and returns.columns.identical(self._returns_snapshot_columns)
+        )
+        same = (
+            same_axes
+            and self._returns_snapshot is not None
+            and np.array_equal(values, self._returns_snapshot, equal_nan=self._returns_snapshot_nan)
+        )
+        if not same:
+            self._returns_snapshot = np.array(values, copy=True, order="K")
+            self._returns_snapshot_index = returns.index.copy(deep=True)
+            self._returns_snapshot_columns = returns.columns.copy(deep=True)
+            self._returns_snapshot_nan = bool(np.isnan(values).any())
+            self._returns_revision += 1
+        return self._returns_revision
 
     def backtesting_error(self, var_level: int = 5) -> dict:
         """
@@ -354,7 +403,6 @@ class MonteCarlo:
         delta_var = var_emp - var_theor
         delta_cvar = cvar_emp - cvar_theor
         # Arithmetic mean
-        parameters = self.get_parameters_for_distribution()
         match self.distribution:
             case "norm":
                 mean_t = parameters[0]
@@ -521,8 +569,13 @@ class MonteCarlo:
 
         CAGR is calculated for each of n random returns time series.
         """
-        return_ts = self.monte_carlo_returns_ts
-        return helpers.Frame.get_cagr(return_ts)
+        revision = self._returns_state()
+        if revision is None:
+            return helpers.Frame.get_cagr(self.monte_carlo_returns_ts)
+        if self._cagr_cache is None or self._cagr_revision != revision:
+            self._cagr_cache = helpers.Frame.get_cagr(self.monte_carlo_returns_ts)
+            self._cagr_revision = revision
+        return self._cagr_cache.copy()
 
     def percentile_distribution_cagr(
         self,
@@ -558,11 +611,11 @@ class MonteCarlo:
         {5: ..., 10: ..., 20: ...}
         """
         cagr_distr = self._get_cagr_distribution()
-        results = {}
-        for percentile in percentiles:
-            value = cagr_distr.quantile(percentile / 100)
-            results.update({percentile: value})
-        return results
+        percentiles = list(percentiles)
+        if not percentiles:
+            return {}
+        values = cagr_distr.quantile(np.asarray(percentiles) / 100)
+        return dict(zip(percentiles, values, strict=True))
 
     def percentile_inverse_cagr(
         self,
@@ -994,8 +1047,7 @@ class MonteCarlo:
             bootsrap_number = bootstrap_size_var
             rng = np.random.default_rng(seed=11)
             samples = rng.choice(self.ror, size=(bootsrap_number, self.ror.size), replace=True)
-            boot_var = np.quantile(samples, alpha, axis=1)
-            boot_cvar = np.apply_along_axis(tails.cvar_of_sample, 1, samples, alpha)
+            boot_var, boot_cvar = _bootstrap_tail_statistics(samples, alpha)
             var_ci = np.quantile(boot_var, [0.025, 0.975])
             cvar_ci = np.quantile(boot_cvar, [0.025, 0.975])
             # Stripe 95% CI emp VaR & CVar

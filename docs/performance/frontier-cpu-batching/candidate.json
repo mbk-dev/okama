@@ -1,0 +1,201 @@
+{
+  "revision": "b33ca12bdd81b4107c2de484fff581eda1023ce1",
+  "diff_sha256": "249f881c664972091b41b2d6a1f6f822a21041e3f850b64f17cd29e2dfa11e3c",
+  "python": "3.11.17",
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+  "processor": "",
+  "numpy": "2.4.6",
+  "pandas": "3.1.0",
+  "okama": "4.0.0",
+  "blas_config": "Build Dependencies:\n  blas:\n    detection method: pkgconfig\n    found: true\n    include directory: /opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/include\n    lib directory: /opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/lib\n    name: scipy-openblas\n    openblas configuration: OpenBLAS 0.3.31.188.0  USE64BITINT DYNAMIC_ARCH NO_AFFINITY\n      Haswell MAX_THREADS=64\n    pc file directory: /project/.openblas\n    version: 0.3.31.188.0\n  lapack:\n    detection method: pkgconfig\n    found: true\n    include directory: /opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/include\n    lib directory: /opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/lib\n    name: scipy-openblas\n    openblas configuration: OpenBLAS 0.3.31.188.0  USE64BITINT DYNAMIC_ARCH NO_AFFINITY\n      Haswell MAX_THREADS=64\n    pc file directory: /project/.openblas\n    version: 0.3.31.188.0\nCompilers:\n  c:\n    commands: cc\n    linker: ld.bfd\n    name: gcc\n    version: 14.2.1\n  c++:\n    commands: c++\n    linker: ld.bfd\n    name: gcc\n    version: 14.2.1\n  cython:\n    commands: cython\n    linker: cython\n    name: cython\n    version: 3.2.4\nMachine Information:\n  build:\n    cpu: x86_64\n    endian: little\n    family: x86_64\n    system: linux\n  host:\n    cpu: x86_64\n    endian: little\n    family: x86_64\n    system: linux\nPython Information:\n  path: /tmp/build-env-gjolnpt6/bin/python\n  version: '3.11'\nSIMD Extensions:\n  baseline:\n  - X86_V2\n  found:\n  - X86_V3\n  - X86_V4\n  - AVX512_ICL\n  not found:\n  - AVX512_SPR\n\n",
+  "thread_env": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": null
+  },
+  "months": 252,
+  "assets": 3,
+  "warmups": 1,
+  "repeats": 5,
+  "memory": "tracemalloc peak allocated during an extra warm call, including returned DataFrame; excludes resident inputs/imports",
+  "cases": {
+    "single_mean_monte_carlo_128": {
+      "seconds": [
+        0.00168781699903775,
+        0.0014643159956904128,
+        0.001609760001883842,
+        0.0016019859976950102,
+        0.001761206003720872
+      ],
+      "median_seconds": 0.001609760001883842,
+      "peak_bytes": 61313,
+      "portfolios": 128
+    },
+    "single_mean_grid_128": {
+      "seconds": [
+        0.0015172549974522553,
+        0.0013665209989994764,
+        0.001143440000305418,
+        0.0010842079936992377,
+        0.0009642720033298247
+      ],
+      "median_seconds": 0.001143440000305418,
+      "peak_bytes": 55824,
+      "portfolios": 136
+    },
+    "single_mean_monte_carlo_2048": {
+      "seconds": [
+        0.006184550999023486,
+        0.006109827998443507,
+        0.006519193004351109,
+        0.005580589997407515,
+        0.005710053999791853
+      ],
+      "median_seconds": 0.006109827998443507,
+      "peak_bytes": 1030353,
+      "portfolios": 2048
+    },
+    "single_mean_grid_2048": {
+      "seconds": [
+        0.004023319001134951,
+        0.004047053000249434,
+        0.0033931090001715347,
+        0.0035728470029425807,
+        0.0036783069954253733
+      ],
+      "median_seconds": 0.0036783069954253733,
+      "peak_bytes": 708374,
+      "portfolios": 2080
+    },
+    "single_mean_monte_carlo_8192": {
+      "seconds": [
+        0.019483185998979025,
+        0.016176892000657972,
+        0.019364661995496135,
+        0.017159406997961923,
+        0.018535005998273846
+      ],
+      "median_seconds": 0.018535005998273846,
+      "peak_bytes": 3232225,
+      "portfolios": 8192
+    },
+    "single_mean_grid_8192": {
+      "seconds": [
+        0.00898888599476777,
+        0.008456099996692501,
+        0.00793283199891448,
+        0.008250532002421096,
+        0.007942449999973178
+      ],
+      "median_seconds": 0.008250532002421096,
+      "peak_bytes": 1542598,
+      "portfolios": 5151
+    },
+    "single_cagr_monte_carlo_128": {
+      "seconds": [
+        0.0016555370020796545,
+        0.0018600420007715002,
+        0.0016304189994116314,
+        0.0020758800019393675,
+        0.001980179993552156
+      ],
+      "median_seconds": 0.0018600420007715002,
+      "peak_bytes": 61313,
+      "portfolios": 128
+    },
+    "single_cagr_grid_128": {
+      "seconds": [
+        0.0014551379936165176,
+        0.0012751180038321763,
+        0.0011269780006841756,
+        0.0010984350010403432,
+        0.0012352830017334782
+      ],
+      "median_seconds": 0.0012352830017334782,
+      "peak_bytes": 57022,
+      "portfolios": 136
+    },
+    "single_cagr_monte_carlo_2048": {
+      "seconds": [
+        0.006598181003937498,
+        0.007022842997685075,
+        0.007765066002320964,
+        0.006004950999340508,
+        0.007155653998779599
+      ],
+      "median_seconds": 0.007022842997685075,
+      "peak_bytes": 1030353,
+      "portfolios": 2048
+    },
+    "single_cagr_grid_2048": {
+      "seconds": [
+        0.003434076003031805,
+        0.003696741994644981,
+        0.00655803600238869,
+        0.006202323995239567,
+        0.004786500001500826
+      ],
+      "median_seconds": 0.004786500001500826,
+      "peak_bytes": 708374,
+      "portfolios": 2080
+    },
+    "single_cagr_monte_carlo_8192": {
+      "seconds": [
+        0.020480611005041283,
+        0.09707625000010012,
+        0.020330808001745027,
+        0.018288118997588754,
+        0.02078960300423205
+      ],
+      "median_seconds": 0.020480611005041283,
+      "peak_bytes": 3232225,
+      "portfolios": 8192
+    },
+    "single_cagr_grid_8192": {
+      "seconds": [
+        0.01016546900063986,
+        0.008363204004126601,
+        0.008205957994505297,
+        0.007435642997734249,
+        0.0074967180044041015
+      ],
+      "median_seconds": 0.008205957994505297,
+      "peak_bytes": 1542798,
+      "portfolios": 5151
+    }
+  },
+  "profile_single_monte_carlo": "         2765 function calls (2708 primitive calls) in 0.004 seconds\n\n   Ordered by: cumulative time\n   List reduced from 443 to 25 due to restriction <25>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.004    0.004 benchmark_frontier_batching.py:174(<lambda>)\n        1    0.000    0.000    0.004    0.004 single_period.py:921(get_monte_carlo)\n        1    0.000    0.000    0.003    0.003 single_period.py:1037(_get_portfolio_points)\n        1    0.000    0.000    0.001    0.001 helpers.py:461(change_columns_order)\n        1    0.000    0.000    0.001    0.001 frame.py:4283(__getitem__)\n        1    0.000    0.000    0.001    0.001 base.py:6539(_get_indexer_strict)\n        1    0.000    0.000    0.001    0.001 helpers.py:73(get_random_weights)\n        2    0.000    0.000    0.001    0.000 frame.py:466(__init__)\n        3    0.000    0.000    0.001    0.000 base.py:484(__new__)\n        1    0.000    0.000    0.000    0.000 _decorators.py:327(wrapper)\n        1    0.000    0.000    0.000    0.000 frame.py:17981(mean)\n        1    0.000    0.000    0.000    0.000 generic.py:12020(mean)\n        1    0.000    0.000    0.000    0.000 generic.py:11960(_stat_function)\n        1    0.000    0.000    0.000    0.000 frame.py:16969(_reduce)\n        1    0.000    0.000    0.000    0.000 construction.py:378(dict_to_mgr)\n        9    0.000    0.000    0.000    0.000 construction.py:580(sanitize_array)\n        1    0.000    0.000    0.000    0.000 frame.py:16606(cov)\n        1    0.000    0.000    0.000    0.000 base.py:6477(get_indexer_for)\n        1    0.000    0.000    0.000    0.000 base.py:3831(get_indexer)\n        1    0.000    0.000    0.000    0.000 generic.py:4048(take)\n        1    0.000    0.000    0.000    0.000 managers.py:1069(take)\n        1    0.000    0.000    0.000    0.000 managers.py:1712(reduce)\n        7    0.000    0.000    0.000    0.000 base.py:8354(ensure_index)\n        1    0.000    0.000    0.000    0.000 managers.py:1727(<listcomp>)\n        3    0.000    0.000    0.000    0.000 blocks.py:359(reduce)\n\n\n",
+  "profile_single_grid": "         2804 function calls (2670 primitive calls) in 0.003 seconds\n\n   Ordered by: cumulative time\n   List reduced from 440 to 25 due to restriction <25>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.003    0.003 benchmark_frontier_batching.py:176(<lambda>)\n        1    0.000    0.000    0.003    0.003 single_period.py:991(get_grid_portfolios)\n        1    0.000    0.000    0.003    0.003 single_period.py:1037(_get_portfolio_points)\n        1    0.000    0.000    0.001    0.001 helpers.py:461(change_columns_order)\n        1    0.000    0.000    0.001    0.001 frame.py:4283(__getitem__)\n        1    0.000    0.000    0.001    0.001 base.py:6539(_get_indexer_strict)\n        1    0.000    0.000    0.001    0.001 frame.py:16606(cov)\n        1    0.000    0.000    0.000    0.000 helpers.py:137(get_grid_weights)\n        2    0.000    0.000    0.000    0.000 frame.py:466(__init__)\n        9    0.000    0.000    0.000    0.000 construction.py:580(sanitize_array)\n        3    0.000    0.000    0.000    0.000 base.py:484(__new__)\n        1    0.000    0.000    0.000    0.000 construction.py:378(dict_to_mgr)\n        1    0.000    0.000    0.000    0.000 base.py:6477(get_indexer_for)\n        1    0.000    0.000    0.000    0.000 base.py:3831(get_indexer)\n        1    0.000    0.000    0.000    0.000 _decorators.py:327(wrapper)\n        1    0.000    0.000    0.000    0.000 frame.py:17981(mean)\n        1    0.000    0.000    0.000    0.000 generic.py:12020(mean)\n        1    0.000    0.000    0.000    0.000 generic.py:11960(_stat_function)\n        1    0.000    0.000    0.000    0.000 frame.py:16969(_reduce)\n        1    0.000    0.000    0.000    0.000 series.py:360(__init__)\n        2    0.000    0.000    0.000    0.000 base.py:5397(_get_engine_target)\n        7    0.000    0.000    0.000    0.000 base.py:8354(ensure_index)\n        1    0.000    0.000    0.000    0.000 _function_base_impl.py:2674(cov)\n     78/1    0.000    0.000    0.000    0.000 helpers.py:202(_enumerate)\n        1    0.000    0.000    0.000    0.000 generic.py:4048(take)\n\n\n",
+  "profile_multi_monte_carlo": "         651095 function calls (636594 primitive calls) in 0.500 seconds\n\n   Ordered by: cumulative time\n   List reduced from 743 to 25 due to restriction <25>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.500    0.500 benchmark_frontier_batching.py:174(<lambda>)\n        1    0.003    0.003    0.500    0.500 multi_period.py:1297(get_monte_carlo)\n      128    0.004    0.000    0.458    0.004 rebalancing.py:381(return_ror_ts_ef)\n      128    0.005    0.000    0.397    0.003 rebalancing.py:327(wealth_ts_ef)\n      896    0.001    0.000    0.133    0.000 common.py:122(new_method)\n      896    0.001    0.000    0.124    0.000 _decorators.py:327(wrapper)\n     1920    0.008    0.000    0.107    0.000 managers.py:410(apply)\n      256    0.002    0.000    0.079    0.000 frame.py:10128(_arith_method)\n      384    0.002    0.000    0.076    0.000 groupby.py:822(__init__)\n      384    0.004    0.000    0.074    0.000 grouper.py:745(get_grouper)\n      512    0.002    0.000    0.072    0.000 ops.py:1006(_cython_operation)\n      256    0.000    0.000    0.067    0.000 arraylike.py:229(__rmul__)\n      256    0.001    0.000    0.064    0.000 frame.py:13563(groupby)\n      128    0.000    0.000    0.059    0.000 generic.py:2002(__array_ufunc__)\n      128    0.002    0.000    0.058    0.000 arraylike.py:278(array_ufunc)\n     1281    0.008    0.000    0.057    0.000 series.py:360(__init__)\n     1152    0.001    0.000    0.055    0.000 ops.py:829(ids)\n      896    0.001    0.000    0.055    0.000 blocks.py:348(apply)\n      640    0.001    0.000    0.051    0.000 series.py:7386(_arith_method)\n      384    0.001    0.000    0.051    0.000 ops.py:779(has_dropped_na)\n      640    0.004    0.000    0.049    0.000 base.py:1701(_arith_method)\n      128    0.000    0.000    0.049    0.000 resample.py:2617(_get_grouper)\n      128    0.001    0.000    0.049    0.000 resample.py:2547(_get_resampler)\n      128    0.000    0.000    0.049    0.000 groupby.py:4783(cumprod)\n      128    0.000    0.000    0.048    0.000 generic.py:2454(_cython_transform)\n\n\n",
+  "profile_multi_grid": "         336519 function calls (329015 primitive calls) in 0.232 seconds\n\n   Ordered by: cumulative time\n   List reduced from 716 to 25 due to restriction <25>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.232    0.232 benchmark_frontier_batching.py:176(<lambda>)\n        1    0.001    0.001    0.232    0.232 multi_period.py:1374(get_grid_portfolios)\n       66    0.002    0.000    0.212    0.003 rebalancing.py:381(return_ror_ts_ef)\n       66    0.002    0.000    0.182    0.003 rebalancing.py:327(wealth_ts_ef)\n      462    0.001    0.000    0.064    0.000 common.py:122(new_method)\n      462    0.001    0.000    0.057    0.000 _decorators.py:327(wrapper)\n      990    0.004    0.000    0.049    0.000 managers.py:410(apply)\n      132    0.001    0.000    0.037    0.000 frame.py:10128(_arith_method)\n      198    0.001    0.000    0.034    0.000 groupby.py:822(__init__)\n      198    0.002    0.000    0.034    0.000 grouper.py:745(get_grouper)\n      264    0.001    0.000    0.033    0.000 ops.py:1006(_cython_operation)\n      132    0.000    0.000    0.032    0.000 arraylike.py:229(__rmul__)\n      132    0.001    0.000    0.029    0.000 frame.py:13563(groupby)\n       66    0.000    0.000    0.028    0.000 generic.py:2002(__array_ufunc__)\n       66    0.001    0.000    0.028    0.000 arraylike.py:278(array_ufunc)\n      661    0.004    0.000    0.028    0.000 series.py:360(__init__)\n      594    0.000    0.000    0.025    0.000 ops.py:829(ids)\n      330    0.000    0.000    0.025    0.000 series.py:7386(_arith_method)\n      462    0.001    0.000    0.025    0.000 blocks.py:348(apply)\n      330    0.002    0.000    0.024    0.000 base.py:1701(_arith_method)\n      198    0.001    0.000    0.023    0.000 ops.py:779(has_dropped_na)\n       66    0.000    0.000    0.022    0.000 resample.py:2617(_get_grouper)\n       66    0.000    0.000    0.022    0.000 resample.py:2547(_get_resampler)\n       66    0.000    0.000    0.022    0.000 groupby.py:4783(cumprod)\n       66    0.000    0.000    0.022    0.000 generic.py:2454(_cython_transform)\n\n\n",
+  "phases_seconds": {
+    "weight_generation": [
+      0.01601387399568921,
+      0.016014936001738533,
+      0.015117069997359067,
+      0.01777595199382631,
+      0.09635101999447215
+    ],
+    "statistics_preparation": [
+      0.0006557789965881966,
+      0.0002754599991021678,
+      0.00020577900431817397,
+      0.00019846500072162598,
+      0.00019007800437975675
+    ],
+    "batch_calculation": [
+      0.000414632995671127,
+      0.0003505320055410266,
+      0.00032849100534804165,
+      0.00033487300242995843,
+      0.0003108969976892695
+    ],
+    "output_construction": [
+      0.0011818030034191906,
+      0.0004912780059385113,
+      0.00039166000351542607,
+      0.00039304199890466407,
+      0.0003990130062447861
+    ]
+  }
+}

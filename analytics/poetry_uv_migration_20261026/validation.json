@@ -1,0 +1,75 @@
+{
+  "3.11": {
+    "tests": 530,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 3
+  },
+  "3.12": {
+    "tests": 530,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 3
+  },
+  "3.13": {
+    "tests": 530,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 3
+  },
+  "notebooks-3.14": {
+    "tests": "11",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0"
+  },
+  "notebooks-3.12": {
+    "tests": "11",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0"
+  },
+  "3.14": {
+    "tests": 530,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 3
+  },
+  "bootstrap": {
+    "passed": 22,
+    "red_failed": 11
+  },
+  "setup": {
+    "passed": 51,
+    "migrated_worktree": "PASS",
+    "legacy_worktree": "PASS",
+    "cache_readback": "PASS"
+  },
+  "sphinx": {
+    "exit_code": 0,
+    "warnings": 256,
+    "incremental_warnings": 510
+  },
+  "packaging": {
+    "twine": "PASS",
+    "wheel_and_sdist_pip311": "PASS",
+    "package_files_identical": 30,
+    "runtime_dependencies_identical": 10
+  },
+  "acceptance_pending": [
+    "Hosted GitHub/Travis CI and Read the Docs after authorized branch publication",
+    "Actual Google Colab session; local Python 3.12 notebooks and Colab bootstrap branch passed"
+  ],
+  "artifact_sha256": {
+    ".gitignore": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+    "okama-4.0.0.tar.gz": "e5570854a57bf3ffb512ba32cd343305b94e33f731f7b27cdba6b57f346e3281",
+    "okama-4.0.0-py3-none-any.whl": "8bbcecbbb65ab6dafb64bca75b3b0ffb2168ac8fdca056b8c9f108a9fdf1aae8"
+  },
+  "credentials_wrapper": {
+    "tests_passed": 9,
+    "real_credentials_read": false,
+    "publication_performed": false
+  },
+  "release_kernel_probe": "PASS: fresh shell selected current worktree interpreter and package",
+  "review": "Independent Grok 4.6 partial review: two findings verified and fixed; timed out before complete final review; no clean independent-review claim"
+}

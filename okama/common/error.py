@@ -1,3 +1,7 @@
+class MissingDistributionsWarning(UserWarning):
+    """A known income-paying fund has no distribution history in the data API."""
+
+
 class ShortPeriodLengthError(Exception):
     """
     Raised when available period length is too short for the asset.

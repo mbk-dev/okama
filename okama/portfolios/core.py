@@ -637,7 +637,7 @@ class Portfolio(make_asset_list.ListMaker):
         if real:
             df_or_ts = self._make_real_return_time_series(df_or_ts)
         df = self._make_df_if_series(df_or_ts)
-        return helpers.Frame.get_rolling_fn(df, window=window, fn=helpers.Frame.get_cagr)
+        return helpers.Frame.get_rolling_cagr(df, window=window)
 
     def get_monthly_geometric_mean_return(self):
         """

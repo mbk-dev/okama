@@ -1,0 +1,51 @@
+{
+  "python": "3.11.17",
+  "numpy": "2.4.6",
+  "pandas": "3.1.0",
+  "revision": "b33ca12bdd81b4107c2de484fff581eda1023ce1",
+  "script_sha256": "38e41300286abe79e6752a1b258fc33947c128866fe89a907e6ab438e499e427",
+  "scope": "Exploratory offline prototypes; no production modifications",
+  "cases": {
+    "gmv_monthly_3_assets": {
+      "baseline_seconds": [
+        0.009055262002220843,
+        0.007408792997011915,
+        0.007522005995269865,
+        0.0066688549995888025,
+        0.006779714996810071
+      ],
+      "prototype_seconds": [
+        0.0018787189983413555,
+        0.0019979930002591573,
+        0.0035658139968290925,
+        0.00202659799833782,
+        0.00196749599854229
+      ],
+      "baseline_median_seconds": 0.007408792997011915,
+      "prototype_median_seconds": 0.0019979930002591573,
+      "ratio": 3.7081175940310747,
+      "baseline_covariance_calls": 16
+    },
+    "gmv_monthly_32_assets": {
+      "baseline_seconds": [
+        0.06998582700180123,
+        0.06339204300456913,
+        0.05808600300224498,
+        0.06452132699632784,
+        0.06477410400111694
+      ],
+      "prototype_seconds": [
+        0.005178159997740295,
+        0.005600628006504849,
+        0.005563166996580549,
+        0.005753846999141388,
+        0.004850310004258063
+      ],
+      "baseline_median_seconds": 0.06452132699632784,
+      "prototype_median_seconds": 0.005563166996580549,
+      "ratio": 11.597948980497344,
+      "baseline_covariance_calls": 264
+    }
+  },
+  "profiles": {}
+}

@@ -1,0 +1,283 @@
+{
+  "python": "3.11.17",
+  "numpy": "2.4.6",
+  "pandas": "3.1.0",
+  "revision": "b33ca12bdd81b4107c2de484fff581eda1023ce1",
+  "script_sha256": "c0b7c9227bc42ea88de1d8bb473c961b67413686b1b36cd9e0348518411ce308",
+  "scope": "Exploratory offline prototypes; no production modifications",
+  "cases": {
+    "rebalance_conditional_252x3": {
+      "baseline_seconds": [
+        0.12949866500275675,
+        0.12053914400166832,
+        0.11345487400103593,
+        0.10246263400040334,
+        0.10169262899580644
+      ],
+      "prototype_seconds": [
+        0.0011982939977315255,
+        0.0011837359998025931,
+        0.001170812000054866,
+        0.0011306149972369894,
+        0.001157776998297777
+      ],
+      "baseline_median_seconds": 0.11345487400103593,
+      "prototype_median_seconds": 0.001170812000054866,
+      "ratio": 96.90272562607768
+    },
+    "rebalance_calendar_month_252x3": {
+      "baseline_seconds": [
+        0.1310674479973386,
+        0.13034403199708322,
+        0.1338713240038487,
+        0.13315312699705828,
+        0.12783867999678478
+      ],
+      "prototype_seconds": [
+        0.0015775299980305135,
+        0.0011565739987418056,
+        0.0017410290020052344,
+        0.001343197000096552,
+        0.0017288949966314249
+      ],
+      "baseline_median_seconds": 0.1310674479973386,
+      "prototype_median_seconds": 0.0015775299980305135,
+      "ratio": 83.0839655416831
+    },
+    "rebalance_calendar_year_252x3": {
+      "baseline_seconds": [
+        0.011087180006143171,
+        0.013650650995259639,
+        0.011269734000961762,
+        0.011291866001556627,
+        0.01097627000126522
+      ],
+      "prototype_seconds": [
+        0.001619337999727577,
+        0.0013920290002715774,
+        0.001410875003784895,
+        0.0012811400010832585,
+        0.0030053270020289347
+      ],
+      "baseline_median_seconds": 0.011269734000961762,
+      "prototype_median_seconds": 0.001410875003784895,
+      "ratio": 7.987762183559083
+    },
+    "rebalance_conditional_600x16": {
+      "baseline_seconds": [
+        0.2277379130027839,
+        0.234113342994533,
+        0.24815699600003427,
+        0.3292560030022287,
+        0.2981475299966405
+      ],
+      "prototype_seconds": [
+        0.0027929239950026385,
+        0.002767537000181619,
+        0.0028234319979674183,
+        0.0027596319996519014,
+        0.0028163189999759197
+      ],
+      "baseline_median_seconds": 0.24815699600003427,
+      "prototype_median_seconds": 0.0027929239950026385,
+      "ratio": 88.85204052958835
+    },
+    "rebalance_calendar_month_600x16": {
+      "baseline_seconds": [
+        0.38877479199436493,
+        0.3728105219997815,
+        0.4665754069937975,
+        0.5235727250037598,
+        0.37300104099995224
+      ],
+      "prototype_seconds": [
+        0.001671045996772591,
+        0.001199114994960837,
+        0.0019855299979099073,
+        0.0014648760043201037,
+        0.0017093679998652078
+      ],
+      "baseline_median_seconds": 0.38877479199436493,
+      "prototype_median_seconds": 0.001671045996772591,
+      "ratio": 232.65355516558677
+    },
+    "rebalance_calendar_year_600x16": {
+      "baseline_seconds": [
+        0.027695024997228757,
+        0.023888757001259364,
+        0.02724065700022038,
+        0.024919654002587777,
+        0.02572062700346578
+      ],
+      "prototype_seconds": [
+        0.0017538820029585622,
+        0.001477079997130204,
+        0.001399403001414612,
+        0.0011732060011127032,
+        0.001573762005136814
+      ],
+      "baseline_median_seconds": 0.02572062700346578,
+      "prototype_median_seconds": 0.001477079997130204,
+      "ratio": 17.413157752754074
+    },
+    "rebalance_ef_batch_none_128": {
+      "baseline_seconds": [
+        0.04623934900155291,
+        0.04833071900065988,
+        0.042170814995188266
+      ],
+      "prototype_seconds": [
+        0.00021700000070268288,
+        0.00013976400077808648,
+        0.00018847599858418107
+      ],
+      "baseline_median_seconds": 0.04623934900155291,
+      "prototype_median_seconds": 0.00018847599858418107,
+      "ratio": 245.332824067254
+    },
+    "rebalance_ef_batch_none_2048": {
+      "baseline_seconds": [
+        0.6344642080002814,
+        0.7115404370051692,
+        0.5991859010027838
+      ],
+      "prototype_seconds": [
+        0.002954950003186241,
+        0.0038960079982643947,
+        0.004633390999515541
+      ],
+      "baseline_median_seconds": 0.6344642080002814,
+      "prototype_median_seconds": 0.0038960079982643947,
+      "ratio": 162.8498217362296
+    },
+    "rebalance_ef_batch_month_128": {
+      "baseline_seconds": [
+        0.1714747720034211,
+        0.17677416099468246,
+        0.18279569299920695
+      ],
+      "prototype_seconds": [
+        0.001147556999057997,
+        0.0009668359998613596,
+        0.0012204450031276792
+      ],
+      "baseline_median_seconds": 0.17677416099468246,
+      "prototype_median_seconds": 0.001147556999057997,
+      "ratio": 154.0439046947492
+    },
+    "rebalance_ef_batch_month_2048": {
+      "baseline_seconds": [
+        2.5547464699993725,
+        2.5109172820011736,
+        2.6564056770002935
+      ],
+      "prototype_seconds": [
+        0.015462381998077035,
+        0.014634229002695065,
+        0.014382433000719175
+      ],
+      "baseline_median_seconds": 2.5547464699993725,
+      "prototype_median_seconds": 0.014634229002695065,
+      "ratio": 174.57335603596786
+    },
+    "rebalance_ef_batch_quarter_128": {
+      "baseline_seconds": [
+        0.1582278940040851,
+        0.16817181399528636,
+        0.19209471499925712
+      ],
+      "prototype_seconds": [
+        0.001062636001734063,
+        0.0009212000004481524,
+        0.001864100995589979
+      ],
+      "baseline_median_seconds": 0.16817181399528636,
+      "prototype_median_seconds": 0.001062636001734063,
+      "ratio": 158.25909692581007
+    },
+    "rebalance_ef_batch_quarter_2048": {
+      "baseline_seconds": [
+        2.6175939259992447,
+        2.5552783950042794,
+        2.4385967169946525
+      ],
+      "prototype_seconds": [
+        0.009519167993857991,
+        0.009573399998771492,
+        0.00910238099459093
+      ],
+      "baseline_median_seconds": 2.5552783950042794,
+      "prototype_median_seconds": 0.009519167993857991,
+      "ratio": 268.435056157535
+    },
+    "rebalance_ef_batch_half-year_128": {
+      "baseline_seconds": [
+        0.15309998900193023,
+        0.16055115200288128,
+        0.19200128000375116
+      ],
+      "prototype_seconds": [
+        0.0007315719994949177,
+        0.000664515006064903,
+        0.0008110919952741824
+      ],
+      "baseline_median_seconds": 0.16055115200288128,
+      "prototype_median_seconds": 0.0007315719994949177,
+      "ratio": 219.46049344934866
+    },
+    "rebalance_ef_batch_half-year_2048": {
+      "baseline_seconds": [
+        2.602947162995406,
+        2.562573381997936,
+        2.5297652589943027
+      ],
+      "prototype_seconds": [
+        0.006451203997130506,
+        0.006650069997704122,
+        0.006822775001637638
+      ],
+      "baseline_median_seconds": 2.562573381997936,
+      "prototype_median_seconds": 0.006650069997704122,
+      "ratio": 385.34532461803286
+    },
+    "rebalance_ef_batch_year_128": {
+      "baseline_seconds": [
+        0.1564864040046814,
+        0.15146363899839344,
+        0.16420867999840993
+      ],
+      "prototype_seconds": [
+        0.0007050519998301752,
+        0.0007374420019914396,
+        0.001172534997749608
+      ],
+      "baseline_median_seconds": 0.1564864040046814,
+      "prototype_median_seconds": 0.0007374420019914396,
+      "ratio": 212.2016424099721
+    },
+    "rebalance_ef_batch_year_2048": {
+      "baseline_seconds": [
+        2.502560460001405,
+        2.6528477370011387,
+        2.605555589994765
+      ],
+      "prototype_seconds": [
+        0.006455010996432975,
+        0.00879931900271913,
+        0.006743785997969098
+      ],
+      "baseline_median_seconds": 2.605555589994765,
+      "prototype_median_seconds": 0.006743785997969098,
+      "ratio": 386.3639194333023
+    }
+  },
+  "profiles": {
+    "rebalance_conditional_252x3": "         690339 function calls (667053 primitive calls) in 0.265 seconds\n\n   Ordered by: cumulative time\n   List reduced from 594 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.265    0.265 benchmark_performance_opportunities.py:158(reference)\n        1    0.000    0.000    0.265    0.265 rebalancing.py:116(wealth_ts)\n        1    0.003    0.003    0.264    0.264 rebalancing.py:216(_rebalance_by_condition)\n      252    0.002    0.000    0.099    0.000 rebalancing.py:251(_check_if_rebalancing_required)\n      264    0.001    0.000    0.092    0.000 series.py:1215(__setitem__)\n     1512    0.001    0.000    0.090    0.000 common.py:122(new_method)\n      265    0.001    0.000    0.084    0.000 indexing.py:977(__setitem__)\n     2550    0.011    0.000    0.078    0.000 series.py:360(__init__)\n      265    0.001    0.000    0.075    0.000 indexing.py:2581(_setitem_with_indexer)\n     1260    0.001    0.000    0.074    0.000 series.py:7386(_arith_method)\n      265    0.004    0.000    0.073    0.000 indexing.py:2987(_setitem_with_indexer_missing)\n     1260    0.005    0.000    0.072    0.000 base.py:1701(_arith_method)\n     1764    0.004    0.000    0.063    0.000 series.py:7466(_construct_result)\n      504    0.000    0.000    0.031    0.000 series.py:8353(truediv)\n      504    0.001    0.000    0.031    0.000 series.py:7509(_flex_method)\n173395/171628    0.016    0.000    0.029    0.000 {built-in method builtins.isinstance}\n      504    0.000    0.000    0.029    0.000 arraylike.py:217(__sub__)\n      239    0.000    0.000    0.025    0.000 generic.py:12768(__imul__)\n\n\n",
+    "rebalance_calendar_month_252x3": "         574760 function calls (550264 primitive calls) in 0.309 seconds\n\n   Ordered by: cumulative time\n   List reduced from 650 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.001    0.001    0.309    0.309 benchmark_performance_opportunities.py:175(reference)\n        1    0.010    0.010    0.308    0.308 rebalancing.py:116(wealth_ts)\n      251    0.002    0.000    0.109    0.000 series.py:1215(__setitem__)\n      252    0.002    0.000    0.101    0.000 indexing.py:977(__setitem__)\n      504    0.001    0.000    0.094    0.000 common.py:122(new_method)\n      504    0.003    0.000    0.092    0.000 frame.py:10128(_arith_method)\n      252    0.001    0.000    0.090    0.000 indexing.py:2581(_setitem_with_indexer)\n      252    0.004    0.000    0.088    0.000 indexing.py:2987(_setitem_with_indexer_missing)\n      252    0.000    0.000    0.069    0.000 generic.py:2002(__array_ufunc__)\n      252    0.002    0.000    0.069    0.000 arraylike.py:278(array_ufunc)\n      252    0.000    0.000    0.065    0.000 arraylike.py:229(__rmul__)\n      252    0.000    0.000    0.056    0.000 _decorators.py:327(wrapper)\n      252    0.001    0.000    0.056    0.000 frame.py:17755(sum)\n      252    0.000    0.000    0.055    0.000 generic.py:12102(sum)\n      252    0.001    0.000    0.054    0.000 generic.py:12070(_min_count_stat_function)\n      252    0.002    0.000    0.053    0.000 frame.py:16969(_reduce)\n      504    0.001    0.000    0.040    0.000 frame.py:10326(_align_for_op)\n     2016    0.005    0.000    0.033    0.000 managers.py:410(apply)\n\n\n",
+    "rebalance_calendar_year_252x3": "         44978 function calls (43191 primitive calls) in 0.024 seconds\n\n   Ordered by: cumulative time\n   List reduced from 651 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.024    0.024 benchmark_performance_opportunities.py:175(reference)\n        1    0.001    0.001    0.024    0.024 rebalancing.py:116(wealth_ts)\n       44    0.000    0.000    0.008    0.000 common.py:122(new_method)\n       44    0.000    0.000    0.008    0.000 frame.py:10128(_arith_method)\n       21    0.000    0.000    0.008    0.000 series.py:1215(__setitem__)\n       22    0.000    0.000    0.008    0.000 indexing.py:977(__setitem__)\n       22    0.000    0.000    0.007    0.000 indexing.py:2581(_setitem_with_indexer)\n       22    0.000    0.000    0.007    0.000 indexing.py:2987(_setitem_with_indexer_missing)\n       22    0.000    0.000    0.006    0.000 generic.py:2002(__array_ufunc__)\n       22    0.000    0.000    0.006    0.000 arraylike.py:278(array_ufunc)\n       22    0.000    0.000    0.006    0.000 arraylike.py:229(__rmul__)\n       44    0.000    0.000    0.003    0.000 frame.py:10326(_align_for_op)\n      176    0.000    0.000    0.003    0.000 managers.py:410(apply)\n       68    0.000    0.000    0.003    0.000 frame.py:466(__init__)\n       69    0.000    0.000    0.002    0.000 series.py:360(__init__)\n       22    0.000    0.000    0.002    0.000 arraylike.py:213(__radd__)\n       44    0.000    0.000    0.002    0.000 frame.py:10548(_construct_result)\n      132    0.000    0.000    0.002    0.000 managers.py:743(copy)\n\n\n",
+    "rebalance_conditional_600x16": "         1627172 function calls (1572193 primitive calls) in 0.781 seconds\n\n   Ordered by: cumulative time\n   List reduced from 594 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.781    0.781 benchmark_performance_opportunities.py:158(reference)\n        1    0.000    0.000    0.781    0.781 rebalancing.py:116(wealth_ts)\n        1    0.011    0.011    0.779    0.779 rebalancing.py:216(_rebalance_by_condition)\n      600    0.007    0.000    0.282    0.000 rebalancing.py:251(_check_if_rebalancing_required)\n      607    0.004    0.000    0.279    0.000 series.py:1215(__setitem__)\n     3600    0.004    0.000    0.255    0.000 common.py:122(new_method)\n      608    0.004    0.000    0.252    0.000 indexing.py:977(__setitem__)\n      608    0.002    0.000    0.225    0.000 indexing.py:2581(_setitem_with_indexer)\n      608    0.012    0.000    0.220    0.000 indexing.py:2987(_setitem_with_indexer_missing)\n     6020    0.030    0.000    0.219    0.000 series.py:360(__init__)\n     3000    0.003    0.000    0.209    0.000 series.py:7386(_arith_method)\n     3000    0.015    0.000    0.203    0.000 base.py:1701(_arith_method)\n     4200    0.010    0.000    0.172    0.000 series.py:7466(_construct_result)\n     1200    0.001    0.000    0.087    0.000 series.py:8353(truediv)\n     1200    0.002    0.000    0.087    0.000 series.py:7509(_flex_method)\n407924/403721    0.045    0.000    0.080    0.000 {built-in method builtins.isinstance}\n      592    0.001    0.000    0.080    0.000 generic.py:12768(__imul__)\n     1200    0.001    0.000    0.079    0.000 arraylike.py:217(__sub__)\n\n\n",
+    "rebalance_calendar_month_600x16": "         1366790 function calls (1308512 primitive calls) in 0.780 seconds\n\n   Ordered by: cumulative time\n   List reduced from 650 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.001    0.001    0.780    0.780 benchmark_performance_opportunities.py:175(reference)\n        1    0.020    0.020    0.779    0.779 rebalancing.py:116(wealth_ts)\n      599    0.003    0.000    0.333    0.001 series.py:1215(__setitem__)\n      600    0.003    0.000    0.315    0.001 indexing.py:977(__setitem__)\n      600    0.002    0.000    0.290    0.000 indexing.py:2581(_setitem_with_indexer)\n      600    0.009    0.000    0.287    0.000 indexing.py:2987(_setitem_with_indexer_missing)\n     1200    0.001    0.000    0.214    0.000 common.py:122(new_method)\n     1200    0.006    0.000    0.210    0.000 frame.py:10128(_arith_method)\n      600    0.001    0.000    0.155    0.000 generic.py:2002(__array_ufunc__)\n      600    0.005    0.000    0.154    0.000 arraylike.py:278(array_ufunc)\n      600    0.001    0.000    0.147    0.000 arraylike.py:229(__rmul__)\n      601    0.005    0.000    0.133    0.000 concat.py:56(concat_compat)\n      598    0.005    0.000    0.127    0.000 array.py:2553(_concat_same_type)\n      600    0.001    0.000    0.125    0.000 _decorators.py:327(wrapper)\n      600    0.001    0.000    0.124    0.000 frame.py:17755(sum)\n      600    0.001    0.000    0.122    0.000 generic.py:12102(sum)\n      600    0.002    0.000    0.122    0.000 generic.py:12070(_min_count_stat_function)\n      598    0.120    0.000    0.120    0.000 array.py:2566(<listcomp>)\n\n\n",
+    "rebalance_calendar_year_600x16": "         102264 function calls (98189 primitive calls) in 0.050 seconds\n\n   Ordered by: cumulative time\n   List reduced from 651 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.050    0.050 benchmark_performance_opportunities.py:175(reference)\n        1    0.002    0.002    0.050    0.050 rebalancing.py:116(wealth_ts)\n      102    0.000    0.000    0.018    0.000 common.py:122(new_method)\n       50    0.000    0.000    0.018    0.000 series.py:1215(__setitem__)\n      102    0.000    0.000    0.018    0.000 frame.py:10128(_arith_method)\n       51    0.000    0.000    0.017    0.000 indexing.py:977(__setitem__)\n       51    0.000    0.000    0.014    0.000 indexing.py:2581(_setitem_with_indexer)\n       51    0.001    0.000    0.014    0.000 indexing.py:2987(_setitem_with_indexer_missing)\n       51    0.000    0.000    0.013    0.000 generic.py:2002(__array_ufunc__)\n       51    0.000    0.000    0.013    0.000 arraylike.py:278(array_ufunc)\n       51    0.000    0.000    0.012    0.000 arraylike.py:229(__rmul__)\n      102    0.000    0.000    0.007    0.000 frame.py:10326(_align_for_op)\n      408    0.001    0.000    0.006    0.000 managers.py:410(apply)\n      155    0.000    0.000    0.005    0.000 frame.py:466(__init__)\n      156    0.001    0.000    0.005    0.000 series.py:360(__init__)\n       51    0.000    0.000    0.005    0.000 arraylike.py:213(__radd__)\n      102    0.000    0.000    0.005    0.000 frame.py:10548(_construct_result)\n      306    0.000    0.000    0.004    0.000 managers.py:743(copy)\n\n\n"
+  },
+  "processing_note": "Only Rebalance measurements retained from this run. Initial ListMaker measurements used a currency fixture that truncated pre-1990 histories and were discarded; corrected full-window measurements are in listmaker.json."
+}

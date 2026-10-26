@@ -1,0 +1,12 @@
+[
+  {
+    "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+    "source": "/home/chilango/projects/rs/wt/okama/uv-setup-smoke/okama/__init__.py",
+    "version": "4.0.0"
+  },
+  {
+    "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+    "source": "/home/chilango/projects/rs/wt/okama/uv-setup-legacy-smoke/okama/__init__.py",
+    "version": "4.0.0"
+  }
+]

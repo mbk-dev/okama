@@ -1,9 +1,13 @@
+import warnings
+
 import pandas as pd
 import numpy as np
 
 from okama import settings
 from okama.api import data_queries, namespaces
+from okama.api.request_scope import data_request_scope
 from okama.common import validators
+from okama.common.error import MissingDistributionsWarning
 from okama.common.helpers import helpers
 
 
@@ -25,6 +29,7 @@ class Asset:
         If None, the last available date will be used.
     """
 
+    @data_request_scope()
     def __init__(
         self,
         symbol: str = settings.default_ticker,
@@ -45,6 +50,17 @@ class Asset:
             period="M",
         )
         self._set_first_last_dates()
+        # Verified missing-history cases from issue #125. This is a temporary,
+        # bounded safeguard until API coverage metadata is available (okama-API#545).
+        if self.symbol in {"TPAY.MOEX", "FLOW.MOEX", "AKIE.MOEX"}:
+            if data_queries.QueryData.get_dividends(self.symbol).empty:
+                warnings.warn(
+                    f"{self.symbol}: distribution history is missing from the data API. "
+                    "Dividend yield and total-return calculations may omit cash distributions. "
+                    "See https://github.com/mbk-dev/okama/issues/125.",
+                    MissingDistributionsWarning,
+                    stacklevel=2,
+                )
 
     def _set_first_last_dates(self) -> None:
         """

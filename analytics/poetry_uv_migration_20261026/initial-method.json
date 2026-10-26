@@ -1,0 +1,12 @@
+{
+  "python": "/usr/bin/python3.14",
+  "poetry": "2.5.1",
+  "uv": "0.12.23",
+  "all_groups": true,
+  "timing": "environment creation plus dependency resolution/install plus editable root install; inventory/import smoke excluded",
+  "cache": "existing per-tool host cache; initial run retained separately; caches not purged",
+  "other_load": "other Poetry installations observed during first pair; no processes interrupted",
+  "uv_manifest": "PEP 621 project.dependencies and dependency-groups appended in disposable copy; same dependency constraints and poetry-core backend",
+  "cleanup": "delete only benchmark .venv after each run; keep logs and manifests",
+  "scope": "Python setup only; excludes Git worktree and CodeGraph"
+}

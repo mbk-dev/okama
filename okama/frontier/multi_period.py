@@ -1,5 +1,8 @@
 import time  # noqa: I001
 import itertools
+from functools import wraps
+from typing import Any
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -17,6 +20,23 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def _optimizer_scope(method: Callable[..., Any]) -> Callable[..., Any]:
+    """Check mutable inputs once at the boundary of a nested numerical calculation."""
+
+    @wraps(method)
+    def calculate(self: "EfficientFrontier", *args: Any, **kwargs: Any) -> Any:
+        depth = getattr(self, "_optimizer_depth", 0)
+        if depth == 0:
+            self._prepare_optimizer_inputs()
+        self._optimizer_depth = depth + 1
+        try:
+            return method(self, *args, **kwargs)
+        finally:
+            self._optimizer_depth = depth
+
+    return calculate
 
 
 class EfficientFrontier(asset_list.AssetList):
@@ -208,7 +228,50 @@ class EfficientFrontier(asset_list.AssetList):
         self._ef_points = pd.DataFrame(dtype=float)  # renew EF points DataFrame
         self._mdp_points = pd.DataFrame(dtype=float)  # renew MDP points DataFrame
         self._ror_cache = {}  # clear portfolio return time series cache
+        self._optimizer_input = None
+        self._prepared_ror = None
+        self.__dict__.pop("_global_max_return_portfolio_weights", None)
 
+    def _optimizer_settings(self) -> tuple:
+        """Capture the effective inputs to numerical tables, excluding rendering settings."""
+        return (
+            tuple(tuple(bound) for bound in self.bounds),
+            self.rebalancing_strategy.period,
+            self.n_points,
+            self.full_frontier,
+            tuple(self._asset_labels(self._labels_mode)),
+            self.first_date,
+            self.last_date,
+            settings._MONTHS_PER_YEAR,
+            self._FTOL,
+        )
+
+    def _prepare_optimizer_inputs(self) -> None:
+        """Reuse a single prepared snapshot; never scan the frame inside trial callbacks."""
+        ror = self.assets_ror
+        values = ror.to_numpy(copy=False)
+        # Wide fragmented pandas blocks reduce differently after consolidation.
+        # Two-asset sums have only one addition and retain the original order.
+        # Use public memory-sharing checks, without depending on pandas internals.
+        shared = not ror.empty and np.shares_memory(values, ror.iloc[:, 0].to_numpy(copy=False))
+        configuration = (*self._optimizer_settings(), values.strides, shared)
+        previous = getattr(self, "_optimizer_input", None)
+        if (
+            previous is not None
+            and previous[0] == configuration
+            and previous[1].equals(ror)
+            and previous[1].index.identical(ror.index)
+            and previous[1].columns.identical(ror.columns)
+        ):
+            return
+        self._clear_cache()
+        snapshot = ror.copy(deep=True)
+        self._optimizer_input = (configuration, snapshot)
+        # Custom frontier classes can supply different calculation semantics.
+        if type(self) is EfficientFrontier and (shared or ror.shape[1] == 2):
+            self._prepared_ror = Rebalance(period=self.rebalancing_strategy.period)._prepare_ef_data(ror)
+
+    @_optimizer_scope
     def _get_portfolio_ror_ts(self, weights: np.ndarray) -> pd.Series:
         """
         Get portfolio return time series with caching based on weights.
@@ -231,8 +294,19 @@ class EfficientFrontier(asset_list.AssetList):
         weights_key = tuple(np.round(weights, decimals=10))
 
         if weights_key not in self._ror_cache:
-            rebalance = Rebalance(period=self.rebalancing_strategy.period)
-            self._ror_cache[weights_key] = rebalance.return_ror_ts_ef(weights, self.assets_ror)
+            prepared = self._prepared_ror
+            # Preserve the original strided row dot product for SLSQP differences.
+            values = (
+                None
+                if prepared is None
+                else prepared.return_ror_single(np.asarray(weights), self.assets_ror.iloc[0] @ weights)
+            )
+            if values is None:
+                rebalance = Rebalance(period=self.rebalancing_strategy.period)
+                result = rebalance.return_ror_ts_ef(weights, self.assets_ror)
+            else:
+                result = pd.Series(values, index=self.assets_ror.index)
+            self._ror_cache[weights_key] = result
 
         return self._ror_cache[weights_key]
 
@@ -312,6 +386,7 @@ class EfficientFrontier(asset_list.AssetList):
         self._clear_cache()
         self._verbose = verbose
 
+    @_optimizer_scope
     def get_most_diversified_portfolio(
         self,
         target_return: float | None = None,
@@ -423,6 +498,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         raise RuntimeError("No solutions were found")
 
+    @_optimizer_scope
     def get_tangency_portfolio(self, rf_return: float = 0, rate_of_return: str = "cagr") -> dict:
         """
         Calculate asset weights, risk and return values for tangency portfolio within given bounds.
@@ -517,6 +593,7 @@ class EfficientFrontier(asset_list.AssetList):
             raise RuntimeError("No solutions were found")
 
     @property
+    @_optimizer_scope
     def gmv_monthly_weights(self) -> np.ndarray:
         """
         Calculate asset weights of the Global Minimum Volatility (GMV) portfolio. The objective function is
@@ -558,6 +635,7 @@ class EfficientFrontier(asset_list.AssetList):
         return weights.x
 
     @property
+    @_optimizer_scope
     def gmv_annual_weights(self) -> np.ndarray:
         """
         Calculate asset weights of the Global Minimum Volatility (GMV) portfolio. The objective function is
@@ -600,6 +678,7 @@ class EfficientFrontier(asset_list.AssetList):
         )
         return weights.x
 
+    @_optimizer_scope
     def _get_gmv_monthly(self) -> tuple[float, float]:
         """
         Calculate the risk and geometric mean of the Global Minimum Volatility portfolio.
@@ -611,6 +690,7 @@ class EfficientFrontier(asset_list.AssetList):
         return ts.std(), geometric_mean_return
 
     @property
+    @_optimizer_scope
     def gmv_annual_values(self) -> tuple[float, float]:
         """
         Calculate the annualized risk (standard deviation) and CAGR of the Global Minimum Volatility portfolio.
@@ -639,6 +719,7 @@ class EfficientFrontier(asset_list.AssetList):
         )
 
     @property
+    @_optimizer_scope
     def global_max_return_portfolio(self) -> dict:
         """
         Find a portfolio with global max CAGR.
@@ -695,11 +776,13 @@ class EfficientFrontier(asset_list.AssetList):
         }
         return point
 
+    @_optimizer_scope
     def _get_cagr(self, weights: np.ndarray) -> float:
         ts = self._get_portfolio_ror_ts(weights)
         acc_return = (ts + 1.0).prod() - 1.0
         return (1.0 + acc_return) ** (settings._MONTHS_PER_YEAR / ts.shape[0]) - 1.0
 
+    @_optimizer_scope
     def minimize_risk(self, target_value: float) -> dict[str, float]:
         """
         Calculate the portfolio properties to minimize annualized risk at the target CAGR.
@@ -814,6 +897,7 @@ class EfficientFrontier(asset_list.AssetList):
         point["iterations"] = best.nit
         return point
 
+    @_optimizer_scope
     def _maximize_risk(self, target_return: float) -> dict[str, float]:
         """
         Calculate the portfolio properties to maximize annualized value of risk at the target CAGR.
@@ -908,6 +992,7 @@ class EfficientFrontier(asset_list.AssetList):
             raise RuntimeError(f"No solution found for target CAGR value: {target_return}.")
         return solution
 
+    @_optimizer_scope
     def _single_asset_corner_portfolio(self, target_value: float) -> dict | None:
         """
         Return the single-asset portfolio point whose CAGR equals the target value, if any.
@@ -1043,7 +1128,9 @@ class EfficientFrontier(asset_list.AssetList):
         """
         Full range of CAGR values (from min to max).
         """
-        if self.full_frontier:
+        if self.full_frontier and self._has_restrictive_bounds:
+            min_cagr = self._bounded_extreme_portfolio(maximize_risk=False)["CAGR"]
+        elif self.full_frontier:
             cagr_series = helpers.Frame.get_cagr(self.assets_ror)
             right_asset = self._max_ratio_asset_right_to_max_cagr
             if right_asset is not None:
@@ -1073,21 +1160,79 @@ class EfficientFrontier(asset_list.AssetList):
         Range of CAGR values from the Global CAGR max to the max asset cagr
         to the right of the max CAGR point (if exists).
         """
-        if self._max_ratio_asset_right_to_max_cagr:
+        maximum = self.global_max_return_portfolio
+        if self._has_restrictive_bounds:
+            endpoint = self._bounded_extreme_portfolio(maximize_risk=True)
+            if endpoint["Risk"] <= maximum["Risk"] + 1e-10:
+                return None
+            ticker_cagr = endpoint["CAGR"]
+        elif self._max_ratio_asset_right_to_max_cagr:
             ticker_cagr = self._max_ratio_asset_right_to_max_cagr["max_asset_cagr"]
-            max_cagr = self.global_max_return_portfolio["CAGR"]
+        else:
+            return None
+        max_cagr = maximum["CAGR"]
+        if max_cagr - ticker_cagr > 1e-12:
             # Skip only a truly degenerate (zero) span: a narrow-but-real CAGR span still
             # has to be drawn, as the risk gap to the asset corner can be large (issue #87).
-            if max_cagr - ticker_cagr > 1e-12:
-                k = abs((self._target_cagr_range_left[0] - self._target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
-                # we don't want too many points in the right range. Therefore if k < 1 n_points value is used
-                number_of_points = round(self.n_points / k) + 1 if k > 1 else self.n_points
-                # At least two points, so that the range keeps its terminal value (the right
-                # asset's own CAGR) after the first point is dropped below.
-                number_of_points = max(number_of_points, 2)
-                target_range = np.linspace(max_cagr, ticker_cagr, number_of_points)
-                return target_range[1:]  # skip the first point (max cagr) as it presents in the left part of the EF
+            k = abs((self._target_cagr_range_left[0] - self._target_cagr_range_left[-1]) / (max_cagr - ticker_cagr))
+            # we don't want too many points in the right range. Therefore if k < 1 n_points value is used
+            number_of_points = round(self.n_points / k) + 1 if k > 1 else self.n_points
+            # At least two points, so that the range keeps its terminal value (the right
+            # asset's own CAGR) after the first point is dropped below.
+            number_of_points = max(number_of_points, 2)
+            target_range = np.linspace(max_cagr, ticker_cagr, number_of_points)
+            return target_range[1:]  # skip the first point (max cagr) as it presents in the left part of the EF
         return None
+
+    @property
+    def _has_restrictive_bounds(self) -> bool:
+        """Whether the supplied box excludes any long-only asset corner."""
+        return any(low > 0 or high < 1 for low, high in self.bounds)
+
+    def _bounded_extreme_portfolio(self, *, maximize_risk: bool) -> dict:
+        """Find a feasible endpoint using multiple starts within the weight bounds.
+
+        Raw asset corners cannot define endpoints when the bounds exclude them.
+        Minimize CAGR for the full left branch, or maximize annualized risk for
+        the right branch, using the same return calculation as the frontier.
+        """
+        lows, highs = np.asarray(self.bounds, dtype=float).T
+        if lows.sum() > 1 + 1e-12 or highs.sum() < 1 - 1e-12:
+            raise ValueError("Weight bounds must allow weights that sum to one.")
+        n = len(lows)
+
+        def objective(weights: np.ndarray) -> float:
+            if maximize_risk:
+                returns = self._get_portfolio_ror_ts(weights)
+                return -helpers.Float.annualize_risk(returns.std(), returns.mean())
+            return self._get_cagr(weights)
+
+        best = None
+        for first in range(n):
+            initial = lows.copy()
+            remaining = 1 - initial.sum()
+            for position in np.roll(np.arange(n), -first):
+                addition = min(remaining, highs[position] - initial[position])
+                initial[position] += addition
+                remaining -= addition
+            candidate = minimize(
+                objective,
+                initial,
+                method="SLSQP",
+                bounds=self.bounds,
+                constraints=({"type": "eq", "fun": lambda weights: weights.sum() - 1},),
+                options={"maxiter": 100, "ftol": 1e-10},
+            )
+            if candidate.success and (best is None or candidate.fun < best.fun):
+                best = candidate
+        if best is None:
+            raise RuntimeError("No feasible frontier endpoint found for the supplied weight bounds.")
+        returns = self._get_portfolio_ror_ts(best.x)
+        return {
+            "Weights": best.x,
+            "CAGR": self._get_cagr(best.x),
+            "Risk": helpers.Float.annualize_risk(returns.std(), returns.mean()),
+        }
 
     @property
     def target_risk_range(self) -> np.ndarray:
@@ -1119,6 +1264,7 @@ class EfficientFrontier(asset_list.AssetList):
         return np.linspace(min_std, max_std, self.n_points)
 
     @property
+    @_optimizer_scope
     def ef_points(self):
         """
         Generate multi-period Efficient Frontier.
@@ -1232,6 +1378,7 @@ class EfficientFrontier(asset_list.AssetList):
         self._ef_points = df
 
     @property
+    @_optimizer_scope
     def mdp_points(self) -> pd.DataFrame:
         """
         Generate Most diversified portfolios frontier for rebalanced portfolios.
@@ -1310,6 +1457,13 @@ class EfficientFrontier(asset_list.AssetList):
         DataFrame
             Table with Return (CAGR) and Risk values for random portfolios (portfolios with random asset weights).
 
+        Notes
+        -----
+        Repeated portfolios share request-local preparation. Normal float64
+        histories use memory-bounded NumPy batches; low-risk portfolios and
+        exceptional inputs retain scalar financial calculations. Generated
+        weights and the returned table still scale with the portfolio count.
+
         Examples
         --------
         >>> ls_m = ["SPY.US", "GLD.US", "PGJ.US", "RGBITR.INDX", "MCFTR.INDX"]
@@ -1353,23 +1507,7 @@ class EfficientFrontier(asset_list.AssetList):
         >>> plt.show()
         """
         weights_series = helpers.Float.get_random_weights(n, self.assets_ror.shape[1], self.bounds)
-        asset_labels = self._asset_labels(self._labels_mode)
-        # Every enumerated weight vector is unique, so the ror cache would never
-        # hit and only grow O(points). Compute the series directly instead.
-        rebalance = Rebalance(period=self.rebalancing_strategy.period)
-        rows_list = []
-        for weights in weights_series:
-            portfolio_ror = rebalance.return_ror_ts_ef(weights, self.assets_ror)
-            risk_monthly = portfolio_ror.std()
-            mean_return = portfolio_ror.mean()
-            risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
-            cagr = helpers.Frame.get_cagr(portfolio_ror)
-            row = dict(zip(asset_labels, weights))  # noqa: B905
-            row["Risk"] = risk
-            row["CAGR"] = cagr
-            rows_list.append(row)
-        result = pd.DataFrame.from_records(rows_list)
-        return helpers.Frame.change_columns_order(result, ["Risk", "CAGR"])
+        return self._get_portfolio_points(weights_series)
 
     def get_grid_portfolios(self, step: float = 0.10, max_points: int = 100_000) -> pd.DataFrame:
         """
@@ -1393,6 +1531,13 @@ class EfficientFrontier(asset_list.AssetList):
         DataFrame
             Table with Risk (annualized std) and CAGR for every grid portfolio.
 
+        Notes
+        -----
+        Repeated portfolios share request-local preparation. Normal float64
+        histories use memory-bounded NumPy batches; low-risk portfolios and
+        exceptional inputs retain scalar financial calculations. Generated
+        weights and the returned table still scale with the portfolio count.
+
         Examples
         --------
         >>> ls_m = ["SPY.US", "GLD.US"]
@@ -1411,22 +1556,66 @@ class EfficientFrontier(asset_list.AssetList):
         weights_series = helpers.Float.get_grid_weights(
             w_shape=self.assets_ror.shape[1], step=step, bounds=self.bounds, max_points=max_points
         )
-        asset_labels = self._asset_labels(self._labels_mode)
-        # Every grid weight vector is unique, so the ror cache would never hit
-        # and only grow O(points). Compute the series directly instead.
+        return self._get_portfolio_points(weights_series)
+
+    _BATCH_SIZE = 1024
+    _BATCH_ELEMENTS = 262_144
+    _SCALAR_RISK_THRESHOLD = 1e-3
+
+    def _get_portfolio_points(self, weights_series: pd.Series) -> pd.DataFrame:
+        """Evaluate repeated weights with request-local preparation and bounded return matrices."""
+        if weights_series.empty:
+            return helpers.Frame.change_columns_order(pd.DataFrame(), ["Risk", "CAGR"])
         rebalance = Rebalance(period=self.rebalancing_strategy.period)
-        rows_list = []
-        for weights in weights_series:
-            portfolio_ror = rebalance.return_ror_ts_ef(weights, self.assets_ror)
-            risk_monthly = portfolio_ror.std()
-            mean_return = portfolio_ror.mean()
-            risk = helpers.Float.annualize_risk(risk_monthly, mean_return)
-            cagr = helpers.Frame.get_cagr(portfolio_ror)
-            row = dict(zip(asset_labels, weights))  # noqa: B905
-            row["Risk"] = risk
-            row["CAGR"] = cagr
-            rows_list.append(row)
-        result = pd.DataFrame.from_records(rows_list)
+        months = len(self.assets_ror)
+        prepared = rebalance._prepare_ef_data(self.assets_ror) if months <= self._BATCH_ELEMENTS else None
+        chunk_size = max(1, min(self._BATCH_SIZE, self._BATCH_ELEMENTS // max(1, months)))
+        labels = self._asset_labels(self._labels_mode)
+
+        def scalar_metrics(weights: np.ndarray) -> tuple[float, float | None]:
+            ror = rebalance.return_ror_ts_ef(weights, self.assets_ror)
+            risk = helpers.Float.annualize_risk(ror.std(), ror.mean())
+            return risk, helpers.Frame.get_cagr(ror)
+
+        chunks = []
+        for start in range(0, len(weights_series), chunk_size):
+            weights = np.stack(weights_series.iloc[start : start + chunk_size])
+            returns = prepared.return_ror(weights) if prepared is not None else None
+            if returns is None:
+                rows = []
+                for row_weights in weights:
+                    risk, cagr = scalar_metrics(row_weights)
+                    point = dict(zip(labels, row_weights))  # noqa: B905
+                    point["Risk"], point["CAGR"] = risk, cagr
+                    rows.append(point)
+                chunks.append(pd.DataFrame.from_records(rows))
+                continue
+            monthly_risk = returns.std(axis=0, ddof=1)
+            monthly_mean = returns.mean(axis=0)
+            with np.errstate(over="ignore", invalid="ignore"):
+                risk = helpers.Float.annualize_risk(monthly_risk, monthly_mean)
+                cagr = (
+                    (1 + returns).prod(axis=0) ** (12 / months) - 1
+                    if months >= 12
+                    else np.full(len(weights), None, dtype=object)
+                )
+            # Annualization subtracts two close powers. Estimate its rounding
+            # sensitivity as well as guarding low volatility at ordinary means.
+            with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+                rounding_bound = 32 * np.finfo(np.float64).eps * np.abs(1 + monthly_mean) ** 24 / np.abs(risk)
+            exceptional = (
+                (monthly_risk < self._SCALAR_RISK_THRESHOLD)
+                | ~np.isfinite(risk)
+                | (rounding_bound > 1e-12 * (1 + np.abs(risk)))
+            )
+            if months >= 12:
+                exceptional |= ~np.isfinite(cagr)
+            for i in np.flatnonzero(exceptional):
+                risk[i], cagr[i] = scalar_metrics(weights[i])
+            columns = dict(zip(labels, weights.T))  # noqa: B905
+            columns["Risk"], columns["CAGR"] = risk, cagr
+            chunks.append(pd.DataFrame(columns))
+        result = pd.concat(chunks, ignore_index=True)
         return helpers.Frame.change_columns_order(result, ["Risk", "CAGR"])
 
     def plot_pair_ef(self, tickers="tickers", figsize: tuple | None = None) -> Axes:
@@ -1483,28 +1672,52 @@ class EfficientFrontier(asset_list.AssetList):
         """
         if len(self.symbols) < 3:
             raise ValueError("The number of symbols cannot be less than 3")
-        # self._verify_axes()
-        bool_inflation = hasattr(self, "inflation")
         fig, ax = plt.subplots(figsize=figsize)
-        for i in itertools.combinations(self.asset_obj_dict.values(), 2):
+        for ef in self._get_pair_frontiers():
+            ax.plot(ef["Risk"], ef["CAGR"])
+        self.plot_assets(kind="cagr", tickers=tickers)
+        return ax
+
+    def _get_pair_frontiers(self) -> list[pd.DataFrame]:
+        """Reuse the latest pair tables after resolving fresh child financial inputs."""
+        previous = getattr(self, "_pair_frontiers", [])
+        entries = []
+        tables = []
+        for position, i in enumerate(itertools.combinations(self.asset_obj_dict.values(), 2)):
             sym_pair = list(i)
             index0 = self.symbols.index(sym_pair[0].symbol)
             index1 = self.symbols.index(sym_pair[1].symbol)
             bounds_pair = (self.bounds[index0], self.bounds[index1])
-            ef = EfficientFrontier(
+            child = EfficientFrontier(
                 assets=sym_pair,
                 ccy=self.currency,
                 first_date=self.first_date,
                 last_date=self.last_date,
-                inflation=bool_inflation,
+                inflation=hasattr(self, "inflation"),
                 full_frontier=True,
                 n_points=self.n_points,
                 bounds=bounds_pair,
                 rebalancing_strategy=self.rebalancing_strategy,
-            ).ef_points
-            ax.plot(ef["Risk"], ef["CAGR"])
-        self.plot_assets(kind="cagr", tickers=tickers)
-        return ax
+            )
+            configuration = child._optimizer_settings()
+            ror = child.assets_ror
+            old = previous[position] if position < len(previous) else None
+            if (
+                type(self) is EfficientFrontier
+                and old is not None
+                and old[0] == configuration
+                and old[1].equals(ror)
+                and old[1].index.identical(ror.index)
+                and old[1].columns.identical(ror.columns)
+            ):
+                entry = old
+            else:
+                entry = (configuration, ror.copy(deep=True), child.ef_points[["Risk", "CAGR"]].copy(deep=True))
+            entries.append(entry)
+            tables.append(entry[2].copy(deep=True))
+        # Keep one collection, never child objects or matplotlib figures.
+        self._pair_frontiers = entries if type(self) is EfficientFrontier else []
+        return tables
 
     def plot_cml(self, rf_return: float = 0, figsize: tuple | None = None):
         """

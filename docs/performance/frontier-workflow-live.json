@@ -1,0 +1,135 @@
+{
+  "protocol": "One current-candidate live observation; no baseline or warm/cold network equivalence claim",
+  "loading_mode": "frontier_symbol_constructor",
+  "script_sha256": "222a389f32c7a079082cc0bc37745be3faa167989dcdfee03836788fbc20bb54",
+  "symbols": [
+    "SPY.US",
+    "BND.US",
+    "GLD.US"
+  ],
+  "first_date": "2005-01",
+  "last_date": "2025-12",
+  "stages_seconds": {
+    "frontier_load_and_setup": 0.6582774039998185,
+    "frontier_solve": 0.08553475700318813,
+    "tangency": 0.005523246989469044,
+    "portfolio_setup": 0.1860989879933186,
+    "portfolio_metrics": 0.004700113000581041
+  },
+  "requests": [
+    {
+      "stage": "frontier_load_and_setup",
+      "endpoint": "/api/assets_namespaces/",
+      "symbol": "",
+      "first_date": null,
+      "last_date": null,
+      "period": null,
+      "success": true,
+      "seconds": 0.03588356300315354
+    },
+    {
+      "stage": "frontier_load_and_setup",
+      "endpoint": "/api/symbol/",
+      "symbol": "USD.FX",
+      "first_date": null,
+      "last_date": null,
+      "period": null,
+      "success": true,
+      "seconds": 0.07211428201117087
+    },
+    {
+      "stage": "frontier_load_and_setup",
+      "endpoint": "/api/ts/ror/",
+      "symbol": "USD.FX",
+      "first_date": "2005-01",
+      "last_date": "2025-12",
+      "period": "M",
+      "success": true,
+      "seconds": 0.057827138996799476
+    },
+    {
+      "stage": "frontier_load_and_setup",
+      "endpoint": "/api/symbol/",
+      "symbol": "BND.US",
+      "first_date": null,
+      "last_date": null,
+      "period": null,
+      "success": true,
+      "seconds": 0.048880949994781986
+    },
+    {
+      "stage": "frontier_load_and_setup",
+      "endpoint": "/api/symbol/",
+      "symbol": "SPY.US",
+      "first_date": null,
+      "last_date": null,
+      "period": null,
+      "success": true,
+      "seconds": 0.051881564999348484
+    },
+    {
+      "stage": "frontier_load_and_setup",
+      "endpoint": "/api/symbol/",
+      "symbol": "GLD.US",
+      "first_date": null,
+      "last_date": null,
+      "period": null,
+      "success": true,
+      "seconds": 0.05322012200485915
+    },
+    {
+      "stage": "frontier_load_and_setup",
+      "endpoint": "/api/ts/ror/",
+      "symbol": "BND.US",
+      "first_date": "2005-01",
+      "last_date": "2025-12",
+      "period": "M",
+      "success": true,
+      "seconds": 0.12078133899194654
+    },
+    {
+      "stage": "frontier_load_and_setup",
+      "endpoint": "/api/ts/ror/",
+      "symbol": "SPY.US",
+      "first_date": "2005-01",
+      "last_date": "2025-12",
+      "period": "M",
+      "success": true,
+      "seconds": 0.18061385299370158
+    },
+    {
+      "stage": "frontier_load_and_setup",
+      "endpoint": "/api/ts/ror/",
+      "symbol": "GLD.US",
+      "first_date": "2005-01",
+      "last_date": "2025-12",
+      "period": "M",
+      "success": true,
+      "seconds": 0.3433773280121386
+    },
+    {
+      "stage": "portfolio_setup",
+      "endpoint": "/api/symbol/",
+      "symbol": "USD.FX",
+      "first_date": null,
+      "last_date": null,
+      "period": null,
+      "success": true,
+      "seconds": 0.05259078400558792
+    },
+    {
+      "stage": "portfolio_setup",
+      "endpoint": "/api/ts/ror/",
+      "symbol": "USD.FX",
+      "first_date": "1913-01-01",
+      "last_date": "2100-01-01",
+      "period": "M",
+      "success": true,
+      "seconds": 0.12520072200277355
+    }
+  ],
+  "success": true,
+  "frontier_rows": 20,
+  "return_months": 224,
+  "total_seconds": 0.940479803000926
+}

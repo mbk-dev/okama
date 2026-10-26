@@ -629,7 +629,7 @@ class AssetList(make_asset_list.ListMaker):
         df = self._add_inflation()
         if real:
             df = self._make_real_return_time_series(df)
-        return helpers.Frame.get_rolling_fn(df, window=window, fn=helpers.Frame.get_cagr)
+        return helpers.Frame.get_rolling_cagr(df, window=window)
 
     def get_monthly_geometric_mean_return(self):
         """
@@ -1359,12 +1359,7 @@ class AssetList(make_asset_list.ListMaker):
         >>> plt.show()
         """
         if rolling_window:
-            rolling_cagr = helpers.Frame.get_rolling_fn(
-                self.assets_ror,
-                window=rolling_window,
-                fn=helpers.Frame.get_cagr,
-                window_below_year=False,  # small windows below 12 months are not allowed (CAGR is not defined)
-            )
+            rolling_cagr = helpers.Frame.get_rolling_cagr(self.assets_ror, window=rolling_window)
             return rolling_cagr.subtract(rolling_cagr.iloc[:, 0], axis=0).iloc[:, 1:]
         else:
             return helpers.Index.tracking_difference_annualized(self.tracking_difference())
