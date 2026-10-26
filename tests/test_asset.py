@@ -1,5 +1,6 @@
 from unittest.mock import call  # noqa: I001
 import pytest
+from pytest_mock import MockerFixture
 
 import pandas as pd
 
@@ -55,6 +56,42 @@ def test_init_uses_mocked_queries(basic_patches):
     # Asserts on dates computed from ror index
     assert a.first_date == dm.ror_index[0].to_timestamp(how="start")
     assert a.last_date == dm.ror_index[-1].to_timestamp(how="start")
+
+
+@pytest.mark.parametrize("symbol", ["TPAY.MOEX", "FLOW.MOEX", "AKIE.MOEX"])
+def test_distributing_moex_fund_warns_when_payment_history_is_missing(
+    basic_patches: dict, mocker: MockerFixture, symbol: str
+) -> None:
+    """Known distributing funds must not silently look like zero-income investments."""
+    basic_patches["m_namespaces"].return_value = {"MOEX"}
+    mocker.patch("okama.asset.data_queries.QueryData.get_dividends", return_value=pd.Series(dtype=float))
+    with pytest.warns(UserWarning, match=rf"{symbol}.*distribution history is missing"):
+        asset = ok.Asset(symbol)
+    pd.testing.assert_series_equal(asset.ror, basic_patches["defaults"].ror)
+
+
+def test_distributing_moex_fund_does_not_warn_once_payments_are_available(
+    basic_patches: dict, mocker: MockerFixture
+) -> None:
+    """The temporary missing-history warning follows the API's actual data."""
+    import warnings
+
+    basic_patches["m_namespaces"].return_value = {"MOEX"}
+    mocker.patch(
+        "okama.asset.data_queries.QueryData.get_dividends",
+        return_value=pd.Series([1.0], index=pd.period_range("2020-02-01", periods=1, freq="D")),
+    )
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        ok.Asset("TPAY.MOEX")
+    assert caught == []
+
+
+def test_other_assets_do_not_query_payments_during_initialization(basic_patches: dict, mocker: MockerFixture) -> None:
+    """The narrow missing-data check adds no endpoint calls for other assets."""
+    dividends = mocker.patch("okama.asset.data_queries.QueryData.get_dividends")
+    ok.Asset("SPY.US")
+    dividends.assert_not_called()
 
 
 def test_price_calls_live_price(basic_patches, mocker):
