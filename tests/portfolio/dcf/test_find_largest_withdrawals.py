@@ -7,6 +7,8 @@ simulations; always restore the cash flow parameters.
 """
 
 import pytest  # noqa: I001
+import warnings
+import pandas as pd
 import okama as ok
 
 
@@ -131,3 +133,37 @@ def test_rejects_non_positive_iter_max(dcf_solver) -> None:
             tolerance_rel=0.25,
             iter_max=0,
         )
+
+
+def test_solver_records_first_evaluation_without_pandas4_warning(dcf_solver):
+    with warnings.catch_warnings():
+        if hasattr(pd.errors, "Pandas4Warning"):
+            warnings.simplefilter("error", pd.errors.Pandas4Warning)
+        result = dcf_solver.find_the_largest_withdrawals_size(
+            goal="survival_period",
+            withdrawals_range=(0.0, 0.001),
+            target_survival_period=3,
+            percentile=50,
+            threshold=0,
+            tolerance_rel=0.25,
+            iter_max=10,
+        )
+    assert result.solutions.index.tolist() == [0]
+    assert result.withdrawal_rel == pytest.approx(0.001)
+    assert dcf_solver.cashflow_parameters.amount == pytest.approx(-1200)
+
+
+def test_best_attempt_selects_smallest_error_from_object_values(dcf_solver):
+    solutions = pd.DataFrame(
+        {
+            "withdrawal_abs": [-100.0, -200.0],
+            "withdrawal_rel": [0.1, 0.2],
+            "error_rel": [0.2, 0.1],
+            "error_rel_change": [0.0, -0.1],
+        },
+        dtype=object,
+    )
+    result = dcf_solver._best_attempt_result(solutions)
+    assert result.withdrawal_abs == pytest.approx(-200.0)
+    assert result.error_rel == pytest.approx(0.1)
+    pd.testing.assert_frame_equal(result.solutions, solutions)

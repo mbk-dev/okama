@@ -198,7 +198,11 @@ def _get_wealth_indexes_fv_with_cashflow_scalar(  # noqa: C901
         indexation_per_period = (1 + cashflow_parameters.indexation) ** (1 / periods_per_year) - 1
     if cashflow_parameters.frequency == "month" or cashflow_parameters.frequency == "none":
         # Fast Calculation
-        s = pd.Series(dtype=float, name=portfolio_symbol)
+        s = pd.Series(
+            index=ror.index[:0].rename(None) if isinstance(ror.index, pd.PeriodIndex) else None,
+            dtype=float,
+            name=portfolio_symbol,
+        )
         for n, row in enumerate(ror.itertuples()):
             date = row[0]
             r = row[portfolio_position + 1]
@@ -237,7 +241,11 @@ def _get_wealth_indexes_fv_with_cashflow_scalar(  # noqa: C901
             last_date = ror_ts.index[-1]
             # CashFlow inside period (Extra withdrawals/contributions)
             if (cashflow_ts_local != 0).any():
-                period_wealth_index = pd.Series(dtype=float, name=portfolio_symbol)
+                period_wealth_index = pd.Series(
+                    index=ror.index[:0].rename(None) if isinstance(ror.index, pd.PeriodIndex) else None,
+                    dtype=float,
+                    name=portfolio_symbol,
+                )
                 month_balance = period_initial_amount
                 for date, r in ror_ts.items():
                     month_balance = month_balance * (r + 1) + cashflow_ts_local[date]
@@ -306,7 +314,11 @@ def _get_cash_flow_fv_scalar(  # noqa: C901
         dcf_object.cashflow_parameters = cashflow_parameters
     period_initial_amount = cashflow_parameters.initial_investment
     last_regular_cash_flow = 0
-    cs_fv = pd.Series(dtype=float, name="cash_flow_fv")
+    cs_fv = pd.Series(
+        index=ror.index[:0].rename(None) if isinstance(ror.index, pd.PeriodIndex) else None,
+        dtype=float,
+        name="cash_flow_fv",
+    )
     amount = getattr(cashflow_parameters, "amount", None)
     if cashflow_parameters.NAME == "CWD":
         drawdowns = helpers.Frame.get_drawdowns(ror)
@@ -386,7 +398,11 @@ def _get_cash_flow_fv_scalar(  # noqa: C901
             last_date = ror_ts.index[-1]
             # CashFlow inside period (Extra cash flow)
             if (cashflow_ts_local != 0).any():
-                period_wealth_index = pd.Series(dtype=float, name=portfolio_symbol)
+                period_wealth_index = pd.Series(
+                    index=ror.index[:0].rename(None) if isinstance(ror.index, pd.PeriodIndex) else None,
+                    dtype=float,
+                    name=portfolio_symbol,
+                )
                 month_balance = period_initial_amount
                 for date, r in ror_ts.items():
                     month_balance = month_balance * (r + 1) + cashflow_ts_local[date]
