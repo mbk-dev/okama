@@ -33,6 +33,8 @@ All 29 paired workloads passed the equivalence checks. Maximum absolute differen
 
 Monthly calendar full-path allocation peak fell from 3.074 MiB to 0.366 MiB. Yearly MC 2,048-portfolio allocation peak increased from 1.404 MiB to 10.440 MiB; candidate 8,192-portfolio peak was 11.530 MiB. This is the batching memory tradeoff, not a memory reduction for frontier sampling. The table and full distributions in [calendar-batching.json](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/calendar-batching.json) describe actual public methods.
 
+The [multi-period implementation](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/frontier/multi_period.py), [equivalence tests](https://github.com/mbk-dev/okama/blob/v4.0.1/tests/test_frontier_multi_batching.py), [scalar calendar reference](https://github.com/mbk-dev/okama/blob/v4.0.1/tests/helpers/rebalance_reference.py) and [benchmark script](https://github.com/mbk-dev/okama/blob/v4.0.1/analytics/benchmark_calendar_batching.py) accompany these measurements.
+
 ## Verification
 
 Strict TDD included reproducing per-period pandas-container growth, repeated EF grouping, low-risk cancellation and high-mean cancellation before implementing their fixes. Financial references include original scalar methods rather than comparisons only between chunk sizes. Final-code Grok Build review (`grok-4.6-build`, read-only, one turn) reported no blocking findings; an earlier oversized review timed out and is retained as an unsuccessful attempt.

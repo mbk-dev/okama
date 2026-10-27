@@ -88,6 +88,10 @@ uv run ruff format --check .
 
 The first command profiles both frontier classes and writes timing/allocation JSON plus output arrays. The second directly reproduces the old/new comparison from the Git baseline without switching the working tree. For the full historical baseline table, run the first command with baseline library files and the same benchmark script. The accompanying evidence retains [baseline distributions/profiles](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/frontier-cpu-batching/baseline.json), [candidate distributions/profiles](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/frontier-cpu-batching/candidate.json) and [alternating comparison](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/frontier-cpu-batching/paired.json). The benchmark is at [analytics/benchmark_frontier_batching.py](https://github.com/mbk-dev/okama/blob/v4.0.1/analytics/benchmark_frontier_batching.py).
 
+## Verification source
+
+The [single-period implementation](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/frontier/single_period.py) and [scalar-reference tests](https://github.com/mbk-dev/okama/blob/v4.0.1/tests/test_frontier_batching.py) document the formulas, bounds, labels and chunk-size comparisons used for this report.
+
 ## Delivery notes
 
 Final verification: `poetry run pytest -q` completed with **547 passed, 3 skipped**, 371 existing pandas deprecation warnings (the clean baseline also had 371); the new frontier test modules produce no warnings. Both `poetry run ruff check .` and `poetry run ruff format --check .` pass, as does `git diff --check`. Tests run in the Poetry Python 3.11.17 environment, the project minimum version.
