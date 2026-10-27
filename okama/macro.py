@@ -178,11 +178,11 @@ class MacroABC(ABC):  # noqa: B024
         # max value
         max_value = ts.nlargest(n=1)
         row3 = {self.symbol: max_value.iloc[0]}
-        row3.update(period=max_value.index.values[0].strftime("%Y-%m"), property="max value")
+        row3.update(period=max_value.index[0].strftime("%Y-%m"), property="max value")
         # min value
         min_value = ts.nsmallest(n=1)
         row4 = {self.symbol: min_value.iloc[0]}
-        row4.update(period=min_value.index.values[0].strftime("%Y-%m"), property="min value")
+        row4.update(period=min_value.index[0].strftime("%Y-%m"), property="min value")
 
         all_rows.extend([row1, row2, row3, row4])
         # properties for a given list of periods
@@ -197,11 +197,11 @@ class MacroABC(ABC):  # noqa: B024
                 # max value
                 max_value = ts.nlargest(n=1)
                 row3 = {self.symbol: max_value.iloc[0]}
-                row3.update(period=max_value.index.values[0].strftime("%Y-%m"))
+                row3.update(period=max_value.index[0].strftime("%Y-%m"))
                 # min value
                 min_value = ts.nsmallest(n=1)
                 row4 = {self.symbol: min_value.iloc[0]}
-                row4.update(period=min_value.index.values[0].strftime("%Y-%m"))
+                row4.update(period=min_value.index[0].strftime("%Y-%m"))
             else:
                 row1 = {self.symbol: None}
                 row2 = {self.symbol: None}
@@ -226,13 +226,13 @@ class MacroABC(ABC):  # noqa: B024
         max_value = df.nlargest(n=1)
         row2 = {self.symbol: max_value.iloc[0]}
         row2.update(
-            period=max_value.index.values[0].strftime("%Y-%m"),
+            period=max_value.index[0].strftime("%Y-%m"),
             property="max value",
         )
         # min value
         min_value = df.nsmallest(n=1)
         row3 = {self.symbol: min_value.iloc[0]}
-        row3.update(period=min_value.index.values[0].strftime("%Y-%m"), property="min value")
+        row3.update(period=min_value.index[0].strftime("%Y-%m"), property="min value")
         all_rows.extend([row0, row1, row2, row3])
         # Concatenate all rows at once (more efficient than repeated pd.concat in loop)
         description = pd.DataFrame.from_records(all_rows)
@@ -451,7 +451,7 @@ class Inflation(MacroABC):
                 # max inflation
                 max_inflation = self.rolling_inflation[dt:].nlargest(n=1)  # largest 12m inflation for selected period
                 row3 = {self.symbol: max_inflation.iloc[0]}
-                row3.update(period=max_inflation.index.values[0].strftime("%Y-%m"))
+                row3.update(period=max_inflation.index[0].strftime("%Y-%m"))
 
                 # purchase power
                 row4 = {self.symbol: helpers.Float.get_purchasing_power(comp_inflation)}
@@ -485,7 +485,7 @@ class Inflation(MacroABC):
         max_inflation = self.rolling_inflation.nlargest(n=1)
         row = {self.symbol: max_inflation.iloc[0]}
         row.update(
-            period=max_inflation.index.values[0].strftime("%Y-%m"),
+            period=max_inflation.index[0].strftime("%Y-%m"),
             property="max 12m inflation",
         )
         all_rows.append(row)
