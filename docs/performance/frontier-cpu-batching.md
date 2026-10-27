@@ -76,17 +76,21 @@ A chunk contains at most 4096 weight vectors. The largest additional matrix prod
 
 ## Reproduction
 
-Run from the repository root using the existing Poetry environment:
+Run from the repository root using the project uv environment:
 
 ```bash
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 poetry run python -m analytics.benchmark_frontier_batching --output tmp/frontier-candidate.json --repeats 5
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 poetry run python -m analytics.benchmark_frontier_batching --output tmp/frontier-paired.json --paired-base b33ca12bdd81b4107c2de484fff581eda1023ce1 --repeats 5
-poetry run pytest -q
-poetry run ruff check .
-poetry run ruff format --check .
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 uv run python -m analytics.benchmark_frontier_batching --output tmp/frontier-candidate.json --repeats 5
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 uv run python -m analytics.benchmark_frontier_batching --output tmp/frontier-paired.json --paired-base b33ca12bdd81b4107c2de484fff581eda1023ce1 --repeats 5
+uv run pytest -q
+uv run ruff check .
+uv run ruff format --check .
 ```
 
 The first command profiles both frontier classes and writes timing/allocation JSON plus output arrays. The second directly reproduces the old/new comparison from the Git baseline without switching the working tree. For the full historical baseline table, run the first command with baseline library files and the same benchmark script. The accompanying evidence retains [baseline distributions/profiles](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/frontier-cpu-batching/baseline.json), [candidate distributions/profiles](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/frontier-cpu-batching/candidate.json) and [alternating comparison](https://github.com/mbk-dev/okama/blob/v4.0.1/docs/performance/frontier-cpu-batching/paired.json). The benchmark is at [analytics/benchmark_frontier_batching.py](https://github.com/mbk-dev/okama/blob/v4.0.1/analytics/benchmark_frontier_batching.py).
+
+## Verification source
+
+The [single-period implementation](https://github.com/mbk-dev/okama/blob/v4.0.1/okama/frontier/single_period.py) and [scalar-reference tests](https://github.com/mbk-dev/okama/blob/v4.0.1/tests/test_frontier_batching.py) document the formulas, bounds, labels and chunk-size comparisons used for this report.
 
 ## Delivery notes
 
@@ -94,4 +98,4 @@ Final verification: `poetry run pytest -q` completed with **547 passed, 3 skippe
 
 Independent read-only whole-change review completed with no significant findings. The coordinator verified the final source/diff digests and benchmark equivalence; the reviewer did not rerun tests. Earlier external exploration/review attempts ended at a turn cap/timeout without a final verdict and were not counted as accepted reviews. Their logs are retained privately.
 
-Implementation and evidence are local to the task branch. No commit, push, merge, release or issue closure is implied by these measurements.
+The implementation and evidence were subsequently merged in [PR #134](https://github.com/mbk-dev/okama/pull/134) and released in [okama 4.0.1](https://github.com/mbk-dev/okama/releases/tag/v4.0.1). The measurements above describe the original development-stage runs.

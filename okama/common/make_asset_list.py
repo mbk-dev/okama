@@ -484,7 +484,7 @@ class ListMaker(ABC):
         if asset.currency != self.currency:
             s = self._adjust_price_to_currency_monthly(s, asset.currency)
         if remove_forecast:
-            s = s[: pd.Period.now(freq="M")]  # Period.now() must be without arguments to be compatible with pandas 2.0
+            s = s[: pd.Period.now("M")]
         # Create time series with zeros to pad the empty spaces in dividends time series
         index = pd.date_range(start=self.first_date, end=self.last_date, freq="MS")  # 'MS' to include the last period
         period = index.to_period("M")
@@ -610,8 +610,10 @@ class ListMaker(ABC):
         monthly.index = monthly.index.to_timestamp(how="start")
         result = pd.Series(dtype=float)
         for date in prices.index.to_timestamp(how="end"):
-            lower = date - pd.DateOffset(months=12)
-            result.at[date] = monthly[lower:date].sum() / prices.loc[:date].iloc[-1]
+            # Preserve nanoseconds while avoiding pandas 2.x DateOffset conversion warnings.
+            submicrosecond = pd.Timedelta(date.nanosecond, unit="ns")
+            lower = date.floor("us") - pd.DateOffset(months=12) + submicrosecond
+            result.loc[date] = monthly[lower:date].sum() / prices.loc[:date].iloc[-1]
         result.index = result.index.to_period("M")
         return result
 

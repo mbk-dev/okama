@@ -1,4 +1,5 @@
 from unittest.mock import call  # noqa: I001
+import warnings
 
 import pandas as pd
 import pytest
@@ -148,3 +149,29 @@ def test_inflation_describe_smoke(macro_patches):
     df = infl.describe(years=(1,))
     assert {"property", "period"}.issubset(df.columns)
     assert infl.symbol in df.columns
+
+
+@pytest.mark.parametrize("kind", ["inflation", "rate", "indicator"])
+def test_macro_describe_preserves_extrema_periods_without_pandas4_warning(macro_patches, kind):
+    idx = pd.period_range("2020-01", periods=36, freq="M")
+    defaults = macro_patches["defaults"]
+    if kind == "inflation":
+        defaults.infl_m = pd.Series(np.linspace(0.001, 0.01, 36), index=idx, name="USD.INFL")
+        macro = ok.Inflation("USD.INFL")
+        property_name = "max 12m inflation"
+    elif kind == "rate":
+        defaults.rate_m = pd.Series(np.linspace(0.01, 0.05, 36), index=idx, name="RUS_RUB.RATE")
+        macro = ok.Rate("RUS_RUB.RATE")
+        property_name = "max value"
+    else:
+        defaults.ind_m = pd.Series(np.linspace(10.0, 30.0, 36), index=idx, name="USA_CAPE10.RATIO")
+        macro = ok.Indicator("USA_CAPE10.RATIO")
+        property_name = "max value"
+    with warnings.catch_warnings():
+        if hasattr(pd.errors, "Pandas4Warning"):
+            warnings.simplefilter("error", pd.errors.Pandas4Warning)
+        result = macro.describe(years=(1,))
+    rows = result[result["property"] == property_name]
+    assert len(rows) == (2 if kind == "inflation" else 3)
+    assert rows["period"].tolist() == ["2022-12"] * len(rows)
+    assert rows[macro.symbol].notna().all()

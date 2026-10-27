@@ -1146,7 +1146,7 @@ class AssetList(make_asset_list.ListMaker):
         >>> plt.show()
         """
         div_growth = self.dividends_annual.pct_change()[1:]
-        df = pd.DataFrame()
+        df = pd.DataFrame(index=div_growth.index.rename(None)) if len(div_growth.columns) else pd.DataFrame()
         for name in div_growth:
             s = div_growth[name]
             s1 = s.where(s > 0).notnull().astype(int)
@@ -1183,8 +1183,7 @@ class AssetList(make_asset_list.ListMaker):
         >>> plt.show()
         """
         div_annual = self.dividends_annual
-        frame = pd.DataFrame()
-        df = frame
+        df = pd.DataFrame(index=div_annual.index.rename(None)) if len(div_annual.columns) else pd.DataFrame()
         for name in div_annual:
             s = div_annual[name]
             s1 = s.where(s != 0).notnull().astype(int)
