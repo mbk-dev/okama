@@ -1,5 +1,8 @@
 """ListMaker performance contracts with real validation and offline asset data."""
 
+import warnings
+from unittest.mock import PropertyMock
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -84,7 +87,9 @@ def scalar_dividend_yield(asset_list: ok.AssetList) -> pd.DataFrame:
             monthly.index = monthly.index.to_timestamp(how="start")
             result = pd.Series(dtype=float)
             for date in prices.index.to_timestamp(how="end"):
-                result.at[date] = monthly[date - pd.DateOffset(months=12) : date].sum() / prices.loc[:date].iloc[-1]
+                date_without_nanoseconds = pd.Timestamp(date.to_pydatetime(warn=False))
+                start = date_without_nanoseconds - pd.DateOffset(months=12) + pd.Timedelta(date.nanosecond, unit="ns")
+                result.at[date] = monthly[start:date].sum() / prices.loc[:date].iloc[-1]
             result.index = result.index.to_period("M")
             frame[tick] = result
     return pd.DataFrame(frame)
@@ -151,7 +156,7 @@ def test_yield_cache_is_reused(yield_list) -> None:
 
 
 def test_yield_forecast_dividends_remain_excluded(mocker) -> None:
-    current = pd.Period.now(freq="M")
+    current = pd.Period.now("M")
     index = pd.period_range(current - 12, current + 12, freq="M")
     asset = FakeAsset("A.US", pd.Series(0.0, index=index, name="A.US"))
     asset.dividends = pd.Series(1.0, index=index, name="A.US")
@@ -225,3 +230,58 @@ def test_float32_dividends_keep_scalar_accumulation(yield_list) -> None:
         {tick: pd.Series(np.float32(0.1), index=index) for tick in yield_list.symbols}
     )
     pd.testing.assert_frame_equal(yield_list.dividend_yield, scalar_dividend_yield(yield_list), rtol=1e-12, atol=1e-12)
+
+
+@pytest.mark.parametrize("attribute", ["dividend_paying_years", "dividend_growing_years"])
+@pytest.mark.parametrize("payments", [0.0, 1.0])
+def test_dividend_streaks_keep_periods_and_values_without_pandas4_warning(yield_list, attribute, payments):
+    for asset in yield_list.asset_obj_dict.values():
+        asset.dividends = pd.Series(payments, index=asset.ror.index, name=asset.symbol)
+    with warnings.catch_warnings():
+        if hasattr(pd.errors, "Pandas4Warning"):
+            warnings.simplefilter("error", pd.errors.Pandas4Warning)
+        result = getattr(yield_list, attribute)
+    assert list(result.columns) == ["A.US", "B.US"]
+    assert isinstance(result.index, pd.PeriodIndex)
+    assert result.index.name is None
+    assert [str(x) for x in result.index] == (["2021"] if attribute == "dividend_growing_years" else ["2020", "2021"])
+    expected = [0] if attribute == "dividend_growing_years" else ([1, 2] if payments else [0, 0])
+    assert result["A.US"].tolist() == expected
+    assert result["B.US"].tolist() == expected
+
+
+@pytest.mark.parametrize("attribute", ["dividend_paying_years", "dividend_growing_years"])
+def test_dividend_streaks_with_no_columns_keep_empty_frame(yield_list, mocker, attribute):
+    empty = pd.DataFrame(index=pd.period_range("2020", periods=2, freq="Y", name="Date"))
+    mocker.patch.object(ok.AssetList, "dividends_annual", new_callable=PropertyMock, return_value=empty)
+    with warnings.catch_warnings():
+        if hasattr(pd.errors, "Pandas4Warning"):
+            warnings.simplefilter("error", pd.errors.Pandas4Warning)
+        actual = getattr(yield_list, attribute)
+    pd.testing.assert_frame_equal(actual, pd.DataFrame())
+
+
+def test_dividend_forecasts_are_excluded_on_supported_pandas_versions(mocker):
+    current = pd.Period.now("M")
+    index = pd.period_range(current - 1, current + 1, freq="M")
+    asset = FakeAsset("A.US", pd.Series(0.0, index=index, name="A.US"))
+    asset.dividends = pd.Series([1.0, 2.0, 3.0], index=index, name="A.US")
+    asset.close_monthly = pd.Series(100.0, index=index, name="A.US")
+    mocker.patch("okama.common.make_asset_list.asset.Asset", FakeCurrencyAsset)
+    asset_list = ok.AssetList([asset], ccy="USD", inflation=False)
+    actual = asset_list._get_single_asset_dividends("A.US", remove_forecast=True)
+    assert actual.index.equals(index)
+    assert actual.tolist() == [1.0, 2.0, 0.0]
+
+
+def test_scalar_dividend_yield_keeps_month_windows_without_nanosecond_warning():
+    index = pd.period_range("2020-02", periods=15, freq="M")
+    dividends = pd.Series(np.ones(15, dtype=np.float32), index=index, name="A.US")
+    prices = pd.Series(100.0, index=index, name="A.US")
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", message="Discarding nonzero nanoseconds", category=UserWarning)
+        if hasattr(pd.errors, "Pandas4Warning"):
+            warnings.simplefilter("error", pd.errors.Pandas4Warning)
+        actual = make_asset_list.ListMaker._get_ltm_dividend_yield(dividends, prices)
+    expected = pd.Series([min(i, 12) / 100.0 for i in range(1, 16)], index=index)
+    pd.testing.assert_series_equal(actual, expected, rtol=1e-12, atol=1e-12)
