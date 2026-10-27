@@ -1,4 +1,5 @@
 import pandas as pd  # noqa: I001
+import warnings
 import numpy as np
 import pytest
 import okama as ok
@@ -101,3 +102,49 @@ def test_monte_carlo_none_frequency(pf_monthly):
     mc_cf = pf_monthly.dcf.monte_carlo_cash_flow(discounting="fv")
     # Should be all zeros
     assert (mc_cf.values == 0).all()
+
+
+@pytest.mark.parametrize("frequency", ["none", "month", "quarter", "year"])
+@pytest.mark.parametrize("kind", ["wealth", "cashflow"])
+def test_scalar_extra_cashflow_preserves_periods_and_values_without_pandas4_warning(pf_monthly, frequency, kind):
+    from okama.portfolios import dcf_calculations as calc
+
+    ror = pf_monthly.ror
+    deposit_date = ror.index[4]
+    if frequency == "none":
+        parameters = ok.CashFlow(
+            pf_monthly, frequency="none", initial_investment=1000.0, time_series_dic={str(deposit_date): 500.0}
+        )
+    else:
+        parameters = ok.IndexationStrategy(
+            pf_monthly,
+            frequency=frequency,
+            initial_investment=1000.0,
+            amount=0.0,
+            indexation=0.0,
+            time_series_dic={str(deposit_date): 500.0},
+        )
+    pf_monthly.dcf.cashflow_parameters = parameters
+    with warnings.catch_warnings():
+        if hasattr(pd.errors, "Pandas4Warning"):
+            warnings.simplefilter("error", pd.errors.Pandas4Warning)
+        if kind == "wealth":
+            result = calc._get_wealth_indexes_fv_with_cashflow_scalar(
+                ror, pf_monthly.name, None, parameters, "backtest"
+            )
+        else:
+            result = calc._get_cash_flow_fv_scalar(ror, pf_monthly.name, parameters, "backtest")
+    assert isinstance(result.index, pd.PeriodIndex)
+    assert result.index.name is None
+    if kind == "cashflow":
+        assert result.index.equals(ror.index.rename(None))
+        assert result.loc[deposit_date] == pytest.approx(500.0)
+        assert result.sum() == pytest.approx(500.0)
+    else:
+        assert result.index.tolist() == [ror.index[0] - 1, *ror.index]
+        balance = 1000.0
+        expected = [balance]
+        for date, value in ror.items():
+            balance = balance * (1 + value) + (500.0 if date == deposit_date else 0.0)
+            expected.append(balance)
+        np.testing.assert_allclose(result.to_numpy(), expected, rtol=1e-12, atol=1e-12)
