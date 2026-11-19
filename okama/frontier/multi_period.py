@@ -468,13 +468,12 @@ class EfficientFrontier(asset_list.AssetList):
             return result.x if self._is_target_solution(result, target_return) else None
 
         weights = solve(np.repeat(1 / n, n))
-        if weights is None:
-            # Start closer to the low-risk region when solving without a target.
-            weights = (
-                solve(self.gmv_annual_weights)
-                if target_return is None
-                else self._retry_mdp_target(target_return, solve)
-            )
+        if target_return is None:
+            # Equal weights can converge in a basin with much lower diversification.
+            candidates = (weights, solve(self.gmv_annual_weights))
+            weights = min((candidate for candidate in candidates if candidate is not None), key=objective, default=None)
+        elif weights is None:
+            weights = self._retry_mdp_target(target_return, solve)
 
         if weights is None:
             raise FrontierSolverError(f"No verified MDP for target CAGR {target_return}.")
