@@ -10,11 +10,12 @@ import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 from matplotlib.axes import Axes
 
-from scipy.optimize import minimize
+from scipy.optimize import OptimizeResult, minimize
 
 from okama import asset_list, settings
 from okama.common.helpers import helpers
 from okama.common.helpers.rebalancing import Rebalance
+from okama.frontier.errors import FrontierSolverError, InsufficientFrontierHistoryError
 
 import logging
 
@@ -812,8 +813,8 @@ class EfficientFrontier(asset_list.AssetList):
 
         Raises
         ------
-        RuntimeError
-            If no solution is found for the given target CAGR value.
+        FrontierSolverError
+            If no verified solution is found for the given target CAGR value.
 
         Examples
         --------
@@ -869,7 +870,7 @@ class EfficientFrontier(asset_list.AssetList):
                 constraints=(weights_sum_to_1, cagr_is_target),
                 bounds=self.bounds,
             )
-            if candidate.success and (best is None or candidate.fun < best.fun):
+            if self._is_target_solution(candidate, target_value) and (best is None or candidate.fun < best.fun):
                 best = candidate
 
         # Corner guard: when the target CAGR equals a single asset's own CAGR (e.g. the
@@ -883,7 +884,7 @@ class EfficientFrontier(asset_list.AssetList):
             return corner
 
         if best is None:
-            raise RuntimeError(f"No solution found for target CAGR value: {target_value}.")
+            raise FrontierSolverError(f"No solution found for target CAGR value: {target_value}.")
 
         # Recompute the mean return for the selected (best) weights, as objective_function
         # caches it as a side effect of the most recent evaluation.
@@ -967,7 +968,7 @@ class EfficientFrontier(asset_list.AssetList):
             )
 
             # Calculate points of EF given optimal weights
-            if weights.success:
+            if self._is_target_solution(weights, target_return):
                 asset_labels = self._asset_labels(self._labels_mode)
                 solution = dict(zip(asset_labels, weights.x))  # noqa: B905
                 solution["CAGR"] = target_return
@@ -989,8 +990,21 @@ class EfficientFrontier(asset_list.AssetList):
             solution = corner
 
         if solution is None:
-            raise RuntimeError(f"No solution found for target CAGR value: {target_return}.")
+            raise FrontierSolverError(f"No solution found for target CAGR value: {target_return}.")
         return solution
+
+    def _is_target_solution(self, result: OptimizeResult, target: float) -> bool:
+        if not result.success or not np.isfinite(result.fun):
+            return False
+        weights = result.x
+        lows, highs = np.asarray(self.bounds).T
+        tolerance = self._FTOL[0]
+        return bool(
+            np.all(weights >= lows - tolerance)
+            and np.all(weights <= highs + tolerance)
+            and abs(weights.sum() - 1) <= tolerance
+            and abs(self._get_cagr(weights) - target) <= tolerance
+        )
 
     @_optimizer_scope
     def _single_asset_corner_portfolio(self, target_value: float) -> dict | None:
@@ -1226,7 +1240,7 @@ class EfficientFrontier(asset_list.AssetList):
             if candidate.success and (best is None or candidate.fun < best.fun):
                 best = candidate
         if best is None:
-            raise RuntimeError("No feasible frontier endpoint found for the supplied weight bounds.")
+            raise FrontierSolverError("No feasible frontier endpoint found for the supplied weight bounds.")
         returns = self._get_portfolio_ror_ts(best.x)
         return {
             "Weights": best.x,
@@ -1332,13 +1346,26 @@ class EfficientFrontier(asset_list.AssetList):
             self._get_ef_points()
         return self._ef_points
 
-    def _get_ef_points(self):
+    def _get_ef_points(self) -> None:
         """
         Get all the points for the Efficient Frontier running optimizer.
 
         If verbose=True calculates elapsed time for each point and the total elapsed time.
         """
+        finite = np.isfinite(self.assets_ror.to_numpy(dtype=float, na_value=np.nan)).all(axis=1)
+        months = self.assets_ror.index[finite].unique()
+        if len(months) < settings._MONTHS_PER_YEAR:
+            raise InsufficientFrontierHistoryError(
+                settings._MONTHS_PER_YEAR,
+                len(months),
+                months.min().strftime("%Y-%m") if len(months) else None,
+                months.max().strftime("%Y-%m") if len(months) else None,
+            )
+
         main_start_time = time.time()
+        range_left = self._target_cagr_range_left
+        if not np.isfinite(range_left).all():
+            raise FrontierSolverError("The left frontier branch has non-finite CAGR targets.")
 
         # left part of the EF
         def compute_left_part_of_ef(i, target_cagr):
@@ -1350,12 +1377,13 @@ class EfficientFrontier(asset_list.AssetList):
             return row
 
         ef_points_records = Parallel(n_jobs=settings.resolve_n_jobs())(
-            delayed(compute_left_part_of_ef)(i, target_cagr)
-            for i, target_cagr in enumerate(self._target_cagr_range_left)
+            delayed(compute_left_part_of_ef)(i, target_cagr) for i, target_cagr in enumerate(range_left)
         )
         # right part of the EF
         range_right = self._target_cagr_range_right
         if range_right is not None:  # range_right can be a DataFrame. Must put an explicit "is not None"
+            if not np.isfinite(range_right).all():
+                raise FrontierSolverError("The right frontier branch has non-finite CAGR targets.")
 
             def compute_right_part_of_ef(i, target_cagr):
                 start_time = time.time()

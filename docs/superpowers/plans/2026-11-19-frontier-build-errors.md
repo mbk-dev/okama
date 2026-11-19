@@ -1,0 +1,13 @@
+# Efficient Frontier build errors implementation plan
+
+[Issue #155](https://github.com/mbk-dev/okama/issues/155) defines the expected user experience. Execute locally in the three task worktrees.
+
+- [x] **okama.** Add failing regressions to `tests/test_frontier_multi_preparation.py` using aligned monthly returns and controlled solver results. Check fewer than 12 finite common months before building the target grid. Raise a typed history error with count and available month bounds. Report failed left and right optimizations with a `RuntimeError` subclass, preserving the existing error messages. Check feasibility of solver results before accepting a target point. Verify the module and library suite, then run Ruff.
+- [x] **okama-backend.** In `tests/compute/test_frontier.py`, verify status and body for short history, a numerical failure and an unrelated exception. Map the named exceptions in `compute/views.py` and document the response contract. Keep a top-level string `detail` alongside `code`: HTTP 422 `insufficient_history` with `required_months` and available `common_months`, `common_first_month`, `common_last_month`; HTTP 502 `frontier_solver_failed`. Check the computed curve's range before target-weight minimization and return HTTP 400 `target_out_of_range` only for a confirmed range check. Verify the backend with a local install of this okama worktree.
+- [x] **okama-web.** In `FrontierPage.test.tsx`, cover both first failures, failed rebuild with the previous parameters and target tools visible, subsequent success and a target error. Reuse alerts in `FrontierPage.tsx`. Decode the build error from `ApiError.body`; preserve the successful snapshot and annotate its asset list, currency, requested period and rebalancing while a build error is visible. Keep target errors at the target field. Verify targeted tests and the rendered recovery states locally.
+
+## Local acceptance
+
+- The local API replay returned 422 with five common returns (2026-07 through 2026-11), 502 for the finite-CAGR solver reproduction, 400 for an out-of-range target, and 200 for the USD and EUR builds.
+- Playwright confirmed that both build failures clear progress, a failed rebuild retains the previous result and its parameters, and a successful retry replaces it. The target field presents a separate range error.
+- okama: 1,208 passed, 3 skipped. Backend: 839 passed, 1 skipped, with a temporary client-compute fixture generated for this library checkout. The regenerated fixture matched the expected results of all 41 checked-in cases. Frontend: 1,191 passed. Lint, library formatting, and frontend build passed.

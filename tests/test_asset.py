@@ -1,10 +1,12 @@
 from unittest.mock import call  # noqa: I001
 import pytest
 from pytest_mock import MockerFixture
+from requests import HTTPError
 
 import pandas as pd
 
 import okama as ok
+from okama.common.error import ShortPeriodLengthError
 
 
 class _DefaultMocks:
@@ -56,6 +58,18 @@ def test_init_uses_mocked_queries(basic_patches):
     # Asserts on dates computed from ror index
     assert a.first_date == dm.ror_index[0].to_timestamp(how="start")
     assert a.last_date == dm.ror_index[-1].to_timestamp(how="start")
+
+
+@pytest.mark.parametrize("missing_returns", [None, HTTPError("No return data for SPY.US", 404)])
+def test_known_asset_with_no_monthly_returns_reports_short_history(
+    basic_patches: dict, missing_returns: HTTPError | None
+) -> None:
+    get_ror = basic_patches["m_get_ror"]
+    get_ror.return_value = pd.Series(dtype=float)
+    get_ror.side_effect = missing_returns
+
+    with pytest.raises(ShortPeriodLengthError, match="No monthly returns for SPY.US"):
+        ok.Asset("SPY.US")
 
 
 @pytest.mark.parametrize("symbol", ["TPAY.MOEX", "FLOW.MOEX", "AKIE.MOEX"])
