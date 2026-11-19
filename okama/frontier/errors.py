@@ -26,3 +26,7 @@ class InsufficientFrontierHistoryError(ShortPeriodLengthError):
 
 class FrontierSolverError(RuntimeError):
     """The numerical optimizer did not find a verified frontier solution."""
+
+
+class FrontierInfeasibleTargetError(ValueError):
+    """The target CAGR falls outside a proven bound on feasible returns."""
