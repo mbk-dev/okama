@@ -469,9 +469,7 @@ class EfficientFrontier(asset_list.AssetList):
 
         weights = solve(np.repeat(1 / n, n))
         if target_return is None:
-            # Equal weights can converge in a basin with much lower diversification.
-            candidates = (weights, solve(self.gmv_annual_weights))
-            weights = min((candidate for candidate in candidates if candidate is not None), key=objective, default=None)
+            weights = self._best_global_mdp(weights, solve, objective)
         elif weights is None:
             weights = self._retry_mdp_target(target_return, solve)
 
@@ -491,6 +489,25 @@ class EfficientFrontier(asset_list.AssetList):
         point["Risk"] = risk
         point["Diversification ratio"] = ratio
         return point
+
+    def _best_global_mdp(
+        self,
+        weights: np.ndarray | None,
+        solve: Callable[[np.ndarray], np.ndarray | None],
+        objective: Callable[[np.ndarray], float],
+    ) -> np.ndarray | None:
+        """Compare verified candidates and refine the best point from an available line."""
+        candidates = [weights]
+        labels = self._asset_labels(self._labels_mode)
+        if not self._mdp_points.empty and len(set(labels)) == len(labels):
+            best = self._mdp_points["Diversification ratio"].idxmax()
+            seed = self._mdp_points.loc[best, labels].to_numpy(dtype=float)
+            if self._weights_satisfy_bounds(seed) and np.isfinite(objective(seed)):
+                # A verified line point is also feasible without the CAGR constraint.
+                candidates.extend([seed, solve(seed)])
+        if len(candidates) == 1:
+            candidates.append(solve(self.gmv_annual_weights))
+        return min((candidate for candidate in candidates if candidate is not None), key=objective, default=None)
 
     def _retry_mdp_target(self, target: float, solve: Callable[[np.ndarray], np.ndarray | None]) -> np.ndarray | None:
         """Recover a corner or retry the MDP solve from a portfolio that reaches the target."""
@@ -1015,14 +1032,17 @@ class EfficientFrontier(asset_list.AssetList):
     def _is_target_solution(self, result: OptimizeResult, target: float | None) -> bool:
         if not result.success or not np.isfinite(result.fun):
             return False
-        weights = result.x
+        return self._weights_satisfy_bounds(result.x) and (
+            target is None or abs(self._get_cagr(result.x) - target) <= self._FTOL[0]
+        )
+
+    def _weights_satisfy_bounds(self, weights: np.ndarray) -> bool:
         lows, highs = np.asarray(self.bounds).T
         tolerance = self._FTOL[0]
         return bool(
             np.all(weights >= lows - tolerance)
             and np.all(weights <= highs + tolerance)
             and abs(weights.sum() - 1) <= tolerance
-            and (target is None or abs(self._get_cagr(weights) - target) <= tolerance)
         )
 
     @_optimizer_scope

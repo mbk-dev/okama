@@ -4,6 +4,6 @@
 
 - Verify all solver candidates against weight bounds, the weight sum and the requested CAGR. Calculate returned metrics at the accepted weights.
 - Keep the single-asset corner fallback. For an interior target, retry from a verified minimum-risk solution that already reaches that target.
-- For the global MDP marker, solve from equal weights and the annualized minimum-volatility portfolio. Keep the verified solution with the higher diversification ratio.
+- For the global MDP marker, solve from equal weights and refine the best available MDP line point. Include the verified line point in the comparison. If there is no line, use the annualized minimum-volatility portfolio as the second start.
 - Report infeasibility only when the target is outside an independently established return bound. Return a typed solver failure for unresolved targets and preserve the all-or-error line.
 - Check the original data, ordinary MDP lines and the backend response for a failed calculation.
