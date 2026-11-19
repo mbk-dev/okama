@@ -5,6 +5,41 @@ All notable changes to **okama** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.2] - 2026-11-19
+
+This patch makes Efficient Frontier failures easier to diagnose and preserves
+calendar indexes and results across supported pandas versions.
+
+### Fixed
+
+- `EfficientFrontier.ef_points` checks for at least 12 usable common monthly
+  returns before optimizing the curve. `InsufficientFrontierHistoryError`
+  reports how many months are available and the date range when known.
+  `Asset` also reports missing monthly returns as short history.
+- `EfficientFrontier.ef_points` and `EfficientFrontier.minimize_risk()` report
+  numerical failures with `FrontierSolverError`. Both frontier branches
+  verify the weights and achieved CAGR before accepting a solver result
+  ([#155](https://github.com/mbk-dev/okama/issues/155)).
+- `PortfolioDCF.find_the_largest_withdrawals_size()` records optimization
+  attempts without deprecated pandas row insertion. Scalar
+  `PortfolioDCF.wealth_index()` and `PortfolioDCF.cash_flow_ts()` calculations
+  preserve their monthly period indexes
+  ([#138](https://github.com/mbk-dev/okama/issues/138),
+  [#156](https://github.com/mbk-dev/okama/issues/156)).
+- `AssetList.dividend_paying_years` and `AssetList.dividend_growing_years` preserve
+  annual period indexes and dividend streaks without pandas migration warnings.
+  `Rate.describe()` and `Inflation.describe()` preserve the dates of extrema
+  across pandas versions
+  ([#138](https://github.com/mbk-dev/okama/issues/138),
+  [#156](https://github.com/mbk-dev/okama/issues/156)).
+
+### Tests and documentation
+
+- Verify the exact string dtype of empty event series returned by
+  `Rebalance.wealth_ts()` ([#153](https://github.com/mbk-dev/okama/issues/153)).
+- Update the implementation and reproduction links in the frontier and
+  calendar batching reports.
+
 ## [4.0.1] - 2026-10-26
 
 This patch release focuses on CPU calculation speed, reusable numerical preparation and bounded caches. The accelerated paths preserve financial formulas, return shapes and supported fallbacks; equivalence checks use explicit numerical tolerances.
