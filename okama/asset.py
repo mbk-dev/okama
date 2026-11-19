@@ -8,7 +8,7 @@ from okama import settings
 from okama.api import data_queries, namespaces
 from okama.api.request_scope import data_request_scope
 from okama.common import validators
-from okama.common.error import MissingDistributionsWarning, ShortPeriodLengthError
+from okama.common.error import IncompleteTotalReturnWarning, MissingDistributionsWarning, ShortPeriodLengthError
 from okama.common.helpers import helpers
 
 
@@ -59,9 +59,15 @@ class Asset:
         if self.ror.empty:
             raise ShortPeriodLengthError(f"No monthly returns for {self.symbol}.")
         self._set_first_last_dates()
-        # Verified missing-history cases from issue #125. This is a temporary,
-        # bounded safeguard until API coverage metadata is available (okama-API#545).
-        if self.symbol in {"TPAY.MOEX", "FLOW.MOEX", "AKIE.MOEX"}:
+        distributions = self.info.get("distributions")
+        if isinstance(distributions, dict) and distributions.get("return_basis") == "price_only_incomplete":
+            warnings.warn(
+                f"{self.symbol}: the data API provides price-only returns that exclude cash distributions.",
+                IncompleteTotalReturnWarning,
+                stacklevel=2,
+            )
+        # Keep the missing-history check for the known funds on APIs without coverage metadata.
+        elif self.symbol in {"TPAY.MOEX", "FLOW.MOEX", "AKIE.MOEX"}:
             if data_queries.QueryData.get_dividends(self.symbol).empty:
                 warnings.warn(
                     f"{self.symbol}: distribution history is missing from the data API. "
