@@ -1,3 +1,7 @@
+class IncompleteTotalReturnWarning(UserWarning):
+    """The data API reports price-only returns for a distributing asset."""
+
+
 class MissingDistributionsWarning(UserWarning):
     """A known income-paying fund has no distribution history in the data API."""
 

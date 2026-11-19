@@ -6,7 +6,7 @@ from requests import HTTPError
 import pandas as pd
 
 import okama as ok
-from okama.common.error import ShortPeriodLengthError
+from okama.common.error import IncompleteTotalReturnWarning, ShortPeriodLengthError
 
 
 class _DefaultMocks:
@@ -82,6 +82,24 @@ def test_distributing_moex_fund_warns_when_payment_history_is_missing(
     with pytest.warns(UserWarning, match=rf"{symbol}.*distribution history is missing"):
         asset = ok.Asset(symbol)
     pd.testing.assert_series_equal(asset.ror, basic_patches["defaults"].ror)
+
+
+@pytest.mark.parametrize("symbol", ["TPAY.MOEX", "NEWFUND.MOEX"])
+def test_asset_warns_when_api_returns_exclude_distributions(
+    basic_patches: dict, mocker: MockerFixture, symbol: str
+) -> None:
+    basic_patches["m_namespaces"].return_value = {"MOEX"}
+    basic_patches["m_get_symbol_info"].return_value = {
+        **basic_patches["defaults"].symbol_info,
+        "distributions": {"payment_coverage": "verified", "return_basis": "price_only_incomplete"},
+    }
+    get_dividends = mocker.patch("okama.asset.data_queries.QueryData.get_dividends", return_value=pd.Series([1.0]))
+
+    with pytest.warns(IncompleteTotalReturnWarning, match=rf"{symbol}.*price-only returns.*exclude cash distributions"):
+        asset = ok.Asset(symbol)
+
+    pd.testing.assert_series_equal(asset.ror, basic_patches["defaults"].ror)
+    get_dividends.assert_not_called()
 
 
 def test_distributing_moex_fund_does_not_warn_once_payments_are_available(
