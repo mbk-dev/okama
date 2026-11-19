@@ -1,12 +1,17 @@
+from collections.abc import Callable
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
 from joblib import parallel_config
 from numpy.testing import assert_allclose
+from pytest_mock import MockerFixture
+from scipy.optimize import OptimizeResult
 
 import okama as ok
 from okama.common.helpers import helpers
-from okama.frontier.errors import FrontierSolverError
+from okama.frontier.errors import FrontierInfeasibleTargetError, FrontierSolverError
 from tests.helpers.factories import FakeAsset, FakeCurrencyAsset
 
 
@@ -497,6 +502,67 @@ def test_get_most_diversified_portfolio_with_target_return(ef_reb_ab):
     # Check that weights sum to 1
     weights = [dic[s] for s in ef_reb_ab.symbols]
     assert_allclose(np.sum(weights), 1.0, atol=1e-8)
+
+
+@pytest.fixture
+def moex_lse_mdp_frontier(mocker: MockerFixture) -> ok.EfficientFrontier:
+    # Monthly RUB returns aligned by the data API and okama on 2026-11-19 (issue #158).
+    path = Path(__file__).with_name("fixtures") / "mdp_moex_november_2026.csv"
+    returns = pd.read_csv(path, index_col="date", dtype=str).astype(float)
+    returns.index = pd.PeriodIndex(returns.index, freq="M")
+    mocker.patch("okama.common.make_asset_list.asset.Asset", FakeCurrencyAsset)
+    assets = [FakeAsset(symbol, returns[symbol], currency="RUB") for symbol in returns]
+    return ok.EfficientFrontier(assets, ccy="RUB", inflation=False, rebalancing_strategy=ok.Rebalance(period="month"))
+
+
+def test_mdp_line_recovers_the_moex_lse_reproduction(moex_lse_mdp_frontier: ok.EfficientFrontier) -> None:
+    ef = moex_lse_mdp_frontier
+    targets = ef._target_cagr_range_left
+
+    points = ef.mdp_points
+
+    assert len(points) == len(targets)
+    for index, target in enumerate(targets):
+        row = points.iloc[index]
+        weights = row[ef.symbols].to_numpy(dtype=float)
+        assert_allclose(weights.sum(), 1, atol=1e-6)
+        assert np.all((weights >= -1e-6) & (weights <= 1 + 1e-6))
+        assert ef._get_cagr(weights) == pytest.approx(target, abs=1e-6)
+        assert np.isfinite([row["Risk"], row["CAGR"], row["Diversification ratio"]]).all()
+
+
+def test_global_mdp_recovers_the_marker_for_the_moex_lse_line(moex_lse_mdp_frontier: ok.EfficientFrontier) -> None:
+    ef = moex_lse_mdp_frontier
+    best_line_ratio = ef.mdp_points["Diversification ratio"].max()
+
+    point = ef.get_most_diversified_portfolio()
+
+    weights = np.array([point[symbol] for symbol in ef.symbols])
+    assert_allclose(weights.sum(), 1, atol=1e-6)
+    assert np.all((weights >= -1e-6) & (weights <= 1 + 1e-6))
+    assert np.isfinite([point["Risk"], point["CAGR"], point["Diversification ratio"]]).all()
+    assert point["Diversification ratio"] >= best_line_ratio
+
+
+def test_mdp_solver_rejects_success_outside_the_target_constraint(
+    ef_reb_ab: ok.EfficientFrontier, mocker: MockerFixture
+) -> None:
+    ef = ef_reb_ab
+    weights = np.array([0.5, 0.5])
+    target = float(ef._target_cagr_range_left[1])
+    assert abs(ef._get_cagr(weights) - target) > 1e-6
+
+    def invalid_candidate(objective: Callable[[np.ndarray], float], *args: object, **kwargs: object) -> OptimizeResult:
+        return OptimizeResult(success=True, x=weights, fun=objective(weights))
+
+    mocker.patch("okama.frontier.multi_period.minimize", side_effect=invalid_candidate)
+    with pytest.raises(FrontierSolverError):
+        ef.get_most_diversified_portfolio(target)
+
+
+def test_mdp_proves_target_infeasible_outside_the_monthly_return_envelope(ef_reb_ab: ok.EfficientFrontier) -> None:
+    with pytest.raises(FrontierInfeasibleTargetError, match="infeasible"):
+        ef_reb_ab.get_most_diversified_portfolio(10.0)
 
 
 def test_get_most_diversified_portfolio_returns_single_asset_corner_when_optimizer_fails(synthetic_env, mocker):
