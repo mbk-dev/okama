@@ -58,6 +58,7 @@ def test_frontier_reports_insufficient_finite_common_months(
     assert failure.value.common_months == 11
     assert failure.value.common_first_month == str(history.index[1])
     assert failure.value.common_last_month == str(history.index[-1])
+    assert f"{history.index[1]} to {history.index[-1]}" in str(failure.value)
     optimize.assert_not_called()
 
 

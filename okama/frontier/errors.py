@@ -16,9 +16,12 @@ class InsufficientFrontierHistoryError(ShortPeriodLengthError):
         self.common_last_month = common_last_month
 
     def __str__(self) -> str:
-        return (
-            f"The efficient frontier needs {self.required_months} common monthly returns. Found {self.common_months}."
+        message = (
+            f"The efficient frontier needs {self.required_months} common monthly returns. Found {self.common_months}"
         )
+        if self.common_first_month is not None and self.common_last_month is not None:
+            message += f" ({self.common_first_month} to {self.common_last_month})"
+        return f"{message}."
 
 
 class FrontierSolverError(RuntimeError):
