@@ -271,6 +271,8 @@ class ListMaker(ABC):
             asset_own_last_date = asset_item.last_date
 
             ror_series = self._make_ror(asset_item, base_currency_ticker)
+            if ror_series.empty:
+                raise ShortPeriodLengthError(f"No monthly returns in {base_currency_ticker} for {asset_item.symbol}.")
             ror_series_list.append(ror_series)
 
             # get asset first and last dates after adjusting to the currency

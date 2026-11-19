@@ -1,11 +1,17 @@
 """Bounded calendar preparation and original multi-period optimizer behavior."""
 
+from collections.abc import Callable
+
 import numpy as np
 import pandas as pd
 import pytest
+from pytest_mock import MockerFixture
+from scipy.optimize import OptimizeResult
 
 import okama as ok
+from okama.common.error import ShortPeriodLengthError
 from okama.common.helpers import helpers
+from okama.frontier.errors import FrontierSolverError, InsufficientFrontierHistoryError
 from tests.helpers.factories import FakeAsset, FakeCurrencyAsset
 from tests.helpers.multi_optimizer_reference import ScalarMultiOptimizer
 from tests.helpers.rebalance_reference import ScalarCalendarRebalance
@@ -32,6 +38,68 @@ def test_optimizer_groups_returns_once_instead_of_per_trial(frontiers, mocker) -
     point = current.minimize_risk(target)
     assert point["Weights"].shape == (2,)
     assert groupby.call_count <= 2
+
+
+def test_frontier_reports_insufficient_finite_common_months(
+    frontiers: tuple[ok.EfficientFrontier, ScalarMultiOptimizer], mocker: MockerFixture
+) -> None:
+    current, _ = frontiers
+    history = current.assets_ror.iloc[:12].copy()
+    history.iloc[0, 0] = np.nan
+    current._assets_ror = history
+    optimize = mocker.patch(
+        "okama.frontier.multi_period.minimize",
+        side_effect=AssertionError("Optimization started before the common history check"),
+    )
+
+    with pytest.raises(InsufficientFrontierHistoryError) as failure:
+        _ = current.ef_points
+
+    assert failure.value.common_months == 11
+    assert failure.value.common_first_month == str(history.index[1])
+    assert failure.value.common_last_month == str(history.index[-1])
+    assert f"{history.index[1]} to {history.index[-1]}" in str(failure.value)
+    optimize.assert_not_called()
+
+
+def test_frontier_reports_missing_overlap_with_currency_history(mocker: MockerFixture) -> None:
+    ror = returns_frame(24, 2)
+    assets = [FakeAsset(ror.columns[0], ror.iloc[:, 0], currency="EUR"), FakeAsset(ror.columns[1], ror.iloc[:, 1])]
+
+    def currency(symbol: str, **kwargs: object) -> FakeCurrencyAsset:
+        if symbol == "EURUSD.FX":
+            return FakeCurrencyAsset(symbol, first_date="1990-01", last_date="1991-01")
+        return FakeCurrencyAsset(symbol)
+
+    mocker.patch("okama.common.make_asset_list.asset.Asset", side_effect=currency)
+
+    with pytest.raises(ShortPeriodLengthError, match="No monthly returns in USD"):
+        ok.EfficientFrontier(assets, ccy="USD", inflation=False)
+
+
+@pytest.mark.parametrize("method", ["minimize_risk", "_maximize_risk"])
+@pytest.mark.parametrize("solver_success", [False, True])
+def test_frontier_rejects_unverified_solver_target(
+    frontiers: tuple[ok.EfficientFrontier, ScalarMultiOptimizer],
+    mocker: MockerFixture,
+    method: str,
+    solver_success: bool,
+) -> None:
+    frontier, _ = frontiers
+    weights = np.array([0.5, 0.5])
+    target = frontier._get_cagr(weights) + 0.001
+    global_max = frontier.global_max_return_portfolio
+    mocker.patch.object(
+        ok.EfficientFrontier, "global_max_return_portfolio", new_callable=mocker.PropertyMock, return_value=global_max
+    )
+
+    def solve(objective: Callable[[np.ndarray], float], *args: object, **kwargs: object) -> OptimizeResult:
+        return OptimizeResult(success=solver_success, x=weights, fun=objective(weights), nit=1)
+
+    mocker.patch("okama.frontier.multi_period.minimize", side_effect=solve)
+
+    with pytest.raises(FrontierSolverError, match="No solution found for target CAGR"):
+        getattr(frontier, method)(target)
 
 
 @pytest.mark.parametrize("period", ["none", "month", "quarter", "half-year", "year"])

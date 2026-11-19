@@ -2,12 +2,13 @@ import warnings
 
 import pandas as pd
 import numpy as np
+from requests import HTTPError
 
 from okama import settings
 from okama.api import data_queries, namespaces
 from okama.api.request_scope import data_request_scope
 from okama.common import validators
-from okama.common.error import MissingDistributionsWarning
+from okama.common.error import MissingDistributionsWarning, ShortPeriodLengthError
 from okama.common.helpers import helpers
 
 
@@ -43,12 +44,20 @@ class Asset:
         self._get_symbol_data(symbol)
         self._first_date = first_date
         self._last_date = last_date
-        self.ror: pd.Series = data_queries.QueryData.get_ror(
-            symbol,
-            first_date=first_date if first_date else "1913-01-01",
-            last_date=last_date if last_date else "2100-01-01",
-            period="M",
-        )
+        try:
+            self.ror: pd.Series = data_queries.QueryData.get_ror(
+                symbol,
+                first_date=first_date if first_date else "1913-01-01",
+                last_date=last_date if last_date else "2100-01-01",
+                period="M",
+            )
+        except HTTPError as error:
+            # Metadata already confirmed the symbol; the returns endpoint has no series.
+            if error.args[1:2] == (404,):
+                raise ShortPeriodLengthError(f"No monthly returns for {self.symbol}.") from error
+            raise
+        if self.ror.empty:
+            raise ShortPeriodLengthError(f"No monthly returns for {self.symbol}.")
         self._set_first_last_dates()
         # Verified missing-history cases from issue #125. This is a temporary,
         # bounded safeguard until API coverage metadata is available (okama-API#545).

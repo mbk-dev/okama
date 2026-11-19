@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose
 
 import okama as ok
 from okama.common.helpers import helpers
+from okama.frontier.errors import FrontierSolverError
 from tests.helpers.factories import FakeAsset, FakeCurrencyAsset
 
 
@@ -154,12 +155,9 @@ def test_minimize_risk_reaches_target_cagr(ef_reb_ab):
     assert_allclose(np.sum(np.asarray(result["Weights"])), 1.0, atol=1e-8)
 
 
-def test_minimize_risk_raises_runtimeerror_on_failure(ef_reb_ab):
-    """Failed SLSQP optimisation must raise plain RuntimeError, not RecursionError
-    (no recursion is involved; RecursionError misrepresents the failure mode)."""
-    with pytest.raises(RuntimeError) as excinfo:
+def test_minimize_risk_raises_frontier_solver_error_on_failure(ef_reb_ab: ok.EfficientFrontier) -> None:
+    with pytest.raises(FrontierSolverError, match="No solution found for target CAGR"):
         ef_reb_ab.minimize_risk(target_value=10.0)  # 1000% CAGR is infeasible
-    assert type(excinfo.value) is RuntimeError, f"Expected exact RuntimeError, got {type(excinfo.value).__name__}"
 
 
 def test_minimize_risk_returns_single_asset_corner_when_optimizer_fails(synthetic_env, mocker):
