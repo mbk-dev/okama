@@ -1109,7 +1109,7 @@ class PortfolioDCF:
                 goal, percentile, threshold, start_investment, target_survival_period
             )
             withdrawal_abs, withdrawal_rel = self._calculate_withdrawal_metrics(m, start_investment)
-            solutions.at[iteration, "withdrawal_abs"] = withdrawal_abs
+            solutions.loc[iteration, "withdrawal_abs"] = withdrawal_abs
             solutions.at[iteration, "withdrawal_rel"] = withdrawal_rel
             solutions.at[iteration, "error_rel"] = error_rel
             gradient = (
@@ -1158,7 +1158,7 @@ class PortfolioDCF:
 
     def _best_attempt_result(self, solutions: pd.DataFrame) -> Result:
         """Build a failure Result from the recorded attempt with the smallest error."""
-        best_idx = solutions["error_rel"].idxmin()
+        best_idx = pd.to_numeric(solutions["error_rel"]).idxmin()
         best_result = solutions.loc[best_idx]
         logger.warning(
             f"Solution not found after {solutions.shape[0]} evaluations. "

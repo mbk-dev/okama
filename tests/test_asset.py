@@ -1,10 +1,12 @@
 from unittest.mock import call  # noqa: I001
 import pytest
 from pytest_mock import MockerFixture
+from requests import HTTPError
 
 import pandas as pd
 
 import okama as ok
+from okama.common.error import IncompleteTotalReturnWarning, ShortPeriodLengthError
 
 
 class _DefaultMocks:
@@ -58,6 +60,18 @@ def test_init_uses_mocked_queries(basic_patches):
     assert a.last_date == dm.ror_index[-1].to_timestamp(how="start")
 
 
+@pytest.mark.parametrize("missing_returns", [None, HTTPError("No return data for SPY.US", 404)])
+def test_known_asset_with_no_monthly_returns_reports_short_history(
+    basic_patches: dict, missing_returns: HTTPError | None
+) -> None:
+    get_ror = basic_patches["m_get_ror"]
+    get_ror.return_value = pd.Series(dtype=float)
+    get_ror.side_effect = missing_returns
+
+    with pytest.raises(ShortPeriodLengthError, match="No monthly returns for SPY.US"):
+        ok.Asset("SPY.US")
+
+
 @pytest.mark.parametrize("symbol", ["TPAY.MOEX", "FLOW.MOEX", "AKIE.MOEX"])
 def test_distributing_moex_fund_warns_when_payment_history_is_missing(
     basic_patches: dict, mocker: MockerFixture, symbol: str
@@ -68,6 +82,24 @@ def test_distributing_moex_fund_warns_when_payment_history_is_missing(
     with pytest.warns(UserWarning, match=rf"{symbol}.*distribution history is missing"):
         asset = ok.Asset(symbol)
     pd.testing.assert_series_equal(asset.ror, basic_patches["defaults"].ror)
+
+
+@pytest.mark.parametrize("symbol", ["TPAY.MOEX", "NEWFUND.MOEX"])
+def test_asset_warns_when_api_returns_exclude_distributions(
+    basic_patches: dict, mocker: MockerFixture, symbol: str
+) -> None:
+    basic_patches["m_namespaces"].return_value = {"MOEX"}
+    basic_patches["m_get_symbol_info"].return_value = {
+        **basic_patches["defaults"].symbol_info,
+        "distributions": {"payment_coverage": "verified", "return_basis": "price_only_incomplete"},
+    }
+    get_dividends = mocker.patch("okama.asset.data_queries.QueryData.get_dividends", return_value=pd.Series([1.0]))
+
+    with pytest.warns(IncompleteTotalReturnWarning, match=rf"{symbol}.*price-only returns.*exclude cash distributions"):
+        asset = ok.Asset(symbol)
+
+    pd.testing.assert_series_equal(asset.ror, basic_patches["defaults"].ror)
+    get_dividends.assert_not_called()
 
 
 def test_distributing_moex_fund_does_not_warn_once_payments_are_available(

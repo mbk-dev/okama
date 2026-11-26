@@ -10,11 +10,16 @@ import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 from matplotlib.axes import Axes
 
-from scipy.optimize import minimize
+from scipy.optimize import OptimizeResult, minimize
 
 from okama import asset_list, settings
 from okama.common.helpers import helpers
 from okama.common.helpers.rebalancing import Rebalance
+from okama.frontier.errors import (
+    FrontierInfeasibleTargetError,
+    FrontierSolverError,
+    InsufficientFrontierHistoryError,
+)
 
 import logging
 
@@ -409,6 +414,13 @@ class EfficientFrontier(asset_list.AssetList):
             Mapping with asset weights (keys are tickers or asset names depending on `ticker_names`) and portfolio
             metrics: 'CAGR', 'Risk', and 'Diversification ratio'.
 
+        Raises
+        ------
+        FrontierInfeasibleTargetError
+            If the requested target is outside a proven bound on returns.
+        FrontierSolverError
+            If the optimizer cannot find a verified portfolio.
+
         Examples
         --------
         >>> ls4 = ["SPY.US", "AGG.US", "VNQ.US", "GLD.US"]
@@ -424,79 +436,104 @@ class EfficientFrontier(asset_list.AssetList):
 
         It is possible to get the most diversified portfolio for a given target CAGR.
 
-        >>> x.get_most_diversified_portfolio(target_return=0.10)
-        {'SPY.US': 0.3389762570274293,
-        'AGG.US': 0.12915657041748244,
-        'VNQ.US': 0.15083042115027034,
-        'GLD.US': 0.3810367514048179,
-        'CAGR': 0.09370688842211439,
-        'Risk': 0.11725067815643951,
-        'Diversification ratio': 1.4419864802150442}
+        >>> abs(x.get_most_diversified_portfolio(target_return=0.08)["CAGR"] - 0.08) <= 1e-6
+        True
         """
+        if target_return is not None and not np.isfinite(target_return):
+            raise ValueError("Target CAGR must be finite.")
+
         ror = self.assets_ror
-        n = self.assets_ror.shape[1]
-        init_guess = np.repeat(1 / n, n)
+        n = ror.shape[1]
+        assets_annualized_risk = helpers.Float.annualize_risk(ror.std(), ror.mean())
 
-        def objective_function(w):
-            # Diversification Ratio
-            assets_risk = ror.std()
-            assets_mean_return = self.assets_ror.mean()
-            assets_annualized_risk = helpers.Float.annualize_risk(assets_risk, assets_mean_return)
-            weights = np.asarray(w)
-            assets_sigma_weighted_sum = weights.T @ assets_annualized_risk
-
-            portfolio_ror = self._get_portfolio_ror_ts(w)
-            portfolio_mean_return_monthly = portfolio_ror.mean()
-            portfolio_risk_monthly = portfolio_ror.std()
-
-            objective_function.annual_risk = helpers.Float.annualize_risk(
-                portfolio_risk_monthly, portfolio_mean_return_monthly
+        def objective(weights: np.ndarray) -> float:
+            portfolio_ror = self._get_portfolio_ror_ts(weights)
+            return -(weights @ assets_annualized_risk) / helpers.Float.annualize_risk(
+                portfolio_ror.std(), portfolio_ror.mean()
             )
-            return -assets_sigma_weighted_sum / objective_function.annual_risk
 
-        # construct the constraints
-        weights_sum_to_1 = {"type": "eq", "fun": lambda weights: np.sum(weights) - 1}
-        cagr_is_target = {
-            "type": "eq",
-            "fun": lambda weights: target_return - self._get_cagr(weights),
-        }
-        constraints = (weights_sum_to_1,) if target_return is None else (weights_sum_to_1, cagr_is_target)
+        constraints = ({"type": "eq", "fun": lambda weights: weights.sum() - 1},)
+        if target_return is not None:
+            constraints += ({"type": "eq", "fun": lambda weights: target_return - self._get_cagr(weights)},)
 
-        # set optimizer
-        weights = minimize(
-            objective_function,
-            init_guess,
-            method="SLSQP",
-            options={"disp": False},
-            constraints=constraints,
-            bounds=self.bounds,
-        )
-        if weights.success:
-            # CAGR calculation
-            cagr = self._get_cagr(weights.x)
-            asset_labels = self._asset_labels(self._labels_mode)
-            point = dict(zip(asset_labels, weights.x))  # noqa: B905
-            point["CAGR"] = cagr
-            point["Risk"] = objective_function.annual_risk
-            point["Diversification ratio"] = -weights.fun
-            return point
+        def solve(start: np.ndarray) -> np.ndarray | None:
+            result = minimize(
+                objective,
+                start,
+                method="SLSQP",
+                options={"disp": False},
+                constraints=constraints,
+                bounds=self.bounds,
+            )
+            return result.x if self._is_target_solution(result, target_return) else None
 
-        # Corner fallback: at a single-asset-CAGR corner (e.g. the leftmost MDP point, whose
-        # target is the minimum asset CAGR) the 100% single-asset portfolio is the only
-        # feasible point — diversification ratio 1 — but SLSQP from the equal-weights start
-        # can fail to reach that vertex of the bounds. Mirrors the guard in minimize_risk.
-        corner = self._single_asset_corner_portfolio(target_return) if target_return is not None else None
-        if corner is not None:
-            corner_weights = corner["Weights"]
-            diversification_ratio = -objective_function(corner_weights)
-            asset_labels = self._asset_labels(self._labels_mode)
-            point = dict(zip(asset_labels, corner_weights, strict=True))
-            point["CAGR"] = self._get_cagr(corner_weights)
-            point["Risk"] = objective_function.annual_risk
-            point["Diversification ratio"] = diversification_ratio
-            return point
+        weights = solve(np.repeat(1 / n, n))
+        if target_return is None:
+            weights = self._best_global_mdp(weights, solve, objective)
+        elif weights is None:
+            weights = self._retry_mdp_target(target_return, solve)
 
-        raise RuntimeError("No solutions were found")
+        if weights is None:
+            raise FrontierSolverError(f"No verified MDP for target CAGR {target_return}.")
+
+        portfolio_ror = self._get_portfolio_ror_ts(weights)
+        risk = helpers.Float.annualize_risk(portfolio_ror.std(), portfolio_ror.mean())
+        cagr = self._get_cagr(weights)
+        if risk <= 0:
+            raise FrontierSolverError(f"No positive MDP risk for target CAGR {target_return}.")
+        ratio = (weights @ assets_annualized_risk) / risk
+        if not np.isfinite([risk, cagr, ratio]).all():
+            raise FrontierSolverError(f"No finite MDP metrics for target CAGR {target_return}.")
+        point = dict(zip(self._asset_labels(self._labels_mode), weights, strict=True))
+        point["CAGR"] = cagr
+        point["Risk"] = risk
+        point["Diversification ratio"] = ratio
+        return point
+
+    def _best_global_mdp(
+        self,
+        weights: np.ndarray | None,
+        solve: Callable[[np.ndarray], np.ndarray | None],
+        objective: Callable[[np.ndarray], float],
+    ) -> np.ndarray | None:
+        """Compare verified candidates and refine the best point from an available line."""
+        candidates = [weights]
+        labels = self._asset_labels(self._labels_mode)
+        if not self._mdp_points.empty and len(set(labels)) == len(labels):
+            best = self._mdp_points["Diversification ratio"].idxmax()
+            seed = self._mdp_points.loc[best, labels].to_numpy(dtype=float)
+            if self._weights_satisfy_bounds(seed) and np.isfinite(objective(seed)):
+                # A verified line point is also feasible without the CAGR constraint.
+                candidates.extend([seed, solve(seed)])
+        if len(candidates) == 1:
+            candidates.append(solve(self.gmv_annual_weights))
+        return min((candidate for candidate in candidates if candidate is not None), key=objective, default=None)
+
+    def _retry_mdp_target(self, target: float, solve: Callable[[np.ndarray], np.ndarray | None]) -> np.ndarray | None:
+        """Recover a corner or retry the MDP solve from a portfolio that reaches the target."""
+        corner = self._single_asset_corner_portfolio(target)
+        if corner is not None and abs(self._get_cagr(corner["Weights"]) - target) <= self._FTOL[0]:
+            return corner["Weights"]
+        if self._target_outside_return_envelope(target):
+            raise FrontierInfeasibleTargetError(f"Target CAGR {target} is infeasible.")
+        try:
+            seed = self.minimize_risk(target)["Weights"]
+        except FrontierSolverError as error:
+            raise FrontierSolverError(f"No verified MDP for target CAGR {target}.") from error
+        return solve(seed)
+
+    def _target_outside_return_envelope(self, target: float) -> bool:
+        """Bound long-only CAGR by the per-month extremes of asset returns."""
+        returns = self.assets_ror.to_numpy(dtype=float, na_value=np.nan)
+        if any(low < 0 for low, _ in self.bounds) or not returns.size:
+            return False
+        if not np.isfinite(returns).all() or returns.min() <= -1:
+            return False
+        # Positive asset growth factors keep the effective weights nonnegative between rebalances.
+        extremes = np.stack([returns.min(axis=1), returns.max(axis=1)])
+        with np.errstate(over="ignore"):
+            lower, upper = np.expm1(np.log1p(extremes).mean(axis=1) * settings._MONTHS_PER_YEAR)
+        return bool(target < lower - self._FTOL[0] or target > upper + self._FTOL[0])
 
     @_optimizer_scope
     def get_tangency_portfolio(self, rf_return: float = 0, rate_of_return: str = "cagr") -> dict:
@@ -812,8 +849,8 @@ class EfficientFrontier(asset_list.AssetList):
 
         Raises
         ------
-        RuntimeError
-            If no solution is found for the given target CAGR value.
+        FrontierSolverError
+            If no verified solution is found for the given target CAGR value.
 
         Examples
         --------
@@ -869,7 +906,7 @@ class EfficientFrontier(asset_list.AssetList):
                 constraints=(weights_sum_to_1, cagr_is_target),
                 bounds=self.bounds,
             )
-            if candidate.success and (best is None or candidate.fun < best.fun):
+            if self._is_target_solution(candidate, target_value) and (best is None or candidate.fun < best.fun):
                 best = candidate
 
         # Corner guard: when the target CAGR equals a single asset's own CAGR (e.g. the
@@ -883,7 +920,7 @@ class EfficientFrontier(asset_list.AssetList):
             return corner
 
         if best is None:
-            raise RuntimeError(f"No solution found for target CAGR value: {target_value}.")
+            raise FrontierSolverError(f"No solution found for target CAGR value: {target_value}.")
 
         # Recompute the mean return for the selected (best) weights, as objective_function
         # caches it as a side effect of the most recent evaluation.
@@ -967,7 +1004,7 @@ class EfficientFrontier(asset_list.AssetList):
             )
 
             # Calculate points of EF given optimal weights
-            if weights.success:
+            if self._is_target_solution(weights, target_return):
                 asset_labels = self._asset_labels(self._labels_mode)
                 solution = dict(zip(asset_labels, weights.x))  # noqa: B905
                 solution["CAGR"] = target_return
@@ -989,8 +1026,24 @@ class EfficientFrontier(asset_list.AssetList):
             solution = corner
 
         if solution is None:
-            raise RuntimeError(f"No solution found for target CAGR value: {target_return}.")
+            raise FrontierSolverError(f"No solution found for target CAGR value: {target_return}.")
         return solution
+
+    def _is_target_solution(self, result: OptimizeResult, target: float | None) -> bool:
+        if not result.success or not np.isfinite(result.fun):
+            return False
+        return self._weights_satisfy_bounds(result.x) and (
+            target is None or abs(self._get_cagr(result.x) - target) <= self._FTOL[0]
+        )
+
+    def _weights_satisfy_bounds(self, weights: np.ndarray) -> bool:
+        lows, highs = np.asarray(self.bounds).T
+        tolerance = self._FTOL[0]
+        return bool(
+            np.all(weights >= lows - tolerance)
+            and np.all(weights <= highs + tolerance)
+            and abs(weights.sum() - 1) <= tolerance
+        )
 
     @_optimizer_scope
     def _single_asset_corner_portfolio(self, target_value: float) -> dict | None:
@@ -1226,7 +1279,7 @@ class EfficientFrontier(asset_list.AssetList):
             if candidate.success and (best is None or candidate.fun < best.fun):
                 best = candidate
         if best is None:
-            raise RuntimeError("No feasible frontier endpoint found for the supplied weight bounds.")
+            raise FrontierSolverError("No feasible frontier endpoint found for the supplied weight bounds.")
         returns = self._get_portfolio_ror_ts(best.x)
         return {
             "Weights": best.x,
@@ -1332,13 +1385,26 @@ class EfficientFrontier(asset_list.AssetList):
             self._get_ef_points()
         return self._ef_points
 
-    def _get_ef_points(self):
+    def _get_ef_points(self) -> None:
         """
         Get all the points for the Efficient Frontier running optimizer.
 
         If verbose=True calculates elapsed time for each point and the total elapsed time.
         """
+        finite = np.isfinite(self.assets_ror.to_numpy(dtype=float, na_value=np.nan)).all(axis=1)
+        months = self.assets_ror.index[finite].unique()
+        if len(months) < settings._MONTHS_PER_YEAR:
+            raise InsufficientFrontierHistoryError(
+                settings._MONTHS_PER_YEAR,
+                len(months),
+                months.min().strftime("%Y-%m") if len(months) else None,
+                months.max().strftime("%Y-%m") if len(months) else None,
+            )
+
         main_start_time = time.time()
+        range_left = self._target_cagr_range_left
+        if not np.isfinite(range_left).all():
+            raise FrontierSolverError("The left frontier branch has non-finite CAGR targets.")
 
         # left part of the EF
         def compute_left_part_of_ef(i, target_cagr):
@@ -1350,12 +1416,13 @@ class EfficientFrontier(asset_list.AssetList):
             return row
 
         ef_points_records = Parallel(n_jobs=settings.resolve_n_jobs())(
-            delayed(compute_left_part_of_ef)(i, target_cagr)
-            for i, target_cagr in enumerate(self._target_cagr_range_left)
+            delayed(compute_left_part_of_ef)(i, target_cagr) for i, target_cagr in enumerate(range_left)
         )
         # right part of the EF
         range_right = self._target_cagr_range_right
         if range_right is not None:  # range_right can be a DataFrame. Must put an explicit "is not None"
+            if not np.isfinite(range_right).all():
+                raise FrontierSolverError("The right frontier branch has non-finite CAGR targets.")
 
             def compute_right_part_of_ef(i, target_cagr):
                 start_time = time.time()

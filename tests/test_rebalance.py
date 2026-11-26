@@ -102,8 +102,8 @@ def test_empty_rebalance_events_use_string_dtype_and_period_index_without_pandas
         warnings.simplefilter("always")
         result = strategy.wealth_ts([0.5, 0.5], returns)
     assert caught == []
-    assert result.events.empty
-    _assert_event_series_types(result.events)
+    expected = pd.Series(dtype="str", index=pd.PeriodIndex([], freq="M"))
+    pdt.assert_series_equal(result.events, expected)
 
 
 def test_rebalance_by_condition_events_with_mock(mocker):
