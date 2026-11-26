@@ -30,7 +30,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Run Gitleaks on automatic events
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') }}
+        uses: mbk-dev/cbrapi/.github/actions/security-audit@2b32319a99d4da63644995eed3faf18faec28cea
+        with:
+          base-sha: ${{ github.event.pull_request.base.sha || '' }}
+          stage: secrets
       - name: Run pinned source audit
+        if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') }}
         uses: mbk-dev/cbrapi/.github/actions/security-audit@08be62bd91bcc85c04605889701a4bcd34e25a07
         with:
           base-sha: ${{ github.event.pull_request.base.sha || '' }}
