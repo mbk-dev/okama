@@ -47,3 +47,49 @@ jobs:
         # Pass the tests directory explicitly so pytest picks up tests/pytest.ini,
         # which caps xdist at a fixed worker count.
         run: uv run --no-sync pytest tests -q
+
+  package:
+    name: Build package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact source revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.23"
+          python-version: "3.11"
+          enable-cache: false
+
+      - name: Build and validate distributions
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          package_dir="$RUNNER_TEMP/okama-package"
+          uv build --no-sources --python 3.11 --out-dir "$package_dir"
+          cd "$package_dir"
+          shopt -s nullglob
+          wheels=(*.whl)
+          sdists=(*.tar.gz)
+          test "${#wheels[@]}" -eq 1
+          test "${#sdists[@]}" -eq 1
+          uvx --from twine==6.2.0 twine check --strict "${wheels[@]}" "${sdists[@]}"
+          printf '%s\n' "$SOURCE_SHA" > source-sha.txt
+          sha256sum -- "${wheels[@]}" "${sdists[@]}" > SHA256SUMS
+
+      - name: Upload the validated distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: okama-distributions-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/okama-package/
+          if-no-files-found: error
+          retention-days: 14
